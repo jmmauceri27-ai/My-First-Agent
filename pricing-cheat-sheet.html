@@ -5,11 +5,11 @@
 <title>Landscaping Pricing Cheat Sheet</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, sans-serif; font-size: 13px; background: #f4f4f4; color: #222; }
+  body { font-family: Arial, sans-serif; font-size: 12px; background: #f4f4f4; color: #222; }
   h1 { background: #2d6a2d; color: #fff; text-align: center; padding: 14px; font-size: 20px; letter-spacing: 1px; }
-  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 12px; }
   .card { background: #fff; border-radius: 6px; border: 1px solid #ccc; overflow: hidden; }
-  .card-header { background: #4a8a4a; color: #fff; padding: 7px 12px; font-weight: bold; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .card-header { background: #4a8a4a; color: #fff; padding: 6px 10px; font-weight: bold; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
   .card-header.blue  { background: #2a5fa3; }
   .card-header.brown { background: #8b5e3c; }
   .card-header.teal  { background: #2a7a7a; }
@@ -17,15 +17,29 @@
   .card-header.gray  { background: #555; }
   table { width: 100%; border-collapse: collapse; }
   tr:nth-child(even) { background: #f0f7f0; }
-  td { padding: 4px 10px; border-bottom: 1px solid #e8e8e8; vertical-align: top; }
+  td { padding: 3px 8px; border-bottom: 1px solid #e8e8e8; vertical-align: top; }
   td:last-child { text-align: right; font-weight: bold; white-space: nowrap; }
-  .section-label { background: #ddeedd; font-weight: bold; font-size: 11px; text-transform: uppercase; color: #2d6a2d; padding: 3px 10px; }
+  .section-label { background: #ddeedd; font-weight: bold; font-size: 10px; text-transform: uppercase; color: #2d6a2d; padding: 2px 8px; }
   .section-label.blue { background: #dde8f7; color: #2a5fa3; }
   .section-label.brown { background: #f5ede4; color: #8b5e3c; }
   .section-label.teal { background: #ddf0f0; color: #2a7a7a; }
-  .note { font-size: 11px; color: #666; padding: 6px 10px; border-top: 1px dashed #ccc; background: #fafafa; }
+  .section-label.purple { background: #ede4f5; color: #6a3a8a; }
+  .note { font-size: 10px; color: #666; padding: 5px 8px; border-top: 1px dashed #ccc; background: #fafafa; }
   .wide { grid-column: span 2; }
   .full { grid-column: span 3; }
+
+  @media print {
+    @page { size: landscape; margin: 0.5in; }
+    body { background: #fff; font-size: 9pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    h1 { font-size: 14pt; padding: 8px; }
+    .grid { padding: 0; gap: 8px; }
+    .card { border-radius: 3px; break-inside: avoid; }
+    .card-header { font-size: 9pt; padding: 4px 7px; }
+    td { padding: 2px 6px; font-size: 8.5pt; }
+    .section-label { font-size: 7.5pt; padding: 1px 6px; }
+    .note { font-size: 7.5pt; }
+    .wide { grid-column: span 2; }
+  }
 </style>
 </head>
 <body>
