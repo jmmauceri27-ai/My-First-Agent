@@ -29,16 +29,22 @@
   .full { grid-column: span 3; }
 
   @media print {
-    @page { size: landscape; margin: 0.5in; }
-    body { background: #fff; font-size: 9pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    h1 { font-size: 14pt; padding: 8px; }
-    .grid { padding: 0; gap: 8px; }
-    .card { border-radius: 3px; break-inside: avoid; }
-    .card-header { font-size: 9pt; padding: 4px 7px; }
-    td { padding: 2px 6px; font-size: 8.5pt; }
-    .section-label { font-size: 7.5pt; padding: 1px 6px; }
-    .note { font-size: 7.5pt; }
+    @page { size: landscape; margin: 0.35in; }
+    body { background: #fff; font-size: 7pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    h1 { font-size: 11pt; padding: 5px; margin-bottom: 6px; }
+    .grid {
+      padding: 0;
+      gap: 5px;
+      grid-template-columns: repeat(4, 1fr);
+    }
+    /* Re-assign span widths for 4-col print layout */
     .wide { grid-column: span 2; }
+    .full { grid-column: span 4; }
+    .card { border-radius: 2px; break-inside: avoid; }
+    .card-header { font-size: 7pt; padding: 3px 5px; }
+    td { padding: 1.5px 5px; font-size: 7pt; line-height: 1.3; }
+    .section-label { font-size: 6.5pt; padding: 1px 5px; }
+    .note { font-size: 6.5pt; padding: 3px 5px; }
   }
 </style>
 </head>
