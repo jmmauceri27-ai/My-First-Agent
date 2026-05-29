@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Proposal Line Item Reference Guide</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 13px; background: #f0f2f5; color: #222; }
+  h1 { background: #1a3a5c; color: #fff; text-align: center; padding: 14px; font-size: 18px; letter-spacing: 0.5px; }
+  h2 { font-size: 14px; color: #1a3a5c; border-bottom: 2px solid #1a3a5c; padding-bottom: 5px; margin-bottom: 10px; }
+  h3 { font-size: 12px; color: #555; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .container { padding: 14px; max-width: 1400px; margin: 0 auto; }
+  .intro { background: #fff; border-left: 4px solid #1a3a5c; padding: 10px 14px; margin-bottom: 14px; font-size: 12px; color: #444; line-height: 1.6; }
+
+  /* --- PROPOSAL CARDS --- */
+  .proposals-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 18px; }
+  .prop-card { background: #fff; border-radius: 5px; border: 1px solid #ccc; overflow: hidden; }
+  .prop-card-header { background: #1a3a5c; color: #fff; padding: 6px 10px; font-weight: bold; font-size: 11px; }
+  .prop-card-sub { background: #e8eef5; padding: 4px 10px; font-size: 10px; color: #555; border-bottom: 1px solid #ccc; }
+  .prop-card-body { padding: 8px 10px; }
+  .scope-text { font-size: 11px; color: #333; line-height: 1.5; margin-bottom: 8px; }
+  .line-item-row { display: flex; justify-content: space-between; font-size: 11px; padding: 2px 0; border-bottom: 1px dotted #e0e0e0; }
+  .line-item-row:last-child { border-bottom: none; }
+  .li-name { color: #333; }
+  .li-amount { font-weight: bold; color: #1a3a5c; white-space: nowrap; margin-left: 6px; }
+  .total-row { display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; padding: 4px 0 0 0; margin-top: 4px; border-top: 2px solid #1a3a5c; color: #1a3a5c; }
+  .badge { display: inline-block; font-size: 9px; padding: 1px 5px; border-radius: 3px; margin-right: 3px; font-weight: bold; }
+  .badge-labor { background: #d0e8d0; color: #2d6a2d; }
+  .badge-equip { background: #d0dff0; color: #2a5fa3; }
+  .badge-material { background: #f5ede4; color: #8b5e3c; }
+  .badge-trip { background: #f0f0d0; color: #7a7a00; }
+  .badge-other { background: #ede4f5; color: #6a3a8a; }
+  .badge-agreement { background: #fde8e8; color: #a32a2a; }
+
+  /* --- PATTERNS TABLE --- */
+  .section { background: #fff; border-radius: 5px; border: 1px solid #ccc; padding: 14px; margin-bottom: 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { background: #1a3a5c; color: #fff; padding: 6px 10px; text-align: left; font-size: 11px; }
+  td { padding: 5px 10px; border-bottom: 1px solid #eee; vertical-align: top; }
+  tr:nth-child(even) { background: #f7f9fc; }
+  .checkmark { color: #2d6a2d; font-weight: bold; }
+  .dash { color: #ccc; }
+  .scope-tag { display: inline-block; background: #e8eef5; color: #1a3a5c; border-radius: 3px; padding: 1px 6px; font-size: 10px; margin: 1px; }
+
+  /* --- KEY INSIGHTS --- */
+  .insights-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px; }
+  .insight-card { background: #fff; border-radius: 5px; padding: 12px; border-left: 4px solid #1a3a5c; }
+  .insight-card.green { border-left-color: #2d6a2d; }
+  .insight-card.orange { border-left-color: #cc6600; }
+  .insight-card.purple { border-left-color: #6a3a8a; }
+  .insight-title { font-weight: bold; font-size: 12px; margin-bottom: 6px; color: #1a3a5c; }
+  .insight-card.green .insight-title { color: #2d6a2d; }
+  .insight-card.orange .insight-title { color: #cc6600; }
+  .insight-card.purple .insight-title { color: #6a3a8a; }
+  .insight-body { font-size: 11px; line-height: 1.6; color: #444; }
+  .insight-body li { margin-left: 14px; margin-bottom: 2px; }
+
+  /* --- RATE QUICK-REF --- */
+  .rate-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .rate-card { background: #f7f9fc; border: 1px solid #d0dff0; border-radius: 4px; padding: 10px; }
+  .rate-card-title { font-weight: bold; font-size: 11px; color: #1a3a5c; margin-bottom: 6px; border-bottom: 1px solid #d0dff0; padding-bottom: 4px; }
+  .rate-row { display: flex; justify-content: space-between; font-size: 11px; padding: 2px 0; }
+  .rate-val { font-weight: bold; }
+
+  @media print {
+    @page { size: landscape; margin: 0.4in; }
+    body { background: #fff; font-size: 9pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    h1 { font-size: 12pt; padding: 8px; }
+    h2 { font-size: 10pt; }
+    .container { padding: 0; }
+    .proposals-grid { grid-template-columns: repeat(5, 1fr); gap: 6px; }
+    .insights-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .rate-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .section { padding: 10px; margin-bottom: 10px; }
+    td, th { padding: 3px 7px; font-size: 8.5pt; }
+    .prop-card-body { padding: 5px 7px; }
+    .scope-text, .line-item-row, .total-row, .insight-body, .rate-row { font-size: 8pt; }
+    .prop-card-header { font-size: 8pt; }
+    .intro { font-size: 8.5pt; }
+  }
+</style>
+</head>
+<body>
+<h1>DVM National — Proposal Line Item Reference Guide</h1>
+<div class="container">
+
+  <div class="intro">
+    <strong>Purpose:</strong> This guide summarizes 5 real proposals to help you understand which line items to include for a given scope of work, how costs scale with complexity, and what patterns repeat across jobs. Use it as a starting template when building future proposals.
+  </div>
+
+  <!-- PROPOSAL BREAKDOWN CARDS -->
+  <div class="section">
+    <h2>Proposals at a Glance</h2>
+    <div class="proposals-grid">
+
+      <!-- P1: DV105480441194 -->
+      <div class="prop-card">
+        <div class="prop-card-header">DV105480441194</div>
+        <div class="prop-card-sub">660 Merrill Rd, Pittsfield, MA &nbsp;|&nbsp; 04/17/2026</div>
+        <div class="prop-card-body">
+          <div class="scope-text"><strong>Scope:</strong> Tree trimming (avoid scraping cars) + Curb repair &amp; paint</div>
+          <div class="line-item-row"><span class="li-name"><span class="badge badge-labor">Labor</span>Crew (6 hrs)</span><span class="li-amount">$1,912.50</span></div>
+          <div class="line-item-row"><span class="li-name"><span class="badge badge-other">Other</span>Dumping Charge</span><span class="li-amount">$207.19</span></div>
+          <div class="line-item-row"><span class="li-name"><span class="badge badge-material">Mat</span>Misc Material</span><span class="li-amount">$233.75</span></div>
+          <div class="line-item-row"><span class="li-name"><span class="badge badge-trip">Trip</span>Svc Vehicle &amp; Equip</span><span class="li-amount">$297.50</span></div>
+          <div class="total-row"><span>Total (w/ tax)</span><span>$2,650.94</span></div>
+        </div>
+      </div>
+
+      <!-- P2: DV10548051253 -->
+      <div class="prop-card">
+        <div class="prop-card-header">DV10548051253</div>
+        <div class="prop-card-sub">1866 Westchester Ave, Bronx, NY &nbsp;|&nbsp; 01/20/2026</div>
+        <div class="prop-card-body">
+          <div class="scope-text"><strong>Scope:</strong> Install river rock (where arborvitaes removed) + Install 10 decorative grasses</div>
+          <div class="line-item-row"><span class="li-name"><span class="badge badge-labor">Labor</span>Landscape Foreman (8 hrs)</span><span class="li-amount">$1,001.65</span></div>
+          <div class="line-item-row"><span class="li-name"><span class="badge badge-labor">Labor</span>Landscape Laborer (16 hrs)</span><span class="li-amount">$1,567.80</span></div>
+          <div class="line-item-row"><span class="li-name"><span class="badge badge-material">Mat</span>River Stone 1"–3"</span><span class="li-amount">$898.22</span></div>
+          <div class="line-item-row"><span class="li-name"><span class="badge badge-material">Mat</span>Plant Material</span><span class="li-amount">$278.18</span></div>
+          <div class="line-item-row"><span class="li-name"><span class="badge badge-material">Mat</span>10 Decorative Grasses</span><span class="li-amount">$381.06</span></div>
+          <div class="total-row"><span>Total (w/ tax)</span><span>$4,126.91</span></div>
+        </div>
+      </div>
+
+      <!-- P3: DV105480271195 -->
+      <div class="prop-card">
+        <div class="prop-card-header">DV105480271195</div>
+        <div class="prop-card-sub">99 West St, Pittsfield, MA &nbsp;|&nbsp; 04/17/2026</div>
+        <div class="prop-card-body">
+          <div class="scope-text"><strong>Scope:</strong> High tree trimming over sidewalk/parking lot + Pothole repair</div>
+          <div class="line-item-row"><span class="li-name"><span class="badge badge-labor">Labor</span>Crew (10 hrs)</span><span class="li-amount">$3,187.50</span></div>
+          <div class="line-item-row"><span class="li-name"><span class="badge badge-material">Mat</span>Misc Material</span><span class="li-amount">$239.06</span></div>
+          <div class="line-item-row"><span class="li-name"><span class="badge badge-other">Other</span>Dumping Charge</span><span class="li-amount">$217.81</span></div>
+          <div class="line-item-row"><span class="li-name"><span class="badge badge-trip">Trip</span>Svc Vehicle &amp; Equip</span><span class="li-amount">$297.50</span></div>
+          <div class="total-row"><span>Total (w/ tax)</span><span>$3,941.87</span></div>
+        </div>
+      </div>
+
+      <!-- P4: DV10548051193 -->
+      <div class="prop-card">
+        <div class="prop-card-header">DV10548051193</div>
+        <div class="prop-card-sub">271 Main St, Great Barrington, MA &nbsp;|&nbsp; 04/17/2026</div>
+        <div class="prop-card-body">
+          <div class="scope-text"><strong>Scope:</strong> Tree trim + Curb repairs (multiple) + Trip hazard removal + Line striping + Concrete stabilization (9 items)</div>
+          <div class="line-item-row"><span class="li-name"><span class="badge badge-agreement">Agree</span>Agreement Regular</span><span class="li-amount">$21,675.00</span></div>
+          <div style="font-size:10px;color:#888;margin-top:4px;">Broken out in description:<br>
+            Tree trim – $1,320<br>
+            Curb repair + topsoil/seed – $2,400<br>
+            Curb reinstall – $1,800 (×2)<br>
+            Trip hazard (×2) – $2,520 + $2,400<br>
+            Line striping – $2,520<br>
+            Concrete stabilization – $3,000<br>
+            Curb near railing – $2,640
+          </div>
+          <div class="total-row"><span>Total (w/ tax)</span><span>$21,675.00</span></div>
+        </div>
+      </div>
+
+      <!-- P5: DV105480291192 -->
+      <div class="prop-card">
+        <div class="prop-card-header">DV105480291192</div>
+        <div class="prop-card-sub">969 Riverdale St, W. Springfield, MA &nbsp;|&nbsp; 04/17/2026</div>
+        <div class="prop-card-body">
+          <div class="scope-text"><strong>Scope:</strong> Tree trimming + Site-wide curb repairs (multiple locations)</div>
+          <div class="line-item-row"><span class="li-name"><span class="badge badge-labor">Labor</span>Crew (12 hrs)</span><span class="li-amount">$3,825.00</span></div>
+          <div class="line-item-row"><span class="li-name"><span class="badge badge-other">Other</span>Dumping Charge</span><span class="li-amount">$929.69</span></div>
+          <div class="line-item-row"><span class="li-name"><span class="badge badge-material">Mat</span>Misc Material</span><span class="li-amount">$637.50</span></div>
+          <div class="line-item-row"><span class="li-name"><span class="badge badge-equip">Equip</span>F550 Crew/Dump Truck (3 days)</span><span class="li-amount">$717.19</span></div>
+          <div class="line-item-row"><span class="li-name"><span class="badge badge-trip">Trip</span>Svc Vehicle &amp; Equip</span><span class="li-amount">$297.50</span></div>
+          <div class="total-row"><span>Total (w/ tax)</span><span>$6,406.88</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SCOPE → LINE ITEMS PATTERN TABLE -->
+  <div class="section">
+    <h2>Scope of Work → Line Item Pattern Matrix</h2>
+    <table>
+      <tr>
+        <th>Work Type</th>
+        <th>Labor (Crew)</th>
+        <th>Labor (Foreman / Laborer)</th>
+        <th>Dumping Charge</th>
+        <th>Misc Material</th>
+        <th>Specific Materials</th>
+        <th>Equipment Rental</th>
+        <th>Service Vehicle Charge</th>
+        <th>Bundled Agreement</th>
+        <th>Typical Hrs / Scale</th>
+      </tr>
+      <tr>
+        <td><span class="scope-tag">Tree Trim (light)</span> + minor repair / paint</td>
+        <td class="checkmark">✔ 6 hrs</td>
+        <td class="dash">–</td>
+        <td class="checkmark">✔ ~$207</td>
+        <td class="checkmark">✔ ~$234</td>
+        <td class="dash">–</td>
+        <td class="dash">–</td>
+        <td class="checkmark">✔ $297.50</td>
+        <td class="dash">–</td>
+        <td>Half-day crew</td>
+      </tr>
+      <tr>
+        <td><span class="scope-tag">Tree Trim (high / over traffic)</span> + pothole repair</td>
+        <td class="checkmark">✔ 10 hrs</td>
+        <td class="dash">–</td>
+        <td class="checkmark">✔ ~$218</td>
+        <td class="checkmark">✔ ~$239</td>
+        <td class="dash">–</td>
+        <td class="dash">–</td>
+        <td class="checkmark">✔ $297.50</td>
+        <td class="dash">–</td>
+        <td>Full day+ crew</td>
+      </tr>
+      <tr>
+        <td><span class="scope-tag">Tree Trim</span> + <span class="scope-tag">Site-Wide Curb Repairs</span></td>
+        <td class="checkmark">✔ 12 hrs</td>
+        <td class="dash">–</td>
+        <td class="checkmark">✔ ~$930</td>
+        <td class="checkmark">✔ ~$638</td>
+        <td class="dash">–</td>
+        <td class="checkmark">✔ F550 3 days ~$717</td>
+        <td class="checkmark">✔ $297.50</td>
+        <td class="dash">–</td>
+        <td>1.5 days, dump truck needed</td>
+      </tr>
+      <tr>
+        <td><span class="scope-tag">Landscape Install</span> (hardscape + plants)</td>
+        <td class="dash">–</td>
+        <td class="checkmark">✔ Foreman 8 hrs + Laborer 16 hrs</td>
+        <td class="dash">–</td>
+        <td class="dash">–</td>
+        <td class="checkmark">✔ Named: River Stone, Plant Material, Grasses</td>
+        <td class="dash">–</td>
+        <td class="checkmark">✔ $297.50 (implied)</td>
+        <td class="dash">–</td>
+        <td>Split Foreman / Laborer hours</td>
+      </tr>
+      <tr>
+        <td><span class="scope-tag">Major Multi-Scope</span> (9+ items, concrete, striping)</td>
+        <td class="dash">–</td>
+        <td class="dash">–</td>
+        <td class="dash">–</td>
+        <td class="dash">–</td>
+        <td class="dash">–</td>
+        <td class="dash">–</td>
+        <td class="dash">–</td>
+        <td class="checkmark">✔ Single "Agreement Regular" line</td>
+        <td>Description itemizes each sub-cost</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- KEY INSIGHTS -->
+  <div class="section">
+    <h2>Key Trends &amp; Insights</h2>
+    <div class="insights-grid">
+
+      <div class="insight-card">
+        <div class="insight-title">Service Vehicle Charge is Always Included</div>
+        <div class="insight-body">$297.50 appears in every proposal with itemized line items. It's the baseline mobilization cost — treat it as a non-negotiable starting point on every job, regardless of size.</div>
+      </div>
+
+      <div class="insight-card green">
+        <div class="insight-title">Labor: "Crew" vs. "Foreman/Laborer"</div>
+        <div class="insight-body">
+          <ul>
+            <li><strong>Crew</strong> ($318.75/crew-hr): Used for repair/maintenance work — tree trimming, curb work, pothole repair. Doesn't break out the individual workers.</li>
+            <li><strong>Foreman + Laborer separately:</strong> Used for landscape installs where skill differentiation matters (directing planting vs. digging/hauling). Foreman ~$125/hr, Laborer ~$98/hr.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="insight-card orange">
+        <div class="insight-title">Dumping Charge Scales with Debris Volume</div>
+        <div class="insight-body">
+          <ul>
+            <li>Light tree trim: ~$207–$218</li>
+            <li>Site-wide curb repairs + tree trim: ~$930</li>
+            <li>Planting/install jobs: No dumping charge (no significant debris)</li>
+          </ul>
+          Always include if tree work or concrete demolition is involved.
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-title">Misc Material vs. Named Material</div>
+        <div class="insight-body">
+          <ul>
+            <li><strong>"Misc":</strong> Used when materials are incidental — patch concrete, curb paint, pothole mix. Scales $234→$638 with repair scope.</li>
+            <li><strong>Named materials</strong> (River Stone, Plant Material, etc.): Used when a specific product is being installed and the client needs to see what they're paying for.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="insight-card green">
+        <div class="insight-title">Equipment Rental Triggers</div>
+        <div class="insight-body">The F550 Crew/Dump Truck was added only when curb repairs spanned the entire site (multiple locations) and concrete debris was heavy. For light tree trims, the standard service vehicle handles hauling. Add equipment rental when: volume of debris is high, concrete work requires a dump truck, or the job spans multiple days.</div>
+      </div>
+
+      <div class="insight-card purple">
+        <div class="insight-title">When to Bundle vs. Itemize</div>
+        <div class="insight-body">
+          <ul>
+            <li><strong>Itemize</strong> when scope is 1–3 tasks — gives client transparency.</li>
+            <li><strong>Bundle as "Agreement Regular"</strong> when scope is 5+ distinct tasks (9 in DV10548051193). The description still breaks out each sub-price so the client sees the math, but the line item is a single number.</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RATE QUICK REFERENCE -->
+  <div class="section">
+    <h2>Rate Quick Reference (from observed proposals)</h2>
+    <div class="rate-grid">
+
+      <div class="rate-card">
+        <div class="rate-card-title">Labor — Crew Rate</div>
+        <div class="rate-row"><span>Per crew-hour</span><span class="rate-val">$318.75</span></div>
+        <div class="rate-row"><span>6-hr day (light)</span><span class="rate-val">$1,912.50</span></div>
+        <div class="rate-row"><span>10-hr day (full)</span><span class="rate-val">$3,187.50</span></div>
+        <div class="rate-row"><span>12-hr day (heavy)</span><span class="rate-val">$3,825.00</span></div>
+      </div>
+
+      <div class="rate-card">
+        <div class="rate-card-title">Labor — Named Roles (Bronx/NYC)</div>
+        <div class="rate-row"><span>Landscape Foreman/hr</span><span class="rate-val">~$125</span></div>
+        <div class="rate-row"><span>Landscape Laborer/hr</span><span class="rate-val">~$98</span></div>
+        <div class="rate-row"><span>Foreman 8 hrs</span><span class="rate-val">$1,001.65</span></div>
+        <div class="rate-row"><span>Laborer 16 hrs</span><span class="rate-val">$1,567.80</span></div>
+      </div>
+
+      <div class="rate-card">
+        <div class="rate-card-title">Fixed / Standard Charges</div>
+        <div class="rate-row"><span>Service Vehicle Charge</span><span class="rate-val">$297.50</span></div>
+        <div class="rate-row"><span>Dumping (light debris)</span><span class="rate-val">~$207–$218</span></div>
+        <div class="rate-row"><span>Dumping (heavy debris)</span><span class="rate-val">~$930</span></div>
+        <div class="rate-row"><span>F550 Dump Truck/day</span><span class="rate-val">~$239</span></div>
+      </div>
+
+      <div class="rate-card">
+        <div class="rate-card-title">Typical Scope Sub-Costs (from DV10548051193)</div>
+        <div class="rate-row"><span>Tree trim (away from bldg)</span><span class="rate-val">$1,320</span></div>
+        <div class="rate-row"><span>Curb repair + topsoil/seed</span><span class="rate-val">$2,400</span></div>
+        <div class="rate-row"><span>Curb reinstall</span><span class="rate-val">$1,800</span></div>
+        <div class="rate-row"><span>Trip hazard – remove &amp; replace slab</span><span class="rate-val">$2,400–$2,520</span></div>
+        <div class="rate-row"><span>Line striping</span><span class="rate-val">$2,520</span></div>
+        <div class="rate-row"><span>Concrete stabilization (railing)</span><span class="rate-val">$3,000</span></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PROPOSAL TEMPLATE LOGIC -->
+  <div class="section">
+    <h2>Proposal Building Checklist</h2>
+    <table>
+      <tr>
+        <th>Question to Ask</th>
+        <th>If YES → Add This Line Item</th>
+        <th>Notes</th>
+      </tr>
+      <tr>
+        <td>Is any crew going to the site at all?</td>
+        <td><strong>Service Vehicle &amp; Equipment Charge</strong> — $297.50</td>
+        <td>Always first. No exceptions.</td>
+      </tr>
+      <tr>
+        <td>Is this primarily repair/maintenance work (trim, patch, curb)?</td>
+        <td><strong>Labor — Crew</strong> @ $318.75/hr</td>
+        <td>Use crew-hours; estimate conservatively and round up.</td>
+      </tr>
+      <tr>
+        <td>Is this a landscape install (planting, hardscape, grading)?</td>
+        <td><strong>Labor — Landscape Foreman</strong> + <strong>Landscape Laborer</strong> separately</td>
+        <td>Break out by role so client sees skill differentiation.</td>
+      </tr>
+      <tr>
+        <td>Will there be tree cutting or concrete demolition?</td>
+        <td><strong>Dumping Charge</strong></td>
+        <td>Scale up if site-wide; ~$200–$250 for single-tree, $900+ for multi-location concrete.</td>
+      </tr>
+      <tr>
+        <td>Are incidental repair materials needed (patch, paint, fill)?</td>
+        <td><strong>Misc Material</strong></td>
+        <td>Use "Misc" for catch-all repair supplies; name specific materials for installs.</td>
+      </tr>
+      <tr>
+        <td>Are specific products being installed (stone, plants, grasses)?</td>
+        <td><strong>Named Material line(s)</strong> (e.g., River Stone 1"–3", Plant Material)</td>
+        <td>Separate line per distinct product. Gives client transparency.</td>
+      </tr>
+      <tr>
+        <td>Is the job site-wide, multi-day, or heavy on concrete debris?</td>
+        <td><strong>Equipment Rental — F550 Crew/Dump Truck</strong></td>
+        <td>Add when standard service vehicle can't handle debris/material volume.</td>
+      </tr>
+      <tr>
+        <td>Are there 5 or more distinct scopes on one proposal?</td>
+        <td>Consider <strong>Agreement Regular</strong> (single bundled line)</td>
+        <td>Still itemize each cost in the Description field so client can see the math.</td>
+      </tr>
+    </table>
+  </div>
+
+</div>
+</body>
+</html>
