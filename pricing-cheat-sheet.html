@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Landscaping Pricing Cheat Sheet</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 13px; background: #f4f4f4; color: #222; }
+  h1 { background: #2d6a2d; color: #fff; text-align: center; padding: 14px; font-size: 20px; letter-spacing: 1px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding: 14px; }
+  .card { background: #fff; border-radius: 6px; border: 1px solid #ccc; overflow: hidden; }
+  .card-header { background: #4a8a4a; color: #fff; padding: 7px 12px; font-weight: bold; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .card-header.blue  { background: #2a5fa3; }
+  .card-header.brown { background: #8b5e3c; }
+  .card-header.teal  { background: #2a7a7a; }
+  .card-header.purple{ background: #6a3a8a; }
+  .card-header.gray  { background: #555; }
+  table { width: 100%; border-collapse: collapse; }
+  tr:nth-child(even) { background: #f0f7f0; }
+  td { padding: 4px 10px; border-bottom: 1px solid #e8e8e8; vertical-align: top; }
+  td:last-child { text-align: right; font-weight: bold; white-space: nowrap; }
+  .section-label { background: #ddeedd; font-weight: bold; font-size: 11px; text-transform: uppercase; color: #2d6a2d; padding: 3px 10px; }
+  .section-label.blue { background: #dde8f7; color: #2a5fa3; }
+  .section-label.brown { background: #f5ede4; color: #8b5e3c; }
+  .section-label.teal { background: #ddf0f0; color: #2a7a7a; }
+  .note { font-size: 11px; color: #666; padding: 6px 10px; border-top: 1px dashed #ccc; background: #fafafa; }
+  .wide { grid-column: span 2; }
+  .full { grid-column: span 3; }
+</style>
+</head>
+<body>
+<h1>Landscaping Pricing Cheat Sheet</h1>
+<div class="grid">
+
+  <!-- LABOR RATES -->
+  <div class="card">
+    <div class="card-header">Labor Rates</div>
+    <table>
+      <tr class="section-label"><td colspan="4">Standard / OT / Premium (per hour)</td></tr>
+      <tr><td>Landscape Laborer</td><td>$75</td><td>$112.50</td><td>$150</td></tr>
+      <tr><td>Landscape Foreman</td><td>$95</td><td>$142.50</td><td>$190</td></tr>
+      <tr><td>Irrigation Tech</td><td>$115</td><td>$172.50</td><td>$230</td></tr>
+      <tr><td>Irrigation Foreman</td><td>$135</td><td>$202.50</td><td>$270</td></tr>
+      <tr><td>Operator</td><td>$135</td><td>$202.50</td><td>$270</td></tr>
+      <tr><td>Driver</td><td>$95</td><td>$142.50</td><td>$190</td></tr>
+      <tr><td>Tree Climber</td><td>$125</td><td>$187.50</td><td>$250</td></tr>
+      <tr class="section-label"><td colspan="4" class="blue">Internal Reference Rates</td></tr>
+      <tr><td>Tree Tech</td><td colspan="3">$115 / $85</td></tr>
+      <tr><td>Foreman</td><td colspan="3">$100/hr</td></tr>
+      <tr><td>Laborer</td><td colspan="3">$80/hr</td></tr>
+    </table>
+    <div class="note">OT = Outside standard time &amp; Saturday | Premium = Sundays &amp; Holidays</div>
+  </div>
+
+  <!-- EQUIPMENT RATES -->
+  <div class="card">
+    <div class="card-header blue">Equipment Rates</div>
+    <table>
+      <tr class="section-label blue"><td colspan="3">Hourly / Daily</td></tr>
+      <tr><td>Crew Truck</td><td>$95/hr</td><td>$760/day</td></tr>
+      <tr><td>Dump Truck F550</td><td>$110/hr</td><td>$880/day</td></tr>
+      <tr><td>Dump Truck F750</td><td>$125/hr</td><td>$1,000/day</td></tr>
+      <tr><td>Dump Truck 10-Wheeler</td><td>$175/hr</td><td>$1,400/day</td></tr>
+      <tr><td>Dump Trailer</td><td>$200/hr</td><td>$1,600/day</td></tr>
+      <tr><td>Skid Steer</td><td>$200/hr</td><td>$1,600/day</td></tr>
+      <tr><td>Mini Excavator</td><td>$250/hr</td><td>$2,000/day</td></tr>
+      <tr><td>Excavator</td><td>$300/hr</td><td>$2,400/day</td></tr>
+      <tr><td>Bucket Truck</td><td>$250/hr</td><td>$2,000/day</td></tr>
+      <tr><td>Chipper &amp; Truck</td><td>$300/hr</td><td>$2,400/day</td></tr>
+      <tr><td>Stump Grinder</td><td>$175/hr</td><td>$1,400/day</td></tr>
+      <tr><td>Skid Steer w/ Operator</td><td colspan="2">$350/hr (internal ref)</td></tr>
+      <tr class="section-label blue"><td colspan="3">Flat / Other</td></tr>
+      <tr><td>Service Vehicle / Equipment Charge</td><td colspan="2">$275 (flat)</td></tr>
+      <tr><td>Dumping Charge</td><td colspan="2">$275</td></tr>
+    </table>
+    <div class="note">All equipment rates = N/A for project incremental</div>
+  </div>
+
+  <!-- PLANTS & MATERIALS -->
+  <div class="card">
+    <div class="card-header brown">Plants &amp; Materials</div>
+    <table>
+      <tr class="section-label brown"><td colspan="2">Shrubs &amp; Ornamentals</td></tr>
+      <tr><td>Gold Mop #2</td><td>$37</td></tr>
+      <tr><td>Gold Mop #3</td><td>$43</td></tr>
+      <tr><td>Gold Mop #5</td><td>$86</td></tr>
+      <tr><td>Inkberries #3</td><td>$42</td></tr>
+      <tr><td>Inkberries #5</td><td>$88</td></tr>
+      <tr><td>Boxwood #3 (common)</td><td>$54</td></tr>
+      <tr><td>Boxwood #5 (common)</td><td>$86</td></tr>
+      <tr><td>Blue Pac Juniper #2</td><td>$30</td></tr>
+      <tr><td>Blue Pac Juniper #3</td><td>$35</td></tr>
+      <tr><td>Compact Japanese Holly 3 gal</td><td>$40</td></tr>
+      <tr><td>ILEX crenata Spreading #3</td><td>$40</td></tr>
+      <tr><td>Burning Bush 2 gal</td><td>$45</td></tr>
+      <tr><td>Yews (Taxus) Spreading English 24-30"</td><td>$85</td></tr>
+      <tr class="section-label brown"><td colspan="2">Trees</td></tr>
+      <tr><td>Arborvitae Emerald Green 4-5ft</td><td>$124</td></tr>
+      <tr><td>Arborvitae Emerald Green 5-6ft</td><td>$150</td></tr>
+      <tr><td>Arborvitae Western 5-6ft</td><td>$217.50</td></tr>
+      <tr><td>Arborvitae Western 6-7ft</td><td>$255</td></tr>
+      <tr><td>Purple Leaf Flowering Plum 2-2.5" (8-10ft)</td><td>$390</td></tr>
+      <tr><td>Bloodgood Japanese Maple 4-5ft</td><td>$427.50</td></tr>
+      <tr class="section-label brown"><td colspan="2">Perennials &amp; Ground Cover</td></tr>
+      <tr><td>Catmint (Nepeta) – Walkers Low</td><td>$20</td></tr>
+      <tr><td>Catnip 1 gal</td><td>$45</td></tr>
+      <tr><td>Hostas 2 gal</td><td>$25</td></tr>
+      <tr><td>Hydrangea paniculata "Limelight" 5 gal</td><td>$81</td></tr>
+      <tr><td>Day Lily</td><td>$25</td></tr>
+      <tr><td>Tulips</td><td>$35</td></tr>
+      <tr><td>Liriope #1</td><td>$12</td></tr>
+      <tr><td>Purple Fountain Grass / Coral Bells</td><td>—</td></tr>
+      <tr class="section-label brown"><td colspan="2">Soil / Seed / Fertilizer</td></tr>
+      <tr><td>Top Soil (per yd)</td><td>$33</td></tr>
+      <tr><td>Peat Moss 3.8 cu ft bag</td><td>$41</td></tr>
+      <tr><td>Seed 50 lb bag</td><td>$263</td></tr>
+      <tr><td>Starter Fertilizer bag</td><td>TBD</td></tr>
+    </table>
+  </div>
+
+  <!-- IRRIGATION - SPRINKLERS & VALVES -->
+  <div class="card wide">
+    <div class="card-header teal">Irrigation – Flat Rate Repairs &amp; Service</div>
+    <table>
+      <tr class="section-label teal"><td colspan="2">Labor</td><td colspan="2">Sprinkler Installs</td></tr>
+      <tr>
+        <td>First Technician</td><td>$115</td>
+        <td>4" Spray w/ Nozzle</td><td>$45</td>
+      </tr>
+      <tr>
+        <td>2nd Technician</td><td>$56.25</td>
+        <td>5" Rotor</td><td>$55</td>
+      </tr>
+      <tr>
+        <td>Irrigation Foreman</td><td>$135</td>
+        <td>6" Spray w/ Nozzle</td><td>$56.25</td>
+      </tr>
+      <tr>
+        <td>Wire Locating</td><td>$75</td>
+        <td>12" Spray w/ Nozzle</td><td>$67.50</td>
+      </tr>
+      <tr>
+        <td>Rain Sensor Installed</td><td>$131.25</td>
+        <td>12" Rotor</td><td>$75</td>
+      </tr>
+      <tr>
+        <td colspan="2"></td>
+        <td>Rotary Nozzle</td><td>$15</td>
+      </tr>
+      <tr>
+        <td colspan="2"></td>
+        <td>Spray Nozzle</td><td>$11.25</td>
+      </tr>
+
+      <tr class="section-label teal"><td colspan="2">Valves</td><td colspan="2">Valve Boxes</td></tr>
+      <tr><td>1" Valve Flushed</td><td>$56.25</td><td>10" Round Valve Box Replaced</td><td>$75</td></tr>
+      <tr><td>1" Valve Repaired</td><td>$75</td><td>Rectangle Valve Box Replaced</td><td>$75</td></tr>
+      <tr><td>1" Valve Replaced</td><td>$112.50</td><td>Re-Wire Valve Manifold</td><td>$37.50</td></tr>
+      <tr><td>1.5" Valve Flushed</td><td>$93.75</td><td>Solenoid Replaced</td><td>$37.50</td></tr>
+      <tr><td>1.5" Valve Repaired</td><td>$187.50</td><td>Wire Installed (per foot)</td><td>$3.75</td></tr>
+      <tr><td>1.5" Valve Replaced</td><td>$225</td><td>Wire Nut Installed</td><td>$3.75</td></tr>
+      <tr><td>2" Valve Flushed</td><td>$150</td><td>18" Risers</td><td>$15</td></tr>
+      <tr><td>2" Valve Repaired</td><td>$450</td><td></td><td></td></tr>
+      <tr><td>2" Valve Replaced</td><td>$600</td><td></td><td></td></tr>
+
+      <tr class="section-label teal"><td colspan="4">Line Leaks</td></tr>
+      <tr><td>Drip Line Leak</td><td>$15</td><td>1" Lateral Line Leak</td><td>$75</td></tr>
+      <tr><td>1" Mainline Leak</td><td>$93.75</td><td>1.25" Lateral Line Leak</td><td>$93.75</td></tr>
+      <tr><td>1.25" Mainline Leak</td><td>$112.50</td><td>1.5" Lateral Line Leak</td><td>$150</td></tr>
+      <tr><td>1.5" Mainline Leak</td><td>$187.50</td><td>2" Lateral Line Leak</td><td>$225</td></tr>
+      <tr><td>2" Mainline Leak</td><td>$375</td><td></td><td></td></tr>
+      <tr class="section-label teal"><td colspan="4">Additional Pipe (per foot)</td></tr>
+      <tr><td>1" Pipe</td><td>$3.75/ft</td><td>1.25" Pipe</td><td>$3.75/ft</td></tr>
+      <tr><td>1.5" Pipe</td><td>$18.75/ft</td><td>2" Pipe</td><td>$18.75/ft</td></tr>
+
+      <tr class="section-label teal"><td colspan="4">Move / Add Head (up to distance)</td></tr>
+      <tr><td>4" Spray – up to 10 ft</td><td>$82.50</td><td>4" Spray – up to 30 ft</td><td>$120</td></tr>
+      <tr><td>5" Rotor – up to 10 ft</td><td>$82.50</td><td>5" Rotor – up to 30 ft</td><td>$120</td></tr>
+      <tr><td>6" Spray – up to 10 ft</td><td>$82.50</td><td>6" Spray – up to 30 ft</td><td>$120</td></tr>
+      <tr><td>12" Rotor – up to 10 ft</td><td>$112.50</td><td>12" Rotor – up to 30 ft</td><td>$150</td></tr>
+      <tr><td>12" Spray – up to 10 ft</td><td>$112.50</td><td>12" Spray – up to 30 ft</td><td>$150</td></tr>
+    </table>
+  </div>
+
+  <!-- IRRIGATION INSTALLATION -->
+  <div class="card">
+    <div class="card-header teal">Irrigation – Installation</div>
+    <table>
+      <tr><td>Spray Zone</td><td>$600</td></tr>
+      <tr><td>Rotor Zone</td><td>$600</td></tr>
+      <tr><td>Drip Zone</td><td>$900</td></tr>
+      <tr><td>Ornamental Flower Container Zone (4 pots)</td><td>$1,125</td></tr>
+      <tr><td>Additional Flower Pots (each)</td><td>$225</td></tr>
+      <tr><td>Boring Under Sidewalk</td><td>$150</td></tr>
+      <tr><td>Boring Under Driveway</td><td>$750</td></tr>
+      <tr><td>Plumber Cost</td><td>$750</td></tr>
+    </table>
+  </div>
+
+  <!-- PAVING MARKINGS -->
+  <div class="card">
+    <div class="card-header purple">Paving Markings</div>
+    <table>
+      <tr class="section-label purple"><td colspan="2">DVM Rate / Street Rate</td></tr>
+      <tr><td>Parking Spot</td><td>$30 / $20–$30</td></tr>
+      <tr><td>ADA / Handicap Spot (blue)</td><td>$75</td></tr>
+      <tr><td>Arrows</td><td>$75 / $50–$75</td></tr>
+      <tr><td>STOP</td><td>$100</td></tr>
+      <tr><td>THRU / DRIVE / ATM</td><td>$125</td></tr>
+      <tr><td>No Parking (yellow)</td><td>$100–$150</td></tr>
+      <tr><td>One Way</td><td>$100–$125</td></tr>
+      <tr><td>Fire Lane</td><td>$100–$150</td></tr>
+      <tr class="section-label purple"><td colspan="2">Other Paving</td></tr>
+      <tr><td>Crack Fill</td><td>$1.40–$1.80/ft</td></tr>
+    </table>
+    <div class="note">DVM rates target 50–60% margin over sub cost. Negotiate sub pricing to hit margin.</div>
+  </div>
+
+</div>
+</body>
+</html>
