@@ -236,8 +236,12 @@ for ri, (client, *_) in enumerate(contracts, 1):
     ws_tl.cell(tl_row, TC_CLIENT).alignment = Alignment(horizontal="left", vertical="center", indent=1)
     ws_tl.cell(tl_row, TC_TRADE).alignment  = Alignment(horizontal="left", vertical="center", indent=1)
 
-    # Gantt cells — formula returns 1 if this month overlaps the contract, else ""
-    # References Contract Data start (col E) and end (col F) for this row
+    # Gantt cells — formula drives value (1 or ""); fill is set directly in
+    # Python so bars render immediately, and conditional formatting keeps them
+    # updated when Contract Data dates are edited.
+    contract_start = contracts[ri - 1][2]
+    contract_end   = contracts[ri - 1][3]
+
     start_ref = f"'Contract Data'!${get_column_letter(DC['start'])}{data_row}"
     end_ref   = f"'Contract Data'!${get_column_letter(DC['end'])}{data_row}"
 
@@ -245,21 +249,26 @@ for ri, (client, *_) in enumerate(contracts, 1):
     gantt_col_end   = TC_GANTT_0 + len(months) - 1
 
     for i, (yr, mo) in enumerate(months):
-        col          = TC_GANTT_0 + i
-        month_start  = f"DATE({yr},{mo},1)"
-        month_end    = f"EOMONTH(DATE({yr},{mo},1),0)"
-        formula      = f"=IF(AND({start_ref}<={month_end},{end_ref}>={month_start}),1,\"\")"
+        col         = TC_GANTT_0 + i
+        mo_start    = date(yr, mo, 1)
+        mo_end      = date(yr, mo, calendar.monthrange(yr, mo)[1])
+        overlaps    = contract_start <= mo_end and contract_end >= mo_start
+
+        excel_month_start = f"DATE({yr},{mo},1)"
+        excel_month_end   = f"EOMONTH(DATE({yr},{mo},1),0)"
+        formula = (f"=IF(AND({start_ref}<={excel_month_end},"
+                   f"{end_ref}>={excel_month_start}),1,\"\")")
 
         c = ws_tl.cell(tl_row, col, formula)
-        c.fill          = row_fill
-        c.number_format = ";;;"   # hides the 1 so only the fill colour shows
+        c.fill          = fill(gantt_hex) if overlaps else row_fill
+        c.number_format = ";;;"
         c.border        = border()
         if (yr, mo) == (today.year, today.month):
             c.border = Border(top=thin, bottom=thin,
                               left=Side(style="medium", color=C_TODAY),
                               right=Side(style="medium", color=C_TODAY))
 
-    # Conditional formatting: if cell = 1 → colour it with this client's colour
+    # Conditional formatting keeps bars in sync after edits to Contract Data
     gantt_range = (f"{get_column_letter(gantt_col_start)}{tl_row}:"
                    f"{get_column_letter(gantt_col_end)}{tl_row}")
     ws_tl.conditional_formatting.add(
@@ -267,7 +276,13 @@ for ri, (client, *_) in enumerate(contracts, 1):
         FormulaRule(
             formula=[f"{get_column_letter(gantt_col_start)}{tl_row}=1"],
             fill=fill(gantt_hex),
-            font=Font(color=gantt_hex),  # hide the "1"
+        )
+    )
+    ws_tl.conditional_formatting.add(
+        gantt_range,
+        FormulaRule(
+            formula=[f'{get_column_letter(gantt_col_start)}{tl_row}=""'],
+            fill=row_fill,
         )
     )
 
