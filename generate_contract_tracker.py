@@ -6,6 +6,8 @@ from datetime import date
 import calendar
 
 wb = Workbook()
+wb.calculation.calcMode = "auto"
+wb.calculation.fullCalcOnLoad = True
 
 # ── Palette ───────────────────────────────────────────────────────────────────
 C_NAVY      = "1F3864"
