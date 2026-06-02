@@ -251,8 +251,9 @@ for ri, (client, *_) in enumerate(contracts, 1):
         formula      = f"=IF(AND({start_ref}<={month_end},{end_ref}>={month_start}),1,\"\")"
 
         c = ws_tl.cell(tl_row, col, formula)
-        c.fill   = row_fill
-        c.border = border()
+        c.fill          = row_fill
+        c.number_format = ";;;"   # hides the 1 so only the fill colour shows
+        c.border        = border()
         if (yr, mo) == (today.year, today.month):
             c.border = Border(top=thin, bottom=thin,
                               left=Side(style="medium", color=C_TODAY),
