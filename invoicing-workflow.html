@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>C&W Services / Amazon — Invoicing Workflow</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f0f4f8;
+      padding: 40px 20px;
+      color: #1a202c;
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #2d3748;
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #718096;
+      margin-bottom: 40px;
+    }
+    .flow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+    .step {
+      width: 100%;
+      border-radius: 10px;
+      padding: 16px 22px;
+      position: relative;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    .step-inner {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .num {
+      flex-shrink: 0;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      margin-top: 1px;
+    }
+    .text { flex: 1; }
+    .text strong {
+      display: block;
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+    .text span {
+      font-size: 0.82rem;
+      line-height: 1.5;
+      opacity: 0.8;
+    }
+    .arrow {
+      width: 2px;
+      height: 28px;
+      background: #cbd5e0;
+      margin: 0 auto;
+      position: relative;
+    }
+    .arrow::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 8px solid #a0aec0;
+    }
+
+    /* Color themes per step */
+    .s1 { background: #ebf8ff; border-left: 4px solid #3182ce; }
+    .s1 .num { background: #3182ce; color: white; }
+
+    .s2 { background: #e6fffa; border-left: 4px solid #2c7a7b; }
+    .s2 .num { background: #2c7a7b; color: white; }
+
+    .s3 { background: #e6fffa; border-left: 4px solid #2c7a7b; }
+    .s3 .num { background: #2c7a7b; color: white; }
+
+    .s4 { background: #fff5f5; border-left: 4px solid #c53030; }
+    .s4 .num { background: #c53030; color: white; }
+
+    .s5 { background: #fffff0; border-left: 4px solid #b7791f; }
+    .s5 .num { background: #b7791f; color: white; }
+
+    .s6 { background: #faf5ff; border-left: 4px solid #6b46c1; }
+    .s6 .num { background: #6b46c1; color: white; }
+
+    .s7 { background: #fff5f5; border-left: 4px solid #e53e3e; }
+    .s7 .num { background: #e53e3e; color: white; }
+
+    .s8 { background: #f0fff4; border-left: 4px solid #276749; }
+    .s8 .num { background: #276749; color: white; }
+
+    .tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 20px;
+      margin-top: 6px;
+      letter-spacing: 0.03em;
+    }
+    .tag-warn { background: #fed7d7; color: #c53030; }
+    .tag-note { background: #bee3f8; color: #2b6cb0; }
+    .tag-both { background: #e9d8fd; color: #553c9a; }
+
+    .send-grid {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .send-box {
+      flex: 1;
+      background: white;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-align: center;
+      border: 1.5px solid #d6bcfa;
+      color: #553c9a;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Invoicing Workflow</h1>
+<p class="subtitle">Client: C&W Services &mdash; Amazon &nbsp;|&nbsp; Vendor: DVM Fire</p>
+
+<div class="flow">
+
+  <div class="step s1">
+    <div class="step-inner">
+      <div class="num">1</div>
+      <div class="text">
+        <strong>Receive Invoice from Accounts Receivable</strong>
+        <span>AR sends the original invoice with a reference number.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow"></div>
+
+  <div class="step s2">
+    <div class="step-inner">
+      <div class="num">2</div>
+      <div class="text">
+        <strong>Create Receivable Invoice on UtilizeCore</strong>
+        <span>Open the relevant work order and create the receivable invoice on UC.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow"></div>
+
+  <div class="step s3">
+    <div class="step-inner">
+      <div class="num">3</div>
+      <div class="text">
+        <strong>Fill Custom Invoice # with Reference #</strong>
+        <span>Enter the reference # from the AR invoice into the Custom Invoice # field on UC.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow"></div>
+
+  <div class="step s4">
+    <div class="step-inner">
+      <div class="num">4</div>
+      <div class="text">
+        <strong>Break Out Line Items to Amazon Rate Card</strong>
+        <span>Match each line item to the corresponding rate from the Amazon contract rate card.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow"></div>
+
+  <div class="step s5">
+    <div class="step-inner">
+      <div class="num">5</div>
+      <div class="text">
+        <strong>Attach PDF of Original AR Invoice</strong>
+        <span>Upload the original invoice PDF as an internal attachment on the work order.</span>
+        <br><span class="tag tag-warn">⚠ Do NOT make available to client</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow"></div>
+
+  <div class="step s6">
+    <div class="step-inner">
+      <div class="num">6</div>
+      <div class="text">
+        <strong>Send Invoice to C&W</strong>
+        <div class="send-grid">
+          <div class="send-box">Corrigo</div>
+          <div class="send-box">UtilizeCore</div>
+        </div>
+        <br><span class="tag tag-both">Send through both platforms</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow"></div>
+
+  <div class="step s7">
+    <div class="step-inner">
+      <div class="num">7</div>
+      <div class="text">
+        <strong>Create Payable to DVM Fire</strong>
+        <span>Create a payable matching the same amount as the receivable. Fill the Custom Invoice # with the same reference # from step 3.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow"></div>
+
+  <div class="step s8">
+    <div class="step-inner">
+      <div class="num">8</div>
+      <div class="text">
+        <strong>Change Work Order Status to "Invoiced"</strong>
+        <span>Update the work order status on UtilizeCore to mark the process complete.</span>
+        <br><span class="tag tag-note">✓ Process complete</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
