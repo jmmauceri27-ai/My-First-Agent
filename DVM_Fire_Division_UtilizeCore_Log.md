@@ -8,8 +8,39 @@
 
 1. **[2026-07-02]** "I need to create a project on adding DVM Fire Division to UtilizeCore. Please keep a log of everything I type as we go along"
 
+2. **[2026-07-02]** *(Stop hook feedback — commit/push untracked files)*
+
+3. **[2026-07-02]**
+   - Task: Make a companywide filter template for FLS to only see their work orders
+   - Note: Techs are Sebastian Arrango and William Gonzalez
+   - Note: Michael Brown, James Harrison, Randy Zornberg, and Anthony Pasquarella
+   - Task: Get clients from Silpa
+   - Task: Get sites from Anthony
+   - Task: Create scheduled services for all their quarterly services
+   - Task: Add DVM Fire's rates
+
 ---
 
-## Project Notes
+## Project Tasks
 
-*(Notes and decisions will be added here as the project progresses)*
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 1 | Make companywide filter template for FLS (work orders only) | Pending | |
+| 2 | Get clients from Silpa | Pending | |
+| 3 | Get sites from Anthony | Pending | |
+| 4 | Create scheduled services for all quarterly services | Pending | |
+| 5 | Add DVM Fire's rates | Pending | |
+
+---
+
+## Key People
+
+| Role | Name |
+|------|------|
+| Tech | Sebastian Arrango |
+| Tech | William Gonzalez |
+| Staff/Admin | Michael Brown |
+| Staff/Admin | James Harrison |
+| Staff/Admin | Randy Zornberg |
+| Staff/Admin | Anthony Pasquarella |
+| Client Contact | Silpa *(last name TBD)* |
