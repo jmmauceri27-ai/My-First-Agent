@@ -14,6 +14,8 @@
    - Task: Make a companywide filter template for FLS to only see their work orders
    - Note: Techs are Sebastian Arrango and William Gonzalez
    - Note: Michael Brown, James Harrison, Randy Zornberg, and Anthony Pasquarella
+4. **[2026-07-02]** "Fire Life Safety" *(FLS = Fire Life Safety)*
+
    - Task: Get clients from Silpa
    - Task: Get sites from Anthony
    - Task: Create scheduled services for all their quarterly services
@@ -25,7 +27,7 @@
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 1 | Make companywide filter template for FLS (work orders only) | Pending | |
+| 1 | Make companywide filter template for Fire Life Safety / FLS (work orders only) | Pending | |
 | 2 | Get clients from Silpa | Pending | |
 | 3 | Get sites from Anthony | Pending | |
 | 4 | Create scheduled services for all quarterly services | Pending | |
