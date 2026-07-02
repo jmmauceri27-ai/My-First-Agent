@@ -10,6 +10,8 @@
 
 2. **[2026-07-02]** *(Stop hook feedback — commit/push untracked files)*
 
+4. **[2026-07-02]** "Task: Track inventory"
+
 3. **[2026-07-02]**
    - Task: Make a companywide filter template for FLS to only see their work orders
    - Note: Techs are Sebastian Arrango and William Gonzalez
@@ -32,6 +34,7 @@
 | 3 | Get sites from Anthony | Pending | |
 | 4 | Create scheduled services for all quarterly services | Pending | |
 | 5 | Add DVM Fire's rates | Pending | |
+| 6 | Track inventory | Pending | |
 
 ---
 
