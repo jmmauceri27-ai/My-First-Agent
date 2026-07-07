@@ -289,7 +289,9 @@ main { padding: 28px 24px 0; }
 .read-line { font-size: 14px; line-height: 1.5; }
 .read-line strong { color: var(--text); }
 .read-line.lookfor { color: var(--text-dim); }
-.read-line.adjustment { color: var(--text); font-weight: 600; }
+.read-bullets { margin: 2px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 5px; }
+.read-bullets li { font-size: 14.5px; font-weight: 600; color: var(--text); line-height: 1.4; }
+.read-bullets li::marker { color: var(--maroon-bright); }
 .tag-pill {
   display: inline-block;
   font-size: 11px;
@@ -591,28 +593,42 @@ main { padding: 28px 24px 0; }
           id: uid(), createdAt: now - 4000,
           title: 'Count the Safeties', context: 'Offense',
           lookFor: 'Number of deep safeties pre-snap.',
-          adjustment: '1 deep safety → Cover 3 (zone) or Cover 1 (man). 2 deep safeties → Cover 4, Cover 6, Cover 9, Cover 2 zone, or Cover 2 man.',
+          bullets: [
+            '1 Deep Safety - Cover 3, Cover 1 Man',
+            '2 Deep Safeties - Cover 4, Cover 6, Cover 9, Cover 2 Zone, Cover 2 Man'
+          ],
           notes: ''
         },
         {
           id: uid(), createdAt: now - 3000,
           title: 'Utilize Motion', context: 'Offense',
           lookFor: 'Defender reaction to receiver motion.',
-          adjustment: 'Defender follows → man. Defender stays/passes off → zone.',
+          bullets: [
+            'Defender Follows - Man',
+            "Defender Doesn't Follow - Zone"
+          ],
           notes: ''
         },
         {
           id: uid(), createdAt: now - 2000,
           title: 'Cornerback Depth', context: 'Offense',
           lookFor: 'Corner depth off the line (with 2 high safeties).',
-          adjustment: '7-9 yards off → deep third/quarter zone. 5 yards off → flat zone. Pressed at the line → man.',
+          bullets: [
+            '7-9 Yards Off - Deep Third or Deep Quarter Zone',
+            '5 Yards Off - Flat Zone',
+            'Pressing - Man'
+          ],
           notes: ''
         },
         {
           id: uid(), createdAt: now - 1000,
           title: 'Cornerback Alignment', context: 'Offense',
           lookFor: 'Corner leverage on outside WR (with 2 high safeties).',
-          adjustment: 'Press/head-up → Cover 3 or Cover 4 zone. Outside leverage → Cover 2 flat zone. Inside leverage → man.',
+          bullets: [
+            'Press / Head-Up - Cover 3 or Cover 4 Zone',
+            'Outside Leverage - Cover 2 Flat Zone',
+            'Inside Leverage - Man'
+          ],
           notes: ''
         }
       ],
@@ -799,7 +815,7 @@ main { padding: 28px 24px 0; }
     const q = search.trim().toLowerCase();
     const items = state.reads
       .filter(r => side === 'All' || r.context === side)
-      .filter(r => !q || [r.title, r.lookFor, r.adjustment, r.notes].join(' ').toLowerCase().includes(q))
+      .filter(r => !q || [r.title, r.lookFor, ...(r.bullets || []), r.notes].join(' ').toLowerCase().includes(q))
       .sort((a, b) => a.createdAt - b.createdAt);
 
     grid.innerHTML = '';
@@ -822,7 +838,7 @@ main { padding: 28px 24px 0; }
             </div>
           </div>
           ${r.lookFor ? `<div class="read-line lookfor"><strong>Look for:</strong> ${escapeHtml(r.lookFor)}</div>` : ''}
-          ${r.adjustment ? `<div class="read-line adjustment"><strong>→</strong> ${escapeHtml(r.adjustment)}</div>` : ''}
+          ${(r.bullets && r.bullets.length) ? `<ul class="read-bullets">${r.bullets.map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>` : ''}
           ${r.notes ? `<div class="read-line">${escapeHtml(r.notes)}</div>` : ''}
         </div>
       `;
@@ -1083,8 +1099,8 @@ main { padding: 28px 24px 0; }
           <textarea name="lookFor" rows="3" placeholder="Pre-snap indicators / alignment clues...">${escapeHtml(r.lookFor || '')}</textarea>
         </div>
         <div class="field">
-          <label>Adjustment / Counter</label>
-          <textarea name="adjustment" rows="3" placeholder="Audible, hot route, blitz call, protection slide...">${escapeHtml(r.adjustment || '')}</textarea>
+          <label>Key Reads (one per line)</label>
+          <textarea name="bullets" rows="4" placeholder="1 Deep Safety - Cover 3, Cover 1 Man&#10;2 Deep Safeties - Cover 4, Cover 6, Cover 9, Cover 2 Zone, Cover 2 Man">${escapeHtml((r.bullets || []).join('\n'))}</textarea>
         </div>
         <div class="field">
           <label>Notes</label>
@@ -1107,7 +1123,7 @@ main { padding: 28px 24px 0; }
         title: fd.get('title').trim(),
         context: fd.get('context'),
         lookFor: fd.get('lookFor').trim(),
-        adjustment: fd.get('adjustment').trim(),
+        bullets: fd.get('bullets').split('\n').map(b => b.trim()).filter(Boolean),
         notes: fd.get('notes').trim()
       };
       if (existing) {
