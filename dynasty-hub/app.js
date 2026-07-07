@@ -1,7 +1,14 @@
 (() => {
-  const STORAGE_KEY = 'msuDynastyHub_v1';
+  const HUB_CODE_KEY = 'msuDynastyHub_code';
+  const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no 0/O/1/I/L ambiguity
 
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+  function genHubCode() {
+    let code = '';
+    for (let i = 0; i < 6; i++) code += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
+    return code;
+  }
 
   function defaultState() {
     const now = Date.now();
@@ -44,22 +51,82 @@
     };
   }
 
-  let state = load();
-
-  function load() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return defaultState();
-      const parsed = JSON.parse(raw);
-      return { ...defaultState(), ...parsed };
-    } catch (e) {
-      return defaultState();
-    }
-  }
+  let state = defaultState();
+  let docRef = null;
 
   function save() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    if (!docRef) return;
+    docRef.set(state).catch(err => toast('Sync error: ' + err.message));
   }
+
+  function setSyncDot(online) {
+    const dot = document.getElementById('syncDot');
+    if (dot) { dot.classList.toggle('online', online); dot.classList.toggle('offline', !online); }
+  }
+
+  function connectToHub(code) {
+    document.getElementById('setupScreen').classList.add('hidden');
+    document.getElementById('onboardScreen').classList.add('hidden');
+    document.getElementById('appRoot').hidden = false;
+    document.getElementById('hubCodeText').textContent = code;
+    localStorage.setItem(HUB_CODE_KEY, code);
+
+    firebase.auth().signInAnonymously().then(() => {
+      const db = firebase.firestore();
+      docRef = db.collection('dynastyHubs').doc(code);
+      docRef.onSnapshot(snap => {
+        setSyncDot(!snap.metadata.fromCache);
+        if (!snap.exists) {
+          docRef.set(state); // first device to use this code seeds it
+          return;
+        }
+        state = { ...defaultState(), ...snap.data() };
+        applyTheme();
+        if (document.activeElement !== nameEl) nameEl.textContent = state.dynastyName;
+        renderAll();
+      }, err => {
+        setSyncDot(false);
+        toast('Sync error: ' + err.message);
+      });
+    }).catch(err => {
+      toast('Could not connect: ' + err.message);
+    });
+  }
+
+  function initHub() {
+    const cfg = window.FIREBASE_CONFIG || {};
+    if (!cfg.apiKey || cfg.apiKey.startsWith('PASTE_')) {
+      document.getElementById('setupScreen').classList.remove('hidden');
+      return;
+    }
+    firebase.initializeApp(cfg);
+    try { firebase.firestore().enablePersistence({ synchronizeTabs: true }).catch(() => {}); } catch (e) {}
+
+    const existingCode = localStorage.getItem(HUB_CODE_KEY);
+    if (existingCode) {
+      connectToHub(existingCode);
+      return;
+    }
+
+    document.getElementById('onboardScreen').classList.remove('hidden');
+    document.getElementById('createHubBtn').addEventListener('click', () => connectToHub(genHubCode()));
+    document.getElementById('joinHubBtn').addEventListener('click', () => {
+      const code = document.getElementById('joinCodeInput').value.trim().toUpperCase();
+      if (!code) return;
+      connectToHub(code);
+    });
+  }
+
+  document.getElementById('hubCodeBadge').addEventListener('click', () => {
+    const code = document.getElementById('hubCodeText').textContent;
+    if (!code || code === '—') return;
+    navigator.clipboard.writeText(code).then(() => toast('Sync code copied — enter it on your other device'));
+  });
+  document.getElementById('switchHubBtn').addEventListener('click', () => {
+    if (!confirm('Switch to a different hub? You can always come back by re-entering this hub\'s code.')) return;
+    localStorage.removeItem(HUB_CODE_KEY);
+    location.reload();
+  });
 
   function toast(msg) {
     const el = document.getElementById('toast');
@@ -649,5 +716,5 @@
 
   // ---------- Init ----------
   applyTheme();
-  renderAll();
+  initHub();
 })();

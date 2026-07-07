@@ -8,7 +8,52 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div class="app">
+
+<div id="setupScreen" class="setup-screen hidden">
+  <div class="setup-card">
+    <svg class="paw" width="42" height="42" viewBox="0 0 64 64" fill="currentColor" aria-hidden="true">
+      <ellipse cx="32" cy="42" rx="17" ry="14"/>
+      <ellipse cx="12" cy="24" rx="7" ry="9" transform="rotate(-20 12 24)"/>
+      <ellipse cx="26" cy="14" rx="7.5" ry="10"/>
+      <ellipse cx="38" cy="14" rx="7.5" ry="10"/>
+      <ellipse cx="52" cy="24" rx="7" ry="9" transform="rotate(20 52 24)"/>
+    </svg>
+    <h2>One-time setup needed</h2>
+    <p>This hub syncs across devices using a free Firebase project, but <code>firebase-config.js</code>
+      still has placeholder values. Create a free Firebase project, then paste its web config
+      into <code>dynasty-hub/firebase-config.js</code> and reload this page.</p>
+    <p class="setup-steps">
+      1. Go to the Firebase console and create a project (free Spark plan).<br>
+      2. Add a Web App to it and copy the <code>firebaseConfig</code> object.<br>
+      3. Paste those values into <code>firebase-config.js</code>.<br>
+      4. In the console, enable <strong>Firestore Database</strong> and <strong>Anonymous</strong> sign-in
+      under Authentication.<br>
+      5. Reload this page.
+    </p>
+  </div>
+</div>
+
+<div id="onboardScreen" class="setup-screen hidden">
+  <div class="setup-card">
+    <svg class="paw" width="42" height="42" viewBox="0 0 64 64" fill="currentColor" aria-hidden="true">
+      <ellipse cx="32" cy="42" rx="17" ry="14"/>
+      <ellipse cx="12" cy="24" rx="7" ry="9" transform="rotate(-20 12 24)"/>
+      <ellipse cx="26" cy="14" rx="7.5" ry="10"/>
+      <ellipse cx="38" cy="14" rx="7.5" ry="10"/>
+      <ellipse cx="52" cy="24" rx="7" ry="9" transform="rotate(20 52 24)"/>
+    </svg>
+    <h2>Welcome to the Bulldog Playbook</h2>
+    <p>Create a new hub, or join one you already made on another device with its sync code.</p>
+    <button class="btn primary" id="createHubBtn" style="width:100%;margin-bottom:14px;">Create New Hub</button>
+    <div class="or-sep">or join an existing hub</div>
+    <div class="join-row">
+      <input type="text" id="joinCodeInput" placeholder="Enter sync code" maxlength="8">
+      <button class="btn ghost" id="joinHubBtn">Join</button>
+    </div>
+  </div>
+</div>
+
+<div class="app" id="appRoot" hidden>
 
   <header class="hero">
     <div class="hero-glow"></div>
@@ -28,6 +73,11 @@
       </div>
 
       <div class="hero-right">
+        <button class="hub-code-badge" id="hubCodeBadge" title="Click to copy your sync code">
+          <span class="dot online" id="syncDot"></span>
+          Hub Code: <strong id="hubCodeText">—</strong>
+        </button>
+        <button class="icon-btn" id="switchHubBtn" title="Switch to a different hub">⇄</button>
         <div class="record-tracker" id="recordTracker">
           <div class="stat"><span id="winsVal">0</span><label>W</label></div>
           <div class="stat sep">–</div>
@@ -122,7 +172,7 @@
   </main>
 
   <footer class="toolbar">
-    <span class="toolbar-hint">Data is saved automatically in this browser.</span>
+    <span class="toolbar-hint">Data syncs automatically to your hub — enter its code on any device to see it there too.</span>
     <div class="toolbar-actions">
       <button class="btn ghost" id="exportBtn">Export JSON</button>
       <button class="btn ghost" id="importBtn">Import JSON</button>
@@ -139,6 +189,10 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
