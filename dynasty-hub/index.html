@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bulldog Playbook — MSU Dynasty Hub</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23660022'/%3E%3Ctext x='50' y='68' font-size='58' font-family='Georgia,serif' font-weight='bold' fill='white' text-anchor='middle'%3EM%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-inner">
+      <div class="brand">
+        <svg class="paw" width="46" height="46" viewBox="0 0 64 64" fill="currentColor" aria-hidden="true">
+          <ellipse cx="32" cy="42" rx="17" ry="14"/>
+          <ellipse cx="12" cy="24" rx="7" ry="9" transform="rotate(-20 12 24)"/>
+          <ellipse cx="26" cy="14" rx="7.5" ry="10"/>
+          <ellipse cx="38" cy="14" rx="7.5" ry="10"/>
+          <ellipse cx="52" cy="24" rx="7" ry="9" transform="rotate(20 52 24)"/>
+        </svg>
+        <div class="brand-text">
+          <span class="eyebrow">Mississippi State Bulldogs · Dynasty Mode</span>
+          <h1 id="dynastyName" contenteditable="true" spellcheck="false">My Dynasty Hub</h1>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <div class="record-tracker" id="recordTracker">
+          <div class="stat"><span id="winsVal">0</span><label>W</label></div>
+          <div class="stat sep">–</div>
+          <div class="stat"><span id="lossesVal">0</span><label>L</label></div>
+          <button class="icon-btn" id="editRecordBtn" title="Edit record">✎</button>
+        </div>
+        <button class="icon-btn" id="themeToggle" title="Toggle theme">◐</button>
+      </div>
+    </div>
+
+    <nav class="tabs" id="tabs">
+      <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+      <button class="tab-btn" data-tab="plays">Favorite Plays</button>
+      <button class="tab-btn" data-tab="reads">Pre-Snap Reads</button>
+      <button class="tab-btn" data-tab="tips">Tips &amp; Notes</button>
+    </nav>
+  </header>
+
+  <main>
+
+    <section id="dashboard" class="tab-panel active">
+      <div class="summary-grid">
+        <div class="summary-card">
+          <span class="summary-num" id="playsCount">0</span>
+          <span class="summary-label">Favorite Plays</span>
+        </div>
+        <div class="summary-card">
+          <span class="summary-num" id="readsCount">0</span>
+          <span class="summary-label">Pre-Snap Reads</span>
+        </div>
+        <div class="summary-card">
+          <span class="summary-num" id="tipsCount">0</span>
+          <span class="summary-label">Tips &amp; Notes</span>
+        </div>
+        <div class="summary-card accent">
+          <span class="summary-num" id="recordVal">0-0</span>
+          <span class="summary-label">Dynasty Record</span>
+        </div>
+      </div>
+
+      <div class="panel-head">
+        <h2>Recently Added</h2>
+      </div>
+      <div id="recentList" class="recent-list"></div>
+    </section>
+
+    <section id="plays" class="tab-panel">
+      <div class="panel-head">
+        <h2>Favorite Plays</h2>
+        <button class="btn primary" data-add="plays">+ Add Play</button>
+      </div>
+      <div class="filter-row">
+        <input type="search" class="search-input" id="playsSearch" placeholder="Search plays, formations, situations…">
+        <div class="chip-row" id="playsSideFilter">
+          <button class="chip active" data-side="All">All</button>
+          <button class="chip" data-side="Offense">Offense</button>
+          <button class="chip" data-side="Defense">Defense</button>
+        </div>
+      </div>
+      <div class="chip-row" id="playsTagFilter"></div>
+      <div id="playsGrid" class="card-grid"></div>
+    </section>
+
+    <section id="reads" class="tab-panel">
+      <div class="panel-head">
+        <h2>Pre-Snap Reads</h2>
+        <button class="btn primary" data-add="reads">+ Add Read</button>
+      </div>
+      <div class="filter-row">
+        <input type="search" class="search-input" id="readsSearch" placeholder="Search reads, keys, adjustments…">
+        <div class="chip-row" id="readsSideFilter">
+          <button class="chip active" data-side="All">All</button>
+          <button class="chip" data-side="Offense">On Offense</button>
+          <button class="chip" data-side="Defense">On Defense</button>
+        </div>
+      </div>
+      <div id="readsGrid" class="card-grid"></div>
+    </section>
+
+    <section id="tips" class="tab-panel">
+      <div class="panel-head">
+        <h2>Tips &amp; Notes</h2>
+        <button class="btn primary" data-add="tips">+ Add Tip</button>
+      </div>
+      <div class="filter-row">
+        <input type="search" class="search-input" id="tipsSearch" placeholder="Search tips…">
+        <div class="chip-row" id="tipsCatFilter"></div>
+      </div>
+      <div id="tipsGrid" class="card-grid"></div>
+    </section>
+
+  </main>
+
+  <footer class="toolbar">
+    <span class="toolbar-hint">Data is saved automatically in this browser.</span>
+    <div class="toolbar-actions">
+      <button class="btn ghost" id="exportBtn">Export JSON</button>
+      <button class="btn ghost" id="importBtn">Import JSON</button>
+      <input type="file" id="importFile" accept="application/json" hidden>
+      <button class="btn ghost danger" id="clearAllBtn">Clear All</button>
+    </div>
+  </footer>
+
+</div>
+
+<div class="modal-overlay hidden" id="modalOverlay">
+  <div class="modal" id="modal" role="dialog" aria-modal="true"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
