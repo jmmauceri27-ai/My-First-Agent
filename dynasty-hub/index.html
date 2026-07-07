@@ -557,30 +557,30 @@ main { padding: 28px 24px 0; }
         {
           id: uid(), createdAt: now - 4000,
           title: 'Count the Safeties', context: 'Offense',
-          lookFor: 'How many safeties are aligned deep before the snap.',
-          adjustment: 'Single high safety = Cover 3 zone or Cover 1 man. Two high safeties = Cover 4, Cover 6, Cover 9, Cover 2 zone, or Cover 2 man.',
-          notes: 'Start every pre-snap read here — safety count narrows the coverage family before you even look at the corners.'
+          lookFor: 'Number of deep safeties pre-snap.',
+          adjustment: '1 deep safety → Cover 3 (zone) or Cover 1 (man). 2 deep safeties → Cover 4, Cover 6, Cover 9, Cover 2 zone, or Cover 2 man.',
+          notes: ''
         },
         {
           id: uid(), createdAt: now - 3000,
           title: 'Utilize Motion', context: 'Offense',
-          lookFor: 'Send a receiver in motion across the formation and watch how the defense reacts.',
-          adjustment: 'If a defender follows the motion, the defense is in man. If no one follows, the defense is in zone.',
-          notes: 'Send it late enough that the defense has to show its hand before the snap, since some coverages rotate last second.'
+          lookFor: 'Defender reaction to receiver motion.',
+          adjustment: 'Defender follows → man. Defender stays/passes off → zone.',
+          notes: ''
         },
         {
           id: uid(), createdAt: now - 2000,
           title: 'Cornerback Depth', context: 'Offense',
-          lookFor: 'How far off the line of scrimmage the corners are playing, combined with the safety count.',
-          adjustment: 'With two high safeties: corner at 7-9 yards off = deep third or deep quarter zone. Corner at 5 yards off = flat zone. Corner pressing at the line = man.',
-          notes: 'Depth plus safety count together get you almost all the way to the exact zone shell.'
+          lookFor: 'Corner depth off the line (with 2 high safeties).',
+          adjustment: '7-9 yards off → deep third/quarter zone. 5 yards off → flat zone. Pressed at the line → man.',
+          notes: ''
         },
         {
           id: uid(), createdAt: now - 1000,
           title: 'Cornerback Alignment', context: 'Offense',
-          lookFor: "Corner's leverage on the outside WR (press/head-up, outside shade, or inside shade) with two high safeties shown.",
-          adjustment: 'Press directly in front of the WR = Cover 3 or Cover 4 zone. Outside leverage = Cover 2 flat zone. Inside leverage = man coverage.',
-          notes: 'Use this as the tiebreaker when depth alone does not clarify zone vs. man.'
+          lookFor: 'Corner leverage on outside WR (with 2 high safeties).',
+          adjustment: 'Press/head-up → Cover 3 or Cover 4 zone. Outside leverage → Cover 2 flat zone. Inside leverage → man.',
+          notes: ''
         }
       ],
       tips: [
@@ -788,7 +788,7 @@ main { padding: 28px 24px 0; }
         <h3 class="card-title">${escapeHtml(r.title)}</h3>
         ${r.lookFor ? `<div class="card-meta"><strong>Look for:</strong> ${escapeHtml(r.lookFor)}</div>` : ''}
         ${r.adjustment ? `<div class="card-meta"><strong>Adjustment:</strong> ${escapeHtml(r.adjustment)}</div>` : ''}
-        <div class="card-body">${escapeHtml(r.notes || '')}</div>
+        ${r.notes ? `<div class="card-body">${escapeHtml(r.notes)}</div>` : ''}
       `;
       card.querySelector(`[data-edit="${r.id}"]`).addEventListener('click', () => openReadModal(r));
       card.querySelector(`[data-del="${r.id}"]`).addEventListener('click', () => removeItem('reads', r.id));
