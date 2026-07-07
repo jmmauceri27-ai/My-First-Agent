@@ -257,6 +257,39 @@ main { padding: 28px 24px 0; }
   color: var(--text-faint); font-size: 14px; padding: 2px 4px; border-radius: 6px;
 }
 .card-actions button:hover { color: var(--text); background: rgba(128,128,128,0.15); }
+
+/* ---------- Pre-snap reads: vertical checklist ---------- */
+.reads-list { display: flex; flex-direction: column; gap: 12px; max-width: 720px; }
+.read-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.read-row:hover { border-color: var(--maroon-bright); background: var(--card-hover); }
+.step-num {
+  flex-shrink: 0;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--maroon-bright), var(--maroon));
+  color: #fff;
+  font-weight: 800;
+  font-size: 15px;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 2px;
+}
+.read-row-content { flex: 1; display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.read-row-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.read-row-top .card-title { font-size: 17px; }
+.read-row-top .card-actions { margin-left: auto; }
+.read-line { font-size: 14px; line-height: 1.5; }
+.read-line strong { color: var(--text); }
+.read-line.lookfor { color: var(--text-dim); }
+.read-line.adjustment { color: var(--text); font-weight: 600; }
 .tag-pill {
   display: inline-block;
   font-size: 11px;
@@ -490,7 +523,7 @@ main { padding: 28px 24px 0; }
           <button class="chip" data-side="Defense">On Defense</button>
         </div>
       </div>
-      <div id="readsGrid" class="card-grid"></div>
+      <div id="readsGrid" class="reads-list"></div>
     </section>
 
     <section id="tips" class="tab-panel">
@@ -767,28 +800,31 @@ main { padding: 28px 24px 0; }
     const items = state.reads
       .filter(r => side === 'All' || r.context === side)
       .filter(r => !q || [r.title, r.lookFor, r.adjustment, r.notes].join(' ').toLowerCase().includes(q))
-      .sort((a, b) => b.createdAt - a.createdAt);
+      .sort((a, b) => a.createdAt - b.createdAt);
 
     grid.innerHTML = '';
     if (!items.length) {
       grid.innerHTML = '<div class="empty-msg">No pre-snap reads yet. Add your first key.</div>';
       return;
     }
-    items.forEach(r => {
+    items.forEach((r, idx) => {
       const card = document.createElement('div');
-      card.className = 'card';
+      card.className = 'read-row';
       card.innerHTML = `
-        <div class="card-top">
-          <span class="tag-pill ${r.context === 'Defense' ? 'side-defense' : ''}">On ${escapeHtml(r.context)}</span>
-          <div class="card-actions">
-            <button data-edit="${r.id}" title="Edit">✎</button>
-            <button data-del="${r.id}" title="Delete">✕</button>
+        <div class="step-num">${idx + 1}</div>
+        <div class="read-row-content">
+          <div class="read-row-top">
+            <h3 class="card-title">${escapeHtml(r.title)}</h3>
+            <span class="tag-pill ${r.context === 'Defense' ? 'side-defense' : ''}">On ${escapeHtml(r.context)}</span>
+            <div class="card-actions">
+              <button data-edit="${r.id}" title="Edit">✎</button>
+              <button data-del="${r.id}" title="Delete">✕</button>
+            </div>
           </div>
+          ${r.lookFor ? `<div class="read-line lookfor"><strong>Look for:</strong> ${escapeHtml(r.lookFor)}</div>` : ''}
+          ${r.adjustment ? `<div class="read-line adjustment"><strong>→</strong> ${escapeHtml(r.adjustment)}</div>` : ''}
+          ${r.notes ? `<div class="read-line">${escapeHtml(r.notes)}</div>` : ''}
         </div>
-        <h3 class="card-title">${escapeHtml(r.title)}</h3>
-        ${r.lookFor ? `<div class="card-meta"><strong>Look for:</strong> ${escapeHtml(r.lookFor)}</div>` : ''}
-        ${r.adjustment ? `<div class="card-meta"><strong>Adjustment:</strong> ${escapeHtml(r.adjustment)}</div>` : ''}
-        ${r.notes ? `<div class="card-body">${escapeHtml(r.notes)}</div>` : ''}
       `;
       card.querySelector(`[data-edit="${r.id}"]`).addEventListener('click', () => openReadModal(r));
       card.querySelector(`[data-del="${r.id}"]`).addEventListener('click', () => removeItem('reads', r.id));
