@@ -10,6 +10,8 @@
 
 2. **[2026-07-02]** *(Stop hook feedback — commit/push untracked files)*
 
+6. **[2026-07-02]** "Task: Create a dummy work order to show Silpa"
+
 5. **[2026-07-02]** "Task: Track employee hours / Details: Make separate WO's for any day off like PTO, Holiday, Sick, etc. Regular work hours will be tracked from check-in and check-out times in UC"
 
 4. **[2026-07-02]** "Task: Track inventory"
@@ -38,6 +40,7 @@
 | 5 | Add DVM Fire's rates | Pending | |
 | 6 | Track inventory | Pending | |
 | 7 | Track employee hours | Pending | Separate WOs for PTO / Holiday / Sick; regular hours via UC check-in & check-out |
+| 8 | Create a dummy work order to show Silpa | Pending | Demo/training WO for Silpa review |
 
 ---
 
