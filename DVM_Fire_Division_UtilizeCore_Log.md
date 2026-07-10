@@ -42,7 +42,7 @@
 | 5 | Add DVM Fire's rates | Pending | |
 | 6 | Track inventory | Pending | |
 | 7 | Track employee hours | Pending | Separate WOs for PTO / Holiday / Sick; regular hours via UC check-in & check-out |
-| 8 | Create a dummy work order to show Silpa | Pending | Demo/training WO for Silpa review |
+| 8 | Create a dummy reactive work order to show Silpa | Pending | Demo/training reactive WO for Silpa review |
 | 9 | Create a dummy PM work order for Silpa | Pending | Preventive Maintenance WO demo for Silpa |
 
 ---
