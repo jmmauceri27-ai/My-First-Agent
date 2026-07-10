@@ -10,6 +10,8 @@
 
 2. **[2026-07-02]** *(Stop hook feedback — commit/push untracked files)*
 
+8. **[2026-07-02]** "Task: Reach out to Frank Trotta to see what dashboards and reports he's getting from UC to track payroll"
+
 7. **[2026-07-02]** "Task: Create a dummy PM work order for Silpa"
 
 6. **[2026-07-02]** "Task: Create a dummy work order to show Silpa"
@@ -44,6 +46,7 @@
 | 7 | Track employee hours | Pending | Separate WOs for PTO / Holiday / Sick; regular hours via UC check-in & check-out |
 | 8 | Create a dummy reactive work order to show Silpa | Pending | Demo/training reactive WO for Silpa review |
 | 9 | Create a dummy PM work order for Silpa | Pending | Preventive Maintenance WO demo for Silpa |
+| 10 | Reach out to Frank Trotta | Pending | Find out what UC dashboards & reports he uses to track payroll |
 
 ---
 
