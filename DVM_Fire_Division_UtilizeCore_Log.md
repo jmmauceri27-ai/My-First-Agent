@@ -46,7 +46,7 @@
 | 7 | Track employee hours | Pending | Separate WOs for PTO / Holiday / Sick; regular hours via UC check-in & check-out |
 | 8 | Create a dummy reactive work order to show Silpa | Pending | Demo/training reactive WO for Silpa review |
 | 9 | Create a dummy PM work order for Silpa | Pending | Preventive Maintenance WO demo for Silpa |
-| 10 | Reach out to Frank Trotta | Pending | Find out what UC dashboards & reports he uses to track payroll |
+| 10 | Reach out to Frank Trotta | Complete | Find out what UC dashboards & reports he uses to track payroll |
 
 ---
 
