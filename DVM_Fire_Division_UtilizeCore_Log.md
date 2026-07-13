@@ -10,6 +10,8 @@
 
 2. **[2026-07-02]** *(Stop hook feedback — commit/push untracked files)*
 
+10. **[2026-07-13]** "Add task: Build New Services and Tasks / Add task: Assign Department to Service and Tasks / Add task: Assign Trades and Services to Sites / Add task: Match Building Reports to Work Order Reports"
+
 9. **[2026-07-13]**
    - Trade: Fire Life Safety / Service: Fire Extinguisher Service Call / Tasks: Repair/Replacement, 2.5lb, 5lb, 10lb, 20lb
    - Trade: Fire Life Safety / Service: Emergency Light Maintenance / Tasks: Annual 90 Minute, Repair/Replace Batts, Repair/Replace Bulbs
@@ -55,6 +57,10 @@
 | 8 | Create a dummy reactive work order to show Silpa | Pending | Demo/training reactive WO for Silpa review |
 | 9 | Create a dummy PM work order for Silpa | Pending | Preventive Maintenance WO demo for Silpa |
 | 10 | Reach out to Frank Trotta | Complete | Find out what UC dashboards & reports he uses to track payroll |
+| 11 | Build New Services and Tasks | Pending | |
+| 12 | Assign Department to Service and Tasks | Pending | |
+| 13 | Assign Trades and Services to Sites | Pending | |
+| 14 | Match Building Reports to Work Order Reports | Pending | |
 
 ---
 
