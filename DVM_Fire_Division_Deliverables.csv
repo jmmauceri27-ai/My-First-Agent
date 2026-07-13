@@ -1,0 +1,15 @@
+DVM Fire Division - UtilizeCore Deliverables Tracker,,,,
+Go-Live Date: 8/1/2026,,,,
+Last Updated: 7/13/2026,,,,
+,,,,
+#,Deliverable,Owner,Status,Notes
+1,Companywide filter template for FLS (work orders only),,Complete,
+2,Get clients from Silpa,Silpa,Pending,
+3,Get sites from Anthony,Anthony Pasquarella,Pending,
+4,Create scheduled services for all quarterly services,,Pending,
+5,Add DVM Fire's rates,,Pending,
+6,Track inventory,,Pending,
+7,Track employee hours,,Pending,"Separate WOs for PTO, Holiday, Sick; regular hours via UC check-in & check-out"
+8,Create a dummy reactive work order to show Silpa,Silpa,Pending,Demo/training reactive WO
+9,Create a dummy PM work order for Silpa,Silpa,Pending,Preventive Maintenance WO demo
+10,Reach out to Frank Trotta re: payroll dashboards & reports,Frank Trotta,Complete,Find out what UC dashboards & reports he uses to track payroll
