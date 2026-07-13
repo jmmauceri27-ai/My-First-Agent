@@ -37,7 +37,7 @@
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 1 | Make companywide filter template for Fire Life Safety / FLS (work orders only) | Pending | |
+| 1 | Make companywide filter template for Fire Life Safety / FLS (work orders only) | Complete | |
 | 2 | Get clients from Silpa | Pending | |
 | 3 | Get sites from Anthony | Pending | |
 | 4 | Create scheduled services for all quarterly services | Pending | |
