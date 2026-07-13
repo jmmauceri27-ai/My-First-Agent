@@ -10,6 +10,14 @@
 
 2. **[2026-07-02]** *(Stop hook feedback — commit/push untracked files)*
 
+9. **[2026-07-13]**
+   - Trade: Fire Life Safety / Service: Fire Extinguisher Service Call / Tasks: Repair/Replacement, 2.5lb, 5lb, 10lb, 20lb
+   - Trade: Fire Life Safety / Service: Emergency Light Maintenance / Tasks: Annual 90 Minute, Repair/Replace Batts, Repair/Replace Bulbs
+   - Trade: Fire Life Safety / Service: Backup Generator Maintenance / Tasks: Annual
+   - Trade: Fire Life Safety / Service: Fire Suppression Maintenance / Tasks: Semi Annual/Clean Agent, Semi/Inergen, Semi Annual FM-200
+   - Trade: Fire Life Safety / Service: Backflow Maintenance / Tasks: Semi Annual Testing, Annual Testing
+   - Trade: Fire Life Safety / Service: Suppression System - Anti Freeze Maintenance / Tasks: Annual Testing
+
 8. **[2026-07-02]** "Task: Reach out to Frank Trotta to see what dashboards and reports he's getting from UC to track payroll"
 
 7. **[2026-07-02]** "Task: Create a dummy PM work order for Silpa"
