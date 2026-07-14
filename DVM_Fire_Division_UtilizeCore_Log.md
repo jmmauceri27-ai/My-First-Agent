@@ -63,6 +63,7 @@
 | 14 | Match Building Reports to Work Order Reports | Pending | |
 | 15 | Create all clients in UC | Complete | |
 | 16 | Create sites | Pending | |
+| 17 | Add Accumatica Customer ID's | Pending | |
 
 ---
 
