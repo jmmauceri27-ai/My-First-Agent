@@ -131,6 +131,34 @@ def cmd_update_status():
     console.print(f"[green]Updated [{record_id}] to status '{new_status}'.[/green]")
 
 
+def cmd_edit():
+    record_id = Prompt.ask("Pain point ID to edit").strip()
+    r = store.get_pain_point(record_id)
+    if not r:
+        console.print(f"[red]No pain point found with ID '{record_id}'.[/red]")
+        return
+    console.print(f"Editing [{record_id}] {r['title']} — press Enter to keep the current value.")
+    title = Prompt.ask("Title", default=r["title"])
+    category = Prompt.ask("Category", default=r["category"])
+    description = Prompt.ask("Description", default=r["description"])
+    impact = Prompt.ask("Business impact", default=r["impact"] or "")
+    severity = _choose("Severity", store.SEVERITIES, default=r["severity"])
+    frequency = _choose("Frequency", store.FREQUENCIES, default=r["frequency"])
+    workaround = Prompt.ask("Workaround", default=r["workaround"] or "")
+
+    store.update_pain_point(
+        record_id,
+        title=title,
+        category=category,
+        description=description,
+        impact=impact,
+        severity=severity,
+        frequency=frequency,
+        workaround=workaround,
+    )
+    console.print(f"[green]Updated [{record_id}].[/green]")
+
+
 def cmd_delete():
     record_id = Prompt.ask("Pain point ID to delete").strip()
     r = store.get_pain_point(record_id)
@@ -281,6 +309,7 @@ HELP_TEXT = (
     "• add        - log a new pain point\n"
     "• list       - view all logged pain points (optionally filter by status)\n"
     "• show       - view full details of one pain point by ID\n"
+    "• edit       - edit any field of a pain point\n"
     "• status     - update the status of a pain point\n"
     "• delete     - remove a pain point\n"
     "• stats      - summary counts by status/severity/category\n"
@@ -293,6 +322,7 @@ COMMANDS = {
     "add": cmd_add,
     "list": cmd_list,
     "show": cmd_show,
+    "edit": cmd_edit,
     "status": cmd_update_status,
     "delete": cmd_delete,
     "stats": cmd_stats,

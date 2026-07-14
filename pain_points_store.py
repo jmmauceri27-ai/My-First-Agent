@@ -8,7 +8,7 @@ _DB_DIR = Path.home() / ".utilizecore_pain_points"
 _DB_PATH = _DB_DIR / "pain_points.db"
 
 CATEGORIES = [
-    "Work Order Management",
+    "Work Orders",
     "Vendor Management",
     "Invoicing/Billing",
     "Reporting/Analytics",
@@ -115,6 +115,29 @@ def update_status(record_id: str, status: str) -> bool:
     cur.execute(
         "UPDATE pain_points SET status = ?, date_resolved = ? WHERE id = ?",
         (status, date_resolved, record_id),
+    )
+    updated = cur.rowcount > 0
+    conn.commit()
+    conn.close()
+    return updated
+
+
+_EDITABLE_FIELDS = {"title", "category", "description", "impact", "severity", "frequency", "workaround"}
+
+
+def update_pain_point(record_id: str, **fields) -> bool:
+    unknown = set(fields) - _EDITABLE_FIELDS
+    if unknown:
+        raise ValueError(f"Unknown field(s): {unknown}")
+    if not fields:
+        return False
+    init_db()
+    conn = sqlite3.connect(_DB_PATH)
+    cur = conn.cursor()
+    set_clause = ", ".join(f"{k} = ?" for k in fields)
+    cur.execute(
+        f"UPDATE pain_points SET {set_clause} WHERE id = ?",
+        (*fields.values(), record_id),
     )
     updated = cur.rowcount > 0
     conn.commit()
