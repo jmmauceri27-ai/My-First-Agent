@@ -62,6 +62,7 @@
 | 13 | Assign Trades and Services to Sites | Pending | |
 | 14 | Match Building Reports to Work Order Reports | Pending | |
 | 15 | Create all clients in UC | Complete | |
+| 16 | Create sites | Pending | |
 
 ---
 
