@@ -61,6 +61,7 @@
 | 12 | Assign Department to Service and Tasks | Pending | |
 | 13 | Assign Trades and Services to Sites | Pending | |
 | 14 | Match Building Reports to Work Order Reports | Pending | |
+| 15 | Create all clients in UC | Pending | |
 
 ---
 
