@@ -49,7 +49,7 @@
 |---|------|--------|-------|
 | 1 | Make companywide filter template for Fire Life Safety / FLS (work orders only) | Complete | |
 | 2 | Get clients from Silpa | Complete | Service Call and Maintenance customers only |
-| 3 | Get sites from Anthony | Pending | |
+| 3 | Get sites from Anthony | Complete | |
 | 4 | Create scheduled services for all quarterly services | Pending | |
 | 5 | Add DVM Fire's rates | Pending | |
 | 6 | Track inventory | Pending | |
@@ -57,11 +57,11 @@
 | 8 | Create a dummy reactive work order to show Silpa | Pending | Demo/training reactive WO for Silpa review |
 | 9 | Create a dummy PM work order for Silpa | Pending | Preventive Maintenance WO demo for Silpa |
 | 10 | Reach out to Frank Trotta | Complete | Find out what UC dashboards & reports he uses to track payroll |
-| 11 | Build New Services and Tasks | Pending | |
-| 12 | Assign Department to Service and Tasks | Pending | |
+| 11 | Build New Services and Tasks | Complete | |
+| 12 | Assign Department to Service and Tasks | Complete | |
 | 13 | Assign Trades and Services to Sites | Pending | |
 | 14 | Match Building Reports to Work Order Reports | Pending | |
-| 15 | Create all clients in UC | Pending | |
+| 15 | Create all clients in UC | Complete | |
 
 ---
 
