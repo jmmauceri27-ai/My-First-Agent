@@ -64,6 +64,7 @@
 | 15 | Create all clients in UC | Complete | |
 | 16 | Create all sites | Complete | |
 | 17 | Add Accumatica Customer ID's | Complete | |
+| 18 | Get employee rates for FLS Technicians | Pending | |
 
 ---
 
