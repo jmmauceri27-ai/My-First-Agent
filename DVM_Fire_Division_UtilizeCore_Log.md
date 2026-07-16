@@ -65,6 +65,7 @@
 | 16 | Create all sites | Complete | |
 | 17 | Add Accumatica Customer ID's | Complete | |
 | 18 | Get employee rates for FLS Technicians | Pending | |
+| 19 | Meet w/ Anthony Wednesday to review Services, Reports, and Payroll | Pending | |
 
 ---
 
