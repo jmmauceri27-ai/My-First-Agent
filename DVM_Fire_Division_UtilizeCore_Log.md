@@ -74,6 +74,7 @@
 | 1 | Do clients get serviced on a monthly basis, but billed at different frequencies? | Open |
 | 2 | Do they have per service rates? | Open |
 | 3 | How can we match up the rates and services on the Client Data Base sheet with UtilizeCore compatibility? | Open |
+| 4 | What are the differences with Central Station Companies? | Open |
 
 ---
 
