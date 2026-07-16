@@ -67,6 +67,15 @@
 
 ---
 
+## Open Questions
+
+| # | Question | Status |
+|---|----------|--------|
+| 1 | Do clients get serviced on a monthly basis, but billed at different frequencies? | Open |
+| 2 | Do they have per service rates? | Open |
+
+---
+
 ## Key People
 
 | Role | Name |
