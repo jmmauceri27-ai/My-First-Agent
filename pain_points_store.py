@@ -10,6 +10,7 @@ _DB_PATH = _DB_DIR / "pain_points.db"
 CATEGORIES = [
     "Work Orders",
     "Clients",
+    "Roles",
     "Vendor Management",
     "Invoicing/Billing",
     "Reporting/Analytics",
