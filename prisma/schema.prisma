@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// One row per player in your personal draft pool.
+model Player {
+  id            String   @id @default(cuid())
+  name          String
+  position      String // QB, RB, WR, TE, K, DST
+  team          String?
+  byeWeek       Int?
+  overallRank   Int? // your custom overall rank
+  positionRank  Int? // your custom rank within position
+  adp           Float? // average draft position, if you track it
+  tier          Int? // 1 = best tier; null = unranked / not tiered yet
+  tags          String[] // sleeper, bust, breakout, injury-risk, rookie, handcuff, target, avoid, ...
+  bio           String? // short freeform summary / cheat-sheet blurb
+  watchlisted   Boolean  @default(false)
+
+  // Draft-day tracking
+  draftedBy     String? // null = still available; otherwise "Me" or an opponent's name
+  draftRound    Int?
+  draftPick     Int?
+  draftedAt     DateTime?
+
+  notes         Note[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([position])
+  @@index([tier])
+  @@index([overallRank])
+}
+
+// A timestamped note / trend / news blurb attached to a player.
+// The running feed of these across all players is your "trends" view.
+model Note {
+  id        String   @id @default(cuid())
+  playerId  String
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  body      String
+  kind      String   @default("note") // note | trend | news | injury
+  createdAt DateTime @default(now())
+
+  @@index([playerId])
+  @@index([createdAt])
+}

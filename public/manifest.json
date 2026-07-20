@@ -1,0 +1,17 @@
+{
+  "name": "Fantasy Draft Hub",
+  "short_name": "Draft Hub",
+  "description": "Personal fantasy football draft prep hub: rankings, tiers, notes, and draft-day tracker.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a2e17",
+  "theme_color": "#166030",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
