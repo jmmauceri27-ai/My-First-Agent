@@ -49,9 +49,11 @@ every device the moment you save it — no local files to keep in sync.
    - [Vercel Postgres](https://vercel.com/storage/postgres) (pairs perfectly with Vercel hosting)
    - [Supabase](https://supabase.com)
    - [Neon](https://neon.tech)
-3. Copy `.env.example` to `.env` and fill in `DATABASE_URL` with the
-   connection string from your provider. Leave `SITE_PASSWORD` blank for
-   local dev.
+3. Copy `.env.example` to `.env` and fill in `DATABASE_URL` and `DIRECT_URL`
+   with the connection strings from your provider (on Supabase: the
+   "Transaction pooler" string for `DATABASE_URL`, "Session pooler" for
+   `DIRECT_URL` — grab both from your project's Connect dialog). Leave
+   `SITE_PASSWORD` blank for local dev.
 4. Push the schema to your database:
    ```bash
    npx prisma db push
@@ -66,9 +68,10 @@ every device the moment you save it — no local files to keep in sync.
 
 1. Push this repo to GitHub (already done if you're reading this from the repo).
 2. Go to [vercel.com/new](https://vercel.com/new) and import the repo.
-3. Add a Postgres database from the Vercel Storage tab (or paste a
-   Supabase/Neon connection string as the `DATABASE_URL` environment
-   variable in the project's Settings → Environment Variables).
+3. Add a Postgres database from the Vercel Storage tab, or set
+   `DATABASE_URL` and `DIRECT_URL` in the project's Settings → Environment
+   Variables with connection strings from your own provider (e.g. Supabase's
+   pooled and session-pooler URLs).
 4. Optionally set `SITE_PASSWORD` in the same Environment Variables screen
    to gate the site behind a passcode.
 5. Deploy. The build command (`prisma generate && prisma db push && next build`)
