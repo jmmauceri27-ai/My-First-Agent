@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 
 function optInt(value: FormDataEntryValue | null): number | null {
   if (value === null || value === "") return null;
@@ -121,6 +122,9 @@ export async function importCsv(formData: FormData): Promise<CsvImportResult> {
   const dataLines = /name/i.test(header[0]) ? lines.slice(1) : lines;
   const columns = /name/i.test(header[0]) ? header : CSV_COLUMNS.slice(0, header.length);
 
+  type ParsedRow = Prisma.PlayerCreateManyInput;
+  const parsed: ParsedRow[] = [];
+
   for (let i = 0; i < dataLines.length; i++) {
     const line = dataLines[i];
     const cells = line.split(",").map((c) => c.trim());
@@ -134,7 +138,7 @@ export async function importCsv(formData: FormData): Promise<CsvImportResult> {
       continue;
     }
 
-    const data = {
+    parsed.push({
       name: row.name,
       position: row.position.toUpperCase(),
       team: row.team || null,
@@ -145,19 +149,37 @@ export async function importCsv(formData: FormData): Promise<CsvImportResult> {
       tier: row.tier ? parseInt(row.tier, 10) : null,
       tags: row.tags ? row.tags.split("|").map((t) => t.trim()).filter(Boolean) : [],
       bio: row.bio || null,
-    };
-
-    const existing = await prisma.player.findFirst({
-      where: { name: { equals: data.name, mode: "insensitive" }, position: data.position },
     });
+  }
 
-    if (existing) {
-      await prisma.player.update({ where: { id: existing.id }, data });
-      result.updated++;
+  // Batch: one query to find existing matches, one bulk insert for new rows,
+  // and only fall back to per-row updates for players that already exist.
+  const existing = await prisma.player.findMany({ select: { id: true, name: true, position: true } });
+  const existingMap = new Map(existing.map((p) => [`${p.name.toLowerCase()}|${p.position}`, p.id]));
+
+  const toCreate: ParsedRow[] = [];
+  const toUpdate: { id: string; data: ParsedRow }[] = [];
+
+  for (const row of parsed) {
+    const key = `${row.name.toLowerCase()}|${row.position}`;
+    const existingId = existingMap.get(key);
+    if (existingId) {
+      toUpdate.push({ id: existingId, data: row });
     } else {
-      await prisma.player.create({ data });
-      result.created++;
+      toCreate.push(row);
     }
+  }
+
+  if (toCreate.length > 0) {
+    await prisma.player.createMany({ data: toCreate });
+    result.created = toCreate.length;
+  }
+
+  if (toUpdate.length > 0) {
+    await prisma.$transaction(
+      toUpdate.map((u) => prisma.player.update({ where: { id: u.id }, data: u.data }))
+    );
+    result.updated = toUpdate.length;
   }
 
   revalidatePath("/players");
