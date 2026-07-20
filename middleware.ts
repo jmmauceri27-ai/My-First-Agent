@@ -9,7 +9,9 @@ export async function middleware(request: NextRequest) {
   if (!sitePassword) return NextResponse.next();
 
   const { pathname } = request.nextUrl;
-  if (PUBLIC_PATHS.some((p) => pathname === p)) return NextResponse.next();
+  if (PUBLIC_PATHS.some((p) => pathname === p) || pathname.startsWith("/api/")) {
+    return NextResponse.next();
+  }
 
   const cookie = request.cookies.get(AUTH_COOKIE)?.value;
   const expected = await hashPassword(sitePassword);
