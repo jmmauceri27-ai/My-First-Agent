@@ -16,7 +16,7 @@ export default async function PlayersPage() {
         <h1 className="text-2xl font-bold">Players</h1>
         <Link
           href="/players/import"
-          className="rounded-md border border-gridiron-500 px-3 py-2 text-sm font-medium text-gridiron-600 hover:bg-gridiron-50 dark:text-gridiron-100 dark:hover:bg-zinc-800"
+          className="rounded-md border border-gridiron-500 px-3 py-2 text-sm font-medium text-gridiron-600 hover:bg-gridiron-50 dark:text-gridiron-100 dark:hover:bg-ink-800"
         >
           Bulk Import CSV
         </Link>

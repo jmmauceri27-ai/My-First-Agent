@@ -1,6 +1,13 @@
 import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import NavBar from "@/components/NavBar";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Fantasy Draft Hub",
@@ -13,15 +20,15 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#166030",
+  themeColor: "#08090b",
   width: "device-width",
   initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" className={`dark ${inter.variable}`}>
+      <body className="font-sans antialiased">
         <NavBar />
         <main className="mx-auto max-w-6xl px-4 pb-20 pt-4 sm:pb-10">{children}</main>
       </body>

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { Player } from "@prisma/client";
 import { POSITIONS, TAG_STYLES, tierColor } from "@/lib/constants";
+import TeamBadge from "@/components/TeamBadge";
 
 export default function BoardView({ players }: { players: Player[] }) {
   const [positionFilter, setPositionFilter] = useState("ALL");
@@ -37,7 +38,7 @@ export default function BoardView({ players }: { players: Player[] }) {
           <button
             onClick={() => setPositionFilter("ALL")}
             className={`rounded-md px-3 py-1.5 text-sm font-medium ${
-              positionFilter === "ALL" ? "bg-gridiron-500 text-white" : "bg-zinc-100 dark:bg-zinc-800"
+              positionFilter === "ALL" ? "bg-gridiron-500 text-white" : "bg-zinc-100 dark:bg-ink-800"
             }`}
           >
             ALL
@@ -47,7 +48,7 @@ export default function BoardView({ players }: { players: Player[] }) {
               key={p}
               onClick={() => setPositionFilter(p)}
               className={`rounded-md px-3 py-1.5 text-sm font-medium ${
-                positionFilter === p ? "bg-gridiron-500 text-white" : "bg-zinc-100 dark:bg-zinc-800"
+                positionFilter === p ? "bg-gridiron-500 text-white" : "bg-zinc-100 dark:bg-ink-800"
               }`}
             >
               {p}
@@ -60,7 +61,7 @@ export default function BoardView({ players }: { players: Player[] }) {
         </label>
         <button
           onClick={() => window.print()}
-          className="ml-auto rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          className="ml-auto rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-ink-800"
         >
           🖨️ Print Cheat Sheet
         </button>
@@ -68,7 +69,7 @@ export default function BoardView({ players }: { players: Player[] }) {
 
       <div className="space-y-4">
         {tiers.map(({ key, players: tierPlayers }) => (
-          <div key={key} className={`rounded-lg border-l-4 bg-white p-3 shadow-sm dark:bg-zinc-900 ${tierColor(key === "unranked" ? null : key)}`}>
+          <div key={key} className={`rounded-lg border-l-4 bg-white p-3 shadow-sm dark:bg-ink-900 ${tierColor(key === "unranked" ? null : key)}`}>
             <h3 className="mb-2 font-bold">{key === "unranked" ? "Unranked" : `Tier ${key}`}</h3>
             <div className="flex flex-wrap gap-2">
               {tierPlayers.map((p) => (
@@ -80,8 +81,10 @@ export default function BoardView({ players }: { players: Player[] }) {
                     {p.overallRank ? `${p.overallRank}. ` : ""}
                     {p.name}
                   </div>
-                  <div className="text-xs text-zinc-500">
-                    {p.position} · {p.team ?? "FA"} {p.byeWeek ? `· Bye ${p.byeWeek}` : ""}
+                  <div className="mt-0.5 flex items-center gap-1 text-xs text-zinc-500">
+                    <span>{p.position}</span>
+                    <TeamBadge team={p.team} />
+                    {p.byeWeek ? <span>Bye {p.byeWeek}</span> : null}
                   </div>
                   {p.tags.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-1">

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { TAG_STYLES, tierColor } from "@/lib/constants";
+import TeamBadge from "@/components/TeamBadge";
 import PlayerFormModal from "../PlayerFormModal";
 import NoteForm from "./NoteForm";
 import { deleteNote } from "../actions";
@@ -24,15 +25,17 @@ export default async function PlayerDetailPage({ params }: { params: { id: strin
         ← Back to Players
       </Link>
 
-      <div className={`mb-6 rounded-lg border-l-4 bg-white p-5 shadow-sm dark:bg-zinc-900 ${tierColor(player.tier)}`}>
+      <div className={`mb-6 rounded-lg border-l-4 bg-white p-5 shadow-sm dark:bg-ink-900 ${tierColor(player.tier)}`}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold">
               {player.watchlisted && "⭐ "}
               {player.name}
             </h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              {player.position} · {player.team ?? "FA"} · Bye {player.byeWeek ?? "—"}
+            <p className="flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+              <span>{player.position}</span>
+              <TeamBadge team={player.team} />
+              <span>· Bye {player.byeWeek ?? "—"}</span>
             </p>
           </div>
           <PlayerFormModal player={player} />
@@ -58,7 +61,7 @@ export default async function PlayerDetailPage({ params }: { params: { id: strin
         {player.bio && <p className="mt-3 text-sm text-zinc-700 dark:text-zinc-300">{player.bio}</p>}
 
         {player.draftedBy && (
-          <p className="mt-3 rounded-md bg-zinc-100 px-3 py-2 text-sm dark:bg-zinc-800">
+          <p className="mt-3 rounded-md bg-zinc-100 px-3 py-2 text-sm dark:bg-ink-800">
             Drafted by <strong>{player.draftedBy}</strong>
             {player.draftRound ? ` — Round ${player.draftRound}, Pick ${player.draftPick}` : ""}
           </p>
@@ -73,7 +76,7 @@ export default async function PlayerDetailPage({ params }: { params: { id: strin
           <p className="text-sm text-zinc-500">No notes yet. Log your first scouting note above.</p>
         )}
         {player.notes.map((note) => (
-          <div key={note.id} className="flex items-start justify-between gap-3 rounded-lg border border-zinc-200 p-3 text-sm dark:border-zinc-800">
+          <div key={note.id} className="flex items-start justify-between gap-3 rounded-lg border border-zinc-200 p-3 text-sm dark:border-ink-800">
             <div>
               <span className="mr-2">{kindEmoji[note.kind] ?? "📝"}</span>
               <span className="text-xs uppercase text-zinc-400">{note.kind}</span>
@@ -96,7 +99,7 @@ export default async function PlayerDetailPage({ params }: { params: { id: strin
 
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-md bg-zinc-50 p-2 text-center dark:bg-zinc-800">
+    <div className="rounded-md bg-zinc-50 p-2 text-center dark:bg-ink-800">
       <div className="text-xs text-zinc-500 dark:text-zinc-400">{label}</div>
       <div className="font-semibold">{value}</div>
     </div>

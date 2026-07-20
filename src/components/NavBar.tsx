@@ -15,7 +15,7 @@ export default function NavBar() {
 
   return (
     <>
-      <nav className="sticky top-0 z-40 border-b border-zinc-200 bg-white/90 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/90">
+      <nav className="sticky top-0 z-40 border-b border-zinc-200 bg-white/90 backdrop-blur dark:border-ink-800 dark:bg-ink-950/90">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <Link href="/" className="flex items-center gap-2 font-bold text-lg text-gridiron-600 dark:text-gridiron-100">
             🏈 Draft Hub
@@ -30,7 +30,7 @@ export default function NavBar() {
                   className={`rounded-md px-3 py-2 text-sm font-medium transition ${
                     active
                       ? "bg-gridiron-500 text-white"
-                      : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                      : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-ink-800"
                   }`}
                 >
                   {link.label}
@@ -42,7 +42,7 @@ export default function NavBar() {
       </nav>
 
       {/* mobile bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-zinc-200 bg-white/95 backdrop-blur sm:hidden dark:border-zinc-800 dark:bg-zinc-950/95">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-zinc-200 bg-white/95 backdrop-blur sm:hidden dark:border-ink-800 dark:bg-ink-950/95">
         <div className="flex justify-around">
           {LINKS.map((link) => {
             const active = pathname === link.href;

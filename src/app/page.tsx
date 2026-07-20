@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { TAG_STYLES, tierColor } from "@/lib/constants";
+import TeamBadge from "@/components/TeamBadge";
 
 export const dynamic = "force-dynamic";
 
@@ -62,11 +63,12 @@ export default async function DashboardPage() {
               <Link
                 key={p.id}
                 href={`/players/${p.id}`}
-                className={`block rounded-lg border-l-4 bg-white p-2 text-sm shadow-sm hover:shadow dark:bg-zinc-900 ${tierColor(p.tier)}`}
+                className={`block rounded-lg border-l-4 bg-white p-2 text-sm shadow-sm hover:shadow dark:bg-ink-900 ${tierColor(p.tier)}`}
               >
                 <span className="font-medium">{p.name}</span>
-                <span className="ml-2 text-xs text-zinc-500">
-                  {p.position} · {p.team ?? "FA"}
+                <span className="ml-2 inline-flex items-center gap-1 text-xs text-zinc-500">
+                  {p.position}
+                  <TeamBadge team={p.team} />
                 </span>
                 <div className="mt-1 flex flex-wrap gap-1">
                   {p.tags.map((t) => (
@@ -90,7 +92,7 @@ export default async function DashboardPage() {
               <Link
                 key={note.id}
                 href={`/players/${note.playerId}`}
-                className="block rounded-lg border border-zinc-200 p-2 text-sm hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
+                className="block rounded-lg border border-zinc-200 p-2 text-sm hover:bg-zinc-50 dark:border-ink-800 dark:hover:bg-ink-900"
               >
                 <span className="font-medium">{note.player.name}</span>
                 <span className="ml-2 text-xs uppercase text-zinc-400">{note.kind}</span>
@@ -112,7 +114,7 @@ function StatCard({ label, value, href }: { label: string; value: number; href: 
   return (
     <Link
       href={href}
-      className="rounded-lg border border-zinc-200 bg-white p-3 text-center shadow-sm hover:shadow dark:border-zinc-800 dark:bg-zinc-900"
+      className="rounded-lg border border-zinc-200 bg-white p-3 text-center shadow-sm hover:shadow dark:border-ink-800 dark:bg-ink-900"
     >
       <div className="text-2xl font-bold">{value}</div>
       <div className="text-xs text-zinc-500 dark:text-zinc-400">{label}</div>

@@ -19,12 +19,12 @@ export default function NoteForm({ playerId }: { playerId: string }) {
   }
 
   return (
-    <form ref={formRef} action={handleSubmit} className="mb-6 space-y-2 rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+    <form ref={formRef} action={handleSubmit} className="mb-6 space-y-2 rounded-lg border border-zinc-200 p-3 dark:border-ink-800">
       <input type="hidden" name="playerId" value={playerId} />
       <div className="flex items-center gap-2">
         <select
           name="kind"
-          className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+          className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-ink-800"
         >
           {NOTE_KINDS.map((k) => (
             <option key={k} value={k}>
@@ -39,7 +39,7 @@ export default function NoteForm({ playerId }: { playerId: string }) {
         required
         rows={2}
         placeholder="e.g. 'Trending up after WR1 target share jumped to 28% over last 3 weeks'"
-        className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+        className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-ink-800"
       />
       <button
         type="submit"

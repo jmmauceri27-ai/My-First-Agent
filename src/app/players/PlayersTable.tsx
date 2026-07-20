@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { Player } from "@prisma/client";
 import { POSITIONS, TAG_STYLES, tierColor } from "@/lib/constants";
+import TeamBadge from "@/components/TeamBadge";
 import PlayerFormModal from "./PlayerFormModal";
 import { deletePlayer, toggleWatchlist } from "./actions";
 
@@ -49,12 +50,12 @@ export default function PlayersTable({ players }: { players: Player[] }) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search name, team, tag..."
-          className="min-w-[180px] flex-1 rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+          className="min-w-[180px] flex-1 rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-ink-800"
         />
         <select
           value={positionFilter}
           onChange={(e) => setPositionFilter(e.target.value)}
-          className="rounded-md border border-zinc-300 px-2 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+          className="rounded-md border border-zinc-300 px-2 py-2 text-sm dark:border-zinc-700 dark:bg-ink-800"
         >
           <option value="ALL">All positions</option>
           {POSITIONS.map((p) => (
@@ -66,7 +67,7 @@ export default function PlayersTable({ players }: { players: Player[] }) {
         <select
           value={sortKey}
           onChange={(e) => setSortKey(e.target.value as SortKey)}
-          className="rounded-md border border-zinc-300 px-2 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+          className="rounded-md border border-zinc-300 px-2 py-2 text-sm dark:border-zinc-700 dark:bg-ink-800"
         >
           <option value="overallRank">Sort: Overall Rank</option>
           <option value="positionRank">Sort: Position Rank</option>
@@ -89,9 +90,9 @@ export default function PlayersTable({ players }: { players: Player[] }) {
         Showing {filtered.length} of {players.length} players
       </p>
 
-      <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
+      <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-ink-800">
         <table className="w-full min-w-[900px] text-sm">
-          <thead className="bg-zinc-100 text-left dark:bg-zinc-900">
+          <thead className="bg-zinc-100 text-left dark:bg-ink-900">
             <tr>
               <th className="px-3 py-2">★</th>
               <th className="px-3 py-2">Rank</th>
@@ -110,7 +111,7 @@ export default function PlayersTable({ players }: { players: Player[] }) {
             {filtered.map((p) => (
               <tr
                 key={p.id}
-                className={`border-t border-zinc-200 dark:border-zinc-800 ${
+                className={`border-t border-zinc-200 dark:border-ink-800 ${
                   p.draftedBy ? "opacity-50" : ""
                 }`}
               >
@@ -134,7 +135,9 @@ export default function PlayersTable({ players }: { players: Player[] }) {
                   </Link>
                 </td>
                 <td className="px-3 py-2">{p.position}</td>
-                <td className="px-3 py-2">{p.team ?? "—"}</td>
+                <td className="px-3 py-2">
+                  <TeamBadge team={p.team} />
+                </td>
                 <td className="px-3 py-2">{p.byeWeek ?? "—"}</td>
                 <td className="px-3 py-2">
                   {p.tier ? (

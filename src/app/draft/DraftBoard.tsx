@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Player } from "@prisma/client";
 import { POSITIONS, tierColor } from "@/lib/constants";
+import TeamBadge from "@/components/TeamBadge";
 import { markDrafted, undoDraft, resetDraft } from "./actions";
 
 export default function DraftBoard({ players }: { players: Player[] }) {
@@ -58,7 +59,7 @@ export default function DraftBoard({ players }: { players: Player[] }) {
             <button
               onClick={() => setPositionFilter("ALL")}
               className={`rounded-md px-2 py-1 text-xs font-medium ${
-                positionFilter === "ALL" ? "bg-gridiron-500 text-white" : "bg-zinc-100 dark:bg-zinc-800"
+                positionFilter === "ALL" ? "bg-gridiron-500 text-white" : "bg-zinc-100 dark:bg-ink-800"
               }`}
             >
               ALL
@@ -68,7 +69,7 @@ export default function DraftBoard({ players }: { players: Player[] }) {
                 key={p}
                 onClick={() => setPositionFilter(p)}
                 className={`rounded-md px-2 py-1 text-xs font-medium ${
-                  positionFilter === p ? "bg-gridiron-500 text-white" : "bg-zinc-100 dark:bg-zinc-800"
+                  positionFilter === p ? "bg-gridiron-500 text-white" : "bg-zinc-100 dark:bg-ink-800"
                 }`}
               >
                 {p}
@@ -79,15 +80,16 @@ export default function DraftBoard({ players }: { players: Player[] }) {
 
         <div className="max-h-[70vh] space-y-2 overflow-y-auto">
           {available.map((p) => (
-            <div key={p.id} className={`rounded-lg border-l-4 bg-white p-2 shadow-sm dark:bg-zinc-900 ${tierColor(p.tier)}`}>
+            <div key={p.id} className={`rounded-lg border-l-4 bg-white p-2 shadow-sm dark:bg-ink-900 ${tierColor(p.tier)}`}>
               <div className="flex items-center justify-between gap-2">
                 <div>
                   <span className="font-medium">
                     {p.overallRank ? `${p.overallRank}. ` : ""}
                     {p.name}
                   </span>
-                  <span className="ml-2 text-xs text-zinc-500">
-                    {p.position} · {p.team ?? "FA"}
+                  <span className="ml-2 inline-flex items-center gap-1 text-xs text-zinc-500">
+                    {p.position}
+                    <TeamBadge team={p.team} />
                   </span>
                 </div>
                 {draftingId === p.id ? null : (
@@ -105,19 +107,19 @@ export default function DraftBoard({ players }: { players: Player[] }) {
                   <input
                     name="draftedBy"
                     placeholder="Drafted by (default: Me)"
-                    className="w-36 rounded-md border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800"
+                    className="w-36 rounded-md border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-ink-800"
                   />
                   <input
                     name="draftRound"
                     type="number"
                     placeholder="Rnd"
-                    className="w-16 rounded-md border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800"
+                    className="w-16 rounded-md border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-ink-800"
                   />
                   <input
                     name="draftPick"
                     type="number"
                     placeholder="Pick"
-                    className="w-16 rounded-md border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800"
+                    className="w-16 rounded-md border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-ink-800"
                   />
                   <button
                     type="submit"
@@ -129,7 +131,7 @@ export default function DraftBoard({ players }: { players: Player[] }) {
                   <button
                     type="button"
                     onClick={() => setDraftingId(null)}
-                    className="rounded-md px-2 py-1 text-xs text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    className="rounded-md px-2 py-1 text-xs text-zinc-500 hover:bg-zinc-100 dark:hover:bg-ink-800"
                   >
                     Cancel
                   </button>
@@ -153,12 +155,16 @@ export default function DraftBoard({ players }: { players: Player[] }) {
         </div>
         <div className="max-h-[70vh] space-y-2 overflow-y-auto">
           {drafted.map((p) => (
-            <div key={p.id} className="flex items-center justify-between rounded-lg border border-zinc-200 p-2 text-sm dark:border-zinc-800">
+            <div key={p.id} className="flex items-center justify-between rounded-lg border border-zinc-200 p-2 text-sm dark:border-ink-800">
               <div>
                 <span className="font-medium">{p.name}</span>
-                <span className="ml-2 text-xs text-zinc-500">
-                  {p.position} · {p.draftedBy}
-                  {p.draftRound ? ` · Rnd ${p.draftRound} Pick ${p.draftPick}` : ""}
+                <span className="ml-2 inline-flex items-center gap-1 text-xs text-zinc-500">
+                  {p.position}
+                  <TeamBadge team={p.team} />
+                  <span>
+                    · {p.draftedBy}
+                    {p.draftRound ? ` · Rnd ${p.draftRound} Pick ${p.draftPick}` : ""}
+                  </span>
                 </span>
               </div>
               <form action={handleUndo}>

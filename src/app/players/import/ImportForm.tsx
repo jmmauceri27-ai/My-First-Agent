@@ -23,7 +23,7 @@ export default function ImportForm() {
 
   return (
     <div>
-      <div className="mb-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="mb-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm dark:border-ink-800 dark:bg-ink-900">
         <p className="mb-1 font-medium">Expected columns (header row optional):</p>
         <code className="text-xs">{TEMPLATE.split("\n")[0]}</code>
         <p className="mt-2 text-xs text-zinc-500">
@@ -61,7 +61,7 @@ export default function ImportForm() {
           onChange={(e) => setCsv(e.target.value)}
           rows={14}
           placeholder="Paste your CSV here..."
-          className="w-full rounded-md border border-zinc-300 px-3 py-2 font-mono text-xs dark:border-zinc-700 dark:bg-zinc-800"
+          className="w-full rounded-md border border-zinc-300 px-3 py-2 font-mono text-xs dark:border-zinc-700 dark:bg-ink-800"
         />
         <button
           type="submit"
@@ -73,7 +73,7 @@ export default function ImportForm() {
       </form>
 
       {result && (
-        <div className="mt-4 rounded-lg border border-zinc-200 p-3 text-sm dark:border-zinc-800">
+        <div className="mt-4 rounded-lg border border-zinc-200 p-3 text-sm dark:border-ink-800">
           <p>
             ✅ Created {result.created}, updated {result.updated}.
           </p>

@@ -7,7 +7,17 @@ html {
 }
 
 body {
-  @apply bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100;
+  @apply bg-zinc-50 text-ink-900 dark:bg-ink-950 dark:text-zinc-100;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv11", "ss01";
+}
+
+h1,
+h2,
+h3 {
+  @apply tracking-tight;
 }
 
 @media print {
