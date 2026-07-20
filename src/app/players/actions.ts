@@ -118,16 +118,22 @@ export async function importCsv(formData: FormData): Promise<CsvImportResult> {
   const lines = raw.split(/\r?\n/).filter((l) => l.trim() !== "");
   if (lines.length === 0) return result;
 
-  const header = lines[0].split(",").map((h) => h.trim());
-  const dataLines = /name/i.test(header[0]) ? lines.slice(1) : lines;
-  const columns = /name/i.test(header[0]) ? header : CSV_COLUMNS.slice(0, header.length);
+  // Auto-detect delimiter: pasting from a spreadsheet app (Excel/Sheets/Numbers)
+  // copies cells as tab-separated, not comma-separated.
+  const tabCount = (lines[0].match(/\t/g) ?? []).length;
+  const commaCount = (lines[0].match(/,/g) ?? []).length;
+  const delimiter = tabCount > commaCount ? "\t" : ",";
+
+  const header = lines[0].split(delimiter).map((h) => h.trim());
+  const dataLines = /^name$/i.test(header[0]) ? lines.slice(1) : lines;
+  const columns = /^name$/i.test(header[0]) ? header : CSV_COLUMNS.slice(0, header.length);
 
   type ParsedRow = Prisma.PlayerCreateManyInput;
   const parsed: ParsedRow[] = [];
 
   for (let i = 0; i < dataLines.length; i++) {
     const line = dataLines[i];
-    const cells = line.split(",").map((c) => c.trim());
+    const cells = line.split(delimiter).map((c) => c.trim());
     const row: Record<string, string> = {};
     columns.forEach((col, idx) => {
       row[col] = cells[idx] ?? "";
