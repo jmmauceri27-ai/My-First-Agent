@@ -5,10 +5,12 @@ tags, a running notes/trends timeline, a printable tier board, and a live
 draft-day tracker. Built with Next.js + Postgres so your data syncs across
 every device the moment you save it — no local files to keep in sync.
 
-> This repo also contains an earlier, unrelated project (`agent.py`,
-> `data_tools.py`, `memory_store.py` — a UtilizeCore data analyst CLI). It's
-> left untouched; the draft hub lives entirely under `src/`, `prisma/`, and
-> the config files at the repo root.
+> This repo also contains an earlier, unrelated project (a UtilizeCore data
+> analyst CLI), moved into `python-analyst-agent/` so it doesn't confuse
+> Vercel's build detection — a `requirements.txt` at the repo root makes
+> Vercel try to build the whole repo as a Python app instead of Next.js.
+> The draft hub itself lives under `src/`, `prisma/`, and the config files
+> at the repo root.
 
 ## Features
 
