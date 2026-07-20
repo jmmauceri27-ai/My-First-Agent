@@ -95,7 +95,8 @@ export async function deleteNote(formData: FormData): Promise<void> {
 }
 
 export async function importCsv(formData: FormData): Promise<CsvImportResult> {
-  const raw = String(formData.get("csv") ?? "");
+  const file = formData.get("file");
+  const raw = file instanceof File && file.size > 0 ? await file.text() : String(formData.get("csv") ?? "");
   const result = await importPlayersFromCsv(raw);
 
   revalidatePath("/players");

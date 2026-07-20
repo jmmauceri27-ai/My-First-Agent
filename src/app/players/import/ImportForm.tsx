@@ -41,12 +41,25 @@ export default function ImportForm() {
       </div>
 
       <form action={handleSubmit} className="space-y-3">
+        <div>
+          <label className="block text-sm font-medium">
+            Upload a .csv file (recommended — avoids paste/formatting issues)
+            <input
+              type="file"
+              name="file"
+              accept=".csv,.tsv,.txt,text/csv,text/plain"
+              className="mt-1 block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-gridiron-500 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-gridiron-600"
+            />
+          </label>
+        </div>
+
+        <p className="text-center text-xs text-zinc-400">— or —</p>
+
         <textarea
           name="csv"
           value={csv}
           onChange={(e) => setCsv(e.target.value)}
           rows={14}
-          required
           placeholder="Paste your CSV here..."
           className="w-full rounded-md border border-zinc-300 px-3 py-2 font-mono text-xs dark:border-zinc-700 dark:bg-zinc-800"
         />
