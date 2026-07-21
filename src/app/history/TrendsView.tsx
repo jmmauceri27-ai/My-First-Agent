@@ -51,7 +51,7 @@ function computeOrderStats(items: { groupKey: string; round: number }[]) {
 
 export default function TrendsView({ picks }: { picks: Pick[] }) {
   const [seasonFilter, setSeasonFilter] = useState("ALL");
-  const [statMode, setStatMode] = useState<"total" | "average">("total");
+  const [statMode, setStatMode] = useState<"total" | "average">("average");
 
   const seasons = useMemo(() => {
     const map = new Map<string, string>();
