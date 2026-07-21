@@ -169,37 +169,61 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
     return rows;
   }, [filtered, maxRound]);
 
-  // Dead zones: for each position, contiguous runs of 2+ rounds with zero
-  // picks, sandwiched between rounds where that position WAS drafted (so we
-  // catch "disappears for a stretch" gaps, not just "stopped being drafted").
-  const deadZones = useMemo(() => {
-    const result: { position: string; ranges: { start: number; end: number }[] }[] = [];
+  // Momentum-loss zones: for each position, contiguous rounds (within the
+  // rounds it's actively drafted in) where its average picks-per-season
+  // rate drops well below its own typical rate for that stretch — a
+  // "cooling off" period, not just literal zero picks (which rarely happens
+  // once you're averaging across several 10-12 team drafts).
+  const MOMENTUM_THRESHOLD = 0.5; // below 50% of the position's own average rate
+  const momentumZones = useMemo(() => {
+    const result: {
+      position: string;
+      typicalRate: number;
+      ranges: { start: number; end: number; rate: number }[];
+    }[] = [];
     for (const position of POSITIONS) {
-      const roundsWithPicks = new Set(
-        filtered.filter((p) => p.position === position).map((p) => p.round)
-      );
-      if (roundsWithPicks.size === 0) {
-        result.push({ position, ranges: [] });
+      const rates = roundBreakdown.map((r) => (r.counts.get(position) ?? 0) / seasonCount);
+      const activeIdx = rates.reduce<number[]>((acc, r, i) => (r > 0 ? [...acc, i] : acc), []);
+      if (activeIdx.length === 0) {
+        result.push({ position, typicalRate: 0, ranges: [] });
         continue;
       }
-      const first = Math.min(...roundsWithPicks);
-      const last = Math.max(...roundsWithPicks);
-      const ranges: { start: number; end: number }[] = [];
-      let gapStart: number | null = null;
-      for (let round = first; round <= last; round++) {
-        if (roundsWithPicks.has(round)) {
-          if (gapStart !== null && round - gapStart >= 2) {
-            ranges.push({ start: gapStart, end: round - 1 });
-          }
-          gapStart = null;
-        } else if (gapStart === null) {
-          gapStart = round;
+      const firstIdx = Math.min(...activeIdx);
+      const lastIdx = Math.max(...activeIdx);
+      const windowRates = rates.slice(firstIdx, lastIdx + 1);
+      const typicalRate = windowRates.reduce((s, n) => s + n, 0) / windowRates.length;
+      const threshold = typicalRate * MOMENTUM_THRESHOLD;
+
+      const ranges: { start: number; end: number; rate: number }[] = [];
+      let rangeStartRound: number | null = null;
+      let rangeRates: number[] = [];
+      for (let idx = firstIdx; idx <= lastIdx; idx++) {
+        const round = roundBreakdown[idx].round;
+        const rate = rates[idx];
+        if (rate < threshold) {
+          if (rangeStartRound === null) rangeStartRound = round;
+          rangeRates.push(rate);
+        } else if (rangeStartRound !== null) {
+          ranges.push({
+            start: rangeStartRound,
+            end: round - 1,
+            rate: rangeRates.reduce((s, n) => s + n, 0) / rangeRates.length,
+          });
+          rangeStartRound = null;
+          rangeRates = [];
         }
       }
-      result.push({ position, ranges });
+      if (rangeStartRound !== null) {
+        ranges.push({
+          start: rangeStartRound,
+          end: roundBreakdown[lastIdx].round,
+          rate: rangeRates.reduce((s, n) => s + n, 0) / rangeRates.length,
+        });
+      }
+      result.push({ position, typicalRate, ranges });
     }
     return result;
-  }, [filtered]);
+  }, [roundBreakdown, seasonCount]);
 
   function heatBg(count: number, total: number): string {
     if (!count || !total) return "transparent";
@@ -398,23 +422,27 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
       <div className="mt-6">
         <h3 className="mb-1 font-bold">Position Dead Zones</h3>
         <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-          Stretches of rounds where a position historically goes untouched, between rounds where it
-          was still being drafted.
+          Round ranges where a position's draft rate drops to less than half its own typical pace —
+          the stretch where it usually cools off between runs.
         </p>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {deadZones.map(({ position, ranges }) => (
+          {momentumZones.map(({ position, ranges, typicalRate }) => (
             <div
               key={position}
               className="rounded-lg border border-zinc-200 bg-white/90 p-3 text-sm backdrop-blur-md dark:border-ink-800 dark:bg-ink-900/70"
             >
               <div className="font-semibold">{position}</div>
               {ranges.length === 0 ? (
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">No dead zone detected.</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">No cold stretch detected.</p>
               ) : (
                 <ul className="mt-1 space-y-0.5 text-xs text-zinc-600 dark:text-zinc-300">
                   {ranges.map((r, i) => (
                     <li key={i}>
-                      Rounds {r.start}–{r.end}
+                      Rounds {r.start}
+                      {r.end > r.start ? `–${r.end}` : ""}{" "}
+                      <span className="text-zinc-400">
+                        ({r.rate.toFixed(2)}/season vs {typicalRate.toFixed(2)} typical)
+                      </span>
                     </li>
                   ))}
                 </ul>
