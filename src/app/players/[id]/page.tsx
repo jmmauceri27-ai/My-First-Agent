@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import type { GameLog } from "@prisma/client";
 import { TAG_STYLES, tierColor } from "@/lib/constants";
 import TeamBadge from "@/components/TeamBadge";
 import PlayerFormModal from "../PlayerFormModal";
 import NoteForm from "./NoteForm";
+import GameLogTable from "./GameLogTable";
 import { deleteNote } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -20,20 +20,6 @@ export default async function PlayerDetailPage({ params }: { params: { id: strin
   });
 
   if (!player) notFound();
-
-  function statLine(log: GameLog): string {
-    const parts: string[] = [];
-    if (log.passYards || log.passTDs || log.passInt) {
-      parts.push(`${log.passYards ?? 0} pass yds, ${log.passTDs ?? 0} TD, ${log.passInt ?? 0} INT`);
-    }
-    if (log.rushYards || log.rushTDs) {
-      parts.push(`${log.rushYards ?? 0} rush yds, ${log.rushTDs ?? 0} TD`);
-    }
-    if (log.receptions || log.recYards || log.recTDs) {
-      parts.push(`${log.receptions ?? 0} rec, ${log.recYards ?? 0} yds, ${log.recTDs ?? 0} TD`);
-    }
-    return parts.join(" | ") || "—";
-  }
 
   const kindEmoji: Record<string, string> = { note: "📝", trend: "📈", news: "📰", injury: "🩹" };
 
@@ -95,31 +81,10 @@ export default async function PlayerDetailPage({ params }: { params: { id: strin
       </div>
 
       {player.gameLogs.length > 0 && (
-        <>
+        <div className="mb-6">
           <h2 className="mb-2 text-lg font-bold">Game Log</h2>
-          <div className="mb-6 overflow-x-auto rounded-lg border border-zinc-200 bg-white/90 backdrop-blur-md dark:border-ink-800 dark:bg-ink-900/70">
-            <table className="w-full text-sm">
-              <thead className="bg-zinc-100 text-left dark:bg-ink-900/60">
-                <tr>
-                  <th className="px-3 py-2">Wk</th>
-                  <th className="px-3 py-2">Opp</th>
-                  <th className="px-3 py-2">Stat Line</th>
-                  <th className="px-3 py-2">PPR</th>
-                </tr>
-              </thead>
-              <tbody>
-                {player.gameLogs.map((log) => (
-                  <tr key={log.id} className="border-t border-zinc-200 dark:border-ink-800">
-                    <td className="px-3 py-2">{log.week}</td>
-                    <td className="px-3 py-2">{log.opponent ?? "—"}</td>
-                    <td className="px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300">{statLine(log)}</td>
-                    <td className="px-3 py-2 font-medium">{log.pointsPPR.toFixed(1)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
+          <GameLogTable position={player.position} byeWeek={player.byeWeek} logs={player.gameLogs} />
+        </div>
       )}
 
       <h2 className="mb-2 text-lg font-bold">Notes &amp; Trends Timeline</h2>

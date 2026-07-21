@@ -47,23 +47,29 @@ model Player {
 
 // One week's box score for a player.
 model GameLog {
-  id         String   @id @default(cuid())
-  playerId   String
-  player     Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  season     Int
-  week       Int
-  team       String?
-  opponent   String?
-  passYards  Int?
-  passTDs    Int?
-  passInt    Int?
-  rushYards  Int?
-  rushTDs    Int?
-  receptions Int?
-  recYards   Int?
-  recTDs     Int?
-  pointsPPR  Float
-  createdAt  DateTime @default(now())
+  id              String   @id @default(cuid())
+  playerId        String
+  player          Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  season          Int
+  week            Int
+  team            String?
+  opponent        String?
+  isHome          Boolean? // null = unknown (e.g. bye week placeholder)
+  passCompletions Int?
+  passAttempts    Int?
+  passYards       Int?
+  passTDs         Int?
+  passInt         Int?
+  carries         Int?
+  rushYards       Int?
+  rushTDs         Int?
+  targets         Int?
+  receptions      Int?
+  recYards        Int?
+  recTDs          Int?
+  miscTDs         Int? // return TDs, fumble recovery TDs, etc.
+  pointsPPR       Float
+  createdAt       DateTime @default(now())
 
   @@unique([playerId, season, week])
   @@index([playerId])

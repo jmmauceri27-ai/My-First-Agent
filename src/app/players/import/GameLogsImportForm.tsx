@@ -22,7 +22,9 @@ export default function GameLogsImportForm() {
       <h2 className="mb-1 text-lg font-bold">Import Game Logs</h2>
       <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">
         Upload a weekly stats file (columns:{" "}
-        <code>season,week,name,position,team,opponent,passYards,passTDs,passInt,rushYards,rushTDs,receptions,recYards,recTDs,pointsPPR</code>
+        <code>
+          season,week,name,position,team,opponent,isHome,passCompletions,passAttempts,passYards,passTDs,passInt,carries,rushYards,rushTDs,targets,receptions,recYards,recTDs,miscTDs,pointsPPR
+        </code>
         ) to see each player's week-by-week box scores on their detail page. Only logs games for players already
         on your board.
       </p>
