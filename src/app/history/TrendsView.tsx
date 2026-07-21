@@ -102,44 +102,6 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
     return rows.sort((a, b) => b.total - a.total);
   }, [filtered]);
 
-  const positionStats = useMemo(() => {
-    // Group by manager+season (not just season!) so each team's own RB1,
-    // RB2, ... is its own sequence — otherwise 12 teams' RBs in one season
-    // get treated as one 40+ pick sequence instead of twelve short ones.
-    const byPosition = new Map<string, { groupKey: string; round: number }[]>();
-    for (const p of filtered) {
-      if (!byPosition.has(p.position)) byPosition.set(p.position, []);
-      byPosition.get(p.position)!.push({ groupKey: `${p.manager}|${p.seasonId}`, round: p.round });
-    }
-    const rows: { position: string; order: number; count: number; avgRound: number; minRound: number; maxRound: number }[] = [];
-    for (const [position, items] of byPosition.entries()) {
-      const byGroupRounds = new Map<string, number[]>();
-      for (const it of items) {
-        if (!byGroupRounds.has(it.groupKey)) byGroupRounds.set(it.groupKey, []);
-        byGroupRounds.get(it.groupKey)!.push(it.round);
-      }
-      const byOrder = new Map<number, number[]>();
-      for (const rounds of byGroupRounds.values()) {
-        [...rounds].sort((a, b) => a - b).forEach((round, idx) => {
-          const order = idx + 1;
-          if (!byOrder.has(order)) byOrder.set(order, []);
-          byOrder.get(order)!.push(round);
-        });
-      }
-      for (const [order, rounds] of byOrder.entries()) {
-        rows.push({
-          position,
-          order,
-          count: rounds.length,
-          avgRound: rounds.reduce((s, n) => s + n, 0) / rounds.length,
-          minRound: Math.min(...rounds),
-          maxRound: Math.max(...rounds),
-        });
-      }
-    }
-    return rows.sort((a, b) => a.avgRound - b.avgRound);
-  }, [filtered]);
-
   const maxRound = useMemo(
     () => filtered.reduce((max, p) => Math.max(max, p.round), 0),
     [filtered]
@@ -263,110 +225,66 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div>
-          <h3 className="mb-1 font-bold">Position Draft Timing</h3>
-          <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-            What round each position typically comes off the board — broken out by whether it's the
-            1st, 2nd, 3rd... of that position taken in a given season, since a manager's 2nd RB goes
-            much later than their 1st.
-          </p>
-          <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white/90 backdrop-blur-md dark:border-ink-800 dark:bg-ink-900/70">
-            <table className="w-full text-sm">
-              <thead className="bg-zinc-100 text-left dark:bg-ink-900/60">
-                <tr>
-                  <th className="px-3 py-2">Pos</th>
-                  <th className="px-3 py-2">Pick #</th>
-                  <th className="px-3 py-2">{effectiveStatMode === "average" ? "Avg/Season" : "Picks"}</th>
-                  <th className="px-3 py-2">Avg Rnd</th>
-                  <th className="px-3 py-2">Earliest</th>
-                  <th className="px-3 py-2">Latest</th>
-                </tr>
-              </thead>
-              <tbody>
-                {positionStats.map((s) => (
-                  <tr key={`${s.position}-${s.order}`} className="border-t border-zinc-200 dark:border-ink-800">
-                    <td className="px-3 py-2 font-medium">{s.position}</td>
-                    <td className="px-3 py-2">{s.order === 1 ? "1st" : s.order === 2 ? "2nd" : s.order === 3 ? "3rd" : `${s.order}th`}</td>
-                    <td className="px-3 py-2">{formatCount(s.count, seasonCount)}</td>
-                    <td className="px-3 py-2">{s.avgRound.toFixed(1)}</td>
-                    <td className="px-3 py-2">R{s.minRound}</td>
-                    <td className="px-3 py-2">R{s.maxRound}</td>
-                  </tr>
+      <div>
+        <h3 className="mb-1 font-bold">Manager Tendencies</h3>
+        <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+          Each manager's typical round for their 1st QB/TE/K/D-ST and their top 3 RBs/WRs.
+        </p>
+        <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white/90 backdrop-blur-md dark:border-ink-800 dark:bg-ink-900/70">
+          <table className="w-full text-sm">
+            <thead className="bg-zinc-100 text-left dark:bg-ink-900/60">
+              <tr>
+                <th className="px-3 py-2">Manager</th>
+                {POSITIONS.map((pos) => (
+                  <th key={pos} className="px-2 py-2 text-center">
+                    {pos}
+                  </th>
                 ))}
-                {positionStats.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-3 py-4 text-center text-zinc-500">
-                      No picks for this filter.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div>
-          <h3 className="mb-1 font-bold">Manager Tendencies</h3>
-          <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-            Each manager's typical round for their 1st QB/TE/K/D-ST and their top 3 RBs/WRs.
-          </p>
-          <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white/90 backdrop-blur-md dark:border-ink-800 dark:bg-ink-900/70">
-            <table className="w-full text-sm">
-              <thead className="bg-zinc-100 text-left dark:bg-ink-900/60">
-                <tr>
-                  <th className="px-3 py-2">Manager</th>
-                  {POSITIONS.map((pos) => (
-                    <th key={pos} className="px-2 py-2 text-center">
-                      {pos}
-                    </th>
-                  ))}
-                  <th className="px-3 py-2">Favorite</th>
+                <th className="px-3 py-2">Favorite</th>
+              </tr>
+            </thead>
+            <tbody>
+              {managerRows.map((row) => (
+                <tr key={row.manager} className="border-t border-zinc-200 dark:border-ink-800">
+                  <td className="px-3 py-2 align-top font-medium">{row.manager}</td>
+                  {POSITIONS.map((pos) => {
+                    const cap = MANAGER_ORDER_CAP[pos] ?? 1;
+                    const orderStats = (row.stats.get(pos) ?? []).filter((s) => s.order <= cap);
+                    return (
+                      <td key={pos} className="px-2 py-2 text-center align-top">
+                        {orderStats.length > 0 ? (
+                          <div className="space-y-0.5">
+                            {orderStats.map((s) => (
+                              <div key={s.order} className="whitespace-nowrap text-xs">
+                                {cap > 1 && (
+                                  <span className="text-zinc-400">
+                                    {s.order === 1 ? "1st" : s.order === 2 ? "2nd" : s.order === 3 ? "3rd" : `${s.order}th`}
+                                    :{" "}
+                                  </span>
+                                )}
+                                R{s.avgRound.toFixed(1)}
+                                <span className="text-zinc-400"> ({s.count}x)</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                    );
+                  })}
+                  <td className="px-3 py-2 font-semibold">{row.favorite || "—"}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {managerRows.map((row) => (
-                  <tr key={row.manager} className="border-t border-zinc-200 dark:border-ink-800">
-                    <td className="px-3 py-2 align-top font-medium">{row.manager}</td>
-                    {POSITIONS.map((pos) => {
-                      const cap = MANAGER_ORDER_CAP[pos] ?? 1;
-                      const orderStats = (row.stats.get(pos) ?? []).filter((s) => s.order <= cap);
-                      return (
-                        <td key={pos} className="px-2 py-2 text-center align-top">
-                          {orderStats.length > 0 ? (
-                            <div className="space-y-0.5">
-                              {orderStats.map((s) => (
-                                <div key={s.order} className="whitespace-nowrap text-xs">
-                                  {cap > 1 && (
-                                    <span className="text-zinc-400">
-                                      {s.order === 1 ? "1st" : s.order === 2 ? "2nd" : s.order === 3 ? "3rd" : `${s.order}th`}
-                                      :{" "}
-                                    </span>
-                                  )}
-                                  R{s.avgRound.toFixed(1)}
-                                  <span className="text-zinc-400"> ({s.count}x)</span>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            "—"
-                          )}
-                        </td>
-                      );
-                    })}
-                    <td className="px-3 py-2 font-semibold">{row.favorite || "—"}</td>
-                  </tr>
-                ))}
-                {managerRows.length === 0 && (
-                  <tr>
-                    <td colSpan={POSITIONS.length + 2} className="px-3 py-4 text-center text-zinc-500">
-                      No picks for this filter.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+              ))}
+              {managerRows.length === 0 && (
+                <tr>
+                  <td colSpan={POSITIONS.length + 2} className="px-3 py-4 text-center text-zinc-500">
+                    No picks for this filter.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
