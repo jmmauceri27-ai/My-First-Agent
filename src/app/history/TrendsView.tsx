@@ -67,6 +67,73 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
       .sort((a, b) => a.avgRound - b.avgRound);
   }, [filtered]);
 
+  const maxRound = useMemo(
+    () => filtered.reduce((max, p) => Math.max(max, p.round), 0),
+    [filtered]
+  );
+
+  // Round x position pick counts, plus each round's most-frequently-taken position.
+  const roundBreakdown = useMemo(() => {
+    const rows: { round: number; counts: Map<string, number>; total: number; plurality: string }[] = [];
+    for (let round = 1; round <= maxRound; round++) {
+      const counts = new Map<string, number>();
+      let total = 0;
+      for (const p of filtered) {
+        if (p.round !== round) continue;
+        counts.set(p.position, (counts.get(p.position) ?? 0) + 1);
+        total++;
+      }
+      let plurality = "";
+      let pluralityCount = 0;
+      for (const [pos, count] of counts.entries()) {
+        if (count > pluralityCount) {
+          plurality = pos;
+          pluralityCount = count;
+        }
+      }
+      rows.push({ round, counts, total, plurality });
+    }
+    return rows;
+  }, [filtered, maxRound]);
+
+  // Dead zones: for each position, contiguous runs of 2+ rounds with zero
+  // picks, sandwiched between rounds where that position WAS drafted (so we
+  // catch "disappears for a stretch" gaps, not just "stopped being drafted").
+  const deadZones = useMemo(() => {
+    const result: { position: string; ranges: { start: number; end: number }[] }[] = [];
+    for (const position of POSITIONS) {
+      const roundsWithPicks = new Set(
+        filtered.filter((p) => p.position === position).map((p) => p.round)
+      );
+      if (roundsWithPicks.size === 0) {
+        result.push({ position, ranges: [] });
+        continue;
+      }
+      const first = Math.min(...roundsWithPicks);
+      const last = Math.max(...roundsWithPicks);
+      const ranges: { start: number; end: number }[] = [];
+      let gapStart: number | null = null;
+      for (let round = first; round <= last; round++) {
+        if (roundsWithPicks.has(round)) {
+          if (gapStart !== null && round - gapStart >= 2) {
+            ranges.push({ start: gapStart, end: round - 1 });
+          }
+          gapStart = null;
+        } else if (gapStart === null) {
+          gapStart = round;
+        }
+      }
+      result.push({ position, ranges });
+    }
+    return result;
+  }, [filtered]);
+
+  function heatBg(count: number, total: number): string {
+    if (!count || !total) return "transparent";
+    const intensity = Math.min(count / total, 1);
+    return `rgba(34, 197, 94, ${(intensity * 0.55).toFixed(2)})`;
+  }
+
   return (
     <div>
       <div className="mb-4">
@@ -163,6 +230,84 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
               </tbody>
             </table>
           </div>
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <h3 className="mb-1 font-bold">Round-by-Round Position Breakdown</h3>
+        <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+          How many of each position got picked in every round. Darker cells = a bigger share of that
+          round; the bolded cell is that round's most common position.
+        </p>
+        <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white/90 backdrop-blur-md dark:border-ink-800 dark:bg-ink-900/70">
+          <table className="w-full text-sm">
+            <thead className="bg-zinc-100 text-left dark:bg-ink-900/60">
+              <tr>
+                <th className="px-3 py-2">Rnd</th>
+                {POSITIONS.map((pos) => (
+                  <th key={pos} className="px-2 py-2 text-center">
+                    {pos}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {roundBreakdown.map((row) => (
+                <tr key={row.round} className="border-t border-zinc-200 dark:border-ink-800">
+                  <td className="px-3 py-2 font-medium">{row.round}</td>
+                  {POSITIONS.map((pos) => {
+                    const count = row.counts.get(pos) ?? 0;
+                    const isPlurality = pos === row.plurality && count > 0;
+                    return (
+                      <td
+                        key={pos}
+                        className={`px-2 py-2 text-center ${isPlurality ? "font-bold" : ""}`}
+                        style={{ backgroundColor: heatBg(count, row.total) }}
+                      >
+                        {count || "—"}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+              {roundBreakdown.length === 0 && (
+                <tr>
+                  <td colSpan={POSITIONS.length + 1} className="px-3 py-4 text-center text-zinc-500">
+                    No picks for this filter.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <h3 className="mb-1 font-bold">Position Dead Zones</h3>
+        <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+          Stretches of rounds where a position historically goes untouched, between rounds where it
+          was still being drafted.
+        </p>
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {deadZones.map(({ position, ranges }) => (
+            <div
+              key={position}
+              className="rounded-lg border border-zinc-200 bg-white/90 p-3 text-sm backdrop-blur-md dark:border-ink-800 dark:bg-ink-900/70"
+            >
+              <div className="font-semibold">{position}</div>
+              {ranges.length === 0 ? (
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">No dead zone detected.</p>
+              ) : (
+                <ul className="mt-1 space-y-0.5 text-xs text-zinc-600 dark:text-zinc-300">
+                  {ranges.map((r, i) => (
+                    <li key={i}>
+                      Rounds {r.start}–{r.end}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
         </div>
       </div>
     </div>
