@@ -14,6 +14,37 @@ type Pick = {
   seasonLabel: string;
 };
 
+// Given a set of same-position picks, figures out each pick's draft order
+// within its own group (1st taken, 2nd taken, ...) and aggregates by that
+// order across groups — so a manager's RB1 and RB2 don't get blended into
+// one misleading average round. `groupKey` should scope each independent
+// sequence: a manager's own picks within one season for per-manager stats,
+// or "manager|season" for league-wide stats (so 12 teams' RBs in one
+// season don't get treated as one giant 61-pick sequence).
+function computeOrderStats(items: { groupKey: string; round: number }[]) {
+  const byGroup = new Map<string, number[]>();
+  for (const it of items) {
+    if (!byGroup.has(it.groupKey)) byGroup.set(it.groupKey, []);
+    byGroup.get(it.groupKey)!.push(it.round);
+  }
+  const byOrder = new Map<number, number[]>();
+  for (const rounds of byGroup.values()) {
+    const sorted = [...rounds].sort((a, b) => a - b);
+    sorted.forEach((round, idx) => {
+      const order = idx + 1;
+      if (!byOrder.has(order)) byOrder.set(order, []);
+      byOrder.get(order)!.push(round);
+    });
+  }
+  return Array.from(byOrder.entries())
+    .map(([order, rounds]) => ({
+      order,
+      avgRound: rounds.reduce((s, n) => s + n, 0) / rounds.length,
+      count: rounds.length,
+    }))
+    .sort((a, b) => a.order - b.order);
+}
+
 export default function TrendsView({ picks }: { picks: Pick[] }) {
   const [seasonFilter, setSeasonFilter] = useState("ALL");
   const [statMode, setStatMode] = useState<"total" | "average">("total");
@@ -39,28 +70,27 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
   }
 
   const managerRows = useMemo(() => {
-    const matrix = new Map<string, Map<string, number[]>>(); // manager -> position -> rounds drafted
+    const matrix = new Map<string, Map<string, { groupKey: string; round: number }[]>>();
     const managerSeasons = new Map<string, Set<string>>();
     for (const p of filtered) {
       if (!matrix.has(p.manager)) matrix.set(p.manager, new Map());
       if (!managerSeasons.has(p.manager)) managerSeasons.set(p.manager, new Set());
       const posMap = matrix.get(p.manager)!;
       if (!posMap.has(p.position)) posMap.set(p.position, []);
-      posMap.get(p.position)!.push(p.round);
+      posMap.get(p.position)!.push({ groupKey: p.seasonId, round: p.round });
       managerSeasons.get(p.manager)!.add(p.seasonId);
     }
     const rows = Array.from(matrix.entries()).map(([manager, posMap]) => {
-      const stats = new Map<string, { avgRound: number; count: number }>();
+      const stats = new Map<string, { order: number; avgRound: number; count: number }[]>();
       let totalPicks = 0;
       let favorite = "";
       let favoriteCount = 0;
-      for (const [pos, rounds] of posMap.entries()) {
-        const count = rounds.length;
-        totalPicks += count;
-        stats.set(pos, { avgRound: rounds.reduce((s, n) => s + n, 0) / count, count });
-        if (count > favoriteCount) {
+      for (const [pos, items] of posMap.entries()) {
+        totalPicks += items.length;
+        stats.set(pos, computeOrderStats(items));
+        if (items.length > favoriteCount) {
           favorite = pos;
-          favoriteCount = count;
+          favoriteCount = items.length;
         }
       }
       return { manager, stats, total: totalPicks, favorite, seasonsPlayed: managerSeasons.get(manager)?.size || 1 };
@@ -69,20 +99,41 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
   }, [filtered]);
 
   const positionStats = useMemo(() => {
-    const byPosition = new Map<string, number[]>();
+    // Group by manager+season (not just season!) so each team's own RB1,
+    // RB2, ... is its own sequence — otherwise 12 teams' RBs in one season
+    // get treated as one 40+ pick sequence instead of twelve short ones.
+    const byPosition = new Map<string, { groupKey: string; round: number }[]>();
     for (const p of filtered) {
       if (!byPosition.has(p.position)) byPosition.set(p.position, []);
-      byPosition.get(p.position)!.push(p.round);
+      byPosition.get(p.position)!.push({ groupKey: `${p.manager}|${p.seasonId}`, round: p.round });
     }
-    return Array.from(byPosition.entries())
-      .map(([position, rounds]) => ({
-        position,
-        count: rounds.length,
-        avgRound: rounds.reduce((s, n) => s + n, 0) / rounds.length,
-        minRound: Math.min(...rounds),
-        maxRound: Math.max(...rounds),
-      }))
-      .sort((a, b) => a.avgRound - b.avgRound);
+    const rows: { position: string; order: number; count: number; avgRound: number; minRound: number; maxRound: number }[] = [];
+    for (const [position, items] of byPosition.entries()) {
+      const byGroupRounds = new Map<string, number[]>();
+      for (const it of items) {
+        if (!byGroupRounds.has(it.groupKey)) byGroupRounds.set(it.groupKey, []);
+        byGroupRounds.get(it.groupKey)!.push(it.round);
+      }
+      const byOrder = new Map<number, number[]>();
+      for (const rounds of byGroupRounds.values()) {
+        [...rounds].sort((a, b) => a - b).forEach((round, idx) => {
+          const order = idx + 1;
+          if (!byOrder.has(order)) byOrder.set(order, []);
+          byOrder.get(order)!.push(round);
+        });
+      }
+      for (const [order, rounds] of byOrder.entries()) {
+        rows.push({
+          position,
+          order,
+          count: rounds.length,
+          avgRound: rounds.reduce((s, n) => s + n, 0) / rounds.length,
+          minRound: Math.min(...rounds),
+          maxRound: Math.max(...rounds),
+        });
+      }
+    }
+    return rows.sort((a, b) => a.avgRound - b.avgRound);
   }, [filtered]);
 
   const maxRound = useMemo(
@@ -188,13 +239,16 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
         <div>
           <h3 className="mb-1 font-bold">Position Draft Timing</h3>
           <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-            What round each position typically comes off the board.
+            What round each position typically comes off the board — broken out by whether it's the
+            1st, 2nd, 3rd... of that position taken in a given season, since a manager's 2nd RB goes
+            much later than their 1st.
           </p>
           <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white/90 backdrop-blur-md dark:border-ink-800 dark:bg-ink-900/70">
             <table className="w-full text-sm">
               <thead className="bg-zinc-100 text-left dark:bg-ink-900/60">
                 <tr>
                   <th className="px-3 py-2">Pos</th>
+                  <th className="px-3 py-2">Pick #</th>
                   <th className="px-3 py-2">{effectiveStatMode === "average" ? "Avg/Season" : "Picks"}</th>
                   <th className="px-3 py-2">Avg Rnd</th>
                   <th className="px-3 py-2">Earliest</th>
@@ -203,8 +257,9 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
               </thead>
               <tbody>
                 {positionStats.map((s) => (
-                  <tr key={s.position} className="border-t border-zinc-200 dark:border-ink-800">
+                  <tr key={`${s.position}-${s.order}`} className="border-t border-zinc-200 dark:border-ink-800">
                     <td className="px-3 py-2 font-medium">{s.position}</td>
+                    <td className="px-3 py-2">{s.order === 1 ? "1st" : s.order === 2 ? "2nd" : s.order === 3 ? "3rd" : `${s.order}th`}</td>
                     <td className="px-3 py-2">{formatCount(s.count, seasonCount)}</td>
                     <td className="px-3 py-2">{s.avgRound.toFixed(1)}</td>
                     <td className="px-3 py-2">R{s.minRound}</td>
@@ -213,7 +268,7 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
                 ))}
                 {positionStats.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-3 py-4 text-center text-zinc-500">
+                    <td colSpan={6} className="px-3 py-4 text-center text-zinc-500">
                       No picks for this filter.
                     </td>
                   </tr>
@@ -226,8 +281,8 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
         <div>
           <h3 className="mb-1 font-bold">Manager Tendencies</h3>
           <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-            The round each manager typically drafts each position in, with how many times they've
-            taken it in parentheses.
+            Each manager's typical round for their 1st, 2nd, 3rd... of each position, since blending
+            a manager's RB1 and RB2 into one average hides the real pattern.
           </p>
           <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white/90 backdrop-blur-md dark:border-ink-800 dark:bg-ink-900/70">
             <table className="w-full text-sm">
@@ -245,16 +300,24 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
               <tbody>
                 {managerRows.map((row) => (
                   <tr key={row.manager} className="border-t border-zinc-200 dark:border-ink-800">
-                    <td className="px-3 py-2 font-medium">{row.manager}</td>
+                    <td className="px-3 py-2 align-top font-medium">{row.manager}</td>
                     {POSITIONS.map((pos) => {
-                      const stat = row.stats.get(pos);
+                      const orderStats = row.stats.get(pos);
                       return (
-                        <td key={pos} className="px-2 py-2 text-center">
-                          {stat ? (
-                            <>
-                              <div>R{stat.avgRound.toFixed(1)}</div>
-                              <div className="text-[10px] text-zinc-400">{stat.count}x</div>
-                            </>
+                        <td key={pos} className="px-2 py-2 text-center align-top">
+                          {orderStats && orderStats.length > 0 ? (
+                            <div className="space-y-0.5">
+                              {orderStats.map((s) => (
+                                <div key={s.order} className="whitespace-nowrap text-xs">
+                                  <span className="text-zinc-400">
+                                    {s.order === 1 ? "1st" : s.order === 2 ? "2nd" : s.order === 3 ? "3rd" : `${s.order}th`}
+                                    :{" "}
+                                  </span>
+                                  R{s.avgRound.toFixed(1)}
+                                  <span className="text-zinc-400"> ({s.count}x)</span>
+                                </div>
+                              ))}
+                            </div>
                           ) : (
                             "—"
                           )}
