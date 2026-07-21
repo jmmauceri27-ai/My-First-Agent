@@ -10,6 +10,14 @@ function num(n: number | null): string {
   return n == null ? "—" : String(n);
 }
 
+function sum(logs: GameLog[], field: keyof GameLog): number {
+  return logs.reduce((s, l) => s + ((l[field] as number | null) ?? 0), 0);
+}
+
+function perGame(total: number, games: number, decimals = 1): string {
+  return games ? (total / games).toFixed(decimals) : "—";
+}
+
 export default function GameLogTable({
   position,
   byeWeek,
@@ -43,6 +51,24 @@ export default function GameLogTable({
     (showRushing ? 4 : 0) +
     (showReceiving ? 3 + (showTargets ? 1 : 0) + (showReceivingAvg ? 1 : 0) : 0) +
     2; // misc td, fpts
+
+  const games = logs.length;
+  const totals = {
+    passCompletions: sum(logs, "passCompletions"),
+    passAttempts: sum(logs, "passAttempts"),
+    passYards: sum(logs, "passYards"),
+    passTDs: sum(logs, "passTDs"),
+    passInt: sum(logs, "passInt"),
+    carries: sum(logs, "carries"),
+    rushYards: sum(logs, "rushYards"),
+    rushTDs: sum(logs, "rushTDs"),
+    receptions: sum(logs, "receptions"),
+    targets: sum(logs, "targets"),
+    recYards: sum(logs, "recYards"),
+    recTDs: sum(logs, "recTDs"),
+    miscTDs: sum(logs, "miscTDs"),
+    pointsPPR: logs.reduce((s, l) => s + l.pointsPPR, 0),
+  };
 
   return (
     <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white/90 backdrop-blur-md dark:border-ink-800 dark:bg-ink-900/70">
@@ -137,6 +163,76 @@ export default function GameLogTable({
             )
           )}
         </tbody>
+        <tfoot>
+          <tr className="border-t-2 border-zinc-300 bg-zinc-50 font-semibold dark:border-ink-700 dark:bg-ink-900/60">
+            <td className="px-2 py-2" colSpan={2}>
+              Total ({games} gm)
+            </td>
+            {showPassing && (
+              <>
+                <td className="px-2 py-2 text-center">{totals.passCompletions}</td>
+                <td className="px-2 py-2 text-center">{totals.passAttempts}</td>
+                <td className="px-2 py-2 text-center">{totals.passYards}</td>
+                <td className="px-2 py-2 text-center">{totals.passTDs}</td>
+                <td className="px-2 py-2 text-center">{totals.passInt}</td>
+              </>
+            )}
+            {showRushing && (
+              <>
+                <td className="px-2 py-2 text-center">{totals.carries}</td>
+                <td className="px-2 py-2 text-center">{totals.rushYards}</td>
+                <td className="px-2 py-2 text-center">{perGame(totals.rushYards, totals.carries)}</td>
+                <td className="px-2 py-2 text-center">{totals.rushTDs}</td>
+              </>
+            )}
+            {showReceiving && (
+              <>
+                <td className="px-2 py-2 text-center">{totals.receptions}</td>
+                {showTargets && <td className="px-2 py-2 text-center">{totals.targets}</td>}
+                <td className="px-2 py-2 text-center">{totals.recYards}</td>
+                {showReceivingAvg && (
+                  <td className="px-2 py-2 text-center">{perGame(totals.recYards, totals.receptions)}</td>
+                )}
+                <td className="px-2 py-2 text-center">{totals.recTDs}</td>
+              </>
+            )}
+            <td className="px-2 py-2 text-center">{totals.miscTDs}</td>
+            <td className="px-2 py-2 text-center">{totals.pointsPPR.toFixed(1)}</td>
+          </tr>
+          <tr className="border-t border-zinc-200 text-zinc-500 dark:border-ink-800 dark:text-zinc-400">
+            <td className="px-2 py-2 text-xs" colSpan={2}>
+              Avg / game
+            </td>
+            {showPassing && (
+              <>
+                <td className="px-2 py-2 text-center text-xs">{perGame(totals.passCompletions, games)}</td>
+                <td className="px-2 py-2 text-center text-xs">{perGame(totals.passAttempts, games)}</td>
+                <td className="px-2 py-2 text-center text-xs">{perGame(totals.passYards, games)}</td>
+                <td className="px-2 py-2 text-center text-xs">{perGame(totals.passTDs, games)}</td>
+                <td className="px-2 py-2 text-center text-xs">{perGame(totals.passInt, games)}</td>
+              </>
+            )}
+            {showRushing && (
+              <>
+                <td className="px-2 py-2 text-center text-xs">{perGame(totals.carries, games)}</td>
+                <td className="px-2 py-2 text-center text-xs">{perGame(totals.rushYards, games)}</td>
+                <td className="px-2 py-2 text-center text-xs">—</td>
+                <td className="px-2 py-2 text-center text-xs">{perGame(totals.rushTDs, games)}</td>
+              </>
+            )}
+            {showReceiving && (
+              <>
+                <td className="px-2 py-2 text-center text-xs">{perGame(totals.receptions, games)}</td>
+                {showTargets && <td className="px-2 py-2 text-center text-xs">{perGame(totals.targets, games)}</td>}
+                <td className="px-2 py-2 text-center text-xs">{perGame(totals.recYards, games)}</td>
+                {showReceivingAvg && <td className="px-2 py-2 text-center text-xs">—</td>}
+                <td className="px-2 py-2 text-center text-xs">{perGame(totals.recTDs, games)}</td>
+              </>
+            )}
+            <td className="px-2 py-2 text-center text-xs">{perGame(totals.miscTDs, games)}</td>
+            <td className="px-2 py-2 text-center text-xs">{perGame(totals.pointsPPR, games)}</td>
+          </tr>
+        </tfoot>
       </table>
     </div>
   );
