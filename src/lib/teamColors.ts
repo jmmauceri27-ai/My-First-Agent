@@ -35,6 +35,7 @@ const TEAM_COLORS: Record<string, TeamColor> = {
   TB: { bg: "#D50A0A", text: "#ffffff", ring: "#34302B" },
   TEN: { bg: "#0C2340", text: "#ffffff", ring: "#4B92DB" },
   WAS: { bg: "#5A1414", text: "#FFB612", ring: "#FFB612" },
+  WSH: { bg: "#5A1414", text: "#FFB612", ring: "#FFB612" },
   FA: { bg: "#3f3f46", text: "#d4d4d8", ring: "#71717a" },
 };
 

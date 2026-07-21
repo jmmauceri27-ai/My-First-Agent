@@ -12,6 +12,38 @@ export function splitRow(line: string, delimiter: string): string[] {
   return line.split(delimiter).map((c) => c.trim());
 }
 
+// Splits a single CSV line into fields, respecting double-quoted fields that
+// contain the delimiter itself (e.g. `1,"Smith Atl, RB",CJ` is 3 fields, not 4).
+export function splitQuotedRow(line: string, delimiter: string): string[] {
+  const result: string[] = [];
+  let cur = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (line[i + 1] === '"') {
+          cur += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        cur += ch;
+      }
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === delimiter) {
+      result.push(cur.trim());
+      cur = "";
+    } else {
+      cur += ch;
+    }
+  }
+  result.push(cur.trim());
+  return result;
+}
+
 export function parseDelimited(
   raw: string,
   expectedColumns: readonly string[]
