@@ -16,6 +16,7 @@ type Pick = {
 
 export default function TrendsView({ picks }: { picks: Pick[] }) {
   const [seasonFilter, setSeasonFilter] = useState("ALL");
+  const [statMode, setStatMode] = useState<"total" | "average">("total");
 
   const seasons = useMemo(() => {
     const map = new Map<string, string>();
@@ -28,15 +29,27 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
     [picks, seasonFilter]
   );
 
+  // Averaging only means something when pooling multiple seasons together.
+  const effectiveStatMode = seasonFilter === "ALL" ? statMode : "total";
+  const seasonCount = useMemo(() => new Set(filtered.map((p) => p.seasonId)).size || 1, [filtered]);
+
+  function formatCount(count: number, divisor: number): string {
+    if (!count) return "—";
+    return effectiveStatMode === "average" ? (count / divisor).toFixed(1) : String(count);
+  }
+
   const managerRows = useMemo(() => {
     const matrix = new Map<string, Map<string, number>>();
+    const managerSeasons = new Map<string, Set<string>>();
     for (const p of filtered) {
       if (!matrix.has(p.manager)) matrix.set(p.manager, new Map());
-      const row = matrix.get(p.manager)!;
-      row.set(p.position, (row.get(p.position) ?? 0) + 1);
+      if (!managerSeasons.has(p.manager)) managerSeasons.set(p.manager, new Set());
+      matrix.get(p.manager)!.set(p.position, (matrix.get(p.manager)!.get(p.position) ?? 0) + 1);
+      managerSeasons.get(p.manager)!.add(p.seasonId);
     }
     const rows = Array.from(matrix.entries()).map(([manager, counts]) => {
       const total = Array.from(counts.values()).reduce((s, n) => s + n, 0);
+      const seasonsPlayed = managerSeasons.get(manager)?.size || 1;
       let favorite = "";
       let favoriteCount = 0;
       for (const [pos, count] of counts.entries()) {
@@ -45,7 +58,7 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
           favoriteCount = count;
         }
       }
-      return { manager, counts, total, favorite };
+      return { manager, counts, total, favorite, seasonsPlayed };
     });
     return rows.sort((a, b) => b.total - a.total);
   }, [filtered]);
@@ -136,7 +149,7 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
 
   return (
     <div>
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <select
           value={seasonFilter}
           onChange={(e) => setSeasonFilter(e.target.value)}
@@ -149,6 +162,21 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
             </option>
           ))}
         </select>
+        <select
+          value={statMode}
+          onChange={(e) => setStatMode(e.target.value as "total" | "average")}
+          disabled={seasonFilter !== "ALL"}
+          title={seasonFilter !== "ALL" ? "Averaging only applies when viewing All Seasons" : undefined}
+          className="rounded-md border border-zinc-300 px-2 py-2 text-sm disabled:opacity-50 dark:border-zinc-700 dark:bg-ink-800"
+        >
+          <option value="total">Totals</option>
+          <option value="average">Average per season</option>
+        </select>
+        {effectiveStatMode === "average" && (
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+            Averaged across {seasonCount} season{seasonCount === 1 ? "" : "s"}
+          </span>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -162,7 +190,7 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
               <thead className="bg-zinc-100 text-left dark:bg-ink-900/60">
                 <tr>
                   <th className="px-3 py-2">Pos</th>
-                  <th className="px-3 py-2">Picks</th>
+                  <th className="px-3 py-2">{effectiveStatMode === "average" ? "Avg/Season" : "Picks"}</th>
                   <th className="px-3 py-2">Avg Rnd</th>
                   <th className="px-3 py-2">Earliest</th>
                   <th className="px-3 py-2">Latest</th>
@@ -172,7 +200,7 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
                 {positionStats.map((s) => (
                   <tr key={s.position} className="border-t border-zinc-200 dark:border-ink-800">
                     <td className="px-3 py-2 font-medium">{s.position}</td>
-                    <td className="px-3 py-2">{s.count}</td>
+                    <td className="px-3 py-2">{formatCount(s.count, seasonCount)}</td>
                     <td className="px-3 py-2">{s.avgRound.toFixed(1)}</td>
                     <td className="px-3 py-2">R{s.minRound}</td>
                     <td className="px-3 py-2">R{s.maxRound}</td>
@@ -214,7 +242,7 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
                     <td className="px-3 py-2 font-medium">{row.manager}</td>
                     {POSITIONS.map((pos) => (
                       <td key={pos} className="px-2 py-2 text-center">
-                        {row.counts.get(pos) ?? 0}
+                        {formatCount(row.counts.get(pos) ?? 0, row.seasonsPlayed)}
                       </td>
                     ))}
                     <td className="px-3 py-2 font-semibold">{row.favorite || "—"}</td>
@@ -264,7 +292,7 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
                         className={`px-2 py-2 text-center ${isPlurality ? "font-bold" : ""}`}
                         style={{ backgroundColor: heatBg(count, row.total) }}
                       >
-                        {count || "—"}
+                        {formatCount(count, seasonCount)}
                       </td>
                     );
                   })}
