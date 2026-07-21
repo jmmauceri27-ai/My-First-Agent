@@ -17,7 +17,7 @@ export default function NavBar() {
     <>
       <nav className="sticky top-0 z-40 border-b border-zinc-200 bg-white/90 backdrop-blur dark:border-ink-800 dark:bg-ink-950/90">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <Link href="/" className="flex items-center gap-2 font-bold text-lg text-gridiron-600 dark:text-gridiron-100">
+          <Link href="/" className="flex items-center gap-2 font-display text-xl font-semibold uppercase tracking-wide text-gridiron-600 dark:text-gridiron-100">
             🏈 Draft Hub
           </Link>
           <div className="hidden gap-1 sm:flex">
@@ -27,7 +27,7 @@ export default function NavBar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`rounded-md px-3 py-2 text-sm font-medium transition ${
+                  className={`rounded-md px-3 py-2 font-display text-sm font-medium uppercase tracking-wide transition ${
                     active
                       ? "bg-gridiron-500 text-white"
                       : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-ink-800"
@@ -50,7 +50,7 @@ export default function NavBar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-xs font-medium ${
+                className={`flex flex-1 flex-col items-center gap-0.5 py-2 font-display text-xs font-medium uppercase tracking-wide ${
                   active ? "text-gridiron-600 dark:text-gridiron-100" : "text-zinc-500 dark:text-zinc-400"
                 }`}
               >
