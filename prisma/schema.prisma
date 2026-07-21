@@ -29,6 +29,11 @@ model Player {
   draftPick     Int?
   draftedAt     DateTime?
 
+  // Actual season performance, imported after the season for comparison
+  // against your preseason rank/tier.
+  actualPointsPPR   Float?
+  actualGamesPlayed Int?
+
   notes         Note[]
 
   createdAt     DateTime @default(now())

@@ -41,11 +41,19 @@ export default async function PlayerDetailPage({ params }: { params: { id: strin
           <PlayerFormModal player={player} />
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
           <Stat label="Overall Rank" value={player.overallRank ?? "—"} />
           <Stat label="Position Rank" value={player.positionRank ?? "—"} />
           <Stat label="ADP" value={player.adp ?? "—"} />
           <Stat label="Tier" value={player.tier ? `Tier ${player.tier}` : "—"} />
+          <Stat
+            label="2025 PPR"
+            value={
+              player.actualPointsPPR != null
+                ? `${player.actualPointsPPR.toFixed(1)}${player.actualGamesPlayed ? ` (${player.actualGamesPlayed}gp)` : ""}`
+                : "—"
+            }
+          />
         </div>
 
         {player.tags.length > 0 && (

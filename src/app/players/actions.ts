@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { importPlayersFromCsv, type CsvImportResult } from "@/lib/importPlayers";
+import { importActualStatsFromCsv, type ActualStatsImportResult } from "@/lib/importActualStats";
 
-export type { CsvImportResult };
+export type { CsvImportResult, ActualStatsImportResult };
 
 function optInt(value: FormDataEntryValue | null): number | null {
   if (value === null || value === "") return null;
@@ -102,6 +103,17 @@ export async function importCsv(formData: FormData): Promise<CsvImportResult> {
   revalidatePath("/players");
   revalidatePath("/board");
   revalidatePath("/draft");
+  revalidatePath("/");
+  return result;
+}
+
+export async function importActualStats(formData: FormData): Promise<ActualStatsImportResult> {
+  const file = formData.get("file");
+  const raw = file instanceof File && file.size > 0 ? await file.text() : String(formData.get("csv") ?? "");
+  const result = await importActualStatsFromCsv(raw);
+
+  revalidatePath("/players");
+  revalidatePath("/board");
   revalidatePath("/");
   return result;
 }
