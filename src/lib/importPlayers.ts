@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
+import { parseDelimited, splitRow } from "@/lib/csv";
 
 const CSV_COLUMNS = [
   "name",
@@ -17,32 +18,21 @@ const CSV_COLUMNS = [
 export type CsvImportResult = { created: number; updated: number; errors: string[] };
 
 export async function importPlayersFromCsv(raw: string): Promise<CsvImportResult> {
-  const trimmedRaw = raw.trim();
   const result: CsvImportResult = { created: 0, updated: 0, errors: [] };
-  if (!trimmedRaw) {
+  if (!raw.trim()) {
     result.errors.push("No CSV text provided.");
     return result;
   }
 
-  const lines = trimmedRaw.split(/\r?\n/).filter((l) => l.trim() !== "");
-  if (lines.length === 0) return result;
-
-  // Auto-detect delimiter: pasting from a spreadsheet app (Excel/Sheets/Numbers)
-  // copies cells as tab-separated, not comma-separated.
-  const tabCount = (lines[0].match(/\t/g) ?? []).length;
-  const commaCount = (lines[0].match(/,/g) ?? []).length;
-  const delimiter = tabCount > commaCount ? "\t" : ",";
-
-  const header = lines[0].split(delimiter).map((h) => h.trim());
-  const dataLines = /^name$/i.test(header[0]) ? lines.slice(1) : lines;
-  const columns = /^name$/i.test(header[0]) ? header : CSV_COLUMNS.slice(0, header.length);
+  const { columns, dataLines, delimiter } = parseDelimited(raw, CSV_COLUMNS);
+  if (dataLines.length === 0) return result;
 
   type ParsedRow = Prisma.PlayerCreateManyInput;
   const parsed: ParsedRow[] = [];
 
   for (let i = 0; i < dataLines.length; i++) {
     const line = dataLines[i];
-    const cells = line.split(delimiter).map((c) => c.trim());
+    const cells = splitRow(line, delimiter);
     const row: Record<string, string> = {};
     columns.forEach((col, idx) => {
       row[col] = cells[idx] ?? "";

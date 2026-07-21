@@ -52,3 +52,35 @@ model Note {
   @@index([playerId])
   @@index([createdAt])
 }
+
+// One past draft (a single league, single year) whose full results you've logged.
+model DraftSeason {
+  id        String   @id @default(cuid())
+  year      Int
+  name      String? // optional label, e.g. "Redraft" or "Keeper League"
+  numTeams  Int?
+  createdAt DateTime @default(now())
+
+  picks DraftHistoryPick[]
+
+  @@index([year])
+}
+
+// One pick from a past draft: who took whom, at what spot, playing what position.
+model DraftHistoryPick {
+  id          String      @id @default(cuid())
+  seasonId    String
+  season      DraftSeason @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  round       Int
+  pickInRound Int
+  manager     String // the manager/team that made this pick
+  playerName  String
+  position    String // QB, RB, WR, TE, K, DST
+  nflTeam     String?
+  createdAt   DateTime    @default(now())
+
+  @@unique([seasonId, round, pickInRound])
+  @@index([seasonId])
+  @@index([manager])
+  @@index([position])
+}

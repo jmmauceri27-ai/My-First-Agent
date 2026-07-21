@@ -8,6 +8,7 @@ const LINKS = [
   { href: "/players", label: "Players", icon: "📋" },
   { href: "/board", label: "Tier Board", icon: "🗂️" },
   { href: "/draft", label: "Draft Day", icon: "🎯" },
+  { href: "/history", label: "History", icon: "📈" },
 ];
 
 export default function NavBar() {
