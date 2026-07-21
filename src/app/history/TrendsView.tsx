@@ -14,6 +14,10 @@ type Pick = {
   seasonLabel: string;
 };
 
+// How many draft-order levels of each position matter for the Manager
+// Tendencies table — e.g. only the 1st QB taken, but the top 3 RBs/WRs.
+const MANAGER_ORDER_CAP: Record<string, number> = { QB: 1, RB: 3, WR: 3, TE: 1, K: 1, DST: 1 };
+
 // Given a set of same-position picks, figures out each pick's draft order
 // within its own group (1st taken, 2nd taken, ...) and aggregates by that
 // order across groups — so a manager's RB1 and RB2 don't get blended into
@@ -281,8 +285,7 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
         <div>
           <h3 className="mb-1 font-bold">Manager Tendencies</h3>
           <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-            Each manager's typical round for their 1st, 2nd, 3rd... of each position, since blending
-            a manager's RB1 and RB2 into one average hides the real pattern.
+            Each manager's typical round for their 1st QB/TE/K/D-ST and their top 3 RBs/WRs.
           </p>
           <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white/90 backdrop-blur-md dark:border-ink-800 dark:bg-ink-900/70">
             <table className="w-full text-sm">
@@ -302,17 +305,20 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
                   <tr key={row.manager} className="border-t border-zinc-200 dark:border-ink-800">
                     <td className="px-3 py-2 align-top font-medium">{row.manager}</td>
                     {POSITIONS.map((pos) => {
-                      const orderStats = row.stats.get(pos);
+                      const cap = MANAGER_ORDER_CAP[pos] ?? 1;
+                      const orderStats = (row.stats.get(pos) ?? []).filter((s) => s.order <= cap);
                       return (
                         <td key={pos} className="px-2 py-2 text-center align-top">
-                          {orderStats && orderStats.length > 0 ? (
+                          {orderStats.length > 0 ? (
                             <div className="space-y-0.5">
                               {orderStats.map((s) => (
                                 <div key={s.order} className="whitespace-nowrap text-xs">
-                                  <span className="text-zinc-400">
-                                    {s.order === 1 ? "1st" : s.order === 2 ? "2nd" : s.order === 3 ? "3rd" : `${s.order}th`}
-                                    :{" "}
-                                  </span>
+                                  {cap > 1 && (
+                                    <span className="text-zinc-400">
+                                      {s.order === 1 ? "1st" : s.order === 2 ? "2nd" : s.order === 3 ? "3rd" : `${s.order}th`}
+                                      :{" "}
+                                    </span>
+                                  )}
                                   R{s.avgRound.toFixed(1)}
                                   <span className="text-zinc-400"> ({s.count}x)</span>
                                 </div>
