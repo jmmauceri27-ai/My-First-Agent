@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { parseDelimited, splitRow } from "@/lib/csv";
+import { parseDelimited, splitRow, normalizePlayerName } from "@/lib/csv";
 
 // Matches the file generated from nflverse's season stats export:
 // rank,name,position,team,total_ppr_2025,games,ppr_per_game
@@ -25,7 +25,9 @@ export async function importActualStatsFromCsv(raw: string): Promise<ActualStats
   // since the point is comparing actual results against your existing
   // rankings, not bulk-importing every player who played a snap.
   const existing = await prisma.player.findMany({ select: { id: true, name: true, position: true } });
-  const existingMap = new Map(existing.map((p) => [`${p.name.toLowerCase()}|${p.position.toUpperCase()}`, p.id]));
+  const existingMap = new Map(
+    existing.map((p) => [`${normalizePlayerName(p.name)}|${p.position.toUpperCase()}`, p.id])
+  );
 
   const updates: { id: string; actualPointsPPR: number; actualGamesPlayed: number | null }[] = [];
 
@@ -44,7 +46,7 @@ export async function importActualStatsFromCsv(raw: string): Promise<ActualStats
       continue;
     }
 
-    const key = `${row.name.toLowerCase()}|${row.position.toUpperCase()}`;
+    const key = `${normalizePlayerName(row.name)}|${row.position.toUpperCase()}`;
     const id = existingMap.get(key);
     if (!id) {
       result.notFound.push(`${row.name} (${row.position})`);

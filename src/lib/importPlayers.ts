@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
-import { parseDelimited, splitRow } from "@/lib/csv";
+import { parseDelimited, splitRow, normalizePlayerName } from "@/lib/csv";
 
 const CSV_COLUMNS = [
   "name",
@@ -60,13 +60,13 @@ export async function importPlayersFromCsv(raw: string): Promise<CsvImportResult
   // Batch: one query to find existing matches, one bulk insert for new rows,
   // and only fall back to per-row updates for players that already exist.
   const existing = await prisma.player.findMany({ select: { id: true, name: true, position: true } });
-  const existingMap = new Map(existing.map((p) => [`${p.name.toLowerCase()}|${p.position}`, p.id]));
+  const existingMap = new Map(existing.map((p) => [`${normalizePlayerName(p.name)}|${p.position}`, p.id]));
 
   const toCreate: ParsedRow[] = [];
   const toUpdate: { id: string; data: ParsedRow }[] = [];
 
   for (const row of parsed) {
-    const key = `${row.name.toLowerCase()}|${row.position}`;
+    const key = `${normalizePlayerName(row.name)}|${row.position}`;
     const existingId = existingMap.get(key);
     if (existingId) {
       toUpdate.push({ id: existingId, data: row });

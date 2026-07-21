@@ -44,6 +44,19 @@ export function splitQuotedRow(line: string, delimiter: string): string[] {
   return result;
 }
 
+// Normalizes a player name for matching across data sources that format
+// suffixes/punctuation differently (e.g. "Kenneth Walker III" vs
+// "Kenneth Walker" vs "Kenneth Walker, III", "Ja'Marr Chase" vs
+// "Ja Marr Chase"). Strips punctuation and a trailing generational suffix.
+export function normalizePlayerName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[.,'']/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\s+(jr|sr|ii|iii|iv|v)$/i, "");
+}
+
 export function parseDelimited(
   raw: string,
   expectedColumns: readonly string[]
