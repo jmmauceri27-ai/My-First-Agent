@@ -39,26 +39,31 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
   }
 
   const managerRows = useMemo(() => {
-    const matrix = new Map<string, Map<string, number>>();
+    const matrix = new Map<string, Map<string, number[]>>(); // manager -> position -> rounds drafted
     const managerSeasons = new Map<string, Set<string>>();
     for (const p of filtered) {
       if (!matrix.has(p.manager)) matrix.set(p.manager, new Map());
       if (!managerSeasons.has(p.manager)) managerSeasons.set(p.manager, new Set());
-      matrix.get(p.manager)!.set(p.position, (matrix.get(p.manager)!.get(p.position) ?? 0) + 1);
+      const posMap = matrix.get(p.manager)!;
+      if (!posMap.has(p.position)) posMap.set(p.position, []);
+      posMap.get(p.position)!.push(p.round);
       managerSeasons.get(p.manager)!.add(p.seasonId);
     }
-    const rows = Array.from(matrix.entries()).map(([manager, counts]) => {
-      const total = Array.from(counts.values()).reduce((s, n) => s + n, 0);
-      const seasonsPlayed = managerSeasons.get(manager)?.size || 1;
+    const rows = Array.from(matrix.entries()).map(([manager, posMap]) => {
+      const stats = new Map<string, { avgRound: number; count: number }>();
+      let totalPicks = 0;
       let favorite = "";
       let favoriteCount = 0;
-      for (const [pos, count] of counts.entries()) {
+      for (const [pos, rounds] of posMap.entries()) {
+        const count = rounds.length;
+        totalPicks += count;
+        stats.set(pos, { avgRound: rounds.reduce((s, n) => s + n, 0) / count, count });
         if (count > favoriteCount) {
           favorite = pos;
           favoriteCount = count;
         }
       }
-      return { manager, counts, total, favorite, seasonsPlayed };
+      return { manager, stats, total: totalPicks, favorite, seasonsPlayed: managerSeasons.get(manager)?.size || 1 };
     });
     return rows.sort((a, b) => b.total - a.total);
   }, [filtered]);
@@ -221,7 +226,8 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
         <div>
           <h3 className="mb-1 font-bold">Manager Tendencies</h3>
           <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-            How many of each position every manager has historically drafted.
+            The round each manager typically drafts each position in, with how many times they've
+            taken it in parentheses.
           </p>
           <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white/90 backdrop-blur-md dark:border-ink-800 dark:bg-ink-900/70">
             <table className="w-full text-sm">
@@ -240,11 +246,21 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
                 {managerRows.map((row) => (
                   <tr key={row.manager} className="border-t border-zinc-200 dark:border-ink-800">
                     <td className="px-3 py-2 font-medium">{row.manager}</td>
-                    {POSITIONS.map((pos) => (
-                      <td key={pos} className="px-2 py-2 text-center">
-                        {formatCount(row.counts.get(pos) ?? 0, row.seasonsPlayed)}
-                      </td>
-                    ))}
+                    {POSITIONS.map((pos) => {
+                      const stat = row.stats.get(pos);
+                      return (
+                        <td key={pos} className="px-2 py-2 text-center">
+                          {stat ? (
+                            <>
+                              <div>R{stat.avgRound.toFixed(1)}</div>
+                              <div className="text-[10px] text-zinc-400">{stat.count}x</div>
+                            </>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                      );
+                    })}
                     <td className="px-3 py-2 font-semibold">{row.favorite || "—"}</td>
                   </tr>
                 ))}
