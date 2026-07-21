@@ -1,6 +1,7 @@
 import Link from "next/link";
 import ImportForm from "./ImportForm";
 import ActualStatsImportForm from "./ActualStatsImportForm";
+import GameLogsImportForm from "./GameLogsImportForm";
 
 export default function ImportPage() {
   return (
@@ -12,6 +13,9 @@ export default function ImportPage() {
       <ImportForm />
       <div className="mt-8">
         <ActualStatsImportForm />
+      </div>
+      <div className="mt-8">
+        <GameLogsImportForm />
       </div>
     </div>
   );

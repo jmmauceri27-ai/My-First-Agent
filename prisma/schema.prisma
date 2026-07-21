@@ -35,6 +35,7 @@ model Player {
   actualGamesPlayed Int?
 
   notes         Note[]
+  gameLogs      GameLog[]
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -42,6 +43,31 @@ model Player {
   @@index([position])
   @@index([tier])
   @@index([overallRank])
+}
+
+// One week's box score for a player.
+model GameLog {
+  id         String   @id @default(cuid())
+  playerId   String
+  player     Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  season     Int
+  week       Int
+  team       String?
+  opponent   String?
+  passYards  Int?
+  passTDs    Int?
+  passInt    Int?
+  rushYards  Int?
+  rushTDs    Int?
+  receptions Int?
+  recYards   Int?
+  recTDs     Int?
+  pointsPPR  Float
+  createdAt  DateTime @default(now())
+
+  @@unique([playerId, season, week])
+  @@index([playerId])
+  @@index([season, week])
 }
 
 // A timestamped note / trend / news blurb attached to a player.
