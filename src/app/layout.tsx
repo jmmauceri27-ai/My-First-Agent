@@ -36,6 +36,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`dark ${inter.variable} ${oswald.variable}`}>
       <body className="font-sans antialiased">
+        <div
+          className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(8,9,11,0.82), rgba(8,9,11,0.94) 55%, rgba(8,9,11,0.99)), url('/stadium-bg.jpg')",
+          }}
+        />
         <NavBar />
         <main className="mx-auto max-w-6xl px-4 pb-20 pt-4 sm:pb-10">{children}</main>
       </body>
