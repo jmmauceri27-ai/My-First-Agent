@@ -90,9 +90,9 @@ export default function PlayersTable({ players }: { players: Player[] }) {
         Showing {filtered.length} of {players.length} players
       </p>
 
-      <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-ink-800">
+      <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white/90 backdrop-blur-md dark:border-ink-800 dark:bg-ink-900/70">
         <table className="w-full min-w-[900px] text-sm">
-          <thead className="bg-zinc-100 text-left dark:bg-ink-900">
+          <thead className="bg-zinc-100 text-left dark:bg-ink-900/60">
             <tr>
               <th className="px-3 py-2">★</th>
               <th className="px-3 py-2">Rank</th>

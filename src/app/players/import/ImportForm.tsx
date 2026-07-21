@@ -23,7 +23,7 @@ export default function ImportForm() {
 
   return (
     <div>
-      <div className="mb-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm dark:border-ink-800 dark:bg-ink-900">
+      <div className="mb-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm backdrop-blur-md dark:border-ink-800 dark:bg-ink-900/70">
         <p className="mb-1 font-medium">Expected columns (header row optional):</p>
         <code className="text-xs">{TEMPLATE.split("\n")[0]}</code>
         <p className="mt-2 text-xs text-zinc-500">

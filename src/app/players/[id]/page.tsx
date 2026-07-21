@@ -25,7 +25,7 @@ export default async function PlayerDetailPage({ params }: { params: { id: strin
         ← Back to Players
       </Link>
 
-      <div className={`mb-6 rounded-lg border-l-4 bg-white p-5 shadow-sm dark:bg-ink-900 ${tierColor(player.tier)}`}>
+      <div className={`mb-6 rounded-lg border-l-4 bg-white p-5 shadow-sm backdrop-blur-md dark:bg-ink-900/70 ${tierColor(player.tier)}`}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold">

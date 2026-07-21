@@ -80,7 +80,7 @@ export default function DraftBoard({ players }: { players: Player[] }) {
 
         <div className="max-h-[70vh] space-y-2 overflow-y-auto">
           {available.map((p) => (
-            <div key={p.id} className={`rounded-lg border-l-4 bg-white p-2 shadow-sm dark:bg-ink-900 ${tierColor(p.tier)}`}>
+            <div key={p.id} className={`rounded-lg border-l-4 bg-white p-2 shadow-sm backdrop-blur-md dark:bg-ink-900/70 ${tierColor(p.tier)}`}>
               <div className="flex items-center justify-between gap-2">
                 <div>
                   <span className="font-medium">

@@ -40,7 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(8,9,11,0.82), rgba(8,9,11,0.94) 55%, rgba(8,9,11,0.99)), url('/stadium-bg.jpg')",
+              "linear-gradient(rgba(8,9,11,0.35), rgba(8,9,11,0.55) 55%, rgba(8,9,11,0.85)), url('/stadium-bg.jpg')",
           }}
         />
         <NavBar />

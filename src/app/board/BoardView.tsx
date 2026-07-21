@@ -69,7 +69,7 @@ export default function BoardView({ players }: { players: Player[] }) {
 
       <div className="space-y-4">
         {tiers.map(({ key, players: tierPlayers }) => (
-          <div key={key} className={`rounded-lg border-l-4 bg-white p-3 shadow-sm dark:bg-ink-900 ${tierColor(key === "unranked" ? null : key)}`}>
+          <div key={key} className={`rounded-lg border-l-4 bg-white p-3 shadow-sm backdrop-blur-md dark:bg-ink-900/70 ${tierColor(key === "unranked" ? null : key)}`}>
             <h3 className="mb-2 font-bold">{key === "unranked" ? "Unranked" : `Tier ${key}`}</h3>
             <div className="flex flex-wrap gap-2">
               {tierPlayers.map((p) => (
