@@ -143,7 +143,6 @@ export default function PlayersTable({ players }: { players: Player[] }) {
                         width={28}
                         height={28}
                         className="h-7 w-7 shrink-0 rounded-full border border-zinc-200 bg-zinc-100 object-cover dark:border-ink-800 dark:bg-ink-800"
-                        unoptimized
                       />
                     ) : (
                       <span className="h-7 w-7 shrink-0 rounded-full bg-zinc-100 dark:bg-ink-800" />

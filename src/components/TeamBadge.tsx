@@ -10,7 +10,7 @@ export default function TeamBadge({ team, className = "" }: { team: string | nul
       className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-bold tracking-wide ${className}`}
       style={{ backgroundColor: bg, color: text }}
     >
-      {logoUrl && <Image src={logoUrl} alt="" width={14} height={14} className="rounded-sm" unoptimized />}
+      {logoUrl && <Image src={logoUrl} alt="" width={14} height={14} className="rounded-sm" />}
       {team}
     </span>
   );

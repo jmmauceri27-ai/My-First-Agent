@@ -40,7 +40,6 @@ export default async function PlayerDetailPage({ params }: { params: { id: strin
                 width={64}
                 height={64}
                 className="h-16 w-16 shrink-0 rounded-full border border-zinc-200 bg-zinc-100 object-cover dark:border-ink-800 dark:bg-ink-800"
-                unoptimized
               />
             )}
             <div>
