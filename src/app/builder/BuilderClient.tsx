@@ -1,0 +1,155 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { KPI_AGG_LABELS } from "@/lib/kpi";
+import type { DashboardCard, DatasetSummary } from "@/lib/types";
+import AddChartCardForm from "./AddChartCardForm";
+import AddKpiCardForm from "./AddKpiCardForm";
+import { deleteDashboardAction, loadDashboardAction, saveDashboardAction } from "./actions";
+
+const NEW_DASHBOARD = "__new__";
+
+export default function BuilderClient({
+  datasets,
+  dashboards,
+}: {
+  datasets: DatasetSummary[];
+  dashboards: { id: string; name: string }[];
+}) {
+  const router = useRouter();
+  const [selectedId, setSelectedId] = useState(NEW_DASHBOARD);
+  const [name, setName] = useState("");
+  const [cards, setCards] = useState<DashboardCard[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function handleSelectDashboard(id: string) {
+    setSelectedId(id);
+    setMessage(null);
+    if (id === NEW_DASHBOARD) {
+      setName("");
+      setCards([]);
+      return;
+    }
+    const config = await loadDashboardAction(id);
+    if (config) {
+      setName(config.name);
+      setCards(config.cards);
+    }
+  }
+
+  function removeCard(index: number) {
+    setCards((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function handleSave() {
+    setMessage(null);
+    if (!name.trim()) {
+      setMessage("Please enter a dashboard name.");
+      return;
+    }
+    if (cards.length === 0) {
+      setMessage("Add at least one card before saving.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const { id } = await saveDashboardAction({ name: name.trim(), cards });
+      setSelectedId(id);
+      setMessage(`Saved dashboard '${name.trim()}'.`);
+      router.refresh();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (selectedId === NEW_DASHBOARD) return;
+    await deleteDashboardAction(selectedId);
+    setSelectedId(NEW_DASHBOARD);
+    setName("");
+    setCards([]);
+    setMessage("Dashboard deleted.");
+    router.refresh();
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium text-zinc-700 dark:text-zinc-300">Dashboard to edit</span>
+          <select
+            value={selectedId}
+            onChange={(e) => handleSelectDashboard(e.target.value)}
+            className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+          >
+            <option value={NEW_DASHBOARD}>➕ New dashboard</option>
+            {dashboards.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="flex min-w-[220px] flex-1 flex-col gap-1 text-sm">
+          <span className="font-medium text-zinc-700 dark:text-zinc-300">Dashboard name</span>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+          />
+        </label>
+      </div>
+
+      <div>
+        <h2 className="mb-2 text-lg font-medium text-zinc-900 dark:text-zinc-50">Cards in this dashboard</h2>
+        {cards.length === 0 ? (
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">No cards yet. Add a KPI or chart card below.</p>
+        ) : (
+          <div className="flex flex-col divide-y divide-zinc-100 rounded-xl border border-zinc-200 dark:divide-zinc-900 dark:border-zinc-800">
+            {cards.map((card, i) => (
+              <div key={i} className="flex items-center justify-between gap-4 px-4 py-2">
+                <span className="text-sm text-zinc-800 dark:text-zinc-200">
+                  {card.type === "kpi"
+                    ? `KPI — ${card.title} (${card.datasetName}, ${KPI_AGG_LABELS[card.agg]})`
+                    : `Chart — ${card.title} (${card.chartType} on ${card.datasetName})`}
+                </span>
+                <button
+                  onClick={() => removeCard(i)}
+                  className="text-sm font-medium text-red-600 hover:underline"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <AddKpiCardForm datasets={datasets} onAdd={(card) => setCards((prev) => [...prev, card])} />
+      <AddChartCardForm datasets={datasets} onAdd={(card) => setCards((prev) => [...prev, card])} />
+
+      {message && <p className="text-sm text-zinc-700 dark:text-zinc-300">{message}</p>}
+
+      <div className="flex gap-3">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
+        >
+          {saving ? "Saving…" : "💾 Save dashboard"}
+        </button>
+        {selectedId !== NEW_DASHBOARD && (
+          <button
+            onClick={handleDelete}
+            className="rounded-md px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+          >
+            🗑️ Delete this dashboard
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
