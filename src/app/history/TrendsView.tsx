@@ -81,7 +81,7 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
       const stat = (row.stats.get(pos) ?? []).find((s) => s.order === order);
       if (stat) rows.push({ manager: row.manager, avgRound: stat.avgRound });
     }
-    return rows.sort((a, b) => b.avgRound - a.avgRound);
+    return rows.sort((a, b) => a.avgRound - b.avgRound);
   }, [managerRows, tendencyPosition]);
 
   // Plain-English tendency tags, always computed from the full draft history
@@ -221,7 +221,7 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
       <div>
         <h3 className="mb-1 font-bold">Manager Tendencies</h3>
         <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-          Pick a position to see every manager's average draft round for it, from latest to earliest.
+          Pick a position to see every manager's average draft round for it, from earliest to latest.
         </p>
         <select
           value={tendencyPosition}
