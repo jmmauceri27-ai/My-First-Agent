@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { POSITIONS } from "@/lib/constants";
-import { computeOrderStats, computeManagerTendencyTags, MANAGER_ORDER_CAP } from "@/lib/managerTendencies";
+import { computeOrderStats, MANAGER_ORDER_CAP } from "@/lib/managerTendencies";
 
 type Pick = {
   round: number;
@@ -83,17 +83,6 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
     }
     return rows.sort((a, b) => a.avgRound - b.avgRound);
   }, [managerRows, tendencyPosition]);
-
-  // Plain-English tendency tags, always computed from the full draft history
-  // (not the season filter above) since a "tendency" is a career-wide read,
-  // not a single-season one.
-  const managerSummaries = useMemo(() => {
-    const result = computeManagerTendencyTags(picks);
-    // This compact card grid only has room for a manager's biggest standouts —
-    // their full profile page shows every tag that qualified.
-    const tags = new Map(Array.from(result.tags.entries()).map(([m, list]) => [m, list.slice(0, 3)]));
-    return { ...result, tags };
-  }, [picks]);
 
   const maxRound = useMemo(
     () => filtered.reduce((max, p) => Math.max(max, p.round), 0),
@@ -263,52 +252,6 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
             </tbody>
           </table>
         </div>
-      </div>
-
-      <div className="mt-6">
-        <h3 className="mb-1 font-bold">Manager Scouting Report</h3>
-        <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-          What stands out about each manager compared to everyone else in the league, based on their
-          full draft history (not affected by the season filter above).
-        </p>
-        {managerSummaries.insufficientData ? (
-          <p className="rounded-lg border border-dashed border-zinc-300 p-4 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-            Need at least 3 managers with logged draft history to compare tendencies.
-          </p>
-        ) : (
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {managerSummaries.managers.map((manager) => {
-              const tags = managerSummaries.tags.get(manager) ?? [];
-              return (
-                <div
-                  key={manager}
-                  className="rounded-lg border border-zinc-200 bg-white/90 p-3 text-sm backdrop-blur-md dark:border-ink-800 dark:bg-ink-900/70"
-                >
-                  <Link
-                    href={`/history/managers/${encodeURIComponent(manager)}`}
-                    className="mb-1.5 block font-semibold hover:underline"
-                  >
-                    {manager}
-                  </Link>
-                  {tags.length > 0 ? (
-                    <div className="flex flex-wrap gap-1">
-                      {tags.map((t, i) => (
-                        <span
-                          key={i}
-                          className="rounded bg-gridiron-100 px-1.5 py-0.5 text-xs font-medium text-gridiron-800 dark:bg-gridiron-900/40 dark:text-gridiron-200"
-                        >
-                          {t.label}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">No strong standout — balanced approach.</p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
       </div>
 
       <div className="mt-6">
