@@ -1,9 +1,18 @@
 import { prisma } from "@/lib/prisma";
-import { parseDelimited, splitRow, normalizePlayerName } from "@/lib/csv";
+import { parseDelimited, splitQuotedRow, normalizePlayerName } from "@/lib/csv";
 
 // Matches the file generated from nflverse's season stats export:
-// rank,name,position,team,total_ppr_2025,games,ppr_per_game
-const CSV_COLUMNS = ["rank", "name", "position", "team", "total_ppr_2025", "games", "ppr_per_game"] as const;
+// rank,name,position,team,total_ppr_2025,games,ppr_per_game,headshotUrl
+const CSV_COLUMNS = [
+  "rank",
+  "name",
+  "position",
+  "team",
+  "total_ppr_2025",
+  "games",
+  "ppr_per_game",
+  "headshotUrl",
+] as const;
 
 export type ActualStatsImportResult = {
   updated: number;
@@ -29,10 +38,15 @@ export async function importActualStatsFromCsv(raw: string): Promise<ActualStats
     existing.map((p) => [`${normalizePlayerName(p.name)}|${p.position.toUpperCase()}`, p.id])
   );
 
-  const updates: { id: string; actualPointsPPR: number; actualGamesPlayed: number | null }[] = [];
+  const updates: {
+    id: string;
+    actualPointsPPR: number;
+    actualGamesPlayed: number | null;
+    headshotUrl: string | null;
+  }[] = [];
 
   for (let i = 0; i < dataLines.length; i++) {
-    const cells = splitRow(dataLines[i], delimiter);
+    const cells = splitQuotedRow(dataLines[i], delimiter);
     const row: Record<string, string> = {};
     columns.forEach((col, idx) => {
       row[col] = cells[idx] ?? "";
@@ -57,6 +71,7 @@ export async function importActualStatsFromCsv(raw: string): Promise<ActualStats
       id,
       actualPointsPPR: points,
       actualGamesPlayed: row.games ? parseInt(row.games, 10) : null,
+      headshotUrl: row.headshotUrl || null,
     });
   }
 
@@ -65,7 +80,11 @@ export async function importActualStatsFromCsv(raw: string): Promise<ActualStats
       updates.map((u) =>
         prisma.player.update({
           where: { id: u.id },
-          data: { actualPointsPPR: u.actualPointsPPR, actualGamesPlayed: u.actualGamesPlayed },
+          data: {
+            actualPointsPPR: u.actualPointsPPR,
+            actualGamesPlayed: u.actualGamesPlayed,
+            ...(u.headshotUrl ? { headshotUrl: u.headshotUrl } : {}),
+          },
         })
       )
     );

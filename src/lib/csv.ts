@@ -66,7 +66,7 @@ export function parseDelimited(
   if (lines.length === 0) return { columns: [], dataLines: [], delimiter: "," };
 
   const delimiter = detectDelimiter(lines[0]);
-  const header = splitRow(lines[0], delimiter);
+  const header = splitQuotedRow(lines[0], delimiter);
   const headerMatches = expectedColumns.some((c) => new RegExp(`^${c}$`, "i").test(header[0]));
 
   const dataLines = headerMatches ? lines.slice(1) : lines;

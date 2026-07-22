@@ -45,3 +45,15 @@ export function getTeamColor(team: string | null | undefined): TeamColor {
   if (!team) return FALLBACK;
   return TEAM_COLORS[team.toUpperCase()] ?? FALLBACK;
 }
+
+// nflverse hosts square team logo crops on GitHub, keyed by team_abbr; a
+// couple of our aliases (JAC, WSH) need mapping to their canonical file name.
+const LOGO_FILE_OVERRIDES: Record<string, string> = { JAC: "JAX", WSH: "WAS" };
+
+export function getTeamLogoUrl(team: string | null | undefined): string | null {
+  if (!team) return null;
+  const code = team.toUpperCase();
+  if (code === "FA" || !TEAM_COLORS[code]) return null;
+  const file = LOGO_FILE_OVERRIDES[code] ?? code;
+  return `https://raw.githubusercontent.com/nflverse/nflverse-pbp/master/squared_logos/${file}.png`;
+}

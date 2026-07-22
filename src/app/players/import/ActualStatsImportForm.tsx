@@ -21,9 +21,10 @@ export default function ActualStatsImportForm() {
     <div className="mb-8 rounded-lg border border-zinc-200 bg-white/90 p-4 backdrop-blur-md dark:border-ink-800 dark:bg-ink-900/70">
       <h2 className="mb-1 text-lg font-bold">Import Actual Season Stats</h2>
       <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">
-        Upload a season PPR stats file (columns: <code>rank,name,position,team,total_ppr_2025,games,ppr_per_game</code>)
-        to compare actual results against your preseason rank/tier. Only updates players already on your board —
-        it won't add new ones.
+        Upload a season PPR stats file (columns:{" "}
+        <code>rank,name,position,team,total_ppr_2025,games,ppr_per_game,headshotUrl</code>) to compare actual
+        results against your preseason rank/tier and pull in a player photo. Only updates players already on
+        your board — it won't add new ones.
       </p>
       <form action={handleSubmit} className="space-y-3">
         <input

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import type { Player } from "@prisma/client";
 import { POSITIONS, TAG_STYLES, tierColor } from "@/lib/constants";
 import TeamBadge from "@/components/TeamBadge";
@@ -134,7 +135,19 @@ export default function PlayersTable({ players }: { players: Player[] }) {
                 </td>
                 <td className="px-3 py-2">{p.overallRank ?? "—"}</td>
                 <td className="px-3 py-2 font-medium">
-                  <Link href={`/players/${p.id}`} className="hover:underline">
+                  <Link href={`/players/${p.id}`} className="flex items-center gap-2 hover:underline">
+                    {p.headshotUrl ? (
+                      <Image
+                        src={p.headshotUrl}
+                        alt=""
+                        width={28}
+                        height={28}
+                        className="h-7 w-7 shrink-0 rounded-full border border-zinc-200 bg-zinc-100 object-cover dark:border-ink-800 dark:bg-ink-800"
+                        unoptimized
+                      />
+                    ) : (
+                      <span className="h-7 w-7 shrink-0 rounded-full bg-zinc-100 dark:bg-ink-800" />
+                    )}
                     {p.name}
                   </Link>
                 </td>

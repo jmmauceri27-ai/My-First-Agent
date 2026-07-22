@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { TAG_STYLES, tierColor } from "@/lib/constants";
@@ -31,16 +32,28 @@ export default async function PlayerDetailPage({ params }: { params: { id: strin
 
       <div className={`mb-6 rounded-lg border-l-4 bg-white p-5 shadow-sm backdrop-blur-md dark:bg-ink-900/70 ${tierColor(player.tier)}`}>
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold">
-              {player.watchlisted && "⭐ "}
-              {player.name}
-            </h1>
-            <p className="flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400">
-              <span>{player.position}</span>
-              <TeamBadge team={player.team} />
-              <span>· Bye {player.byeWeek ?? "—"}</span>
-            </p>
+          <div className="flex items-center gap-4">
+            {player.headshotUrl && (
+              <Image
+                src={player.headshotUrl}
+                alt=""
+                width={64}
+                height={64}
+                className="h-16 w-16 shrink-0 rounded-full border border-zinc-200 bg-zinc-100 object-cover dark:border-ink-800 dark:bg-ink-800"
+                unoptimized
+              />
+            )}
+            <div>
+              <h1 className="text-2xl font-bold">
+                {player.watchlisted && "⭐ "}
+                {player.name}
+              </h1>
+              <p className="flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+                <span>{player.position}</span>
+                <TeamBadge team={player.team} />
+                <span>· Bye {player.byeWeek ?? "—"}</span>
+              </p>
+            </div>
           </div>
           <PlayerFormModal player={player} />
         </div>

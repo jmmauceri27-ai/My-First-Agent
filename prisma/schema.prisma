@@ -33,6 +33,7 @@ model Player {
   // against your preseason rank/tier.
   actualPointsPPR   Float?
   actualGamesPlayed Int?
+  headshotUrl       String?
 
   notes         Note[]
   gameLogs      GameLog[]

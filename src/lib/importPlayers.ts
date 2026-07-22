@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
-import { parseDelimited, splitRow, normalizePlayerName } from "@/lib/csv";
+import { parseDelimited, splitQuotedRow, normalizePlayerName } from "@/lib/csv";
 
 const CSV_COLUMNS = [
   "name",
@@ -32,7 +32,7 @@ export async function importPlayersFromCsv(raw: string): Promise<CsvImportResult
 
   for (let i = 0; i < dataLines.length; i++) {
     const line = dataLines[i];
-    const cells = splitRow(line, delimiter);
+    const cells = splitQuotedRow(line, delimiter);
     const row: Record<string, string> = {};
     columns.forEach((col, idx) => {
       row[col] = cells[idx] ?? "";
