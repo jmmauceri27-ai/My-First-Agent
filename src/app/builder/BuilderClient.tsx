@@ -3,11 +3,17 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { KPI_AGG_LABELS } from "@/lib/kpi";
-import type { DashboardCard, DatasetSummary } from "@/lib/types";
+import type { DashboardCard, DatasetRecord, DatasetSummary } from "@/lib/types";
+import DashboardCardsView from "@/components/DashboardCardsView";
 import AddChartCardForm from "./AddChartCardForm";
 import AddKpiCardForm from "./AddKpiCardForm";
 import ImportConfigForm from "./ImportConfigForm";
-import { deleteDashboardAction, loadDashboardAction, saveDashboardAction } from "./actions";
+import {
+  deleteDashboardAction,
+  fetchDatasetRowsAction,
+  loadDashboardAction,
+  saveDashboardAction,
+} from "./actions";
 
 const NEW_DASHBOARD = "__new__";
 
@@ -24,10 +30,15 @@ export default function BuilderClient({
   const [cards, setCards] = useState<DashboardCard[]>([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [previewRows, setPreviewRows] = useState<Record<string, DatasetRecord[]>>({});
+  const [previewCards, setPreviewCards] = useState<DashboardCard[] | null>(null);
+  const [previewing, setPreviewing] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
 
   async function handleSelectDashboard(id: string) {
     setSelectedId(id);
     setMessage(null);
+    setPreviewCards(null);
     if (id === NEW_DASHBOARD) {
       setName("");
       setCards([]);
@@ -42,6 +53,33 @@ export default function BuilderClient({
 
   function removeCard(index: number) {
     setCards((prev) => prev.filter((_, i) => i !== index));
+    setPreviewCards(null);
+  }
+
+  function addCard(card: DashboardCard) {
+    setCards((prev) => [...prev, card]);
+    setPreviewCards(null);
+  }
+
+  async function handlePreview() {
+    setPreviewError(null);
+    if (cards.length === 0) {
+      setPreviewError("Add at least one card first.");
+      return;
+    }
+    setPreviewing(true);
+    try {
+      const uniqueIds = Array.from(new Set(cards.map((c) => c.datasetId)));
+      const entries = await Promise.all(
+        uniqueIds.map(async (id) => [id, await fetchDatasetRowsAction(id)] as const),
+      );
+      setPreviewRows(Object.fromEntries(entries));
+      setPreviewCards(cards);
+    } catch (e) {
+      setPreviewError(e instanceof Error ? e.message : "Failed to load preview data.");
+    } finally {
+      setPreviewing(false);
+    }
   }
 
   async function handleSave() {
@@ -133,17 +171,25 @@ export default function BuilderClient({
         datasets={datasets}
         onImport={(importedCards, importedName) => {
           setCards(importedCards);
+          setPreviewCards(null);
           if (importedName) setName(importedName);
           setMessage(`Loaded ${importedCards.length} card(s) from the pasted config. Review, then Save dashboard.`);
         }}
       />
 
-      <AddKpiCardForm datasets={datasets} onAdd={(card) => setCards((prev) => [...prev, card])} />
-      <AddChartCardForm datasets={datasets} onAdd={(card) => setCards((prev) => [...prev, card])} />
+      <AddKpiCardForm datasets={datasets} onAdd={addCard} />
+      <AddChartCardForm datasets={datasets} onAdd={addCard} />
 
       {message && <p className="text-sm text-zinc-700 dark:text-zinc-300">{message}</p>}
 
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
+        <button
+          onClick={handlePreview}
+          disabled={previewing}
+          className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+        >
+          {previewing ? "Loading preview…" : "👁 Preview (not saved)"}
+        </button>
         <button
           onClick={handleSave}
           disabled={saving}
@@ -160,6 +206,25 @@ export default function BuilderClient({
           </button>
         )}
       </div>
+
+      {previewError && <p className="text-sm text-red-600">{previewError}</p>}
+
+      {previewCards && (
+        <div className="flex flex-col gap-4 rounded-xl border border-dashed border-zinc-300 p-4 dark:border-zinc-700">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">
+              👁 Live preview <span className="text-sm font-normal text-zinc-500 dark:text-zinc-400">(not saved)</span>
+            </h2>
+            <button
+              onClick={() => setPreviewCards(null)}
+              className="text-sm text-zinc-500 hover:underline dark:text-zinc-400"
+            >
+              Hide
+            </button>
+          </div>
+          <DashboardCardsView cards={previewCards} rowsByDataset={previewRows} />
+        </div>
+      )}
     </div>
   );
 }
