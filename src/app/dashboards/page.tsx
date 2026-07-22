@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getDatasetRows, listDashboards, loadDashboard } from "@/lib/dal";
 import type { DatasetRecord } from "@/lib/types";
 import DashboardCardsView from "@/components/DashboardCardsView";

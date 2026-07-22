@@ -7,10 +7,13 @@ custom KPI dashboards from that data.
 Built with **Next.js** (App Router) + **Supabase** (Postgres + Auth), meant to
 be deployed on **Vercel**.
 
+> **⚠️ Login is currently disabled.** The site runs on the Supabase
+> service-role key server-side instead of per-request sign-in, so anyone
+> with the URL can view and edit the data. See
+> [Re-enabling login](#re-enabling-login) to turn it back on.
+
 ## Features
 
-- **Sign-in gated** — Supabase Auth (email/password). There's no public
-  sign-up; you create your account directly in the Supabase dashboard.
 - **Upload Data** — upload `.xlsx`/`.csv` files. Each sheet in a workbook
   becomes its own dataset, tagged with a category (Work Orders, Invoices,
   Proposals, Vendors, Properties, Other).
@@ -34,16 +37,21 @@ SQL Editor, run the contents of [`supabase/schema.sql`](./supabase/schema.sql)
 once — it creates the `datasets`, `dataset_rows`, and `dashboards` tables
 with row-level security so each account only ever sees its own data.
 
-### 2. Create your user account
+### 2. Create a user account
 
-There is no public sign-up page by design. In the Supabase dashboard, go to
-**Authentication -> Users -> Add user** and create an account with your
-email and a password. That's the account you'll log in with.
+Even with login disabled, the database schema still ties every row to a
+`user_id` (a real Supabase Auth user), so one still needs to exist. In the
+Supabase dashboard, go to **Authentication -> Users -> Add user** and create
+an account (email + password). Copy its **User UID** — you'll need it below.
 
 ### 3. Configure environment variables
 
-Copy `.env.local.example` to `.env.local` and fill in your project's URL and
-anon key (Supabase dashboard: **Settings -> API**):
+Copy `.env.local.example` to `.env.local` and fill in:
+- `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase
+  dashboard: **Settings -> API**
+- `SUPABASE_SERVICE_ROLE_KEY` — same page, the **service_role secret** key.
+  **Never** prefix this with `NEXT_PUBLIC_` — it must stay server-only.
+- `APP_OWNER_USER_ID` — the User UID from step 2.
 
 ```bash
 cp .env.local.example .env.local
@@ -56,43 +64,64 @@ npm install
 npm run dev
 ```
 
-Visit `http://localhost:3000` and sign in with the account you created.
+Visit `http://localhost:3000` — no sign-in required while login is disabled.
 
 ## Deploying to Vercel
 
 1. Push this repo/branch to GitHub (already done if you're reading this
    from there).
 2. In Vercel, **Add New Project** and import the repo.
-3. In the project's **Settings -> Environment Variables**, add
-   `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` with the
-   same values as your `.env.local`.
+3. In the project's **Settings -> Environment Variables**, add all four
+   variables from `.env.local` (same values).
 4. Deploy.
 
 Since data lives in Supabase rather than on local disk, it persists across
 every redeploy — unlike a filesystem-based approach, there's nothing to lose
 when Vercel spins up a fresh instance.
 
+## Re-enabling login
+
+To turn the login gate back on:
+
+1. In `src/proxy.ts`, replace the body with the commented-out version at the
+   top of that file (it calls `updateSession` from `src/lib/supabase/proxy.ts`,
+   which was left untouched the whole time).
+2. In `src/lib/dal.ts`, swap `createAdminClient()` / `OWNER_USER_ID` back for
+   the cookie-based client (`createClient` from `./supabase/server`) and a
+   real `supabase.auth.getUser()` check in `ingestDataset` and `saveDashboard`
+   (see git history on this file for the previous version).
+3. Add a "Log out" button back to `src/components/NavBar.tsx` (a form posting
+   to `logout` from `src/app/login/actions.ts`).
+4. `SUPABASE_SERVICE_ROLE_KEY` / `APP_OWNER_USER_ID` are no longer needed at
+   that point, but leaving them set doesn't hurt anything.
+
 ## Project layout
 
 ```
 src/
   app/
-    login/            Sign-in page + auth server actions
-    page.tsx           Overview (protected home page)
+    login/            Sign-in page + auth server actions (currently unused)
+    page.tsx           Overview (home page)
     upload/             Upload Data page
     builder/            Dashboard Builder page
     dashboards/         Dashboards viewer page
     explorer/           Data Explorer page
   components/
-    AppShell.tsx        Layout wrapper (hides nav on /login)
+    AppShell.tsx        Layout wrapper
     NavBar.tsx
+    ChartRenderer.tsx    Shared Recharts wrapper
+    DashboardCardsView.tsx  Shared KPI/chart rendering (Dashboards page + Builder preview)
   lib/
-    supabase/           Browser/server Supabase clients + auth proxy helper
+    supabase/
+      client.ts          Browser client (unused while login is disabled)
+      server.ts           Cookie-based server client (unused while login is disabled)
+      admin.ts             Service-role client actually used by dal.ts right now
+      proxy.ts             Session-refresh helper for src/proxy.ts (currently bypassed)
     dal.ts              Data access layer (all Supabase queries)
     parse.ts            Excel/CSV parsing (exceljs + papaparse)
     kpi.ts              KPI + chart aggregation logic
     types.ts            Shared types
-  proxy.ts               Next.js 16 "proxy" (formerly middleware) — auth gate
+  proxy.ts               Next.js 16 "proxy" (formerly middleware) — currently a no-op
 supabase/
   schema.sql            Run once in the Supabase SQL editor
 legacy_streamlit/         Previous Streamlit + SQLite version, kept for reference

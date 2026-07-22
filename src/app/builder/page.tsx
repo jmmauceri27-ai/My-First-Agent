@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { listDashboards, listDatasets } from "@/lib/dal";
 import BuilderClient from "./BuilderClient";
 

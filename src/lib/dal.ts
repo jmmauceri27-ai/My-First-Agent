@@ -1,12 +1,13 @@
 import "server-only";
-import { createClient } from "./supabase/server";
+import { createAdminClient, OWNER_USER_ID } from "./supabase/admin";
 import type { DashboardConfig, DatasetRecord, DatasetSummary } from "./types";
 
 export async function listDatasets(): Promise<DatasetSummary[]> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("datasets")
     .select("id, display_name, category, source_filename, row_count, columns, uploaded_at")
+    .eq("user_id", OWNER_USER_ID)
     .order("uploaded_at", { ascending: false });
   if (error) throw new Error(error.message);
 
@@ -22,11 +23,12 @@ export async function listDatasets(): Promise<DatasetSummary[]> {
 }
 
 export async function getDataset(id: string): Promise<DatasetSummary | null> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("datasets")
     .select("id, display_name, category, source_filename, row_count, columns, uploaded_at")
     .eq("id", id)
+    .eq("user_id", OWNER_USER_ID)
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) return null;
@@ -43,7 +45,7 @@ export async function getDataset(id: string): Promise<DatasetSummary | null> {
 }
 
 export async function getDatasetRows(id: string): Promise<DatasetRecord[]> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const pageSize = 1000;
   let from = 0;
   const rows: DatasetRecord[] = [];
@@ -53,6 +55,7 @@ export async function getDatasetRows(id: string): Promise<DatasetRecord[]> {
       .from("dataset_rows")
       .select("data")
       .eq("dataset_id", id)
+      .eq("user_id", OWNER_USER_ID)
       .order("row_index", { ascending: true })
       .range(from, from + pageSize - 1);
     if (error) throw new Error(error.message);
@@ -71,19 +74,14 @@ export async function ingestDataset(
   sourceFilename: string,
   rows: DatasetRecord[],
 ): Promise<string> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated.");
-
+  const supabase = createAdminClient();
   const columns = rows.length > 0 ? Object.keys(rows[0]) : [];
 
   const { data: dataset, error: upsertError } = await supabase
     .from("datasets")
     .upsert(
       {
-        user_id: user.id,
+        user_id: OWNER_USER_ID,
         display_name: displayName,
         category,
         source_filename: sourceFilename,
@@ -102,14 +100,15 @@ export async function ingestDataset(
   const { error: deleteError } = await supabase
     .from("dataset_rows")
     .delete()
-    .eq("dataset_id", datasetId);
+    .eq("dataset_id", datasetId)
+    .eq("user_id", OWNER_USER_ID);
   if (deleteError) throw new Error(deleteError.message);
 
   const batchSize = 500;
   for (let i = 0; i < rows.length; i += batchSize) {
     const batch = rows.slice(i, i + batchSize).map((row, idx) => ({
       dataset_id: datasetId,
-      user_id: user.id,
+      user_id: OWNER_USER_ID,
       row_index: i + idx,
       data: row,
     }));
@@ -121,27 +120,29 @@ export async function ingestDataset(
 }
 
 export async function deleteDataset(id: string): Promise<void> {
-  const supabase = await createClient();
-  const { error } = await supabase.from("datasets").delete().eq("id", id);
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("datasets").delete().eq("id", id).eq("user_id", OWNER_USER_ID);
   if (error) throw new Error(error.message);
 }
 
 export async function listDashboards(): Promise<{ id: string; name: string }[]> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("dashboards")
     .select("id, name")
+    .eq("user_id", OWNER_USER_ID)
     .order("name", { ascending: true });
   if (error) throw new Error(error.message);
   return data ?? [];
 }
 
 export async function loadDashboard(id: string): Promise<DashboardConfig | null> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("dashboards")
     .select("name, config")
     .eq("id", id)
+    .eq("user_id", OWNER_USER_ID)
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) return null;
@@ -151,17 +152,12 @@ export async function loadDashboard(id: string): Promise<DashboardConfig | null>
 }
 
 export async function saveDashboard(name: string, config: DashboardConfig): Promise<string> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated.");
-
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("dashboards")
     .upsert(
       {
-        user_id: user.id,
+        user_id: OWNER_USER_ID,
         name,
         config,
         updated_at: new Date().toISOString(),
@@ -175,7 +171,7 @@ export async function saveDashboard(name: string, config: DashboardConfig): Prom
 }
 
 export async function deleteDashboard(id: string): Promise<void> {
-  const supabase = await createClient();
-  const { error } = await supabase.from("dashboards").delete().eq("id", id);
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("dashboards").delete().eq("id", id).eq("user_id", OWNER_USER_ID);
   if (error) throw new Error(error.message);
 }

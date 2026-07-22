@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { listDatasets } from "@/lib/dal";
 import DatasetList from "./DatasetList";
 import UploadForm from "./UploadForm";

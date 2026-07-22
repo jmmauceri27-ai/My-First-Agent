@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { logout } from "@/app/login/actions";
 
 const LINKS = [
   { href: "/", label: "Overview" },
@@ -39,15 +38,6 @@ export default function NavBar() {
               </Link>
             );
           })}
-
-          <form action={logout}>
-            <button
-              type="submit"
-              className="rounded-md px-3 py-1.5 text-sm font-medium text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900"
-            >
-              Log out
-            </button>
-          </form>
         </nav>
       </div>
     </header>

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { listDatasets } from "@/lib/dal";
 import ExplorerClient from "./ExplorerClient";
 
