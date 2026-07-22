@@ -16,9 +16,29 @@ type Pick = {
   seasonLabel: string;
 };
 
+// Fixed left-to-right ordering for the Position column when sorted by
+// position — e.g. QB, RB1, RB2, RB3, WR1, WR2, WR3, TE, K, DST.
+const POSITION_ORDER_SEQUENCE = POSITIONS.flatMap((pos) => {
+  const cap = MANAGER_ORDER_CAP[pos] ?? 1;
+  return Array.from({ length: cap }, (_, i) => (cap > 1 ? `${pos}${i + 1}` : pos));
+});
+
+type TendencySort = "manager" | "position";
+
 export default function TrendsView({ picks }: { picks: Pick[] }) {
   const [seasonFilter, setSeasonFilter] = useState("ALL");
   const [statMode, setStatMode] = useState<"total" | "average">("average");
+  const [tendencySort, setTendencySort] = useState<TendencySort>("manager");
+  const [tendencySortDir, setTendencySortDir] = useState<"asc" | "desc">("asc");
+
+  function toggleTendencySort(key: TendencySort) {
+    if (tendencySort === key) {
+      setTendencySortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setTendencySort(key);
+      setTendencySortDir("asc");
+    }
+  }
 
   const seasons = useMemo(() => {
     const map = new Map<string, string>();
@@ -62,6 +82,40 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
     });
     return rows.sort((a, b) => b.total - a.total);
   }, [filtered]);
+
+  // Flattened one-row-per-(manager, position) view, sortable by either column.
+  const tendencyRows = useMemo(() => {
+    const rows: { manager: string; positionLabel: string; positionIndex: number; avgRound: number }[] = [];
+    for (const row of managerRows) {
+      for (const pos of POSITIONS) {
+        const cap = MANAGER_ORDER_CAP[pos] ?? 1;
+        const orderStats = (row.stats.get(pos) ?? []).filter((s) => s.order <= cap);
+        for (const s of orderStats) {
+          const positionLabel = cap > 1 ? `${pos}${s.order}` : pos;
+          rows.push({
+            manager: row.manager,
+            positionLabel,
+            positionIndex: POSITION_ORDER_SEQUENCE.indexOf(positionLabel),
+            avgRound: s.avgRound,
+          });
+        }
+      }
+    }
+    const dir = tendencySortDir === "asc" ? 1 : -1;
+    rows.sort((a, b) => {
+      const primary =
+        tendencySort === "manager"
+          ? a.manager.localeCompare(b.manager) * dir
+          : (a.positionIndex - b.positionIndex) * dir;
+      if (primary !== 0) return primary;
+      // Ties always break the same way, regardless of sort direction, so
+      // rows stay grouped in a sensible reading order.
+      return tendencySort === "manager"
+        ? a.positionIndex - b.positionIndex
+        : a.manager.localeCompare(b.manager);
+    });
+    return rows;
+  }, [managerRows, tendencySort, tendencySortDir]);
 
   // Plain-English tendency tags, always computed from the full draft history
   // (not the season filter above) since a "tendency" is a career-wide read,
@@ -200,59 +254,41 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
       <div>
         <h3 className="mb-1 font-bold">Manager Tendencies</h3>
         <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-          Each manager's typical round for their 1st QB/TE/K/D-ST and their top 3 RBs/WRs.
+          Each manager's typical round for their 1st QB/TE/K/D-ST and their top 3 RBs/WRs. Click a column
+          header to sort.
         </p>
         <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white/90 backdrop-blur-md dark:border-ink-800 dark:bg-ink-900/70">
           <table className="w-full text-sm">
             <thead className="bg-zinc-100 text-left dark:bg-ink-900/60">
               <tr>
-                <th className="px-3 py-2">Manager</th>
-                {POSITIONS.map((pos) => (
-                  <th key={pos} className="px-2 py-2 text-center">
-                    {pos}
-                  </th>
-                ))}
+                <th className="px-3 py-2">
+                  <button type="button" onClick={() => toggleTendencySort("manager")} className="hover:underline">
+                    Manager {tendencySort === "manager" ? (tendencySortDir === "asc" ? "▲" : "▼") : ""}
+                  </button>
+                </th>
+                <th className="px-3 py-2">
+                  <button type="button" onClick={() => toggleTendencySort("position")} className="hover:underline">
+                    Position {tendencySort === "position" ? (tendencySortDir === "asc" ? "▲" : "▼") : ""}
+                  </button>
+                </th>
+                <th className="px-3 py-2">Avg Round</th>
               </tr>
             </thead>
             <tbody>
-              {managerRows.map((row) => (
-                <tr key={row.manager} className="border-t border-zinc-200 dark:border-ink-800">
-                  <td className="px-3 py-2 align-top font-medium">
+              {tendencyRows.map((row, i) => (
+                <tr key={i} className="border-t border-zinc-200 dark:border-ink-800">
+                  <td className="px-3 py-2 font-medium">
                     <Link href={`/history/managers/${encodeURIComponent(row.manager)}`} className="hover:underline">
                       {row.manager}
                     </Link>
                   </td>
-                  {POSITIONS.map((pos) => {
-                    const cap = MANAGER_ORDER_CAP[pos] ?? 1;
-                    const orderStats = (row.stats.get(pos) ?? []).filter((s) => s.order <= cap);
-                    return (
-                      <td key={pos} className="px-2 py-2 text-center align-top">
-                        {orderStats.length > 0 ? (
-                          <div className="space-y-0.5">
-                            {orderStats.map((s) => (
-                              <div key={s.order} className="whitespace-nowrap text-xs">
-                                {cap > 1 && (
-                                  <span className="text-zinc-400">
-                                    {s.order === 1 ? "1st" : s.order === 2 ? "2nd" : s.order === 3 ? "3rd" : `${s.order}th`}
-                                    :{" "}
-                                  </span>
-                                )}
-                                R{s.avgRound.toFixed(1)}
-                                <span className="text-zinc-400"> ({s.count}x)</span>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                    );
-                  })}
+                  <td className="px-3 py-2">{row.positionLabel}</td>
+                  <td className="px-3 py-2">R{row.avgRound.toFixed(1)}</td>
                 </tr>
               ))}
-              {managerRows.length === 0 && (
+              {tendencyRows.length === 0 && (
                 <tr>
-                  <td colSpan={POSITIONS.length + 1} className="px-3 py-4 text-center text-zinc-500">
+                  <td colSpan={3} className="px-3 py-4 text-center text-zinc-500">
                     No picks for this filter.
                   </td>
                 </tr>
