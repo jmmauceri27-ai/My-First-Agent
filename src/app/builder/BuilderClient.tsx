@@ -6,6 +6,7 @@ import { KPI_AGG_LABELS } from "@/lib/kpi";
 import type { DashboardCard, DatasetSummary } from "@/lib/types";
 import AddChartCardForm from "./AddChartCardForm";
 import AddKpiCardForm from "./AddKpiCardForm";
+import ImportConfigForm from "./ImportConfigForm";
 import { deleteDashboardAction, loadDashboardAction, saveDashboardAction } from "./actions";
 
 const NEW_DASHBOARD = "__new__";
@@ -127,6 +128,15 @@ export default function BuilderClient({
           </div>
         )}
       </div>
+
+      <ImportConfigForm
+        datasets={datasets}
+        onImport={(importedCards, importedName) => {
+          setCards(importedCards);
+          if (importedName) setName(importedName);
+          setMessage(`Loaded ${importedCards.length} card(s) from the pasted config. Review, then Save dashboard.`);
+        }}
+      />
 
       <AddKpiCardForm datasets={datasets} onAdd={(card) => setCards((prev) => [...prev, card])} />
       <AddChartCardForm datasets={datasets} onAdd={(card) => setCards((prev) => [...prev, card])} />
