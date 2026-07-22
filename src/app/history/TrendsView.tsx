@@ -54,17 +54,11 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
     const rows = Array.from(matrix.entries()).map(([manager, posMap]) => {
       const stats = new Map<string, { order: number; avgRound: number; count: number }[]>();
       let totalPicks = 0;
-      let favorite = "";
-      let favoriteCount = 0;
       for (const [pos, items] of posMap.entries()) {
         totalPicks += items.length;
         stats.set(pos, computeOrderStats(items));
-        if (items.length > favoriteCount) {
-          favorite = pos;
-          favoriteCount = items.length;
-        }
       }
-      return { manager, stats, total: totalPicks, favorite, seasonsPlayed: managerSeasons.get(manager)?.size || 1 };
+      return { manager, stats, total: totalPicks, seasonsPlayed: managerSeasons.get(manager)?.size || 1 };
     });
     return rows.sort((a, b) => b.total - a.total);
   }, [filtered]);
@@ -218,7 +212,6 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
                     {pos}
                   </th>
                 ))}
-                <th className="px-3 py-2">Favorite</th>
               </tr>
             </thead>
             <tbody>
@@ -255,12 +248,11 @@ export default function TrendsView({ picks }: { picks: Pick[] }) {
                       </td>
                     );
                   })}
-                  <td className="px-3 py-2 font-semibold">{row.favorite || "—"}</td>
                 </tr>
               ))}
               {managerRows.length === 0 && (
                 <tr>
-                  <td colSpan={POSITIONS.length + 2} className="px-3 py-4 text-center text-zinc-500">
+                  <td colSpan={POSITIONS.length + 1} className="px-3 py-4 text-center text-zinc-500">
                     No picks for this filter.
                   </td>
                 </tr>
