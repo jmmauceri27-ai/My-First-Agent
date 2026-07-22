@@ -98,6 +98,7 @@ export default async function ManagerProfilePage({ params }: { params: { manager
                     className="flex items-center gap-3 border-t border-zinc-100 pt-1 first:border-0 first:pt-0 dark:border-ink-800"
                   >
                     <span className="w-14 shrink-0 text-xs text-zinc-400">{p.season.year}</span>
+                    <span className="w-16 shrink-0 whitespace-nowrap text-xs text-zinc-400">Pick {p.pickInRound}</span>
                     <span className="flex-1">{p.playerName}</span>
                     <span className="w-8 shrink-0 text-xs text-zinc-500 dark:text-zinc-400">{p.position}</span>
                     <TeamBadge team={p.nflTeam} />
