@@ -33,7 +33,6 @@ export default function KanbanBoard({
 
   const [optimisticStage, setOptimisticStage] = useState<Record<string, OpportunityStage>>({});
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [editingOpportunity, setEditingOpportunity] = useState<Opportunity | null>(null);
   const [creatingInStage, setCreatingInStage] = useState<OpportunityStage | null>(null);
 
   const grouped: Record<OpportunityStage, Opportunity[]> = Object.fromEntries(
@@ -79,7 +78,7 @@ export default function KanbanBoard({
               key={stage}
               stage={stage}
               opportunities={grouped[stage]}
-              onCardClick={(o) => setEditingOpportunity(o)}
+              onCardClick={(o) => router.push(`/crm/opportunities/${o.id}`)}
             />
           ))}
         </div>
@@ -89,16 +88,13 @@ export default function KanbanBoard({
         </DragOverlay>
       </DndContext>
 
-      {(editingOpportunity || creatingInStage) && (
+      {creatingInStage && (
         <OpportunityModal
-          opportunity={editingOpportunity}
+          opportunity={null}
           companies={companies}
           contacts={contacts}
-          defaultStage={creatingInStage ?? OPPORTUNITY_STAGES[0]}
-          onClose={() => {
-            setEditingOpportunity(null);
-            setCreatingInStage(null);
-          }}
+          defaultStage={creatingInStage}
+          onClose={() => setCreatingInStage(null)}
         />
       )}
     </div>

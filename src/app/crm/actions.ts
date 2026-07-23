@@ -8,12 +8,15 @@ import {
   deleteCompany,
   deleteContact,
   deleteOpportunity,
+  deleteOpportunityFile,
+  getOpportunityFileDownloadUrl,
   listCompanies,
   listContacts,
   updateCompany,
   updateContact,
   updateOpportunity,
   updateOpportunityStage,
+  uploadOpportunityFile,
 } from "@/lib/crmDal";
 import type {
   Company,
@@ -87,4 +90,22 @@ export async function listCompaniesAction(): Promise<Company[]> {
 
 export async function listContactsAction(): Promise<Contact[]> {
   return listContacts();
+}
+
+export async function uploadOpportunityFileAction(opportunityId: string, formData: FormData): Promise<void> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    throw new Error("Please choose a file.");
+  }
+  await uploadOpportunityFile(opportunityId, file);
+  revalidatePath(`/crm/opportunities/${opportunityId}`);
+}
+
+export async function deleteOpportunityFileAction(id: string, opportunityId: string): Promise<void> {
+  await deleteOpportunityFile(id);
+  revalidatePath(`/crm/opportunities/${opportunityId}`);
+}
+
+export async function getOpportunityFileDownloadUrlAction(id: string): Promise<string> {
+  return getOpportunityFileDownloadUrl(id);
 }

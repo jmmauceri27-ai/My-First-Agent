@@ -61,6 +61,16 @@ export interface OpportunityInput {
   contactIds: string[];
 }
 
+export interface OpportunityFile {
+  id: string;
+  opportunityId: string;
+  fileName: string;
+  storagePath: string;
+  contentType: string | null;
+  sizeBytes: number;
+  uploadedAt: string;
+}
+
 export interface CompanyInput {
   name: string;
   address: string | null;
