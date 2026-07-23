@@ -1,4 +1,4 @@
-import type { ChartAgg, ChartType, DatasetRecord, FilterCondition, KpiAgg } from "./types";
+import type { AgingBucketDef, ChartAgg, ChartType, DatasetRecord, FilterCondition, KpiAgg } from "./types";
 
 export const KPI_AGG_LABELS: Record<KpiAgg, string> = {
   count_rows: "Count of rows",
@@ -164,4 +164,47 @@ export function computeChartData(
   }
 
   return points.sort((a, b) => b.value - a.value);
+}
+
+export interface AgingResult {
+  label: string;
+  count: number;
+}
+
+/**
+ * Buckets rows by how many days a date column is in the past relative to
+ * `now`. Rows whose date is missing, unparseable, or not yet due are
+ * excluded. `filters` typically excludes closed/complete statuses so only
+ * still-open records are aged.
+ */
+export function computeAging(
+  rows: DatasetRecord[],
+  dateColumn: string,
+  buckets: AgingBucketDef[],
+  filters?: FilterCondition[],
+  now: Date = new Date(),
+): AgingResult[] {
+  const working = applyFilters(rows, filters);
+  const counts = new Array(buckets.length).fill(0);
+  const nowMs = now.getTime();
+
+  for (const row of working) {
+    const raw = row[dateColumn];
+    if (raw === null || raw === undefined || raw === "") continue;
+    const date = new Date(String(raw));
+    if (Number.isNaN(date.getTime())) continue;
+
+    const daysPastDue = Math.floor((nowMs - date.getTime()) / 86_400_000);
+    if (daysPastDue < 1) continue;
+
+    for (let i = 0; i < buckets.length; i++) {
+      const b = buckets[i];
+      if (daysPastDue >= b.minDays && (b.maxDays === null || daysPastDue <= b.maxDays)) {
+        counts[i]++;
+        break;
+      }
+    }
+  }
+
+  return buckets.map((b, i) => ({ label: b.label, count: counts[i] }));
 }

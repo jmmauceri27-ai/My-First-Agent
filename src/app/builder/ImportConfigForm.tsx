@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import type {
+  AgingBucketDef,
+  AgingCard,
   ChartAgg,
   ChartCard,
   ChartType,
@@ -92,8 +94,26 @@ export default function ImportConfigForm({
           filters: card.filters as FilterCondition[] | undefined,
         };
         resolved.push(chartCard);
+      } else if (card.type === "aging") {
+        const rawBuckets = card.buckets;
+        if (!Array.isArray(rawBuckets) || rawBuckets.length === 0) {
+          setError(`Card ${i + 1} ("aging") needs a non-empty "buckets" array.`);
+          return;
+        }
+        const agingCard: AgingCard = {
+          type: "aging",
+          title: String(card.title ?? "Untitled"),
+          datasetId: dataset.id,
+          datasetName: dataset.displayName,
+          dateColumn: String(card.dateColumn ?? ""),
+          buckets: rawBuckets as AgingBucketDef[],
+          filters: card.filters as FilterCondition[] | undefined,
+        };
+        resolved.push(agingCard);
       } else {
-        setError(`Card ${i + 1} has an unknown "type": "${String(card.type)}". Must be "kpi" or "chart".`);
+        setError(
+          `Card ${i + 1} has an unknown "type": "${String(card.type)}". Must be "kpi", "chart", or "aging".`,
+        );
         return;
       }
     }

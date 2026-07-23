@@ -43,7 +43,34 @@ export interface ChartCard {
   filters?: FilterCondition[];
 }
 
-export type DashboardCard = KpiCard | ChartCard;
+export interface AgingBucketDef {
+  label: string;
+  minDays: number;
+  /** null = unbounded ("61+ days") */
+  maxDays: number | null;
+}
+
+export interface AgingCard {
+  type: "aging";
+  title: string;
+  datasetId: string;
+  datasetName: string;
+  /** Column holding the due/target-completion date to age against today. */
+  dateColumn: string;
+  buckets: AgingBucketDef[];
+  /** Typically excludes closed statuses so only still-open records age. */
+  filters?: FilterCondition[];
+}
+
+export type DashboardCard = KpiCard | ChartCard | AgingCard;
+
+export const DEFAULT_AGING_BUCKETS: AgingBucketDef[] = [
+  { label: "1-7 days", minDays: 1, maxDays: 7 },
+  { label: "8-14 days", minDays: 8, maxDays: 14 },
+  { label: "15-30 days", minDays: 15, maxDays: 30 },
+  { label: "31-60 days", minDays: 31, maxDays: 60 },
+  { label: "61+ days", minDays: 61, maxDays: null },
+];
 
 export interface DashboardConfig {
   name: string;

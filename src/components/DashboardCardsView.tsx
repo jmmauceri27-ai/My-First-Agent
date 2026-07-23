@@ -1,6 +1,7 @@
-import { computeChartData, computeKpi } from "@/lib/kpi";
-import type { ChartCard, DashboardCard, DatasetRecord, KpiCard } from "@/lib/types";
-import { CHART_COLORS_LIGHT } from "@/lib/chartPalette";
+import { computeAging, computeChartData, computeKpi } from "@/lib/kpi";
+import type { AgingCard, ChartCard, DashboardCard, DatasetRecord, KpiCard } from "@/lib/types";
+import { AGING_COLORS_LIGHT, CHART_COLORS_LIGHT } from "@/lib/chartPalette";
+import AgingDonutChart from "./AgingDonutChart";
 import ChartRenderer from "./ChartRenderer";
 import Card from "./ui/Card";
 
@@ -13,6 +14,7 @@ export default function DashboardCardsView({
 }) {
   const kpiCards = cards.filter((c): c is KpiCard => c.type === "kpi");
   const chartCards = cards.filter((c): c is ChartCard => c.type === "chart");
+  const agingCards = cards.filter((c): c is AgingCard => c.type === "aging");
 
   return (
     <div className="flex flex-col gap-6">
@@ -40,6 +42,27 @@ export default function DashboardCardsView({
                 <p className="mt-1.5 text-3xl font-extrabold tracking-tight tabular-nums text-zinc-900 dark:text-zinc-50">
                   {value}
                 </p>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {agingCards.length > 0 && (
+        <div className="flex flex-col gap-6">
+          {agingCards.map((card, i) => {
+            const rows = rowsByDataset[card.datasetId] ?? [];
+            const buckets = computeAging(rows, card.dateColumn, card.buckets, card.filters);
+            return (
+              <Card key={i} className="p-4">
+                <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-zinc-900 dark:text-zinc-50">
+                  <span
+                    className="inline-block h-2.5 w-2.5 rounded-full"
+                    style={{ backgroundColor: AGING_COLORS_LIGHT[2] }}
+                  />
+                  {card.title}
+                </h2>
+                <AgingDonutChart buckets={buckets} />
               </Card>
             );
           })}
