@@ -21,7 +21,7 @@ export default function ImportConfigForm({
   onImport,
 }: {
   datasets: DatasetSummary[];
-  onImport: (cards: DashboardCard[], name?: string) => void;
+  onImport: (cards: DashboardCard[], name?: string, filterColumns?: string[]) => void;
 }) {
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -119,7 +119,12 @@ export default function ImportConfigForm({
     }
 
     const name = (payload as { name?: unknown }).name;
-    onImport(resolved, typeof name === "string" ? name : undefined);
+    const rawFilterColumns = (payload as { filterColumns?: unknown }).filterColumns;
+    const filterColumns = Array.isArray(rawFilterColumns)
+      ? rawFilterColumns.filter((c): c is string => typeof c === "string")
+      : undefined;
+
+    onImport(resolved, typeof name === "string" ? name : undefined, filterColumns);
     setText("");
     setOpen(false);
   }
@@ -145,7 +150,7 @@ export default function ImportConfigForm({
             onChange={(e) => setText(e.target.value)}
             rows={8}
             className="rounded-lg border border-zinc-300 px-3 py-2 font-mono text-xs outline-none transition-shadow focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-zinc-700 dark:bg-zinc-900"
-            placeholder='{"name": "Operations Overview", "cards": [...]}'
+            placeholder='{"name": "Operations Overview", "cards": [...], "filterColumns": ["Status"]}'
           />
           {error && <p className="text-sm text-critical">{error}</p>}
           <Button onClick={handleLoad} variant="secondary" className="w-fit">

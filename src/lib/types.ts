@@ -75,6 +75,8 @@ export const DEFAULT_AGING_BUCKETS: AgingBucketDef[] = [
 export interface DashboardConfig {
   name: string;
   cards: DashboardCard[];
+  /** Columns exposed as live filter dropdowns on the Dashboards viewer. */
+  filterColumns?: string[];
 }
 
 export interface DatasetSummary {

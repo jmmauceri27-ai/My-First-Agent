@@ -38,6 +38,19 @@ export default function BuilderClient({
   const [previewCards, setPreviewCards] = useState<DashboardCard[] | null>(null);
   const [previewing, setPreviewing] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [filterColumns, setFilterColumns] = useState<string[]>([]);
+
+  const availableFilterColumns = Array.from(
+    new Set(
+      cards.flatMap((card) => datasets.find((d) => d.id === card.datasetId)?.columns ?? []),
+    ),
+  ).sort((a, b) => a.localeCompare(b));
+
+  function toggleFilterColumn(column: string) {
+    setFilterColumns((prev) =>
+      prev.includes(column) ? prev.filter((c) => c !== column) : [...prev, column],
+    );
+  }
 
   async function handleSelectDashboard(id: string) {
     setSelectedId(id);
@@ -46,12 +59,14 @@ export default function BuilderClient({
     if (id === NEW_DASHBOARD) {
       setName("");
       setCards([]);
+      setFilterColumns([]);
       return;
     }
     const config = await loadDashboardAction(id);
     if (config) {
       setName(config.name);
       setCards(config.cards);
+      setFilterColumns(config.filterColumns ?? []);
     }
   }
 
@@ -98,7 +113,7 @@ export default function BuilderClient({
     }
     setSaving(true);
     try {
-      const { id } = await saveDashboardAction({ name: name.trim(), cards });
+      const { id } = await saveDashboardAction({ name: name.trim(), cards, filterColumns });
       setSelectedId(id);
       setMessage(`Saved dashboard '${name.trim()}'.`);
       router.refresh();
@@ -113,6 +128,7 @@ export default function BuilderClient({
     setSelectedId(NEW_DASHBOARD);
     setName("");
     setCards([]);
+    setFilterColumns([]);
     setMessage("Dashboard deleted.");
     router.refresh();
   }
@@ -172,12 +188,36 @@ export default function BuilderClient({
         )}
       </div>
 
+      {availableFilterColumns.length > 0 && (
+        <Card className="p-4">
+          <h2 className="mb-1 text-lg font-bold text-zinc-900 dark:text-zinc-50">Global filters</h2>
+          <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">
+            Columns picked here show up as live dropdowns on the Dashboards page — viewers can change
+            them to instantly re-filter every card at once, without editing the dashboard.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            {availableFilterColumns.map((column) => (
+              <label key={column} className="flex items-center gap-1.5 text-sm">
+                <input
+                  type="checkbox"
+                  checked={filterColumns.includes(column)}
+                  onChange={() => toggleFilterColumn(column)}
+                  className="accent-brand-600"
+                />
+                {column}
+              </label>
+            ))}
+          </div>
+        </Card>
+      )}
+
       <ImportConfigForm
         datasets={datasets}
-        onImport={(importedCards, importedName) => {
+        onImport={(importedCards, importedName, importedFilterColumns) => {
           setCards(importedCards);
           setPreviewCards(null);
           if (importedName) setName(importedName);
+          setFilterColumns(importedFilterColumns ?? []);
           setMessage(`Loaded ${importedCards.length} card(s) from the pasted config. Review, then Save dashboard.`);
         }}
       />

@@ -208,3 +208,14 @@ export function computeAging(
 
   return buckets.map((b, i) => ({ label: b.label, count: counts[i] }));
 }
+
+/** Sorted, unique, non-empty string values for a column — used to populate filter dropdowns. */
+export function getDistinctValues(rows: DatasetRecord[], column: string): string[] {
+  const values = new Set<string>();
+  for (const row of rows) {
+    const raw = row[column];
+    if (raw === null || raw === undefined || raw === "") continue;
+    values.add(String(raw));
+  }
+  return Array.from(values).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+}

@@ -148,7 +148,7 @@ export async function loadDashboard(id: string): Promise<DashboardConfig | null>
   if (!data) return null;
 
   const config = data.config as DashboardConfig;
-  return { name: data.name as string, cards: config?.cards ?? [] };
+  return { name: data.name as string, cards: config?.cards ?? [], filterColumns: config?.filterColumns ?? [] };
 }
 
 export async function saveDashboard(name: string, config: DashboardConfig): Promise<string> {
