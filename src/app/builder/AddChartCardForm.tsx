@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { CHART_AGG_LABELS, CHART_TYPES, FILTER_OPS } from "@/lib/kpi";
 import type { ChartAgg, ChartCard, ChartType, DatasetSummary, FilterOp } from "@/lib/types";
+import Button from "@/components/ui/Button";
+import Card from "@/components/ui/Card";
 import { LabeledInput, LabeledSelect } from "./FormControls";
 
 const COUNT_ROWS = "__count_rows__";
@@ -52,8 +54,8 @@ export default function AddChartCardForm({
   if (datasets.length === 0) return null;
 
   return (
-    <div className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
-      <h3 className="mb-3 font-medium text-zinc-900 dark:text-zinc-50">➕ Add chart card</h3>
+    <Card className="border-dashed p-4 shadow-none">
+      <h3 className="mb-3 font-bold text-zinc-900 dark:text-zinc-50">➕ Add chart card</h3>
       <div className="flex flex-wrap gap-3">
         <LabeledInput label="Title" value={title} onChange={setTitle} />
         <LabeledSelect
@@ -118,12 +120,9 @@ export default function AddChartCardForm({
         </div>
       )}
 
-      <button
-        onClick={handleAdd}
-        className="mt-3 rounded-md bg-zinc-100 px-3 py-1.5 text-sm font-medium text-zinc-800 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
-      >
+      <Button onClick={handleAdd} variant="secondary" className="mt-3">
         Add chart card
-      </button>
-    </div>
+      </Button>
+    </Card>
   );
 }

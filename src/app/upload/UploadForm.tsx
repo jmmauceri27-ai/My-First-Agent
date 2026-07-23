@@ -2,6 +2,9 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { DATASET_CATEGORIES, type DatasetSummary } from "@/lib/types";
+import Button from "@/components/ui/Button";
+import Card from "@/components/ui/Card";
+import { inputClass } from "@/components/ui/formClasses";
 import { uploadAndIngest, type UploadState } from "./actions";
 
 const initialState: UploadState = {};
@@ -28,8 +31,8 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
   const existing = datasets.find((d) => d.id === existingDatasetId);
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-      <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">Upload a file</h2>
+    <Card className="p-5">
+      <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Upload a file</h2>
       <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
         Accepts .xlsx and .csv. Replacing an existing dataset keeps its ID, so any saved dashboard built
         from it automatically shows the new data.
@@ -41,7 +44,7 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
             type="radio"
             checked={mode === "new"}
             onChange={() => setMode("new")}
-            className="accent-zinc-900 dark:accent-zinc-50"
+            className="accent-brand-600"
           />
           Create new dataset
         </label>
@@ -51,7 +54,7 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
             checked={mode === "replace"}
             onChange={() => setMode("replace")}
             disabled={datasets.length === 0}
-            className="accent-zinc-900 dark:accent-zinc-50"
+            className="accent-brand-600"
           />
           Replace an existing dataset
         </label>
@@ -74,7 +77,7 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
             type="file"
             accept=".xlsx,.csv"
             required
-            className="text-sm text-zinc-700 file:mr-3 file:rounded-md file:border-0 file:bg-zinc-100 file:px-3 file:py-1.5 file:text-sm file:font-medium dark:text-zinc-300 dark:file:bg-zinc-800"
+            className="text-sm text-zinc-700 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-brand-700 dark:text-zinc-300 dark:file:bg-zinc-800 dark:file:text-brand-400"
           />
         </div>
 
@@ -89,7 +92,7 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
               type="text"
               required
               placeholder="e.g. Work Orders Q1"
-              className="rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900"
+              className={inputClass}
             />
           </div>
         ) : (
@@ -102,7 +105,7 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
               name="existingDatasetId"
               value={existingDatasetId}
               onChange={(e) => handleSelectExisting(e.target.value)}
-              className="rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900"
+              className={inputClass}
             >
               {datasets.map((d) => (
                 <option key={d.id} value={d.id}>
@@ -122,7 +125,7 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
             name="category"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900"
+            className={inputClass}
           >
             {DATASET_CATEGORIES.map((c) => (
               <option key={c} value={c}>
@@ -132,13 +135,9 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
           </select>
         </div>
 
-        <button
-          type="submit"
-          disabled={pending || (mode === "replace" && !existingDatasetId)}
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
-        >
+        <Button type="submit" disabled={pending || (mode === "replace" && !existingDatasetId)}>
           {pending ? "Uploading…" : mode === "replace" ? "Replace & Save" : "Upload & Save"}
-        </button>
+        </Button>
       </form>
 
       {mode === "replace" && existing && (
@@ -148,20 +147,21 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
         </p>
       )}
 
-      {state.error && <p className="mt-3 text-sm text-red-600">{state.error}</p>}
+      {state.error && <p className="mt-3 text-sm text-critical">{state.error}</p>}
 
       {state.results && (
         <div className="mt-4 flex flex-col gap-2">
           {state.results.map((r) => (
             <div
               key={r.name}
-              className="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800 dark:border-green-900 dark:bg-green-950 dark:text-green-300"
+              className="flex items-center gap-2 rounded-lg border border-good/30 bg-good/10 px-3 py-2 text-sm text-emerald-800 dark:text-emerald-300"
             >
+              <span className="h-2 w-2 shrink-0 rounded-full bg-good" />
               Saved <strong>{r.name}</strong> ({r.rowCount} rows, {r.columns.length} columns)
             </div>
           ))}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { applyFilters, FILTER_OPS } from "@/lib/kpi";
 import type { DatasetRecord, DatasetSummary, FilterCondition, FilterOp } from "@/lib/types";
+import Button from "@/components/ui/Button";
+import Card from "@/components/ui/Card";
+import { inputClass } from "@/components/ui/formClasses";
 import { exportToExcel, fetchRows } from "./actions";
 
 function downloadBase64Xlsx(base64: string, filename: string) {
@@ -68,7 +71,7 @@ export default function ExplorerClient({ datasets }: { datasets: DatasetSummary[
         <select
           value={datasetId}
           onChange={(e) => setDatasetId(e.target.value)}
-          className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+          className={inputClass}
         >
           {datasets.map((d) => (
             <option key={d.id} value={d.id}>
@@ -86,7 +89,7 @@ export default function ExplorerClient({ datasets }: { datasets: DatasetSummary[
             <select
               value={filterColumn}
               onChange={(e) => setFilterColumn(e.target.value)}
-              className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+              className={inputClass}
             >
               <option value="">(none)</option>
               {dataset.columns.map((c) => (
@@ -101,7 +104,7 @@ export default function ExplorerClient({ datasets }: { datasets: DatasetSummary[
             <select
               value={filterOp}
               onChange={(e) => setFilterOp(e.target.value as FilterOp)}
-              className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+              className={inputClass}
             >
               {FILTER_OPS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -115,7 +118,7 @@ export default function ExplorerClient({ datasets }: { datasets: DatasetSummary[
             <input
               value={filterValue}
               onChange={(e) => setFilterValue(e.target.value)}
-              className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+              className={inputClass}
             />
           </label>
         </div>
@@ -125,12 +128,12 @@ export default function ExplorerClient({ datasets }: { datasets: DatasetSummary[
         {loading ? "Loading…" : `Showing ${Math.min(filteredRows.length, 200)} of ${filteredRows.length} filtered rows (${rows.length} total)`}
       </p>
 
-      <div className="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
+      <Card className="overflow-x-auto">
         <table className="min-w-full divide-y divide-zinc-200 text-sm dark:divide-zinc-800">
           <thead className="bg-zinc-50 dark:bg-zinc-900">
             <tr>
               {dataset?.columns.map((c) => (
-                <th key={c} className="whitespace-nowrap px-3 py-2 text-left font-medium text-zinc-500">
+                <th key={c} className="whitespace-nowrap px-3 py-2 text-left font-semibold text-zinc-500">
                   {c}
                 </th>
               ))}
@@ -138,7 +141,7 @@ export default function ExplorerClient({ datasets }: { datasets: DatasetSummary[
           </thead>
           <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
             {filteredRows.slice(0, 200).map((row, i) => (
-              <tr key={i}>
+              <tr key={i} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
                 {dataset?.columns.map((c) => (
                   <td key={c} className="whitespace-nowrap px-3 py-2 text-zinc-700 dark:text-zinc-300">
                     {String(row[c] ?? "")}
@@ -148,15 +151,11 @@ export default function ExplorerClient({ datasets }: { datasets: DatasetSummary[
             ))}
           </tbody>
         </table>
-      </div>
+      </Card>
 
-      <button
-        onClick={handleExport}
-        disabled={exporting || !dataset}
-        className="w-fit rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
-      >
+      <Button onClick={handleExport} disabled={exporting || !dataset} className="w-fit">
         {exporting ? "Preparing…" : "⬇️ Download as Excel"}
-      </button>
+      </Button>
     </div>
   );
 }

@@ -11,6 +11,8 @@ import type {
   KpiAgg,
   KpiCard,
 } from "@/lib/types";
+import Button from "@/components/ui/Button";
+import Card from "@/components/ui/Card";
 
 export default function ImportConfigForm({
   datasets,
@@ -103,10 +105,10 @@ export default function ImportConfigForm({
   }
 
   return (
-    <div className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+    <Card className="border-dashed p-4 shadow-none">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+        className="text-sm font-bold text-brand-700 dark:text-brand-400"
       >
         {open ? "▾" : "▸"} Import a dashboard config (paste JSON)
       </button>
@@ -122,18 +124,15 @@ export default function ImportConfigForm({
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={8}
-            className="rounded-md border border-zinc-300 px-3 py-2 font-mono text-xs outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900"
+            className="rounded-lg border border-zinc-300 px-3 py-2 font-mono text-xs outline-none transition-shadow focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-zinc-700 dark:bg-zinc-900"
             placeholder='{"name": "Operations Overview", "cards": [...]}'
           />
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          <button
-            onClick={handleLoad}
-            className="w-fit rounded-md bg-zinc-100 px-3 py-1.5 text-sm font-medium text-zinc-800 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
-          >
+          {error && <p className="text-sm text-critical">{error}</p>}
+          <Button onClick={handleLoad} variant="secondary" className="w-fit">
             Load into builder
-          </button>
+          </Button>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

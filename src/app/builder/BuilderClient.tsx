@@ -5,6 +5,9 @@ import { useState } from "react";
 import { KPI_AGG_LABELS } from "@/lib/kpi";
 import type { DashboardCard, DatasetRecord, DatasetSummary } from "@/lib/types";
 import DashboardCardsView from "@/components/DashboardCardsView";
+import Button from "@/components/ui/Button";
+import Card from "@/components/ui/Card";
+import { inputClass } from "@/components/ui/formClasses";
 import AddChartCardForm from "./AddChartCardForm";
 import AddKpiCardForm from "./AddKpiCardForm";
 import ImportConfigForm from "./ImportConfigForm";
@@ -121,7 +124,7 @@ export default function BuilderClient({
           <select
             value={selectedId}
             onChange={(e) => handleSelectDashboard(e.target.value)}
-            className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+            className={inputClass}
           >
             <option value={NEW_DASHBOARD}>➕ New dashboard</option>
             {dashboards.map((d) => (
@@ -134,22 +137,21 @@ export default function BuilderClient({
 
         <label className="flex min-w-[220px] flex-1 flex-col gap-1 text-sm">
           <span className="font-medium text-zinc-700 dark:text-zinc-300">Dashboard name</span>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
-          />
+          <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
         </label>
       </div>
 
       <div>
-        <h2 className="mb-2 text-lg font-medium text-zinc-900 dark:text-zinc-50">Cards in this dashboard</h2>
+        <h2 className="mb-2 text-lg font-bold text-zinc-900 dark:text-zinc-50">Cards in this dashboard</h2>
         {cards.length === 0 ? (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">No cards yet. Add a KPI or chart card below.</p>
         ) : (
-          <div className="flex flex-col divide-y divide-zinc-100 rounded-xl border border-zinc-200 dark:divide-zinc-900 dark:border-zinc-800">
+          <Card className="flex flex-col divide-y divide-zinc-100 overflow-hidden dark:divide-zinc-900">
             {cards.map((card, i) => (
-              <div key={i} className="flex items-center justify-between gap-4 px-4 py-2">
+              <div
+                key={i}
+                className="flex items-center justify-between gap-4 px-4 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
+              >
                 <span className="text-sm text-zinc-800 dark:text-zinc-200">
                   {card.type === "kpi"
                     ? `KPI — ${card.title} (${card.datasetName}, ${KPI_AGG_LABELS[card.agg]})`
@@ -157,13 +159,13 @@ export default function BuilderClient({
                 </span>
                 <button
                   onClick={() => removeCard(i)}
-                  className="text-sm font-medium text-red-600 hover:underline"
+                  className="text-sm font-semibold text-critical hover:underline"
                 >
                   Remove
                 </button>
               </div>
             ))}
-          </div>
+          </Card>
         )}
       </div>
 
@@ -183,36 +185,25 @@ export default function BuilderClient({
       {message && <p className="text-sm text-zinc-700 dark:text-zinc-300">{message}</p>}
 
       <div className="flex flex-wrap gap-3">
-        <button
-          onClick={handlePreview}
-          disabled={previewing}
-          className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
-        >
+        <Button onClick={handlePreview} disabled={previewing} variant="secondary">
           {previewing ? "Loading preview…" : "👁 Preview (not saved)"}
-        </button>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
-        >
+        </Button>
+        <Button onClick={handleSave} disabled={saving}>
           {saving ? "Saving…" : "💾 Save dashboard"}
-        </button>
+        </Button>
         {selectedId !== NEW_DASHBOARD && (
-          <button
-            onClick={handleDelete}
-            className="rounded-md px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
-          >
+          <Button onClick={handleDelete} variant="danger">
             🗑️ Delete this dashboard
-          </button>
+          </Button>
         )}
       </div>
 
-      {previewError && <p className="text-sm text-red-600">{previewError}</p>}
+      {previewError && <p className="text-sm text-critical">{previewError}</p>}
 
       {previewCards && (
-        <div className="flex flex-col gap-4 rounded-xl border border-dashed border-zinc-300 p-4 dark:border-zinc-700">
+        <Card className="flex flex-col gap-4 border-dashed p-4 shadow-none">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">
+            <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
               👁 Live preview <span className="text-sm font-normal text-zinc-500 dark:text-zinc-400">(not saved)</span>
             </h2>
             <button
@@ -223,7 +214,7 @@ export default function BuilderClient({
             </button>
           </div>
           <DashboardCardsView cards={previewCards} rowsByDataset={previewRows} />
-        </div>
+        </Card>
       )}
     </div>
   );
