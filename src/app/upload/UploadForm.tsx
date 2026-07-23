@@ -9,11 +9,14 @@ import { uploadAndIngest, type UploadState } from "./actions";
 
 const initialState: UploadState = {};
 
+type Mode = "new" | "replace" | "append";
+
 export default function UploadForm({ datasets }: { datasets: DatasetSummary[] }) {
   const [state, formAction, pending] = useActionState(uploadAndIngest, initialState);
   const formRef = useRef<HTMLFormElement>(null);
-  const [mode, setMode] = useState<"new" | "replace">("new");
+  const [mode, setMode] = useState<Mode>("new");
   const [existingDatasetId, setExistingDatasetId] = useState(datasets[0]?.id ?? "");
+  const [keyColumn, setKeyColumn] = useState("");
   const [category, setCategory] = useState<string>(DATASET_CATEGORIES[0]);
 
   useEffect(() => {
@@ -25,7 +28,10 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
   function handleSelectExisting(id: string) {
     setExistingDatasetId(id);
     const match = datasets.find((d) => d.id === id);
-    if (match) setCategory(match.category);
+    if (match) {
+      setCategory(match.category);
+      setKeyColumn(match.columns[0] ?? "");
+    }
   }
 
   const existing = datasets.find((d) => d.id === existingDatasetId);
@@ -34,11 +40,11 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
     <Card className="p-5">
       <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Upload a file</h2>
       <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-        Accepts .xlsx and .csv. Replacing an existing dataset keeps its ID, so any saved dashboard built
-        from it automatically shows the new data.
+        Accepts .xlsx and .csv. Replacing keeps the dataset&rsquo;s ID so dashboards built on it stay
+        current; appending merges rows in by a key column instead of a full re-export.
       </p>
 
-      <div className="mt-4 flex gap-4 text-sm">
+      <div className="mt-4 flex flex-wrap gap-4 text-sm">
         <label className="flex items-center gap-1.5">
           <input
             type="radio"
@@ -57,6 +63,19 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
             className="accent-brand-600"
           />
           Replace an existing dataset
+        </label>
+        <label className="flex items-center gap-1.5">
+          <input
+            type="radio"
+            checked={mode === "append"}
+            onChange={() => {
+              setMode("append");
+              if (existing) setKeyColumn(existing.columns[0] ?? "");
+            }}
+            disabled={datasets.length === 0}
+            className="accent-brand-600"
+          />
+          Append &amp; update (merge by key column)
         </label>
       </div>
 
@@ -98,7 +117,7 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
         ) : (
           <div className="flex flex-col gap-1">
             <label htmlFor="existingDatasetId" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Dataset to replace
+              Dataset to {mode === "append" ? "update" : "replace"}
             </label>
             <select
               id="existingDatasetId"
@@ -110,6 +129,27 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
               {datasets.map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.displayName} ({d.rowCount} rows)
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {mode === "append" && existing && (
+          <div className="flex flex-col gap-1">
+            <label htmlFor="keyColumn" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              Key column (matches rows between uploads)
+            </label>
+            <select
+              id="keyColumn"
+              name="keyColumn"
+              value={keyColumn}
+              onChange={(e) => setKeyColumn(e.target.value)}
+              className={inputClass}
+            >
+              {existing.columns.map((c) => (
+                <option key={c} value={c}>
+                  {c}
                 </option>
               ))}
             </select>
@@ -135,8 +175,11 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
           </select>
         </div>
 
-        <Button type="submit" disabled={pending || (mode === "replace" && !existingDatasetId)}>
-          {pending ? "Uploading…" : mode === "replace" ? "Replace & Save" : "Upload & Save"}
+        <Button
+          type="submit"
+          disabled={pending || (mode !== "new" && !existingDatasetId) || (mode === "append" && !keyColumn)}
+        >
+          {pending ? "Uploading…" : mode === "replace" ? "Replace & Save" : mode === "append" ? "Merge & Save" : "Upload & Save"}
         </Button>
       </form>
 
@@ -144,6 +187,14 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
         <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
           This will replace all {existing.rowCount} existing rows in &ldquo;{existing.displayName}&rdquo; with
           the new file&rsquo;s data. Any dashboard cards using it will show the new numbers next time you view them.
+        </p>
+      )}
+
+      {mode === "append" && existing && keyColumn && (
+        <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+          Rows in the upload whose &ldquo;{keyColumn}&rdquo; matches an existing row will update it in
+          place; rows with a new &ldquo;{keyColumn}&rdquo; are added. Existing rows not present in this
+          upload are left as-is.
         </p>
       )}
 
@@ -157,7 +208,10 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
               className="flex items-center gap-2 rounded-lg border border-good/30 bg-good/10 px-3 py-2 text-sm text-emerald-800 dark:text-emerald-300"
             >
               <span className="h-2 w-2 shrink-0 rounded-full bg-good" />
-              Saved <strong>{r.name}</strong> ({r.rowCount} rows, {r.columns.length} columns)
+              <span>
+                Saved <strong>{r.name}</strong> ({r.rowCount} rows, {r.columns.length} columns)
+                {r.detail && <span className="block text-xs opacity-90">{r.detail}</span>}
+              </span>
             </div>
           ))}
         </div>

@@ -119,6 +119,129 @@ export async function ingestDataset(
   return datasetId;
 }
 
+export interface MergeResult {
+  inserted: number;
+  updated: number;
+  totalRows: number;
+}
+
+/**
+ * Upserts rows into an existing dataset by matching on `keyColumn`: rows whose
+ * key matches an existing row update it in place, everything else is
+ * inserted. Rows already in the dataset that aren't present in this upload
+ * are left untouched (unlike ingestDataset's full replace).
+ */
+export async function mergeDataset(
+  datasetId: string,
+  keyColumn: string,
+  sourceFilename: string,
+  rows: DatasetRecord[],
+): Promise<MergeResult> {
+  const supabase = createAdminClient();
+
+  const existing: { id: number; data: DatasetRecord }[] = [];
+  {
+    const pageSize = 1000;
+    let from = 0;
+    for (;;) {
+      const { data, error } = await supabase
+        .from("dataset_rows")
+        .select("id, data")
+        .eq("dataset_id", datasetId)
+        .eq("user_id", OWNER_USER_ID)
+        .range(from, from + pageSize - 1);
+      if (error) throw new Error(error.message);
+      if (!data || data.length === 0) break;
+      existing.push(...(data as { id: number; data: DatasetRecord }[]));
+      if (data.length < pageSize) break;
+      from += pageSize;
+    }
+  }
+
+  const existingIdByKey = new Map<string, number>();
+  for (const row of existing) {
+    const keyValue = row.data[keyColumn];
+    if (keyValue === null || keyValue === undefined || keyValue === "") continue;
+    existingIdByKey.set(String(keyValue), row.id);
+  }
+
+  const updates: { id: number; row: DatasetRecord }[] = [];
+  const toInsert: DatasetRecord[] = [];
+
+  for (const row of rows) {
+    const keyValue = row[keyColumn];
+    const existingId =
+      keyValue === null || keyValue === undefined || keyValue === ""
+        ? undefined
+        : existingIdByKey.get(String(keyValue));
+    if (existingId !== undefined) {
+      updates.push({ id: existingId, row });
+    } else {
+      toInsert.push(row);
+    }
+  }
+
+  const concurrency = 10;
+  for (let i = 0; i < updates.length; i += concurrency) {
+    const chunk = updates.slice(i, i + concurrency);
+    const results = await Promise.all(
+      chunk.map(({ id, row }) => supabase.from("dataset_rows").update({ data: row }).eq("id", id)),
+    );
+    const failed = results.find((r) => r.error);
+    if (failed?.error) throw new Error(failed.error.message);
+  }
+
+  if (toInsert.length > 0) {
+    const { data: maxRow } = await supabase
+      .from("dataset_rows")
+      .select("row_index")
+      .eq("dataset_id", datasetId)
+      .order("row_index", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const startIndex = (maxRow?.row_index ?? -1) + 1;
+
+    const batchSize = 500;
+    for (let i = 0; i < toInsert.length; i += batchSize) {
+      const batch = toInsert.slice(i, i + batchSize).map((row, idx) => ({
+        dataset_id: datasetId,
+        user_id: OWNER_USER_ID,
+        row_index: startIndex + i + idx,
+        data: row,
+      }));
+      const { error: insertError } = await supabase.from("dataset_rows").insert(batch);
+      if (insertError) throw new Error(insertError.message);
+    }
+  }
+
+  const { data: datasetRow, error: dsError } = await supabase
+    .from("datasets")
+    .select("columns")
+    .eq("id", datasetId)
+    .single();
+  if (dsError) throw new Error(dsError.message);
+
+  const columnSet = new Set<string>((datasetRow.columns as string[]) ?? []);
+  for (const row of rows) {
+    for (const col of Object.keys(row)) columnSet.add(col);
+  }
+
+  const totalRows = existing.length + toInsert.length;
+
+  const { error: updateDatasetError } = await supabase
+    .from("datasets")
+    .update({
+      columns: Array.from(columnSet),
+      row_count: totalRows,
+      source_filename: sourceFilename,
+      uploaded_at: new Date().toISOString(),
+    })
+    .eq("id", datasetId);
+  if (updateDatasetError) throw new Error(updateDatasetError.message);
+
+  return { inserted: toInsert.length, updated: updates.length, totalRows };
+}
+
 export async function deleteDataset(id: string): Promise<void> {
   const supabase = createAdminClient();
   const { error } = await supabase.from("datasets").delete().eq("id", id).eq("user_id", OWNER_USER_ID);

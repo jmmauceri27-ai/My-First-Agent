@@ -1,13 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { deleteDataset, getDataset, ingestDataset } from "@/lib/dal";
+import { deleteDataset, getDataset, ingestDataset, mergeDataset } from "@/lib/dal";
 import { parseUpload } from "@/lib/parse";
 
 export interface UploadResultItem {
   name: string;
   rowCount: number;
   columns: string[];
+  detail?: string;
 }
 
 export interface UploadState {
@@ -25,11 +26,12 @@ export async function uploadAndIngest(_prev: UploadState, formData: FormData): P
   }
 
   let targetName: string;
-  if (mode === "replace") {
-    const existingId = String(formData.get("existingDatasetId") ?? "");
+  let existingId = "";
+  if (mode === "replace" || mode === "append") {
+    existingId = String(formData.get("existingDatasetId") ?? "");
     const existing = existingId ? await getDataset(existingId) : null;
     if (!existing) {
-      return { error: "Please pick a dataset to replace." };
+      return { error: `Please pick a dataset to ${mode === "append" ? "update" : "replace"}.` };
     }
     targetName = existing.displayName;
   } else {
@@ -51,12 +53,44 @@ export async function uploadAndIngest(_prev: UploadState, formData: FormData): P
     return { error: "No data rows were found in this file." };
   }
 
-  if (mode === "replace" && nonEmptySheets.length > 1) {
+  if ((mode === "replace" || mode === "append") && nonEmptySheets.length > 1) {
     return {
       error:
-        "This file has multiple sheets, which isn't supported when replacing a single existing dataset. " +
+        `This file has multiple sheets, which isn't supported when ${mode === "append" ? "updating" : "replacing"} a single existing dataset. ` +
         "Upload it as a new dataset instead, or use a file with one sheet.",
     };
+  }
+
+  if (mode === "append") {
+    const keyColumn = String(formData.get("keyColumn") ?? "");
+    if (!keyColumn) {
+      return { error: "Please choose a key column to match rows on." };
+    }
+    const sheet = nonEmptySheets[0];
+    if (!Object.keys(sheet.rows[0]).includes(keyColumn)) {
+      return {
+        error: `The uploaded file doesn't have a "${keyColumn}" column, so rows can't be matched to existing ones.`,
+      };
+    }
+
+    try {
+      const result = await mergeDataset(existingId, keyColumn, file.name, sheet.rows);
+      revalidatePath("/");
+      revalidatePath("/upload");
+      revalidatePath("/dashboards");
+      return {
+        results: [
+          {
+            name: targetName,
+            rowCount: result.totalRows,
+            columns: Object.keys(sheet.rows[0]),
+            detail: `${result.inserted} new row(s) added, ${result.updated} existing row(s) updated (${result.totalRows} total).`,
+          },
+        ],
+      };
+    } catch (e) {
+      return { error: e instanceof Error ? e.message : "Failed to merge dataset." };
+    }
   }
 
   const results: UploadResultItem[] = [];
