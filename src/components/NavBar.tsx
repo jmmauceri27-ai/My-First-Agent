@@ -9,6 +9,7 @@ const LINKS = [
   { href: "/dashboards", label: "Dashboards" },
   { href: "/builder", label: "Dashboard Builder" },
   { href: "/explorer", label: "Data Explorer" },
+  { href: "/crm", label: "CRM" },
 ];
 
 export default function NavBar() {
@@ -24,7 +25,7 @@ export default function NavBar() {
 
         <nav className="flex flex-wrap items-center gap-1">
           {LINKS.map((link) => {
-            const active = pathname === link.href;
+            const active = link.href === "/" ? pathname === link.href : pathname.startsWith(link.href);
             return (
               <Link
                 key={link.href}
