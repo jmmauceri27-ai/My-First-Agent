@@ -2,12 +2,12 @@
 
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import type { AgingResult } from "@/lib/kpi";
-import { AGING_COLORS_DARK, AGING_COLORS_LIGHT } from "@/lib/chartPalette";
+import { CHART_COLORS_DARK, CHART_COLORS_LIGHT } from "@/lib/chartPalette";
 import { useIsDarkMode } from "@/lib/useIsDarkMode";
 
 export default function AgingDonutChart({ buckets }: { buckets: AgingResult[] }) {
   const isDark = useIsDarkMode();
-  const colors = isDark ? AGING_COLORS_DARK : AGING_COLORS_LIGHT;
+  const colors = isDark ? CHART_COLORS_DARK : CHART_COLORS_LIGHT;
   const total = buckets.reduce((sum, b) => sum + b.count, 0);
 
   if (total === 0) {

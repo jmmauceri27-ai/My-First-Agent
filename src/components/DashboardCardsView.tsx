@@ -1,6 +1,6 @@
 import { computeAging, computeChartData, computeKpi } from "@/lib/kpi";
 import type { AgingCard, ChartCard, DashboardCard, DatasetRecord, KpiCard } from "@/lib/types";
-import { AGING_COLORS_LIGHT, CHART_COLORS_LIGHT } from "@/lib/chartPalette";
+import { CHART_COLORS_LIGHT } from "@/lib/chartPalette";
 import AgingDonutChart from "./AgingDonutChart";
 import ChartRenderer from "./ChartRenderer";
 import Card from "./ui/Card";
@@ -58,7 +58,7 @@ export default function DashboardCardsView({
                 <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-zinc-900 dark:text-zinc-50">
                   <span
                     className="inline-block h-2.5 w-2.5 rounded-full"
-                    style={{ backgroundColor: AGING_COLORS_LIGHT[2] }}
+                    style={{ backgroundColor: CHART_COLORS_LIGHT[7] }}
                   />
                   {card.title}
                 </h2>
