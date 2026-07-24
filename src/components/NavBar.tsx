@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/builder", label: "Dashboard Builder" },
   { href: "/explorer", label: "Data Explorer" },
   { href: "/crm", label: "CRM" },
+  { href: "/procurement", label: "Procurement" },
 ];
 
 export default function NavBar() {

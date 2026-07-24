@@ -94,7 +94,6 @@ export const DATASET_CATEGORIES = [
   "Invoices",
   "Proposals",
   "Vendors",
-  "Procurement",
   "Clients",
   "Sites",
   "Materials",
