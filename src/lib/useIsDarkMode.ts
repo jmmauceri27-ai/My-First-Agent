@@ -1,23 +1,5 @@
-"use client";
-
-import { useSyncExternalStore } from "react";
-
-const QUERY = "(prefers-color-scheme: dark)";
-
-function subscribe(callback: () => void) {
-  const query = window.matchMedia(QUERY);
-  query.addEventListener("change", callback);
-  return () => query.removeEventListener("change", callback);
-}
-
-function getSnapshot() {
-  return window.matchMedia(QUERY).matches;
-}
-
-function getServerSnapshot() {
-  return false;
-}
-
+// The app always renders the dark theme (see src/app/layout.tsx), so chart
+// components always use the dark chart palette.
 export function useIsDarkMode(): boolean {
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return true;
 }

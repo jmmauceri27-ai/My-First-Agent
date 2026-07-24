@@ -1,8 +1,13 @@
 @import "tailwindcss";
 
+/* Always-dark: `dark:` utilities activate off the `.dark` class (forced on <html>)
+   instead of the system's prefers-color-scheme, so the deep theme never depends
+   on the visitor's device settings. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #f5f8fc;
-  --foreground: #0b1120;
+  --background: #05070d;
+  --foreground: #eaf1fb;
 }
 
 @theme inline {
@@ -11,14 +16,16 @@
   --font-sans: var(--font-display);
   --font-mono: var(--font-geist-mono);
 
-  /* Brand accent (categorical slot 1 "blue" from the validated palette) */
-  --color-brand-50: #eaf2fc;
-  --color-brand-100: #cde2fb;
-  --color-brand-400: #3987e5;
-  --color-brand-500: #2a78d6;
-  --color-brand-600: #256abf;
-  --color-brand-700: #1c5cab;
-  --color-brand-800: #184f95;
+  /* Brand accent — vivid electric blue, UI chrome only (buttons/links/nav).
+     Deliberately more saturated than the validated chart palette's blue slot,
+     which stays untouched for data-encoding accessibility. */
+  --color-brand-50: #e8f1fe;
+  --color-brand-100: #c7e0fd;
+  --color-brand-400: #4f9cf9;
+  --color-brand-500: #2f7ef5;
+  --color-brand-600: #2065e0;
+  --color-brand-700: #1750b8;
+  --color-brand-800: #123f92;
 
   /* Status palette (fixed — never reused for chart series) */
   --color-good: #0ca30c;
@@ -27,37 +34,19 @@
   --color-critical: #d03b3b;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #070b14;
-    --foreground: #f3f6fb;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
 }
 
-/* Subtle abstract background art: soft blue mesh gradient + faint blueprint grid. */
+/* Aggressive deep-blue background art: bold mesh gradient + blueprint grid. */
 .bg-art {
   background-image:
-    radial-gradient(ellipse 60% 45% at 12% 8%, rgba(37, 99, 235, 0.20), transparent 60%),
-    radial-gradient(ellipse 55% 45% at 88% 18%, rgba(56, 189, 248, 0.17), transparent 60%),
-    radial-gradient(ellipse 65% 50% at 50% 100%, rgba(29, 78, 216, 0.16), transparent 60%),
-    repeating-linear-gradient(0deg, rgba(37, 99, 235, 0.10) 0px, rgba(37, 99, 235, 0.10) 1px, transparent 1px, transparent 96px),
-    repeating-linear-gradient(90deg, rgba(37, 99, 235, 0.10) 0px, rgba(37, 99, 235, 0.10) 1px, transparent 1px, transparent 96px);
-}
-
-@media (prefers-color-scheme: dark) {
-  .bg-art {
-    background-image:
-      radial-gradient(ellipse 60% 45% at 12% 8%, rgba(56, 130, 246, 0.28), transparent 60%),
-      radial-gradient(ellipse 55% 45% at 88% 18%, rgba(56, 189, 248, 0.22), transparent 60%),
-      radial-gradient(ellipse 65% 50% at 50% 100%, rgba(37, 99, 235, 0.24), transparent 60%),
-      repeating-linear-gradient(0deg, rgba(96, 165, 250, 0.12) 0px, rgba(96, 165, 250, 0.12) 1px, transparent 1px, transparent 96px),
-      repeating-linear-gradient(90deg, rgba(96, 165, 250, 0.12) 0px, rgba(96, 165, 250, 0.12) 1px, transparent 1px, transparent 96px);
-  }
+    radial-gradient(ellipse 65% 50% at 8% 4%, rgba(47, 126, 245, 0.42), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 92% 12%, rgba(56, 189, 248, 0.34), transparent 60%),
+    radial-gradient(ellipse 70% 55% at 50% 105%, rgba(29, 78, 216, 0.36), transparent 60%),
+    repeating-linear-gradient(0deg, rgba(96, 165, 250, 0.12) 0px, rgba(96, 165, 250, 0.12) 1px, transparent 1px, transparent 80px),
+    repeating-linear-gradient(90deg, rgba(96, 165, 250, 0.12) 0px, rgba(96, 165, 250, 0.12) 1px, transparent 1px, transparent 80px);
 }
 
 * {

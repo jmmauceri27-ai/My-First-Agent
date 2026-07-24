@@ -26,7 +26,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${displayFont.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${displayFont.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">
         <AppShell>{children}</AppShell>
