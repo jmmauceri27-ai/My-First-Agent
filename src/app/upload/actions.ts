@@ -1,8 +1,16 @@
 "use server";
 
-import { del } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
-import { deleteDataset, getDataset, ingestDataset, mergeDataset } from "@/lib/dal";
+import {
+  deleteDataset,
+  deleteStaleUploadChunks,
+  deleteUploadChunks,
+  getDataset,
+  getUploadChunks,
+  ingestDataset,
+  insertUploadChunk,
+  mergeDataset,
+} from "@/lib/dal";
 import { parseBuffer, type ParsedSheet } from "@/lib/parse";
 
 export interface UploadResultItem {
@@ -112,26 +120,46 @@ async function ingestParsedSheets(sheets: ParsedSheet[], sourceFilename: string,
 }
 
 /**
- * Files go browser -> Vercel Blob directly (see UploadForm.tsx + /api/upload-token),
- * bypassing the ~4.5MB request body ceiling Vercel enforces on serverless functions.
- * This action just fetches the already-uploaded blob, parses it, and cleans it up --
- * the parsed rows live in Postgres, so the blob itself is temporary.
+ * Vercel's serverless functions hard-cap request bodies at ~4.5MB regardless of
+ * Next.js's own serverActions.bodySizeLimit setting, so large files are sliced
+ * into small pieces in the browser (see UploadForm.tsx) and sent one at a time.
+ * Each chunk just gets stashed in a staging table until the file is complete.
  */
-export async function uploadAndIngestFromBlob(
-  blobUrl: string,
+export async function uploadChunkAction(formData: FormData): Promise<void> {
+  const chunk = formData.get("chunk");
+  const uploadId = String(formData.get("uploadId") ?? "");
+  const chunkIndex = Number(formData.get("chunkIndex"));
+  if (!(chunk instanceof File) || !uploadId || Number.isNaN(chunkIndex)) {
+    throw new Error("Malformed chunk upload.");
+  }
+
+  if (chunkIndex === 0) {
+    deleteStaleUploadChunks().catch(() => {});
+  }
+
+  const buffer = Buffer.from(await chunk.arrayBuffer());
+  await insertUploadChunk(uploadId, chunkIndex, buffer.toString("base64"));
+}
+
+/** Reassembles the chunks stashed by uploadChunkAction, parses the file, and cleans up. */
+export async function finalizeUploadAction(
+  uploadId: string,
   fileName: string,
+  totalChunks: number,
   meta: UploadMeta,
 ): Promise<UploadState> {
   let sheets: ParsedSheet[];
   try {
-    const res = await fetch(blobUrl);
-    if (!res.ok) throw new Error("Failed to retrieve the uploaded file.");
-    const buffer = Buffer.from(await res.arrayBuffer());
+    const chunks = await getUploadChunks(uploadId);
+    if (chunks.length !== totalChunks) {
+      return { error: `Upload incomplete: received ${chunks.length} of ${totalChunks} parts. Please try again.` };
+    }
+    const buffer = Buffer.concat(chunks.map((c) => Buffer.from(c, "base64")));
     sheets = await parseBuffer(buffer, fileName);
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to parse file." };
   } finally {
-    del(blobUrl).catch(() => {});
+    deleteUploadChunks(uploadId).catch(() => {});
   }
 
   return ingestParsedSheets(sheets, fileName, meta);

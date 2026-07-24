@@ -2,6 +2,47 @@ import "server-only";
 import { createAdminClient, OWNER_USER_ID } from "./supabase/admin";
 import type { DashboardConfig, DatasetRecord, DatasetSummary } from "./types";
 
+// ---------- Upload chunk staging ----------
+// Temporary scratch space for large file uploads (see supabase/005_upload_chunks.sql).
+// Not a real dataset store -- rows are deleted once the upload is reassembled.
+
+export async function insertUploadChunk(uploadId: string, chunkIndex: number, base64Data: string): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("upload_chunks")
+    .insert({ user_id: OWNER_USER_ID, upload_id: uploadId, chunk_index: chunkIndex, data: base64Data });
+  if (error) throw new Error(error.message);
+}
+
+export async function getUploadChunks(uploadId: string): Promise<string[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("upload_chunks")
+    .select("chunk_index, data")
+    .eq("upload_id", uploadId)
+    .eq("user_id", OWNER_USER_ID)
+    .order("chunk_index", { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => row.data as string);
+}
+
+export async function deleteUploadChunks(uploadId: string): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("upload_chunks")
+    .delete()
+    .eq("upload_id", uploadId)
+    .eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
+}
+
+/** Best-effort cleanup of chunks left behind by abandoned uploads (closed tab, etc.). */
+export async function deleteStaleUploadChunks(): Promise<void> {
+  const supabase = createAdminClient();
+  const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  await supabase.from("upload_chunks").delete().eq("user_id", OWNER_USER_ID).lt("created_at", cutoff);
+}
+
 export async function listDatasets(): Promise<DatasetSummary[]> {
   const supabase = createAdminClient();
   const { data, error } = await supabase

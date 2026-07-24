@@ -1,20 +1,24 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { upload } from "@vercel/blob/client";
 import { DATASET_CATEGORIES, type DatasetSummary } from "@/lib/types";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
-import { uploadAndIngestFromBlob, type UploadState } from "./actions";
+import { finalizeUploadAction, uploadChunkAction, type UploadState } from "./actions";
 
 const initialState: UploadState = {};
+
+// Vercel's serverless functions hard-cap request bodies at ~4.5MB regardless of
+// app-level config, so files get sliced into pieces safely under that.
+const CHUNK_SIZE = 3.5 * 1024 * 1024;
 
 type Mode = "new" | "replace" | "append";
 
 export default function UploadForm({ datasets }: { datasets: DatasetSummary[] }) {
   const [state, setState] = useState<UploadState>(initialState);
   const [pending, setPending] = useState(false);
+  const [progress, setProgress] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const [mode, setMode] = useState<Mode>("new");
   const [existingDatasetId, setExistingDatasetId] = useState(datasets[0]?.id ?? "");
@@ -52,11 +56,21 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
     setPending(true);
     setState({});
     try {
-      const blob = await upload(file.name, file, {
-        access: "public",
-        handleUploadUrl: "/api/upload-token",
-      });
-      const result = await uploadAndIngestFromBlob(blob.url, file.name, {
+      const uploadId = crypto.randomUUID();
+      const totalChunks = Math.max(1, Math.ceil(file.size / CHUNK_SIZE));
+
+      for (let i = 0; i < totalChunks; i++) {
+        setProgress(totalChunks > 1 ? `Uploading part ${i + 1} of ${totalChunks}…` : "Uploading…");
+        const chunk = file.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+        const chunkFormData = new FormData();
+        chunkFormData.set("chunk", chunk, file.name);
+        chunkFormData.set("uploadId", uploadId);
+        chunkFormData.set("chunkIndex", String(i));
+        await uploadChunkAction(chunkFormData);
+      }
+
+      setProgress("Processing file…");
+      const result = await finalizeUploadAction(uploadId, file.name, totalChunks, {
         mode,
         category,
         displayName: mode === "new" ? String(formData.get("displayName") ?? "") : undefined,
@@ -69,6 +83,7 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
       setState({ error: e instanceof Error ? e.message : "Upload failed." });
     } finally {
       setPending(false);
+      setProgress(null);
     }
   }
 
@@ -213,7 +228,13 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
           type="submit"
           disabled={pending || (mode !== "new" && !existingDatasetId) || (mode === "append" && !keyColumn)}
         >
-          {pending ? "Uploading…" : mode === "replace" ? "Replace & Save" : mode === "append" ? "Merge & Save" : "Upload & Save"}
+          {pending
+            ? (progress ?? "Uploading…")
+            : mode === "replace"
+              ? "Replace & Save"
+              : mode === "append"
+                ? "Merge & Save"
+                : "Upload & Save"}
         </Button>
       </form>
 
