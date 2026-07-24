@@ -38,8 +38,8 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
 
   return (
     <Card className="p-5">
-      <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Upload a file</h2>
-      <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+      <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Upload a file</h2>
+      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
         Accepts .xlsx and .csv. Replacing keeps the dataset&rsquo;s ID so dashboards built on it stay
         current; appending merges rows in by a key column instead of a full re-export.
       </p>
@@ -87,7 +87,7 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
         <input type="hidden" name="mode" value={mode} />
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="file" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <label htmlFor="file" className="text-sm font-medium text-slate-700 dark:text-slate-300">
             File
           </label>
           <input
@@ -96,13 +96,13 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
             type="file"
             accept=".xlsx,.csv"
             required
-            className="text-sm text-zinc-700 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-brand-700 dark:text-zinc-300 dark:file:bg-zinc-800 dark:file:text-brand-400"
+            className="text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-brand-700 dark:text-slate-300 dark:file:bg-slate-800 dark:file:text-brand-400"
           />
         </div>
 
         {mode === "new" ? (
           <div className="flex flex-col gap-1">
-            <label htmlFor="displayName" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label htmlFor="displayName" className="text-sm font-medium text-slate-700 dark:text-slate-300">
               Dataset name
             </label>
             <input
@@ -116,7 +116,7 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
           </div>
         ) : (
           <div className="flex flex-col gap-1">
-            <label htmlFor="existingDatasetId" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label htmlFor="existingDatasetId" className="text-sm font-medium text-slate-700 dark:text-slate-300">
               Dataset to {mode === "append" ? "update" : "replace"}
             </label>
             <select
@@ -137,7 +137,7 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
 
         {mode === "append" && existing && (
           <div className="flex flex-col gap-1">
-            <label htmlFor="keyColumn" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label htmlFor="keyColumn" className="text-sm font-medium text-slate-700 dark:text-slate-300">
               Key column (matches rows between uploads)
             </label>
             <select
@@ -157,7 +157,7 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
         )}
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="category" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <label htmlFor="category" className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Category
           </label>
           <select
@@ -184,14 +184,14 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
       </form>
 
       {mode === "replace" && existing && (
-        <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
           This will replace all {existing.rowCount} existing rows in &ldquo;{existing.displayName}&rdquo; with
           the new file&rsquo;s data. Any dashboard cards using it will show the new numbers next time you view them.
         </p>
       )}
 
       {mode === "append" && existing && keyColumn && (
-        <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
           Rows in the upload whose &ldquo;{keyColumn}&rdquo; matches an existing row will update it in
           place; rows with a new &ldquo;{keyColumn}&rdquo; are added. Existing rows not present in this
           upload are left as-is.

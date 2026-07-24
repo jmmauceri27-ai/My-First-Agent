@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import BackgroundArt from "./BackgroundArt";
 import NavBar from "./NavBar";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -9,7 +10,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const isWide = pathname === "/crm";
 
   return (
-    <div className="flex min-h-screen flex-col bg-zinc-50 dark:bg-black">
+    <div className="flex min-h-screen flex-col bg-background">
+      <BackgroundArt />
       {showNav && <NavBar />}
       <main
         className={`mx-auto flex w-full flex-1 flex-col px-4 py-6 ${isWide ? "max-w-none" : "max-w-6xl"}`}

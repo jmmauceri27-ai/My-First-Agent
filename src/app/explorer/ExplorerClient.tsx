@@ -67,7 +67,7 @@ export default function ExplorerClient({ datasets }: { datasets: DatasetSummary[
   return (
     <div className="flex flex-col gap-4">
       <label className="flex w-fit flex-col gap-1 text-sm">
-        <span className="font-medium text-zinc-700 dark:text-zinc-300">Dataset</span>
+        <span className="font-medium text-slate-700 dark:text-slate-300">Dataset</span>
         <select
           value={datasetId}
           onChange={(e) => setDatasetId(e.target.value)}
@@ -83,9 +83,9 @@ export default function ExplorerClient({ datasets }: { datasets: DatasetSummary[
 
       {dataset && (
         <div className="flex flex-wrap items-end gap-3">
-          <span className="text-sm text-zinc-500 dark:text-zinc-400">Filter:</span>
+          <span className="text-sm text-slate-500 dark:text-slate-400">Filter:</span>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">Column</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Column</span>
             <select
               value={filterColumn}
               onChange={(e) => setFilterColumn(e.target.value)}
@@ -100,7 +100,7 @@ export default function ExplorerClient({ datasets }: { datasets: DatasetSummary[
             </select>
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">Operator</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Operator</span>
             <select
               value={filterOp}
               onChange={(e) => setFilterOp(e.target.value as FilterOp)}
@@ -114,7 +114,7 @@ export default function ExplorerClient({ datasets }: { datasets: DatasetSummary[
             </select>
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">Value</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Value</span>
             <input
               value={filterValue}
               onChange={(e) => setFilterValue(e.target.value)}
@@ -124,26 +124,26 @@ export default function ExplorerClient({ datasets }: { datasets: DatasetSummary[
         </div>
       )}
 
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+      <p className="text-sm text-slate-500 dark:text-slate-400">
         {loading ? "Loading…" : `Showing ${Math.min(filteredRows.length, 200)} of ${filteredRows.length} filtered rows (${rows.length} total)`}
       </p>
 
       <Card className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-zinc-200 text-sm dark:divide-zinc-800">
-          <thead className="bg-zinc-50 dark:bg-zinc-900">
+        <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
+          <thead className="bg-slate-50 dark:bg-slate-900">
             <tr>
               {dataset?.columns.map((c) => (
-                <th key={c} className="whitespace-nowrap px-3 py-2 text-left font-semibold text-zinc-500">
+                <th key={c} className="whitespace-nowrap px-3 py-2 text-left font-semibold text-slate-500">
                   {c}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-900">
             {filteredRows.slice(0, 200).map((row, i) => (
-              <tr key={i} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
+              <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-900/50">
                 {dataset?.columns.map((c) => (
-                  <td key={c} className="whitespace-nowrap px-3 py-2 text-zinc-700 dark:text-zinc-300">
+                  <td key={c} className="whitespace-nowrap px-3 py-2 text-slate-700 dark:text-slate-300">
                     {String(row[c] ?? "")}
                   </td>
                 ))}

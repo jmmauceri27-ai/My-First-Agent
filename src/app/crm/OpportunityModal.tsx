@@ -107,18 +107,18 @@ export default function OpportunityModal({
   return (
     <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <Card className="max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">
           {opportunity ? "Edit opportunity" : "New opportunity"}
         </h2>
 
         <div className="mt-4 flex flex-col gap-4">
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">Opportunity name</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Opportunity name</span>
             <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} autoFocus />
           </label>
 
           <div className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">Company</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Company</span>
             {addingCompany ? (
               <div className="flex gap-2">
                 <input
@@ -150,7 +150,7 @@ export default function OpportunityModal({
 
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">Stage</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Stage</span>
               <select
                 value={stage}
                 onChange={(e) => setStage(e.target.value as OpportunityStage)}
@@ -164,7 +164,7 @@ export default function OpportunityModal({
               </select>
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">Amount ($)</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Amount ($)</span>
               <input
                 type="number"
                 value={amount}
@@ -176,7 +176,7 @@ export default function OpportunityModal({
 
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-zinc-700 dark:text-zinc-300"># of sites</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300"># of sites</span>
               <input
                 type="number"
                 value={siteCount}
@@ -185,7 +185,7 @@ export default function OpportunityModal({
               />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">Expected close date</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Expected close date</span>
               <input
                 type="date"
                 value={expectedCloseDate}
@@ -196,7 +196,7 @@ export default function OpportunityModal({
           </div>
 
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">Type of work</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Type of work</span>
             <input
               value={workType}
               onChange={(e) => setWorkType(e.target.value)}
@@ -206,10 +206,10 @@ export default function OpportunityModal({
           </label>
 
           <div className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">Contacts involved</span>
-            <div className="flex max-h-32 flex-col gap-1 overflow-y-auto rounded-lg border border-zinc-300 p-2 dark:border-zinc-700">
+            <span className="font-medium text-slate-700 dark:text-slate-300">Contacts involved</span>
+            <div className="flex max-h-32 flex-col gap-1 overflow-y-auto rounded-lg border border-slate-300 p-2 dark:border-slate-700">
               {contacts.length === 0 ? (
-                <span className="text-xs text-zinc-400">No contacts yet — add some on the Contacts page.</span>
+                <span className="text-xs text-slate-400">No contacts yet — add some on the Contacts page.</span>
               ) : (
                 contacts.map((c) => (
                   <label key={c.id} className="flex items-center gap-1.5 text-sm">
@@ -220,7 +220,7 @@ export default function OpportunityModal({
                       className="accent-brand-600"
                     />
                     {c.name}
-                    {c.companyName && <span className="text-xs text-zinc-400">({c.companyName})</span>}
+                    {c.companyName && <span className="text-xs text-slate-400">({c.companyName})</span>}
                   </label>
                 ))
               )}
@@ -228,7 +228,7 @@ export default function OpportunityModal({
           </div>
 
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">Notes</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}

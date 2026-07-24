@@ -13,7 +13,7 @@ export default async function CrmPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">💼 CRM</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">💼 CRM</h1>
       <CrmNav active="pipeline" />
       <KanbanBoard opportunities={opportunities} companies={companies} contacts={contacts} />
     </div>

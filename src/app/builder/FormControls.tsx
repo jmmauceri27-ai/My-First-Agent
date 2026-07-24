@@ -15,7 +15,7 @@ export function LabeledInput({
 }) {
   return (
     <label className="flex flex-col gap-1 text-sm">
-      <span className="font-medium text-zinc-700 dark:text-zinc-300">{label}</span>
+      <span className="font-medium text-slate-700 dark:text-slate-300">{label}</span>
       <input type={type} value={value} onChange={(e) => onChange(e.target.value)} className={inputClass} />
     </label>
   );
@@ -34,7 +34,7 @@ export function LabeledSelect({
 }) {
   return (
     <label className="flex flex-col gap-1 text-sm">
-      <span className="font-medium text-zinc-700 dark:text-zinc-300">{label}</span>
+      <span className="font-medium text-slate-700 dark:text-slate-300">{label}</span>
       <select value={value} onChange={(e) => onChange(e.target.value)} className={inputClass}>
         {options.map((o) => (
           <option key={o.value} value={o.value}>

@@ -140,7 +140,7 @@ export default function ImportConfigForm({
 
       {open && (
         <div className="mt-3 flex flex-col gap-2">
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Paste a JSON config — describe the dashboard you want in chat and Claude can generate this
             for you, referencing your dataset(s) by their exact name. Loading this replaces the current
             card list below (review it, then click Save dashboard).
@@ -149,7 +149,7 @@ export default function ImportConfigForm({
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={8}
-            className="rounded-lg border border-zinc-300 px-3 py-2 font-mono text-xs outline-none transition-shadow focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-zinc-700 dark:bg-zinc-900"
+            className="rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs outline-none transition-shadow focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-900"
             placeholder='{"name": "Operations Overview", "cards": [...], "filterColumns": ["Status"]}'
           />
           {error && <p className="text-sm text-critical">{error}</p>}

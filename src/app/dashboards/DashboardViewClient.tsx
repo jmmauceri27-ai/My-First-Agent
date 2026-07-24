@@ -58,7 +58,7 @@ export default function DashboardViewClient({
   });
 
   if (!loaded) {
-    return <p className="text-sm text-zinc-500 dark:text-zinc-400">Loading…</p>;
+    return <p className="text-sm text-slate-500 dark:text-slate-400">Loading…</p>;
   }
 
   return (
@@ -67,7 +67,7 @@ export default function DashboardViewClient({
         <Card className="flex flex-wrap gap-4 p-4">
           {filterColumns.map((column) => (
             <label key={column} className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">{column}</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">{column}</span>
               <select
                 value={globalFilters[column] ?? ""}
                 onChange={(e) => setGlobalFilters((prev) => ({ ...prev, [column]: e.target.value }))}

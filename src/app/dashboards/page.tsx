@@ -15,8 +15,8 @@ export default async function DashboardsPage({
   if (dashboards.length === 0) {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">📊 Dashboards</h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">📊 Dashboards</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
           No dashboards yet. Build one in Dashboard Builder.
         </p>
       </div>
@@ -28,10 +28,10 @@ export default async function DashboardsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">📊 Dashboards</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">📊 Dashboards</h1>
       <DashboardPicker dashboards={dashboards} selectedId={selectedId} />
       {!config || config.cards.length === 0 ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">This dashboard has no cards yet.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">This dashboard has no cards yet.</p>
       ) : (
         <DashboardViewClient key={selectedId} config={config} datasets={datasets} />
       )}

@@ -36,10 +36,10 @@ export default function DashboardCardsView({
                 className="overflow-hidden p-4 transition-transform hover:-translate-y-0.5 hover:shadow-md"
                 style={{ borderTop: `3px solid ${accent}` }}
               >
-                <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   {card.title}
                 </p>
-                <p className="mt-1.5 text-3xl font-extrabold tracking-tight tabular-nums text-zinc-900 dark:text-zinc-50">
+                <p className="mt-1.5 text-3xl font-extrabold tracking-tight tabular-nums text-slate-900 dark:text-slate-50">
                   {value}
                 </p>
               </Card>
@@ -55,7 +55,7 @@ export default function DashboardCardsView({
             const buckets = computeAging(rows, card.dateColumn, card.buckets, card.filters);
             return (
               <Card key={i} className="p-4">
-                <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-zinc-900 dark:text-zinc-50">
+                <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-slate-50">
                   <span
                     className="inline-block h-2.5 w-2.5 rounded-full"
                     style={{ backgroundColor: CHART_COLORS_LIGHT[7] }}
@@ -76,7 +76,7 @@ export default function DashboardCardsView({
             const data = computeChartData(rows, card.x, card.y, card.agg, card.filters);
             return (
               <Card key={i} className="p-4">
-                <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-zinc-900 dark:text-zinc-50">
+                <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-slate-50">
                   <span
                     className="inline-block h-2.5 w-2.5 rounded-full"
                     style={{ backgroundColor: CHART_COLORS_LIGHT[0] }}

@@ -29,10 +29,10 @@ export default function ChartRenderer({ chartType, data }: { chartType: ChartTyp
   const colors = isDark ? CHART_COLORS_DARK : CHART_COLORS_LIGHT;
 
   if (data.length === 0) {
-    return <p className="text-sm text-zinc-500 dark:text-zinc-400">No data to display.</p>;
+    return <p className="text-sm text-slate-500 dark:text-slate-400">No data to display.</p>;
   }
 
-  const gridClass = "stroke-zinc-200 dark:stroke-zinc-800";
+  const gridClass = "stroke-slate-200 dark:stroke-slate-800";
   const tickStyle = { fontSize: 12, fill: isDark ? "#c3c2b7" : "#52514e" };
 
   return (

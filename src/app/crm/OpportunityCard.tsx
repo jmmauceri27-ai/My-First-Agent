@@ -31,13 +31,13 @@ export default function OpportunityCard({
       {...listeners}
       {...attributes}
       onClick={onClick}
-      className={`cursor-grab rounded-lg border border-zinc-200 bg-white p-3 text-sm shadow-sm transition-shadow hover:shadow-md active:cursor-grabbing dark:border-zinc-800 dark:bg-zinc-950 ${
+      className={`cursor-grab rounded-lg border border-slate-200 bg-white p-3 text-sm shadow-sm transition-shadow hover:shadow-md active:cursor-grabbing dark:border-slate-800 dark:bg-slate-950 ${
         isDragging ? "opacity-40" : ""
       }`}
     >
-      <p className="font-semibold text-zinc-900 dark:text-zinc-50">{opportunity.name}</p>
+      <p className="font-semibold text-slate-900 dark:text-slate-50">{opportunity.name}</p>
       {opportunity.companyName && (
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">{opportunity.companyName}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">{opportunity.companyName}</p>
       )}
       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
         {opportunity.amount !== null && (
@@ -46,13 +46,13 @@ export default function OpportunityCard({
           </span>
         )}
         {opportunity.siteCount !== null && (
-          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
             {opportunity.siteCount} site{opportunity.siteCount === 1 ? "" : "s"}
           </span>
         )}
       </div>
       {opportunity.workType && (
-        <p className="mt-1.5 truncate text-xs text-zinc-500 dark:text-zinc-400">{opportunity.workType}</p>
+        <p className="mt-1.5 truncate text-xs text-slate-500 dark:text-slate-400">{opportunity.workType}</p>
       )}
     </div>
   );

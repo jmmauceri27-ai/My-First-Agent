@@ -157,23 +157,23 @@ export default function OpportunityDetailClient({
         <Link href="/crm" className="text-sm font-medium text-brand-600 hover:underline dark:text-brand-400">
           ← Back to pipeline
         </Link>
-        <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">
+        <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">
           {opportunity.name}
         </h1>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className="p-5 lg:col-span-2">
-          <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Details</h2>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Details</h2>
 
           <div className="mt-4 flex flex-col gap-4">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">Opportunity name</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Opportunity name</span>
               <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
             </label>
 
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">Company</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Company</span>
               <select value={companyId} onChange={(e) => setCompanyId(e.target.value)} className={inputClass}>
                 <option value="">(none)</option>
                 {companies.map((c) => (
@@ -186,7 +186,7 @@ export default function OpportunityDetailClient({
 
             <div className="grid grid-cols-2 gap-3">
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-zinc-700 dark:text-zinc-300">Stage</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Stage</span>
                 <select
                   value={stage}
                   onChange={(e) => setStage(e.target.value as OpportunityStage)}
@@ -200,14 +200,14 @@ export default function OpportunityDetailClient({
                 </select>
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-zinc-700 dark:text-zinc-300">Amount ($)</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Amount ($)</span>
                 <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className={inputClass} />
               </label>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-zinc-700 dark:text-zinc-300"># of sites</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300"># of sites</span>
                 <input
                   type="number"
                   value={siteCount}
@@ -216,7 +216,7 @@ export default function OpportunityDetailClient({
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-zinc-700 dark:text-zinc-300">Expected close date</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Expected close date</span>
                 <input
                   type="date"
                   value={expectedCloseDate}
@@ -227,7 +227,7 @@ export default function OpportunityDetailClient({
             </div>
 
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">Type of work</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Type of work</span>
               <input
                 value={workType}
                 onChange={(e) => setWorkType(e.target.value)}
@@ -237,10 +237,10 @@ export default function OpportunityDetailClient({
             </label>
 
             <div className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">Contacts involved</span>
-              <div className="flex max-h-32 flex-col gap-1 overflow-y-auto rounded-lg border border-zinc-300 p-2 dark:border-zinc-700">
+              <span className="font-medium text-slate-700 dark:text-slate-300">Contacts involved</span>
+              <div className="flex max-h-32 flex-col gap-1 overflow-y-auto rounded-lg border border-slate-300 p-2 dark:border-slate-700">
                 {contacts.length === 0 ? (
-                  <span className="text-xs text-zinc-400">No contacts yet — add some on the Contacts page.</span>
+                  <span className="text-xs text-slate-400">No contacts yet — add some on the Contacts page.</span>
                 ) : (
                   contacts.map((c) => (
                     <label key={c.id} className="flex items-center gap-1.5 text-sm">
@@ -251,7 +251,7 @@ export default function OpportunityDetailClient({
                         className="accent-brand-600"
                       />
                       {c.name}
-                      {c.companyName && <span className="text-xs text-zinc-400">({c.companyName})</span>}
+                      {c.companyName && <span className="text-xs text-slate-400">({c.companyName})</span>}
                     </label>
                   ))
                 )}
@@ -259,7 +259,7 @@ export default function OpportunityDetailClient({
             </div>
 
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">Notes</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>
               <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} className={inputClass} />
             </label>
           </div>
@@ -277,8 +277,8 @@ export default function OpportunityDetailClient({
         </Card>
 
         <Card className="flex flex-col p-5">
-          <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Files</h2>
-          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Files</h2>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             Attach proposals, quotes, site surveys — Excel, PDF, or any file type.
           </p>
 
@@ -286,7 +286,7 @@ export default function OpportunityDetailClient({
             <input
               ref={fileInputRef}
               type="file"
-              className="text-xs text-zinc-700 file:mr-2 file:rounded-lg file:border-0 file:bg-brand-50 file:px-2.5 file:py-1 file:text-xs file:font-semibold file:text-brand-700 dark:text-zinc-300 dark:file:bg-zinc-800 dark:file:text-brand-400"
+              className="text-xs text-slate-700 file:mr-2 file:rounded-lg file:border-0 file:bg-brand-50 file:px-2.5 file:py-1 file:text-xs file:font-semibold file:text-brand-700 dark:text-slate-300 dark:file:bg-slate-800 dark:file:text-brand-400"
             />
             <Button type="button" variant="secondary" onClick={handleUpload} disabled={uploading}>
               {uploading ? "Uploading…" : "Upload"}
@@ -294,17 +294,17 @@ export default function OpportunityDetailClient({
             {fileError && <p className="text-xs text-critical">{fileError}</p>}
           </div>
 
-          <div className="mt-4 flex flex-col divide-y divide-zinc-100 dark:divide-zinc-900">
+          <div className="mt-4 flex flex-col divide-y divide-slate-100 dark:divide-slate-900">
             {files.length === 0 ? (
-              <p className="py-2 text-xs text-zinc-400">No files attached yet.</p>
+              <p className="py-2 text-xs text-slate-400">No files attached yet.</p>
             ) : (
               files.map((f) => (
                 <div key={f.id} className="flex items-center justify-between gap-2 py-2">
                   <div className="flex min-w-0 items-start gap-2">
                     <span className="text-lg leading-none">{fileIcon(f.fileName)}</span>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">{f.fileName}</p>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-50">{f.fileName}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
                         {formatSize(f.sizeBytes)} · {new Date(f.uploadedAt).toLocaleDateString()}
                       </p>
                     </div>

@@ -17,21 +17,21 @@ export default function ContactsClient({ contacts, companies }: { contacts: Cont
       </div>
 
       {contacts.length === 0 ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">No contacts yet.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">No contacts yet.</p>
       ) : (
-        <Card className="flex flex-col divide-y divide-zinc-100 overflow-hidden dark:divide-zinc-900">
+        <Card className="flex flex-col divide-y divide-slate-100 overflow-hidden dark:divide-slate-900">
           {contacts.map((c) => (
             <button
               key={c.id}
               onClick={() => setEditingContact(c)}
-              className="flex items-center justify-between gap-4 px-4 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
+              className="flex items-center justify-between gap-4 px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-900/50"
             >
               <div>
-                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
                   {c.name}
-                  {c.title && <span className="ml-2 text-xs font-normal text-zinc-400">{c.title}</span>}
+                  {c.title && <span className="ml-2 text-xs font-normal text-slate-400">{c.title}</span>}
                 </p>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   {[c.companyName, c.email, c.phone].filter(Boolean).join(" · ") || "No details"}
                 </p>
               </div>

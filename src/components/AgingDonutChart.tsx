@@ -12,7 +12,7 @@ export default function AgingDonutChart({ buckets }: { buckets: AgingResult[] })
 
   if (total === 0) {
     return (
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+      <p className="text-sm text-slate-500 dark:text-slate-400">
         Nothing past due right now — every open record is within its ETC.
       </p>
     );
@@ -55,7 +55,7 @@ export default function AgingDonutChart({ buckets }: { buckets: AgingResult[] })
             y="50%"
             textAnchor="middle"
             dominantBaseline="middle"
-            className="fill-zinc-900 dark:fill-zinc-50"
+            className="fill-slate-900 dark:fill-slate-50"
             style={{ fontSize: 28, fontWeight: 800 }}
           >
             {total}
@@ -66,7 +66,7 @@ export default function AgingDonutChart({ buckets }: { buckets: AgingResult[] })
             dy={22}
             textAnchor="middle"
             dominantBaseline="middle"
-            className="fill-zinc-500 dark:fill-zinc-400"
+            className="fill-slate-500 dark:fill-slate-400"
             style={{ fontSize: 12 }}
           >
             past due
@@ -81,8 +81,8 @@ export default function AgingDonutChart({ buckets }: { buckets: AgingResult[] })
               className="inline-block h-2.5 w-2.5 shrink-0 rounded-sm"
               style={{ backgroundColor: colors[i % colors.length] }}
             />
-            <span className="text-zinc-700 dark:text-zinc-300">
-              {d.key} <span className="text-zinc-400 dark:text-zinc-500">({d.value})</span>
+            <span className="text-slate-700 dark:text-slate-300">
+              {d.key} <span className="text-slate-400 dark:text-slate-500">({d.value})</span>
             </span>
           </div>
         ))}

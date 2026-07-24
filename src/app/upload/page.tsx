@@ -9,12 +9,12 @@ export default async function UploadPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">📤 Upload Data</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">📤 Upload Data</h1>
 
       <UploadForm datasets={datasets} />
 
       <section>
-        <h2 className="mb-2 text-lg font-bold text-zinc-900 dark:text-zinc-50">Existing datasets</h2>
+        <h2 className="mb-2 text-lg font-bold text-slate-900 dark:text-slate-50">Existing datasets</h2>
         <DatasetList datasets={datasets} />
       </section>
     </div>

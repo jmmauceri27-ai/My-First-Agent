@@ -137,7 +137,7 @@ export default function BuilderClient({
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-zinc-700 dark:text-zinc-300">Dashboard to edit</span>
+          <span className="font-medium text-slate-700 dark:text-slate-300">Dashboard to edit</span>
           <select
             value={selectedId}
             onChange={(e) => handleSelectDashboard(e.target.value)}
@@ -153,23 +153,23 @@ export default function BuilderClient({
         </label>
 
         <label className="flex min-w-[220px] flex-1 flex-col gap-1 text-sm">
-          <span className="font-medium text-zinc-700 dark:text-zinc-300">Dashboard name</span>
+          <span className="font-medium text-slate-700 dark:text-slate-300">Dashboard name</span>
           <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
         </label>
       </div>
 
       <div>
-        <h2 className="mb-2 text-lg font-bold text-zinc-900 dark:text-zinc-50">Cards in this dashboard</h2>
+        <h2 className="mb-2 text-lg font-bold text-slate-900 dark:text-slate-50">Cards in this dashboard</h2>
         {cards.length === 0 ? (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">No cards yet. Add a KPI or chart card below.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">No cards yet. Add a KPI or chart card below.</p>
         ) : (
-          <Card className="flex flex-col divide-y divide-zinc-100 overflow-hidden dark:divide-zinc-900">
+          <Card className="flex flex-col divide-y divide-slate-100 overflow-hidden dark:divide-slate-900">
             {cards.map((card, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between gap-4 px-4 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
+                className="flex items-center justify-between gap-4 px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-900/50"
               >
-                <span className="text-sm text-zinc-800 dark:text-zinc-200">
+                <span className="text-sm text-slate-800 dark:text-slate-200">
                   {card.type === "kpi"
                     ? `KPI — ${card.title} (${card.datasetName}, ${KPI_AGG_LABELS[card.agg]})`
                     : card.type === "aging"
@@ -190,8 +190,8 @@ export default function BuilderClient({
 
       {availableFilterColumns.length > 0 && (
         <Card className="p-4">
-          <h2 className="mb-1 text-lg font-bold text-zinc-900 dark:text-zinc-50">Global filters</h2>
-          <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">
+          <h2 className="mb-1 text-lg font-bold text-slate-900 dark:text-slate-50">Global filters</h2>
+          <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
             Columns picked here show up as live dropdowns on the Dashboards page — viewers can change
             them to instantly re-filter every card at once, without editing the dashboard.
           </p>
@@ -226,7 +226,7 @@ export default function BuilderClient({
       <AddChartCardForm datasets={datasets} onAdd={addCard} />
       <AddAgingCardForm datasets={datasets} onAdd={addCard} />
 
-      {message && <p className="text-sm text-zinc-700 dark:text-zinc-300">{message}</p>}
+      {message && <p className="text-sm text-slate-700 dark:text-slate-300">{message}</p>}
 
       <div className="flex flex-wrap gap-3">
         <Button onClick={handlePreview} disabled={previewing} variant="secondary">
@@ -247,12 +247,12 @@ export default function BuilderClient({
       {previewCards && (
         <Card className="flex flex-col gap-4 border-dashed p-4 shadow-none">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
-              👁 Live preview <span className="text-sm font-normal text-zinc-500 dark:text-zinc-400">(not saved)</span>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">
+              👁 Live preview <span className="text-sm font-normal text-slate-500 dark:text-slate-400">(not saved)</span>
             </h2>
             <button
               onClick={() => setPreviewCards(null)}
-              className="text-sm text-zinc-500 hover:underline dark:text-zinc-400"
+              className="text-sm text-slate-500 hover:underline dark:text-slate-400"
             >
               Hide
             </button>

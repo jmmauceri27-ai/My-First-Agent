@@ -55,7 +55,7 @@ export default function AddChartCardForm({
 
   return (
     <Card className="border-dashed p-4 shadow-none">
-      <h3 className="mb-3 font-bold text-zinc-900 dark:text-zinc-50">➕ Add chart card</h3>
+      <h3 className="mb-3 font-bold text-slate-900 dark:text-slate-50">➕ Add chart card</h3>
       <div className="flex flex-wrap gap-3">
         <LabeledInput label="Title" value={title} onChange={setTitle} />
         <LabeledSelect
@@ -103,7 +103,7 @@ export default function AddChartCardForm({
 
       {dataset && (
         <div className="mt-3 flex flex-wrap items-end gap-3">
-          <span className="text-sm text-zinc-500 dark:text-zinc-400">Optional filter:</span>
+          <span className="text-sm text-slate-500 dark:text-slate-400">Optional filter:</span>
           <LabeledSelect
             label="Column"
             value={filterColumn}

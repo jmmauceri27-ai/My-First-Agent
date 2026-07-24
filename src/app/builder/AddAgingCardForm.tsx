@@ -74,7 +74,7 @@ export default function AddAgingCardForm({
 
   return (
     <Card className="border-dashed p-4 shadow-none">
-      <h3 className="mb-3 font-bold text-zinc-900 dark:text-zinc-50">➕ Add aging card (circular, by days past due)</h3>
+      <h3 className="mb-3 font-bold text-slate-900 dark:text-slate-50">➕ Add aging card (circular, by days past due)</h3>
 
       <div className="flex flex-wrap gap-3">
         <LabeledInput label="Title" value={title} onChange={setTitle} />
@@ -98,7 +98,7 @@ export default function AddAgingCardForm({
       </div>
 
       <div className="mt-4">
-        <p className="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <p className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">
           Day ranges (records with a due date before today, bucketed by how many days overdue)
         </p>
         <div className="flex flex-col gap-2">
@@ -133,7 +133,7 @@ export default function AddAgingCardForm({
 
       {dataset && (
         <div className="mt-4">
-          <p className="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <p className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">
             Exclude rows where (typically closed/complete statuses, so aging reflects only open work)
           </p>
           <div className="flex flex-col gap-2">

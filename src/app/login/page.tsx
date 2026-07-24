@@ -12,16 +12,16 @@ export default function LoginPage() {
   const [state, formAction, pending] = useActionState(login, initialState);
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4 dark:bg-black">
+    <div className="flex flex-1 items-center justify-center bg-slate-50 px-4 dark:bg-black">
       <Card className="w-full max-w-sm p-8 shadow-lg">
-        <h1 className="text-xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">
+        <h1 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">
           🛠️ Facility Maintenance Dashboard
         </h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Sign in to continue.</p>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Sign in to continue.</p>
 
         <form action={formAction} className="mt-6 flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <label htmlFor="email" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label htmlFor="email" className="text-sm font-medium text-slate-700 dark:text-slate-300">
               Email
             </label>
             <input
@@ -35,7 +35,7 @@ export default function LoginPage() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label htmlFor="password" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label htmlFor="password" className="text-sm font-medium text-slate-700 dark:text-slate-300">
               Password
             </label>
             <input
@@ -55,7 +55,7 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <p className="mt-6 text-xs text-zinc-400">
+        <p className="mt-6 text-xs text-slate-400">
           Accounts are created in the Supabase dashboard — there is no public sign-up.
         </p>
       </Card>
