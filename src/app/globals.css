@@ -6,8 +6,8 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #05070d;
-  --foreground: #eaf1fb;
+  --background: #0a070f;
+  --foreground: #f0edfb;
 }
 
 @theme inline {
@@ -16,16 +16,16 @@
   --font-sans: var(--font-display);
   --font-mono: var(--font-geist-mono);
 
-  /* Brand accent — vivid electric blue, UI chrome only (buttons/links/nav).
-     Deliberately more saturated than the validated chart palette's blue slot,
-     which stays untouched for data-encoding accessibility. */
-  --color-brand-50: #e8f1fe;
-  --color-brand-100: #c7e0fd;
-  --color-brand-400: #4f9cf9;
-  --color-brand-500: #2f7ef5;
-  --color-brand-600: #2065e0;
-  --color-brand-700: #1750b8;
-  --color-brand-800: #123f92;
+  /* Brand accent — vivid electric purple, UI chrome only (buttons/links/nav).
+     Independent of the validated chart palette, which stays untouched for
+     data-encoding accessibility. */
+  --color-brand-50: #f3ecfe;
+  --color-brand-100: #e0cdfd;
+  --color-brand-400: #a873fa;
+  --color-brand-500: #9055f6;
+  --color-brand-600: #7c3ce3;
+  --color-brand-700: #642dbd;
+  --color-brand-800: #4f2296;
 
   /* Status palette (fixed — never reused for chart series) */
   --color-good: #0ca30c;
@@ -42,9 +42,9 @@ body {
 /* Soft hazy "sky" glow behind the ridge layers (see BackgroundArt.tsx). */
 .bg-art {
   background-image:
-    radial-gradient(ellipse 70% 50% at 50% -10%, rgba(56, 189, 248, 0.18), transparent 60%),
-    radial-gradient(ellipse 60% 45% at 12% 8%, rgba(47, 126, 245, 0.16), transparent 60%),
-    radial-gradient(ellipse 55% 45% at 88% 4%, rgba(96, 165, 250, 0.14), transparent 60%);
+    radial-gradient(ellipse 70% 50% at 50% -10%, rgba(168, 115, 250, 0.18), transparent 60%),
+    radial-gradient(ellipse 60% 45% at 12% 8%, rgba(144, 85, 246, 0.16), transparent 60%),
+    radial-gradient(ellipse 55% 45% at 88% 4%, rgba(180, 140, 250, 0.14), transparent 60%);
 }
 
 * {

@@ -31,7 +31,7 @@ export default function OpportunityCard({
       {...listeners}
       {...attributes}
       onClick={onClick}
-      className={`cursor-grab rounded-lg border border-blue-400/40 bg-[#263a66] p-3 text-sm shadow-lg shadow-black/40 transition-shadow hover:shadow-xl active:cursor-grabbing ${
+      className={`cursor-grab rounded-lg border border-purple-400/40 bg-[#3c2b6b] p-3 text-sm shadow-lg shadow-black/40 transition-shadow hover:shadow-xl active:cursor-grabbing ${
         isDragging ? "opacity-40" : ""
       }`}
     >

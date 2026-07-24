@@ -19,7 +19,7 @@ export default async function HomePage() {
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-2">
-        <Card className="border-t-4 p-5" style={{ borderTopColor: "#2a78d6" }}>
+        <Card className="border-t-4 p-5" style={{ borderTopColor: "#9055f6" }}>
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
             Datasets uploaded
           </p>
