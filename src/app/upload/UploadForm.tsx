@@ -1,29 +1,25 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { upload } from "@vercel/blob/client";
 import { DATASET_CATEGORIES, type DatasetSummary } from "@/lib/types";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
-import { uploadAndIngest, type UploadState } from "./actions";
+import { uploadAndIngestFromBlob, type UploadState } from "./actions";
 
 const initialState: UploadState = {};
 
 type Mode = "new" | "replace" | "append";
 
 export default function UploadForm({ datasets }: { datasets: DatasetSummary[] }) {
-  const [state, formAction, pending] = useActionState(uploadAndIngest, initialState);
+  const [state, setState] = useState<UploadState>(initialState);
+  const [pending, setPending] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const [mode, setMode] = useState<Mode>("new");
   const [existingDatasetId, setExistingDatasetId] = useState(datasets[0]?.id ?? "");
   const [keyColumn, setKeyColumn] = useState("");
   const [category, setCategory] = useState<string>(DATASET_CATEGORIES[0]);
-
-  useEffect(() => {
-    if (state.results) {
-      formRef.current?.reset();
-    }
-  }, [state.results]);
 
   function handleSelectExisting(id: string) {
     setExistingDatasetId(id);
@@ -35,6 +31,46 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
   }
 
   const existing = datasets.find((d) => d.id === existingDatasetId);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const file = formData.get("file");
+    if (!(file instanceof File) || file.size === 0) {
+      setState({ error: "Please choose a file." });
+      return;
+    }
+    if ((mode === "replace" || mode === "append") && !existingDatasetId) {
+      setState({ error: `Please pick a dataset to ${mode === "append" ? "update" : "replace"}.` });
+      return;
+    }
+    if (mode === "append" && !keyColumn) {
+      setState({ error: "Please choose a key column to match rows on." });
+      return;
+    }
+
+    setPending(true);
+    setState({});
+    try {
+      const blob = await upload(file.name, file, {
+        access: "public",
+        handleUploadUrl: "/api/upload-token",
+      });
+      const result = await uploadAndIngestFromBlob(blob.url, file.name, {
+        mode,
+        category,
+        displayName: mode === "new" ? String(formData.get("displayName") ?? "") : undefined,
+        existingDatasetId: mode !== "new" ? existingDatasetId : undefined,
+        keyColumn: mode === "append" ? keyColumn : undefined,
+      });
+      setState(result);
+      if (result.results) formRef.current?.reset();
+    } catch (e) {
+      setState({ error: e instanceof Error ? e.message : "Upload failed." });
+    } finally {
+      setPending(false);
+    }
+  }
 
   return (
     <Card className="p-5">
@@ -81,11 +117,9 @@ export default function UploadForm({ datasets }: { datasets: DatasetSummary[] })
 
       <form
         ref={formRef}
-        action={formAction}
+        onSubmit={handleSubmit}
         className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:flex-wrap"
       >
-        <input type="hidden" name="mode" value={mode} />
-
         <div className="flex flex-col gap-1">
           <label htmlFor="file" className="text-sm font-medium text-slate-700 dark:text-slate-300">
             File

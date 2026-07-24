@@ -79,9 +79,8 @@ function parseCsv(buffer: Buffer): ParsedSheet[] {
   return [{ sheetName: "Sheet1", rows: result.data as DatasetRecord[] }];
 }
 
-export async function parseUpload(file: File): Promise<ParsedSheet[]> {
-  const name = file.name.toLowerCase();
-  const buffer = Buffer.from(await file.arrayBuffer());
+export async function parseBuffer(buffer: Buffer, fileName: string): Promise<ParsedSheet[]> {
+  const name = fileName.toLowerCase();
 
   if (name.endsWith(".csv")) {
     return parseCsv(buffer);
@@ -90,7 +89,10 @@ export async function parseUpload(file: File): Promise<ParsedSheet[]> {
     return parseXlsx(buffer);
   }
 
-  throw new Error(
-    `Unsupported file type for '${file.name}'. Please upload a .xlsx or .csv file.`,
-  );
+  throw new Error(`Unsupported file type for '${fileName}'. Please upload a .xlsx or .csv file.`);
+}
+
+export async function parseUpload(file: File): Promise<ParsedSheet[]> {
+  const buffer = Buffer.from(await file.arrayBuffer());
+  return parseBuffer(buffer, file.name);
 }

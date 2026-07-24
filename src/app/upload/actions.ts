@@ -1,8 +1,9 @@
 "use server";
 
+import { del } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
 import { deleteDataset, getDataset, ingestDataset, mergeDataset } from "@/lib/dal";
-import { parseUpload } from "@/lib/parse";
+import { parseBuffer, type ParsedSheet } from "@/lib/parse";
 
 export interface UploadResultItem {
   name: string;
@@ -16,36 +17,31 @@ export interface UploadState {
   results?: UploadResultItem[];
 }
 
-export async function uploadAndIngest(_prev: UploadState, formData: FormData): Promise<UploadState> {
-  const file = formData.get("file");
-  const mode = String(formData.get("mode") ?? "new");
-  const category = String(formData.get("category") ?? "Other");
+export interface UploadMeta {
+  mode: "new" | "replace" | "append";
+  category: string;
+  displayName?: string;
+  existingDatasetId?: string;
+  keyColumn?: string;
+}
 
-  if (!(file instanceof File) || file.size === 0) {
-    return { error: "Please choose a file." };
-  }
+async function ingestParsedSheets(sheets: ParsedSheet[], sourceFilename: string, meta: UploadMeta): Promise<UploadState> {
+  const { mode, category } = meta;
 
   let targetName: string;
   let existingId = "";
   if (mode === "replace" || mode === "append") {
-    existingId = String(formData.get("existingDatasetId") ?? "");
+    existingId = meta.existingDatasetId ?? "";
     const existing = existingId ? await getDataset(existingId) : null;
     if (!existing) {
       return { error: `Please pick a dataset to ${mode === "append" ? "update" : "replace"}.` };
     }
     targetName = existing.displayName;
   } else {
-    targetName = String(formData.get("displayName") ?? "").trim();
+    targetName = (meta.displayName ?? "").trim();
     if (!targetName) {
       return { error: "Please enter a dataset name." };
     }
-  }
-
-  let sheets;
-  try {
-    sheets = await parseUpload(file);
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : "Failed to parse file." };
   }
 
   const nonEmptySheets = sheets.filter((s) => s.rows.length > 0);
@@ -62,7 +58,7 @@ export async function uploadAndIngest(_prev: UploadState, formData: FormData): P
   }
 
   if (mode === "append") {
-    const keyColumn = String(formData.get("keyColumn") ?? "");
+    const keyColumn = meta.keyColumn ?? "";
     if (!keyColumn) {
       return { error: "Please choose a key column to match rows on." };
     }
@@ -74,7 +70,7 @@ export async function uploadAndIngest(_prev: UploadState, formData: FormData): P
     }
 
     try {
-      const result = await mergeDataset(existingId, keyColumn, file.name, sheet.rows);
+      const result = await mergeDataset(existingId, keyColumn, sourceFilename, sheet.rows);
       revalidatePath("/");
       revalidatePath("/upload");
       revalidatePath("/dashboards");
@@ -98,7 +94,7 @@ export async function uploadAndIngest(_prev: UploadState, formData: FormData): P
     for (const sheet of nonEmptySheets) {
       const name =
         mode === "new" && nonEmptySheets.length > 1 ? `${targetName} — ${sheet.sheetName}` : targetName;
-      await ingestDataset(name, category, file.name, sheet.rows);
+      await ingestDataset(name, category, sourceFilename, sheet.rows);
       results.push({
         name,
         rowCount: sheet.rows.length,
@@ -113,6 +109,32 @@ export async function uploadAndIngest(_prev: UploadState, formData: FormData): P
   revalidatePath("/upload");
   revalidatePath("/dashboards");
   return { results };
+}
+
+/**
+ * Files go browser -> Vercel Blob directly (see UploadForm.tsx + /api/upload-token),
+ * bypassing the ~4.5MB request body ceiling Vercel enforces on serverless functions.
+ * This action just fetches the already-uploaded blob, parses it, and cleans it up --
+ * the parsed rows live in Postgres, so the blob itself is temporary.
+ */
+export async function uploadAndIngestFromBlob(
+  blobUrl: string,
+  fileName: string,
+  meta: UploadMeta,
+): Promise<UploadState> {
+  let sheets: ParsedSheet[];
+  try {
+    const res = await fetch(blobUrl);
+    if (!res.ok) throw new Error("Failed to retrieve the uploaded file.");
+    const buffer = Buffer.from(await res.arrayBuffer());
+    sheets = await parseBuffer(buffer, fileName);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to parse file." };
+  } finally {
+    del(blobUrl).catch(() => {});
+  }
+
+  return ingestParsedSheets(sheets, fileName, meta);
 }
 
 export async function removeDataset(formData: FormData): Promise<void> {
