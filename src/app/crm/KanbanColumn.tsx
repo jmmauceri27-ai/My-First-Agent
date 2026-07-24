@@ -26,16 +26,14 @@ export default function KanbanColumn({
     <div
       ref={setNodeRef}
       className={`flex min-w-[200px] flex-1 flex-col gap-2 rounded-xl border p-3 transition-colors ${
-        isOver
-          ? "border-brand-400 bg-brand-50 dark:border-brand-500 dark:bg-brand-500/10"
-          : "border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/50"
+        isOver ? "border-brand-400 bg-brand-500/15" : "border-blue-500/20 bg-[#0e1730]"
       }`}
     >
       <div className="flex items-baseline justify-between px-1">
-        <h3 className="text-sm font-bold text-slate-900 dark:text-slate-50">{stage}</h3>
+        <h3 className="text-sm font-bold text-slate-50">{stage}</h3>
         <span className="text-xs text-slate-400">{opportunities.length}</span>
       </div>
-      {total && <p className="px-1 text-xs font-medium text-slate-500 dark:text-slate-400">{total}</p>}
+      {total && <p className="px-1 text-xs font-medium text-slate-400">{total}</p>}
 
       <div className="flex flex-col gap-2">
         {opportunities.map((o) => (
