@@ -259,6 +259,30 @@ export async function listDashboards(): Promise<{ id: string; name: string }[]> 
   return data ?? [];
 }
 
+export interface DashboardSummary {
+  id: string;
+  name: string;
+  /** Derived from the dataset category of the dashboard's first card. */
+  category: string;
+}
+
+/** Dashboards aren't tied to a category directly, so it's derived from the
+ *  dataset their first card reads from — good enough for grouping them by
+ *  business area in the Dashboards sidebar. */
+export async function listDashboardsWithCategory(): Promise<DashboardSummary[]> {
+  const [dashboards, datasets] = await Promise.all([listDashboards(), listDatasets()]);
+  if (dashboards.length === 0) return [];
+
+  const categoryByDatasetId = new Map(datasets.map((d) => [d.id, d.category]));
+  const configs = await Promise.all(dashboards.map((d) => loadDashboard(d.id)));
+
+  return dashboards.map((d, i) => {
+    const firstCard = configs[i]?.cards[0];
+    const category = (firstCard && categoryByDatasetId.get(firstCard.datasetId)) || "Other";
+    return { id: d.id, name: d.name, category };
+  });
+}
+
 export async function loadDashboard(id: string): Promise<DashboardConfig | null> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
