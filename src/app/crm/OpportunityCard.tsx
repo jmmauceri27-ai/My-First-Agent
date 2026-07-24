@@ -50,6 +50,9 @@ export default function OpportunityCard({
         )}
       </div>
       {opportunity.workType && <p className="mt-1.5 truncate text-xs text-slate-300">{opportunity.workType}</p>}
+      {opportunity.salesManagerName && (
+        <p className="mt-1.5 truncate text-xs text-slate-400">👤 {opportunity.salesManagerName}</p>
+      )}
     </div>
   );
 }

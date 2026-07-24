@@ -6,6 +6,7 @@ import type {
   CompanyInput,
   Contact,
   ContactInput,
+  Employee,
   Opportunity,
   OpportunityFile,
   OpportunityInput,
@@ -150,72 +151,94 @@ export async function deleteContact(id: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+// ---------- Employees ----------
+
+export async function listEmployees(): Promise<Employee[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("crm_employees")
+    .select("id, name, created_at")
+    .eq("user_id", OWNER_USER_ID)
+    .order("name", { ascending: true });
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((e) => ({
+    id: e.id as string,
+    name: e.name as string,
+    createdAt: e.created_at as string,
+  }));
+}
+
+export async function createEmployee(name: string): Promise<string> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("crm_employees")
+    .insert({ user_id: OWNER_USER_ID, name })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return data.id as string;
+}
+
+export async function deleteEmployee(id: string): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("crm_employees").delete().eq("id", id).eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
+}
+
 // ---------- Opportunities ----------
+
+const OPPORTUNITY_COLUMNS =
+  "id, name, company_id, stage, amount, site_count, work_type, expected_close_date, notes, sales_manager_id, position, created_at, updated_at, crm_companies(name), crm_employees(name), crm_opportunity_contacts(contact_id)";
+
+function mapOpportunity(o: Record<string, unknown>): Opportunity {
+  const company = o.crm_companies as unknown as { name: string } | null;
+  const salesManager = o.crm_employees as unknown as { name: string } | null;
+  const contactRows = (o.crm_opportunity_contacts ?? []) as unknown as { contact_id: string }[];
+  return {
+    id: o.id as string,
+    name: o.name as string,
+    companyId: o.company_id as string | null,
+    companyName: company?.name ?? null,
+    stage: o.stage as OpportunityStage,
+    amount: o.amount as number | null,
+    siteCount: o.site_count as number | null,
+    workType: o.work_type as string | null,
+    expectedCloseDate: o.expected_close_date as string | null,
+    notes: o.notes as string | null,
+    contactIds: contactRows.map((r) => r.contact_id),
+    salesManagerId: o.sales_manager_id as string | null,
+    salesManagerName: salesManager?.name ?? null,
+    position: o.position as number,
+    createdAt: o.created_at as string,
+    updatedAt: o.updated_at as string,
+  };
+}
 
 export async function listOpportunities(): Promise<Opportunity[]> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("crm_opportunities")
-    .select(
-      "id, name, company_id, stage, amount, site_count, work_type, expected_close_date, notes, position, created_at, updated_at, crm_companies(name), crm_opportunity_contacts(contact_id)",
-    )
+    .select(OPPORTUNITY_COLUMNS)
     .eq("user_id", OWNER_USER_ID)
     .order("position", { ascending: true });
   if (error) throw new Error(error.message);
 
-  return (data ?? []).map((o) => {
-    const company = o.crm_companies as unknown as { name: string } | null;
-    const contactRows = (o.crm_opportunity_contacts ?? []) as unknown as { contact_id: string }[];
-    return {
-      id: o.id as string,
-      name: o.name as string,
-      companyId: o.company_id as string | null,
-      companyName: company?.name ?? null,
-      stage: o.stage as OpportunityStage,
-      amount: o.amount as number | null,
-      siteCount: o.site_count as number | null,
-      workType: o.work_type as string | null,
-      expectedCloseDate: o.expected_close_date as string | null,
-      notes: o.notes as string | null,
-      contactIds: contactRows.map((r) => r.contact_id),
-      position: o.position as number,
-      createdAt: o.created_at as string,
-      updatedAt: o.updated_at as string,
-    };
-  });
+  return (data ?? []).map(mapOpportunity);
 }
 
 export async function getOpportunity(id: string): Promise<Opportunity | null> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("crm_opportunities")
-    .select(
-      "id, name, company_id, stage, amount, site_count, work_type, expected_close_date, notes, position, created_at, updated_at, crm_companies(name), crm_opportunity_contacts(contact_id)",
-    )
+    .select(OPPORTUNITY_COLUMNS)
     .eq("id", id)
     .eq("user_id", OWNER_USER_ID)
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) return null;
 
-  const company = data.crm_companies as unknown as { name: string } | null;
-  const contactRows = (data.crm_opportunity_contacts ?? []) as unknown as { contact_id: string }[];
-  return {
-    id: data.id as string,
-    name: data.name as string,
-    companyId: data.company_id as string | null,
-    companyName: company?.name ?? null,
-    stage: data.stage as OpportunityStage,
-    amount: data.amount as number | null,
-    siteCount: data.site_count as number | null,
-    workType: data.work_type as string | null,
-    expectedCloseDate: data.expected_close_date as string | null,
-    notes: data.notes as string | null,
-    contactIds: contactRows.map((r) => r.contact_id),
-    position: data.position as number,
-    createdAt: data.created_at as string,
-    updatedAt: data.updated_at as string,
-  };
+  return mapOpportunity(data);
 }
 
 async function nextPositionForStage(stage: OpportunityStage): Promise<number> {
@@ -263,6 +286,7 @@ export async function createOpportunity(input: OpportunityInput): Promise<string
       work_type: input.workType,
       expected_close_date: input.expectedCloseDate,
       notes: input.notes,
+      sales_manager_id: input.salesManagerId,
       position,
     })
     .select("id")
@@ -287,6 +311,7 @@ export async function updateOpportunity(id: string, input: OpportunityInput): Pr
       work_type: input.workType,
       expected_close_date: input.expectedCloseDate,
       notes: input.notes,
+      sales_manager_id: input.salesManagerId,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)

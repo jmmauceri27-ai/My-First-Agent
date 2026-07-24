@@ -4,14 +4,17 @@ import { revalidatePath } from "next/cache";
 import {
   createCompany,
   createContact,
+  createEmployee,
   createOpportunity,
   deleteCompany,
   deleteContact,
+  deleteEmployee,
   deleteOpportunity,
   deleteOpportunityFile,
   getOpportunityFileDownloadUrl,
   listCompanies,
   listContacts,
+  listEmployees,
   updateCompany,
   updateContact,
   updateOpportunity,
@@ -23,6 +26,7 @@ import type {
   CompanyInput,
   Contact,
   ContactInput,
+  Employee,
   OpportunityInput,
   OpportunityStage,
 } from "@/lib/crmTypes";
@@ -90,6 +94,21 @@ export async function listCompaniesAction(): Promise<Company[]> {
 
 export async function listContactsAction(): Promise<Contact[]> {
   return listContacts();
+}
+
+export async function listEmployeesAction(): Promise<Employee[]> {
+  return listEmployees();
+}
+
+export async function saveEmployeeAction(name: string): Promise<string> {
+  const id = await createEmployee(name);
+  revalidatePath("/crm");
+  return id;
+}
+
+export async function deleteEmployeeAction(id: string): Promise<void> {
+  await deleteEmployee(id);
+  revalidatePath("/crm");
 }
 
 export async function uploadOpportunityFileAction(opportunityId: string, formData: FormData): Promise<void> {

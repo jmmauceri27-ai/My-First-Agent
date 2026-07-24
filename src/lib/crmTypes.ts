@@ -32,6 +32,12 @@ export interface Contact {
   createdAt: string;
 }
 
+export interface Employee {
+  id: string;
+  name: string;
+  createdAt: string;
+}
+
 export interface Opportunity {
   id: string;
   name: string;
@@ -44,6 +50,8 @@ export interface Opportunity {
   expectedCloseDate: string | null;
   notes: string | null;
   contactIds: string[];
+  salesManagerId: string | null;
+  salesManagerName: string | null;
   position: number;
   createdAt: string;
   updatedAt: string;
@@ -59,6 +67,7 @@ export interface OpportunityInput {
   expectedCloseDate: string | null;
   notes: string | null;
   contactIds: string[];
+  salesManagerId: string | null;
 }
 
 export interface OpportunityFile {

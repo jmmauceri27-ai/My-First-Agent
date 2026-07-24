@@ -13,7 +13,7 @@ import {
 } from "@dnd-kit/core";
 import Button from "@/components/ui/Button";
 import { OPPORTUNITY_STAGES } from "@/lib/crmTypes";
-import type { Company, Contact, Opportunity, OpportunityStage } from "@/lib/crmTypes";
+import type { Company, Contact, Employee, Opportunity, OpportunityStage } from "@/lib/crmTypes";
 import { moveOpportunityStageAction } from "./actions";
 import KanbanColumn from "./KanbanColumn";
 import OpportunityCard from "./OpportunityCard";
@@ -23,10 +23,12 @@ export default function KanbanBoard({
   opportunities,
   companies,
   contacts,
+  employees,
 }: {
   opportunities: Opportunity[];
   companies: Company[];
   contacts: Contact[];
+  employees: Employee[];
 }) {
   const router = useRouter();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
@@ -93,6 +95,7 @@ export default function KanbanBoard({
           opportunity={null}
           companies={companies}
           contacts={contacts}
+          employees={employees}
           defaultStage={creatingInStage}
           onClose={() => setCreatingInStage(null)}
         />

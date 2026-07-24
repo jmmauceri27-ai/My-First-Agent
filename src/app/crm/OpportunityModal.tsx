@@ -6,19 +6,27 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import { OPPORTUNITY_STAGES } from "@/lib/crmTypes";
-import type { Company, Contact, Opportunity, OpportunityInput, OpportunityStage } from "@/lib/crmTypes";
-import { deleteOpportunityAction, saveCompanyAction, saveOpportunityAction } from "./actions";
+import type { Company, Contact, Employee, Opportunity, OpportunityInput, OpportunityStage } from "@/lib/crmTypes";
+import {
+  deleteEmployeeAction,
+  deleteOpportunityAction,
+  saveCompanyAction,
+  saveEmployeeAction,
+  saveOpportunityAction,
+} from "./actions";
 
 export default function OpportunityModal({
   opportunity,
   companies,
   contacts,
+  employees,
   defaultStage,
   onClose,
 }: {
   opportunity: Opportunity | null;
   companies: Company[];
   contacts: Contact[];
+  employees: Employee[];
   defaultStage: OpportunityStage;
   onClose: () => void;
 }) {
@@ -34,10 +42,16 @@ export default function OpportunityModal({
   const [expectedCloseDate, setExpectedCloseDate] = useState(opportunity?.expectedCloseDate ?? "");
   const [notes, setNotes] = useState(opportunity?.notes ?? "");
   const [contactIds, setContactIds] = useState<string[]>(opportunity?.contactIds ?? []);
+  const [salesManagerId, setSalesManagerId] = useState(opportunity?.salesManagerId ?? "");
 
   const [newCompanyName, setNewCompanyName] = useState("");
   const [addingCompany, setAddingCompany] = useState(false);
   const [localCompanies, setLocalCompanies] = useState(companies);
+
+  const [newEmployeeName, setNewEmployeeName] = useState("");
+  const [addingEmployee, setAddingEmployee] = useState(false);
+  const [localEmployees, setLocalEmployees] = useState(employees);
+  const [removingEmployee, setRemovingEmployee] = useState(false);
 
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -63,6 +77,27 @@ export default function OpportunityModal({
     setAddingCompany(false);
   }
 
+  async function handleAddEmployee() {
+    if (!newEmployeeName.trim()) return;
+    const id = await saveEmployeeAction(newEmployeeName.trim());
+    setLocalEmployees((prev) => [...prev, { id, name: newEmployeeName.trim(), createdAt: new Date().toISOString() }]);
+    setSalesManagerId(id);
+    setNewEmployeeName("");
+    setAddingEmployee(false);
+  }
+
+  async function handleRemoveEmployee() {
+    if (!salesManagerId) return;
+    setRemovingEmployee(true);
+    try {
+      await deleteEmployeeAction(salesManagerId);
+      setLocalEmployees((prev) => prev.filter((e) => e.id !== salesManagerId));
+      setSalesManagerId("");
+    } finally {
+      setRemovingEmployee(false);
+    }
+  }
+
   async function handleSave() {
     setError(null);
     if (!name.trim()) {
@@ -81,6 +116,7 @@ export default function OpportunityModal({
         expectedCloseDate: expectedCloseDate || null,
         notes: notes.trim() || null,
         contactIds,
+        salesManagerId: salesManagerId || null,
       };
       await saveOpportunityAction(opportunity?.id ?? null, input);
       router.refresh();
@@ -144,6 +180,52 @@ export default function OpportunityModal({
                 <Button type="button" variant="secondary" onClick={() => setAddingCompany(true)}>
                   + New
                 </Button>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-slate-700 dark:text-slate-300">Sales manager</span>
+            {addingEmployee ? (
+              <div className="flex gap-2">
+                <input
+                  value={newEmployeeName}
+                  onChange={(e) => setNewEmployeeName(e.target.value)}
+                  placeholder="New employee name"
+                  className={inputClass}
+                />
+                <Button type="button" variant="secondary" onClick={handleAddEmployee}>
+                  Add
+                </Button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <select
+                  value={salesManagerId}
+                  onChange={(e) => setSalesManagerId(e.target.value)}
+                  className={inputClass}
+                >
+                  <option value="">(none)</option>
+                  {localEmployees.map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {e.name}
+                    </option>
+                  ))}
+                </select>
+                <Button type="button" variant="secondary" onClick={() => setAddingEmployee(true)}>
+                  + New
+                </Button>
+                {salesManagerId && (
+                  <Button
+                    type="button"
+                    variant="danger"
+                    onClick={handleRemoveEmployee}
+                    disabled={removingEmployee}
+                    title="Remove this employee from the list"
+                  >
+                    {removingEmployee ? "…" : "Remove"}
+                  </Button>
+                )}
               </div>
             )}
           </div>
