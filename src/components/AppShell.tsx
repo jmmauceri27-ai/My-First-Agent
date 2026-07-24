@@ -10,7 +10,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const isWide = pathname === "/crm";
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="relative isolate flex min-h-screen flex-col bg-background">
       <BackgroundArt />
       {showNav && <NavBar />}
       <main
