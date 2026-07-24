@@ -9,12 +9,11 @@ export default function AreaSidebar({ selectedArea }: { selectedArea: string }) 
     <Card className="flex shrink-0 flex-col gap-1 p-2 lg:w-52">
       <nav className="flex flex-col gap-1">
         {AREAS.map((area) => {
-          const isCrm = area === "CRM";
-          const active = !isCrm && area === selectedArea;
+          const active = area === selectedArea;
           return (
             <Link
               key={area}
-              href={isCrm ? "/crm" : `/dashboards?area=${encodeURIComponent(area)}`}
+              href={`/dashboards?area=${encodeURIComponent(area)}`}
               className={`rounded-lg px-3 py-2 text-sm font-semibold transition-all ${
                 active
                   ? "bg-brand-600 text-white shadow-sm shadow-brand-600/40"
