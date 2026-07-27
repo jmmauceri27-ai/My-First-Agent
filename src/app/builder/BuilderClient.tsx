@@ -11,6 +11,7 @@ import { inputClass } from "@/components/ui/formClasses";
 import AddAgingCardForm from "./AddAgingCardForm";
 import AddChartCardForm from "./AddChartCardForm";
 import AddKpiCardForm from "./AddKpiCardForm";
+import AddScorecardCardForm from "./AddScorecardCardForm";
 import ImportConfigForm from "./ImportConfigForm";
 import {
   deleteDashboardAction,
@@ -174,7 +175,9 @@ export default function BuilderClient({
                     ? `KPI — ${card.title} (${card.datasetName}, ${KPI_AGG_LABELS[card.agg]})`
                     : card.type === "aging"
                       ? `Aging — ${card.title} (${card.datasetName}, by ${card.dateColumn})`
-                      : `Chart — ${card.title} (${card.chartType} on ${card.datasetName})`}
+                      : card.type === "scorecard"
+                        ? `Scorecard — ${card.title} (${card.datasetName}, by ${card.groupColumn})`
+                        : `Chart — ${card.title} (${card.chartType} on ${card.datasetName})`}
                 </span>
                 <button
                   onClick={() => removeCard(i)}
@@ -225,6 +228,7 @@ export default function BuilderClient({
       <AddKpiCardForm datasets={datasets} onAdd={addCard} />
       <AddChartCardForm datasets={datasets} onAdd={addCard} />
       <AddAgingCardForm datasets={datasets} onAdd={addCard} />
+      <AddScorecardCardForm datasets={datasets} onAdd={addCard} />
 
       {message && <p className="text-sm text-slate-700 dark:text-slate-300">{message}</p>}
 

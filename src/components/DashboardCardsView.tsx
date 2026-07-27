@@ -1,5 +1,5 @@
-import { computeAging, computeChartData, computeKpi } from "@/lib/kpi";
-import type { AgingCard, ChartCard, DashboardCard, DatasetRecord, KpiCard } from "@/lib/types";
+import { computeAging, computeChartData, computeKpi, computeScorecard } from "@/lib/kpi";
+import type { AgingCard, ChartCard, DashboardCard, DatasetRecord, KpiCard, ScorecardCard } from "@/lib/types";
 import { CHART_COLORS_LIGHT } from "@/lib/chartPalette";
 import AgingDonutChart from "./AgingDonutChart";
 import ChartRenderer from "./ChartRenderer";
@@ -15,6 +15,7 @@ export default function DashboardCardsView({
   const kpiCards = cards.filter((c): c is KpiCard => c.type === "kpi");
   const chartCards = cards.filter((c): c is ChartCard => c.type === "chart");
   const agingCards = cards.filter((c): c is AgingCard => c.type === "aging");
+  const scorecardCards = cards.filter((c): c is ScorecardCard => c.type === "scorecard");
 
   return (
     <div className="flex flex-col gap-6">
@@ -63,6 +64,75 @@ export default function DashboardCardsView({
                   {card.title}
                 </h2>
                 <AgingDonutChart buckets={buckets} />
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {scorecardCards.length > 0 && (
+        <div className="flex flex-col gap-6">
+          {scorecardCards.map((card, i) => {
+            const rows = rowsByDataset[card.datasetId] ?? [];
+            const data = computeScorecard(rows, {
+              groupColumn: card.groupColumn,
+              statusColumn: card.statusColumn,
+              completedValues: card.completedValues,
+              startDateColumn: card.startDateColumn,
+              completionDateColumn: card.completionDateColumn,
+              dueDateColumn: card.dueDateColumn,
+              filters: card.filters,
+            });
+            return (
+              <Card key={i} className="overflow-hidden p-4">
+                <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-slate-50">
+                  <span
+                    className="inline-block h-2.5 w-2.5 rounded-full"
+                    style={{ backgroundColor: CHART_COLORS_LIGHT[3] }}
+                  />
+                  {card.title}
+                </h2>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                        <th className="py-2 pr-4">{card.groupColumn}</th>
+                        {card.metrics.includes("count") && <th className="py-2 pr-4">Work orders</th>}
+                        {card.metrics.includes("completion_rate") && <th className="py-2 pr-4">Completion rate</th>}
+                        {card.metrics.includes("on_time_rate") && <th className="py-2 pr-4">On-time rate</th>}
+                        {card.metrics.includes("avg_duration") && <th className="py-2 pr-4">Avg days</th>}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.map((row) => (
+                        <tr
+                          key={row.group}
+                          className="border-b border-slate-100 last:border-0 dark:border-slate-900"
+                        >
+                          <td className="py-2 pr-4 font-medium text-slate-800 dark:text-slate-200">{row.group}</td>
+                          {card.metrics.includes("count") && (
+                            <td className="py-2 pr-4 tabular-nums">{row.count}</td>
+                          )}
+                          {card.metrics.includes("completion_rate") && (
+                            <td className="py-2 pr-4 tabular-nums">
+                              {row.completionRate === null ? "—" : `${row.completionRate}%`}
+                            </td>
+                          )}
+                          {card.metrics.includes("on_time_rate") && (
+                            <td className="py-2 pr-4 tabular-nums">
+                              {row.onTimeRate === null ? "—" : `${row.onTimeRate}%`}
+                            </td>
+                          )}
+                          {card.metrics.includes("avg_duration") && (
+                            <td className="py-2 pr-4 tabular-nums">
+                              {row.avgDurationDays === null ? "—" : row.avgDurationDays}
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </Card>
             );
           })}

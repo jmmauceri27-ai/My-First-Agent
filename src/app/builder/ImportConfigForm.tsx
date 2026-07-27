@@ -12,6 +12,8 @@ import type {
   FilterCondition,
   KpiAgg,
   KpiCard,
+  ScorecardCard,
+  ScorecardMetric,
 } from "@/lib/types";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
@@ -110,9 +112,34 @@ export default function ImportConfigForm({
           filters: card.filters as FilterCondition[] | undefined,
         };
         resolved.push(agingCard);
+      } else if (card.type === "scorecard") {
+        const rawMetrics = card.metrics;
+        if (!Array.isArray(rawMetrics) || rawMetrics.length === 0) {
+          setError(`Card ${i + 1} ("scorecard") needs a non-empty "metrics" array.`);
+          return;
+        }
+        if (!card.groupColumn || typeof card.groupColumn !== "string") {
+          setError(`Card ${i + 1} ("scorecard") needs a "groupColumn".`);
+          return;
+        }
+        const scorecardCard: ScorecardCard = {
+          type: "scorecard",
+          title: String(card.title ?? "Untitled"),
+          datasetId: dataset.id,
+          datasetName: dataset.displayName,
+          groupColumn: card.groupColumn,
+          metrics: rawMetrics as ScorecardMetric[],
+          statusColumn: card.statusColumn as string | undefined,
+          completedValues: card.completedValues as string[] | undefined,
+          startDateColumn: card.startDateColumn as string | undefined,
+          completionDateColumn: card.completionDateColumn as string | undefined,
+          dueDateColumn: card.dueDateColumn as string | undefined,
+          filters: card.filters as FilterCondition[] | undefined,
+        };
+        resolved.push(scorecardCard);
       } else {
         setError(
-          `Card ${i + 1} has an unknown "type": "${String(card.type)}". Must be "kpi", "chart", or "aging".`,
+          `Card ${i + 1} has an unknown "type": "${String(card.type)}". Must be "kpi", "chart", "aging", or "scorecard".`,
         );
         return;
       }

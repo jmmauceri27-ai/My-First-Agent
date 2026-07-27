@@ -209,6 +209,97 @@ export function computeAging(
   return buckets.map((b, i) => ({ label: b.label, count: counts[i] }));
 }
 
+function parseDate(value: DatasetRecord[string]): Date | null {
+  if (value === null || value === undefined || value === "") return null;
+  const date = new Date(String(value));
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+export interface ScorecardRow {
+  group: string;
+  count: number;
+  /** % of this group's rows whose status is in `completedValues`. Null if no status column configured. */
+  completionRate: number | null;
+  /** % of completed rows whose completion date is on/before the due date. Null if date columns missing. */
+  onTimeRate: number | null;
+  /** Average days between start and completion date, across completed rows. Null if date columns missing. */
+  avgDurationDays: number | null;
+}
+
+export interface ScorecardOptions {
+  groupColumn: string;
+  statusColumn?: string;
+  completedValues?: string[];
+  startDateColumn?: string;
+  completionDateColumn?: string;
+  dueDateColumn?: string;
+  filters?: FilterCondition[];
+}
+
+/**
+ * Groups rows by `groupColumn` (e.g. vendor name) and computes per-group
+ * completion/on-time rates and average duration. When a status column with
+ * completed values is configured, rates and durations are computed only
+ * over rows whose status counts as "completed"; otherwise all rows in the
+ * group are used.
+ */
+export function computeScorecard(rows: DatasetRecord[], opts: ScorecardOptions): ScorecardRow[] {
+  const working = applyFilters(rows, opts.filters);
+  const completedSet = new Set(opts.completedValues ?? []);
+  const hasStatus = Boolean(opts.statusColumn) && completedSet.size > 0;
+
+  const groups = new Map<string, DatasetRecord[]>();
+  for (const row of working) {
+    const raw = row[opts.groupColumn];
+    if (raw === null || raw === undefined || raw === "") continue;
+    const key = String(raw);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(row);
+  }
+
+  const results: ScorecardRow[] = [];
+  for (const [group, groupRows] of groups) {
+    const count = groupRows.length;
+    const completedRows = hasStatus
+      ? groupRows.filter((r) => completedSet.has(String(r[opts.statusColumn!])))
+      : groupRows;
+
+    const completionRate = hasStatus ? round2((completedRows.length / count) * 100) : null;
+
+    let onTimeRate: number | null = null;
+    if (opts.completionDateColumn && opts.dueDateColumn) {
+      let withBoth = 0;
+      let onTime = 0;
+      for (const r of completedRows) {
+        const completion = parseDate(r[opts.completionDateColumn]);
+        const due = parseDate(r[opts.dueDateColumn]);
+        if (!completion || !due) continue;
+        withBoth++;
+        if (completion.getTime() <= due.getTime()) onTime++;
+      }
+      onTimeRate = withBoth ? round2((onTime / withBoth) * 100) : null;
+    }
+
+    let avgDurationDays: number | null = null;
+    if (opts.startDateColumn && opts.completionDateColumn) {
+      const durations: number[] = [];
+      for (const r of completedRows) {
+        const start = parseDate(r[opts.startDateColumn]);
+        const end = parseDate(r[opts.completionDateColumn]);
+        if (!start || !end) continue;
+        durations.push((end.getTime() - start.getTime()) / 86_400_000);
+      }
+      avgDurationDays = durations.length
+        ? round2(durations.reduce((a, b) => a + b, 0) / durations.length)
+        : null;
+    }
+
+    results.push({ group, count, completionRate, onTimeRate, avgDurationDays });
+  }
+
+  return results.sort((a, b) => b.count - a.count);
+}
+
 /** Sorted, unique, non-empty string values for a column — used to populate filter dropdowns. */
 export function getDistinctValues(rows: DatasetRecord[], column: string): string[] {
   const values = new Set<string>();

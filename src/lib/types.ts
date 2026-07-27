@@ -62,7 +62,37 @@ export interface AgingCard {
   filters?: FilterCondition[];
 }
 
-export type DashboardCard = KpiCard | ChartCard | AgingCard;
+export type ScorecardMetric = "count" | "completion_rate" | "on_time_rate" | "avg_duration";
+
+export const SCORECARD_METRIC_LABELS: Record<ScorecardMetric, string> = {
+  count: "Work order count",
+  completion_rate: "Completion rate",
+  on_time_rate: "On-time rate",
+  avg_duration: "Avg response/completion time",
+};
+
+export interface ScorecardCard {
+  type: "scorecard";
+  title: string;
+  datasetId: string;
+  datasetName: string;
+  /** Column to group rows by, e.g. vendor name. */
+  groupColumn: string;
+  /** Which metrics to show as columns. */
+  metrics: ScorecardMetric[];
+  /** Status column + which of its values count as "completed" (needed for completion/on-time rate). */
+  statusColumn?: string;
+  completedValues?: string[];
+  /** Start date for duration (e.g. dispatch date). */
+  startDateColumn?: string;
+  /** Actual completion date (e.g. checkout date). */
+  completionDateColumn?: string;
+  /** Target/due date to compare the completion date against for on-time rate. */
+  dueDateColumn?: string;
+  filters?: FilterCondition[];
+}
+
+export type DashboardCard = KpiCard | ChartCard | AgingCard | ScorecardCard;
 
 export const DEFAULT_AGING_BUCKETS: AgingBucketDef[] = [
   { label: "1-7 days", minDays: 1, maxDays: 7 },
