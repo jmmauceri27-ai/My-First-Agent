@@ -28,8 +28,10 @@ function TemplateCard({ template, datasets }: { template: DashboardTemplate; dat
   const [datasetId, setDatasetId] = useState("");
   const [binding, setBinding] = useState<Record<string, string> | null>(null);
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [draftMapping, setDraftMapping] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const dataset = datasets.find((d) => d.id === datasetId);
   const bindingKey = dataset ? `${template.key}:${dataset.id}` : null;
@@ -38,12 +40,23 @@ function TemplateCard({ template, datasets }: { template: DashboardTemplate; dat
   useEffect(() => {
     if (!dataset || !bindingKey) return;
     let cancelled = false;
-    getTemplateBindingAction(template.key, dataset.id).then((result) => {
-      if (cancelled) return;
-      setBinding(result);
-      setDraftMapping(result ?? {});
-      setLoadedKey(bindingKey);
-    });
+    getTemplateBindingAction(template.key, dataset.id)
+      .then((result) => {
+        if (cancelled) return;
+        setBinding(result);
+        setDraftMapping(result ?? {});
+        setLoadError(null);
+        setLoadedKey(bindingKey);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setLoadError(
+          e instanceof Error
+            ? e.message
+            : "Failed to check for a saved column mapping for this dataset.",
+        );
+        setLoadedKey(bindingKey);
+      });
     return () => {
       cancelled = true;
     };
@@ -54,9 +67,12 @@ function TemplateCard({ template, datasets }: { template: DashboardTemplate; dat
     const missing = template.roles.some((r) => !draftMapping[r.key]);
     if (missing) return;
     setSaving(true);
+    setSaveError(null);
     try {
       await saveTemplateBindingAction(template.key, dataset.id, draftMapping);
       setBinding(draftMapping);
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "Failed to save the column mapping.");
     } finally {
       setSaving(false);
     }
@@ -105,6 +121,14 @@ function TemplateCard({ template, datasets }: { template: DashboardTemplate; dat
 
       {dataset && loading && <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">Loading…</p>}
 
+      {dataset && !loading && loadError && (
+        <p className="mt-4 text-sm text-critical">
+          Couldn&rsquo;t check for a saved mapping: {loadError}
+          {loadError.toLowerCase().includes("template_bindings") &&
+            " — have you run supabase/006_dashboard_templates.sql in your Supabase project yet?"}
+        </p>
+      )}
+
       {dataset && !loading && !binding && (
         <div className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-purple-400/30 p-4">
           <p className="text-sm text-slate-600 dark:text-slate-300">
@@ -137,6 +161,13 @@ function TemplateCard({ template, datasets }: { template: DashboardTemplate; dat
           >
             {saving ? "Saving…" : "Save & view"}
           </Button>
+          {saveError && (
+            <p className="text-sm text-critical">
+              Couldn&rsquo;t save: {saveError}
+              {saveError.toLowerCase().includes("template_bindings") &&
+                " — have you run supabase/006_dashboard_templates.sql in your Supabase project yet?"}
+            </p>
+          )}
         </div>
       )}
 
