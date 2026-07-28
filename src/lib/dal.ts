@@ -363,3 +363,42 @@ export async function deleteDashboard(id: string): Promise<void> {
   const { error } = await supabase.from("dashboards").delete().eq("id", id).eq("user_id", OWNER_USER_ID);
   if (error) throw new Error(error.message);
 }
+
+// ---------- Dashboard template bindings ----------
+// Template definitions themselves live in code (see lib/templates.ts); this
+// just remembers which column plays each role for a given (template, dataset)
+// pair, so the mapping only needs to be done once per dataset.
+
+export async function getTemplateBinding(
+  templateKey: string,
+  datasetId: string,
+): Promise<Record<string, string> | null> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("template_bindings")
+    .select("role_mapping")
+    .eq("template_key", templateKey)
+    .eq("dataset_id", datasetId)
+    .eq("user_id", OWNER_USER_ID)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data?.role_mapping as Record<string, string>) ?? null;
+}
+
+export async function saveTemplateBinding(
+  templateKey: string,
+  datasetId: string,
+  roleMapping: Record<string, string>,
+): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("template_bindings").upsert(
+    {
+      user_id: OWNER_USER_ID,
+      template_key: templateKey,
+      dataset_id: datasetId,
+      role_mapping: roleMapping,
+    },
+    { onConflict: "user_id,template_key,dataset_id" },
+  );
+  if (error) throw new Error(error.message);
+}

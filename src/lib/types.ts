@@ -119,6 +119,33 @@ export interface DatasetSummary {
   uploadedAt: string;
 }
 
+export interface TemplateRole {
+  key: string;
+  label: string;
+}
+
+export interface TemplateChartCard {
+  type: "chart";
+  title: string;
+  chartType: ChartType;
+  /** Role key resolved to a real column name once bound to a dataset. */
+  xRole: string;
+  agg: ChartAgg;
+}
+
+export type TemplateCard = TemplateChartCard;
+
+export interface DashboardTemplate {
+  key: string;
+  name: string;
+  /** Which Dashboards sidebar area this template appears under, independent of any dataset's category. */
+  area: string;
+  roles: TemplateRole[];
+  cards: TemplateCard[];
+  /** Role keys exposed as live filter dropdowns once resolved against a dataset. */
+  filterRoles?: string[];
+}
+
 export const DATASET_CATEGORIES = [
   "Work Orders",
   "Invoices",

@@ -2,9 +2,11 @@ export const dynamic = "force-dynamic";
 
 import { listDashboardsWithCategory, listDatasets, loadDashboard } from "@/lib/dal";
 import { DATASET_CATEGORIES } from "@/lib/types";
+import { templatesForArea } from "@/lib/templates";
 import AreaSidebar from "./AreaSidebar";
 import DashboardPicker from "./DashboardPicker";
 import DashboardViewClient from "./DashboardViewClient";
+import TemplateGallery from "./TemplateGallery";
 
 export default async function DashboardsPage({
   searchParams,
@@ -23,6 +25,7 @@ export default async function DashboardsPage({
     | string
     | undefined;
   const config = selectedId ? await loadDashboard(selectedId) : null;
+  const templates = templatesForArea(selectedArea);
 
   return (
     <div className="flex flex-col gap-6">
@@ -32,11 +35,15 @@ export default async function DashboardsPage({
         <AreaSidebar selectedArea={selectedArea} />
 
         <div className="flex min-w-0 flex-1 flex-col gap-6">
-          {areaDashboards.length === 0 ? (
+          {areaDashboards.length === 0 && templates.length === 0 && (
             <p className="text-sm text-slate-400">
               No dashboards yet for {selectedArea}. Build one in Dashboard Builder.
             </p>
-          ) : (
+          )}
+
+          {templates.length > 0 && <TemplateGallery templates={templates} datasets={datasets} />}
+
+          {areaDashboards.length > 0 && (
             <>
               <DashboardPicker dashboards={areaDashboards} selectedId={selectedId} area={selectedArea} />
               {!config || config.cards.length === 0 ? (
