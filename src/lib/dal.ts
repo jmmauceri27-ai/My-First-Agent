@@ -1,6 +1,6 @@
 import "server-only";
 import { createAdminClient, OWNER_USER_ID } from "./supabase/admin";
-import type { DashboardConfig, DatasetRecord, DatasetSummary } from "./types";
+import type { DashboardConfig, DatasetRecord, DatasetSummary, SiteMapBinding } from "./types";
 
 // ---------- Upload chunk staging ----------
 // Temporary scratch space for large file uploads (see supabase/005_upload_chunks.sql).
@@ -399,6 +399,46 @@ export async function saveTemplateBinding(
       role_mapping: roleMapping,
     },
     { onConflict: "user_id,template_key,dataset_id" },
+  );
+  if (error) throw new Error(error.message);
+}
+
+// ---------- Procurement site map bindings ----------
+// Remembers, per user and dataset, which columns hold latitude/longitude/
+// label/popup info for the Procurement "Site Map" feature, so a site sheet
+// only needs to be mapped once.
+
+export async function getSiteMapBinding(datasetId: string): Promise<SiteMapBinding | null> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("site_map_bindings")
+    .select("lat_column, lng_column, label_column, popup_columns")
+    .eq("dataset_id", datasetId)
+    .eq("user_id", OWNER_USER_ID)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+
+  return {
+    latColumn: data.lat_column as string,
+    lngColumn: data.lng_column as string,
+    labelColumn: (data.label_column as string | null) ?? null,
+    popupColumns: (data.popup_columns as string[]) ?? [],
+  };
+}
+
+export async function saveSiteMapBinding(datasetId: string, binding: SiteMapBinding): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("site_map_bindings").upsert(
+    {
+      user_id: OWNER_USER_ID,
+      dataset_id: datasetId,
+      lat_column: binding.latColumn,
+      lng_column: binding.lngColumn,
+      label_column: binding.labelColumn,
+      popup_columns: binding.popupColumns,
+    },
+    { onConflict: "user_id,dataset_id" },
   );
   if (error) throw new Error(error.message);
 }

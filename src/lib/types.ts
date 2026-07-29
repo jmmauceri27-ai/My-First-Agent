@@ -146,6 +146,13 @@ export interface DashboardTemplate {
   filterRoles?: string[];
 }
 
+export interface SiteMapBinding {
+  latColumn: string;
+  lngColumn: string;
+  labelColumn: string | null;
+  popupColumns: string[];
+}
+
 export const DATASET_CATEGORIES = [
   "Work Orders",
   "Invoices",
