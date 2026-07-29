@@ -76,5 +76,14 @@ export default function SiteMap({ pins, onPinClick }: { pins: MapPin[]; onPinCli
     };
   }, []);
 
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver(() => {
+      mapRef.current?.invalidateSize();
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   return <div ref={containerRef} className="h-full w-full" />;
 }

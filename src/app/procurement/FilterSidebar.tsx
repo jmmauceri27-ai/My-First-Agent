@@ -77,15 +77,13 @@ export default function FilterSidebar({
                   </span>
                 </summary>
                 <div className="mt-2 flex flex-col gap-2">
-                  {allValues.length > 8 && (
-                    <input
-                      type="text"
-                      value={search[column] ?? ""}
-                      onChange={(e) => setSearch((prev) => ({ ...prev, [column]: e.target.value }))}
-                      placeholder={`Search ${column}…`}
-                      className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200 outline-none focus:border-brand-500"
-                    />
-                  )}
+                  <input
+                    type="text"
+                    value={search[column] ?? ""}
+                    onChange={(e) => setSearch((prev) => ({ ...prev, [column]: e.target.value }))}
+                    placeholder={`Search ${column}…`}
+                    className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200 outline-none focus:border-brand-500"
+                  />
                   <div className="flex max-h-48 flex-col gap-1 overflow-y-auto">
                     {values.length === 0 && <p className="text-xs text-slate-500">No matches.</p>}
                     {values.map((value) => (
