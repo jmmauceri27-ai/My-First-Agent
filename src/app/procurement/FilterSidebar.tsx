@@ -27,6 +27,7 @@ export default function FilterSidebar({
   onClear: () => void;
 }) {
   const [pending, setPending] = useState<Record<string, string[]>>({});
+  const [search, setSearch] = useState<Record<string, string>>({});
 
   function toggleValue(column: string, value: string) {
     setPending((prev) => {
@@ -58,7 +59,9 @@ export default function FilterSidebar({
           </p>
         ) : (
           filterColumns.map((column) => {
-            const values = distinctValuesFor(rows, column);
+            const allValues = distinctValuesFor(rows, column);
+            const query = (search[column] ?? "").trim().toLowerCase();
+            const values = query ? allValues.filter((v) => v.toLowerCase().includes(query)) : allValues;
             const selectedCount = pending[column]?.length ?? 0;
             return (
               <details key={column} className="group border-b border-purple-400/10 px-2 py-2">
@@ -73,18 +76,30 @@ export default function FilterSidebar({
                     <span className="text-slate-500 transition-transform group-open:rotate-180">⌄</span>
                   </span>
                 </summary>
-                <div className="mt-2 flex max-h-48 flex-col gap-1 overflow-y-auto">
-                  {values.map((value) => (
-                    <label key={value} className="flex items-center gap-1.5 text-xs text-slate-300">
-                      <input
-                        type="checkbox"
-                        checked={(pending[column] ?? []).includes(value)}
-                        onChange={() => toggleValue(column, value)}
-                        className="accent-brand-600"
-                      />
-                      {value}
-                    </label>
-                  ))}
+                <div className="mt-2 flex flex-col gap-2">
+                  {allValues.length > 8 && (
+                    <input
+                      type="text"
+                      value={search[column] ?? ""}
+                      onChange={(e) => setSearch((prev) => ({ ...prev, [column]: e.target.value }))}
+                      placeholder={`Search ${column}…`}
+                      className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200 outline-none focus:border-brand-500"
+                    />
+                  )}
+                  <div className="flex max-h-48 flex-col gap-1 overflow-y-auto">
+                    {values.length === 0 && <p className="text-xs text-slate-500">No matches.</p>}
+                    {values.map((value) => (
+                      <label key={value} className="flex items-center gap-1.5 text-xs text-slate-300">
+                        <input
+                          type="checkbox"
+                          checked={(pending[column] ?? []).includes(value)}
+                          onChange={() => toggleValue(column, value)}
+                          className="accent-brand-600"
+                        />
+                        {value}
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </details>
             );

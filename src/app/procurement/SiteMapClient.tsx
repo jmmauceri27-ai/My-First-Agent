@@ -551,36 +551,55 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
           )}
 
           {dataset && !loading && !editing && binding && (
-            <div className="flex h-full flex-col gap-3 p-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  onClick={() => setActiveViewId(null)}
-                  variant={activeViewId === null ? "primary" : "secondary"}
-                  className="w-fit"
-                >
-                  All
-                </Button>
-                {views.map((v) => (
-                  <div key={v.id} className="flex items-center gap-1">
-                    <Button
-                      onClick={() => setActiveViewId(v.id)}
-                      variant={activeViewId === v.id ? "primary" : "secondary"}
-                      className="w-fit"
-                    >
-                      {v.name}
-                    </Button>
-                    <button
-                      onClick={() => handleDeleteView(v.id)}
-                      title={`Delete "${v.name}"`}
-                      className="text-slate-500 hover:text-critical"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-                <Button onClick={() => setAddingView((prev) => !prev)} variant="ghost" className="w-fit">
-                  {addingView ? "Cancel" : "+ Add view"}
-                </Button>
+            <div className="flex h-full flex-col gap-2 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    onClick={() => setActiveViewId(null)}
+                    variant={activeViewId === null ? "primary" : "secondary"}
+                    className="w-fit"
+                  >
+                    All
+                  </Button>
+                  {views.map((v) => (
+                    <div key={v.id} className="flex items-center gap-1">
+                      <Button
+                        onClick={() => setActiveViewId(v.id)}
+                        variant={activeViewId === v.id ? "primary" : "secondary"}
+                        className="w-fit"
+                      >
+                        {v.name}
+                      </Button>
+                      <button
+                        onClick={() => handleDeleteView(v.id)}
+                        title={`Delete "${v.name}"`}
+                        className="text-slate-500 hover:text-critical"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  <Button onClick={() => setAddingView((prev) => !prev)} variant="ghost" className="w-fit">
+                    {addingView ? "Cancel" : "+ Add view"}
+                  </Button>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="text-sm text-slate-400">
+                    {rowsLoading
+                      ? "Loading rows…"
+                      : `${pins.length} of ${filteredRows.length} rows plotted` +
+                        (skippedCount > 0 ? ` (${skippedCount} missing valid coordinates)` : "") +
+                        (filteredOutCount > 0 ? ` (${filteredOutCount} hidden by filters)` : "")}
+                  </p>
+                  {activeView && legend && <MapLegend {...legend} />}
+                  {activeView && !legend && !rowsLoading && (
+                    <p className="text-xs text-slate-500">No sites have data for this view yet.</p>
+                  )}
+                  <Button onClick={() => setEditing(true)} variant="ghost" className="w-fit">
+                    Change columns
+                  </Button>
+                </div>
               </div>
 
               {viewsError && <p className="text-sm text-critical">Couldn&rsquo;t load saved views: {viewsError}</p>}
@@ -644,24 +663,6 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
                 </div>
               )}
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <p className="text-sm text-slate-400">
-                    {rowsLoading
-                      ? "Loading rows…"
-                      : `${pins.length} of ${filteredRows.length} rows plotted` +
-                        (skippedCount > 0 ? ` (${skippedCount} missing valid coordinates)` : "") +
-                        (filteredOutCount > 0 ? ` (${filteredOutCount} hidden by filters)` : "")}
-                  </p>
-                  {activeView && legend && <MapLegend {...legend} />}
-                  {activeView && !legend && !rowsLoading && (
-                    <p className="text-xs text-slate-500">No sites have data for this view yet.</p>
-                  )}
-                </div>
-                <Button onClick={() => setEditing(true)} variant="ghost" className="w-fit">
-                  Change columns
-                </Button>
-              </div>
               {rowsError && <p className="text-sm text-critical">Couldn&rsquo;t load rows: {rowsError}</p>}
               {!rowsLoading && !rowsError && pins.length === 0 && (
                 <p className="text-sm text-slate-400">No rows have valid latitude/longitude values to plot.</p>
