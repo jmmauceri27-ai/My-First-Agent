@@ -51,21 +51,21 @@
 | 2 | Get clients from Silpa | Complete | Service Call and Maintenance customers only |
 | 3 | Get sites from Anthony | Complete | |
 | 4 | Create scheduled services for all quarterly services | Pending | |
-| 5 | Add DVM Fire's rates | Pending | |
-| 6 | Track inventory | In Progress | Working with Anthony |
-| 7 | Track employee hours | Pending | Separate WOs for PTO / Holiday / Sick; regular hours via UC check-in & check-out |
+| 5 | Add DVM Fire's rates | Complete | |
+| 6 | Track inventory | Complete | Working with Anthony |
+| 7 | Track employee hours | Complete | Separate WOs for PTO / Holiday / Sick; regular hours via UC check-in & check-out |
 | 8 | Create a dummy reactive work order to show Silpa | Pending | Demo/training reactive WO for Silpa review |
 | 9 | Create a dummy PM work order for Silpa | Pending | Preventive Maintenance WO demo for Silpa |
 | 10 | Reach out to Frank Trotta | Complete | Find out what UC dashboards & reports he uses to track payroll |
 | 11 | Build New Services and Tasks | Complete | |
 | 12 | Assign Department to Service and Tasks | Complete | |
 | 13 | Assign Trades and Services to Sites | In Progress | Working with Anthony |
-| 14 | Match Building Reports to Work Order Reports | Pending | |
+| 14 | Match Building Reports to Work Order Reports | Complete | |
 | 15 | Create all clients in UC | Complete | |
 | 16 | Create all sites | Complete | |
 | 17 | Add Accumatica Customer ID's | Complete | |
-| 18 | Get employee rates for FLS Technicians | Pending | |
-| 19 | Meet w/ Anthony Wednesday to review Services, Reports, and Payroll | Pending | |
+| 18 | Get employee rates for FLS Technicians | Complete | |
+| 19 | Meet w/ Anthony Wednesday to review Services, Reports, and Payroll | Complete | |
 
 ---
 
