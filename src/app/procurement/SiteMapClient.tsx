@@ -4,7 +4,6 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
-import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import type { DatasetRecord, DatasetRowWithId, DatasetSummary, SiteMapBinding } from "@/lib/types";
 import {
@@ -14,6 +13,7 @@ import {
   updateSiteRowAction,
 } from "./actions";
 import EditSitePanel from "./EditSitePanel";
+import FilterSidebar from "./FilterSidebar";
 import type { MapPin } from "@/components/SiteMap";
 
 const SiteMap = dynamic(() => import("@/components/SiteMap"), { ssr: false });
@@ -145,13 +145,12 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
   }
 
   return (
-    <Card className="p-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-purple-400/20 bg-[#1c1430] px-4 py-3">
         <div>
-          <h2 className="text-lg font-bold text-slate-50">Site Map</h2>
-          <p className="text-sm text-slate-400">
-            Upload a sheet of site locations (via Upload Data), then pick it here to plot pins. Click a pin to
-            view or edit that site&rsquo;s details.
+          <h1 className="text-lg font-bold text-slate-50">🧾 Procurement — Site Map</h1>
+          <p className="text-xs text-slate-400">
+            Click a pin to view or edit that site&rsquo;s details.
           </p>
         </div>
         <label className="flex flex-col gap-1 text-sm">
@@ -167,140 +166,157 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
         </label>
       </div>
 
-      {dataset && loading && <p className="mt-4 text-sm text-slate-400">Loading…</p>}
+      <div className="flex min-h-0 flex-1">
+        <FilterSidebar columns={dataset && binding && !editing ? dataset.columns : []} />
 
-      {dataset && !loading && loadError && (
-        <p className="mt-4 text-sm text-critical">
-          Couldn&rsquo;t check for a saved mapping: {loadError}
-          {loadError.toLowerCase().includes("site_map_bindings") &&
-            " — have you run supabase/007_site_map_bindings.sql in your Supabase project yet?"}
-        </p>
-      )}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {!dataset && (
+            <p className="p-6 text-sm text-slate-400">
+              Choose a dataset above to view its site map. Upload one first on the Upload Data page if you
+              haven&rsquo;t already.
+            </p>
+          )}
 
-      {dataset && !loading && editing && (
-        <div className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-purple-400/30 p-4">
-          <p className="text-sm text-slate-300">
-            Map &ldquo;{dataset.displayName}&rdquo;&rsquo;s columns once — this is remembered for next time.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Latitude column</span>
-              <select
-                value={draft.lat}
-                onChange={(e) => setDraft((prev) => ({ ...prev, lat: e.target.value }))}
-                className={inputClass}
-              >
-                <option value="">Choose a column…</option>
-                {dataset.columns.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Longitude column</span>
-              <select
-                value={draft.lng}
-                onChange={(e) => setDraft((prev) => ({ ...prev, lng: e.target.value }))}
-                className={inputClass}
-              >
-                <option value="">Choose a column…</option>
-                {dataset.columns.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Site name column (optional)</span>
-              <select
-                value={draft.label}
-                onChange={(e) => setDraft((prev) => ({ ...prev, label: e.target.value }))}
-                className={inputClass}
-              >
-                <option value="">None</option>
-                {dataset.columns.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
+          {dataset && loading && <p className="p-6 text-sm text-slate-400">Loading…</p>}
 
-          <div>
-            <span className="text-sm font-medium text-slate-300">Show in pin popup (optional)</span>
-            <div className="mt-1 flex flex-wrap gap-3">
-              {dataset.columns
-                .filter((c) => c !== draft.lat && c !== draft.lng && c !== draft.label)
-                .map((c) => (
-                  <label key={c} className="flex items-center gap-1.5 text-sm text-slate-300">
-                    <input
-                      type="checkbox"
-                      checked={draft.popup.includes(c)}
-                      onChange={() =>
-                        setDraft((prev) => ({
-                          ...prev,
-                          popup: prev.popup.includes(c)
-                            ? prev.popup.filter((p) => p !== c)
-                            : [...prev.popup, c],
-                        }))
-                      }
-                      className="accent-brand-600"
-                    />
-                    {c}
-                  </label>
-                ))}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Button
-              onClick={handleSaveMapping}
-              disabled={saving || !draft.lat || !draft.lng}
-              variant="secondary"
-              className="w-fit"
-            >
-              {saving ? "Saving…" : "Save & view map"}
-            </Button>
-            {binding && (
-              <Button onClick={() => setEditing(false)} variant="ghost" className="w-fit">
-                Cancel
-              </Button>
-            )}
-          </div>
-          {saveError && (
-            <p className="text-sm text-critical">
-              Couldn&rsquo;t save: {saveError}
-              {saveError.toLowerCase().includes("site_map_bindings") &&
+          {dataset && !loading && loadError && (
+            <p className="p-6 text-sm text-critical">
+              Couldn&rsquo;t check for a saved mapping: {loadError}
+              {loadError.toLowerCase().includes("site_map_bindings") &&
                 " — have you run supabase/007_site_map_bindings.sql in your Supabase project yet?"}
             </p>
           )}
-        </div>
-      )}
 
-      {dataset && !loading && !editing && binding && (
-        <div className="mt-4 flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-400">
-              {rowsLoading
-                ? "Loading rows…"
-                : `${pins.length} of ${rows.length} rows plotted` +
-                  (skippedCount > 0 ? ` (${skippedCount} missing valid coordinates)` : "")}
-            </p>
-            <Button onClick={() => setEditing(true)} variant="ghost" className="w-fit">
-              Change columns
-            </Button>
-          </div>
-          {rowsError && <p className="text-sm text-critical">Couldn&rsquo;t load rows: {rowsError}</p>}
-          {!rowsLoading && !rowsError && pins.length === 0 && (
-            <p className="text-sm text-slate-400">No rows have valid latitude/longitude values to plot.</p>
+          {dataset && !loading && editing && (
+            <div className="m-4 flex flex-col gap-3 rounded-lg border border-dashed border-purple-400/30 p-4">
+              <p className="text-sm text-slate-300">
+                Map &ldquo;{dataset.displayName}&rdquo;&rsquo;s columns once — this is remembered for next time.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="font-medium text-slate-300">Latitude column</span>
+                  <select
+                    value={draft.lat}
+                    onChange={(e) => setDraft((prev) => ({ ...prev, lat: e.target.value }))}
+                    className={inputClass}
+                  >
+                    <option value="">Choose a column…</option>
+                    {dataset.columns.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="font-medium text-slate-300">Longitude column</span>
+                  <select
+                    value={draft.lng}
+                    onChange={(e) => setDraft((prev) => ({ ...prev, lng: e.target.value }))}
+                    className={inputClass}
+                  >
+                    <option value="">Choose a column…</option>
+                    {dataset.columns.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="font-medium text-slate-300">Site name column (optional)</span>
+                  <select
+                    value={draft.label}
+                    onChange={(e) => setDraft((prev) => ({ ...prev, label: e.target.value }))}
+                    className={inputClass}
+                  >
+                    <option value="">None</option>
+                    {dataset.columns.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div>
+                <span className="text-sm font-medium text-slate-300">Show in pin popup (optional)</span>
+                <div className="mt-1 flex flex-wrap gap-3">
+                  {dataset.columns
+                    .filter((c) => c !== draft.lat && c !== draft.lng && c !== draft.label)
+                    .map((c) => (
+                      <label key={c} className="flex items-center gap-1.5 text-sm text-slate-300">
+                        <input
+                          type="checkbox"
+                          checked={draft.popup.includes(c)}
+                          onChange={() =>
+                            setDraft((prev) => ({
+                              ...prev,
+                              popup: prev.popup.includes(c)
+                                ? prev.popup.filter((p) => p !== c)
+                                : [...prev.popup, c],
+                            }))
+                          }
+                          className="accent-brand-600"
+                        />
+                        {c}
+                      </label>
+                    ))}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={handleSaveMapping}
+                  disabled={saving || !draft.lat || !draft.lng}
+                  variant="secondary"
+                  className="w-fit"
+                >
+                  {saving ? "Saving…" : "Save & view map"}
+                </Button>
+                {binding && (
+                  <Button onClick={() => setEditing(false)} variant="ghost" className="w-fit">
+                    Cancel
+                  </Button>
+                )}
+              </div>
+              {saveError && (
+                <p className="text-sm text-critical">
+                  Couldn&rsquo;t save: {saveError}
+                  {saveError.toLowerCase().includes("site_map_bindings") &&
+                    " — have you run supabase/007_site_map_bindings.sql in your Supabase project yet?"}
+                </p>
+              )}
+            </div>
           )}
-          {!rowsLoading && pins.length > 0 && <SiteMap pins={pins} onPinClick={setEditingRowId} />}
+
+          {dataset && !loading && !editing && binding && (
+            <div className="flex h-full flex-col gap-3 p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-slate-400">
+                  {rowsLoading
+                    ? "Loading rows…"
+                    : `${pins.length} of ${rows.length} rows plotted` +
+                      (skippedCount > 0 ? ` (${skippedCount} missing valid coordinates)` : "")}
+                </p>
+                <Button onClick={() => setEditing(true)} variant="ghost" className="w-fit">
+                  Change columns
+                </Button>
+              </div>
+              {rowsError && <p className="text-sm text-critical">Couldn&rsquo;t load rows: {rowsError}</p>}
+              {!rowsLoading && !rowsError && pins.length === 0 && (
+                <p className="text-sm text-slate-400">No rows have valid latitude/longitude values to plot.</p>
+              )}
+              {!rowsLoading && pins.length > 0 && (
+                <div className="min-h-0 flex-1 overflow-hidden rounded-lg">
+                  <SiteMap pins={pins} onPinClick={setEditingRowId} />
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {editingRow && (
         <EditSitePanel
@@ -310,6 +326,6 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
           onSave={handleSaveRow}
         />
       )}
-    </Card>
+    </div>
   );
 }

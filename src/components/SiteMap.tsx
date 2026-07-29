@@ -73,5 +73,5 @@ export default function SiteMap({ pins, onPinClick }: { pins: MapPin[]; onPinCli
     };
   }, []);
 
-  return <div ref={containerRef} className="h-[520px] w-full rounded-lg" />;
+  return <div ref={containerRef} className="h-full w-full" />;
 }
