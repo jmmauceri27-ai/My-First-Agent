@@ -1,12 +1,15 @@
 "use server";
 
 import {
+  deleteSiteMapView,
   getDatasetRowsWithIds,
   getSiteMapBinding,
+  listSiteMapViews,
   saveSiteMapBinding,
+  saveSiteMapView,
   updateDatasetRowFields,
 } from "@/lib/dal";
-import type { DatasetRecord, DatasetRowWithId, SiteMapBinding } from "@/lib/types";
+import type { DatasetRecord, DatasetRowWithId, SiteMapBinding, SiteMapView } from "@/lib/types";
 
 export async function fetchDatasetRowsWithIdsAction(datasetId: string): Promise<DatasetRowWithId[]> {
   return getDatasetRowsWithIds(datasetId);
@@ -22,4 +25,19 @@ export async function saveSiteMapBindingAction(datasetId: string, binding: SiteM
 
 export async function updateSiteRowAction(datasetId: string, rowId: number, data: DatasetRecord): Promise<void> {
   await updateDatasetRowFields(datasetId, rowId, data);
+}
+
+export async function listSiteMapViewsAction(datasetId: string): Promise<SiteMapView[]> {
+  return listSiteMapViews(datasetId);
+}
+
+export async function saveSiteMapViewAction(
+  datasetId: string,
+  view: { name: string; colorColumn: string; colorMode: SiteMapView["colorMode"] },
+): Promise<string> {
+  return saveSiteMapView(datasetId, view);
+}
+
+export async function deleteSiteMapViewAction(viewId: string): Promise<void> {
+  await deleteSiteMapView(viewId);
 }

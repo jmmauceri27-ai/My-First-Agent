@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import "leaflet/dist/leaflet.css";
+import { DEFAULT_PIN_COLOR } from "@/lib/siteMapColor";
 
 export interface MapPin {
   rowId: number;
@@ -9,6 +10,7 @@ export interface MapPin {
   lng: number;
   label: string;
   fields: { key: string; value: string }[];
+  color?: string;
 }
 
 export default function SiteMap({ pins, onPinClick }: { pins: MapPin[]; onPinClick: (rowId: number) => void }) {
@@ -42,12 +44,13 @@ export default function SiteMap({ pins, onPinClick }: { pins: MapPin[]; onPinCli
       const bounds: [number, number][] = [];
 
       for (const pin of pins) {
+        const fillColor = pin.color ?? DEFAULT_PIN_COLOR;
         const marker = L.circleMarker([pin.lat, pin.lng], {
           radius: 8,
           weight: 2,
-          color: "#7c3aed",
-          fillColor: "#a78bfa",
-          fillOpacity: 0.85,
+          color: "#1c1430",
+          fillColor,
+          fillOpacity: 0.9,
         });
         marker.bindTooltip(pin.label, { direction: "top", offset: [0, -8] });
         marker.on("click", () => onPinClickRef.current(pin.rowId));

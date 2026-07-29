@@ -151,11 +151,26 @@ export interface SiteMapBinding {
   lngColumn: string;
   labelColumn: string | null;
   popupColumns: string[];
+  contractValueColumn: string | null;
+  subPriceColumn: string | null;
 }
 
 export interface DatasetRowWithId {
   id: number;
   data: DatasetRecord;
+}
+
+/** Sentinel "column" for the computed Contract Value − Sub Price metric. */
+export const MARGIN_METRIC_KEY = "__margin__";
+export const MARGIN_METRIC_LABEL = "Margin ($)";
+
+export type SiteMapColorMode = "gradient" | "categorical";
+
+export interface SiteMapView {
+  id: string;
+  name: string;
+  colorColumn: string;
+  colorMode: SiteMapColorMode;
 }
 
 export const DATASET_CATEGORIES = [

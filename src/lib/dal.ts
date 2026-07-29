@@ -1,6 +1,13 @@
 import "server-only";
 import { createAdminClient, OWNER_USER_ID } from "./supabase/admin";
-import type { DashboardConfig, DatasetRecord, DatasetRowWithId, DatasetSummary, SiteMapBinding } from "./types";
+import type {
+  DashboardConfig,
+  DatasetRecord,
+  DatasetRowWithId,
+  DatasetSummary,
+  SiteMapBinding,
+  SiteMapView,
+} from "./types";
 
 // ---------- Upload chunk staging ----------
 // Temporary scratch space for large file uploads (see supabase/005_upload_chunks.sql).
@@ -475,7 +482,7 @@ export async function getSiteMapBinding(datasetId: string): Promise<SiteMapBindi
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("site_map_bindings")
-    .select("lat_column, lng_column, label_column, popup_columns")
+    .select("lat_column, lng_column, label_column, popup_columns, contract_value_column, sub_price_column")
     .eq("dataset_id", datasetId)
     .eq("user_id", OWNER_USER_ID)
     .maybeSingle();
@@ -487,6 +494,8 @@ export async function getSiteMapBinding(datasetId: string): Promise<SiteMapBindi
     lngColumn: data.lng_column as string,
     labelColumn: (data.label_column as string | null) ?? null,
     popupColumns: (data.popup_columns as string[]) ?? [],
+    contractValueColumn: (data.contract_value_column as string | null) ?? null,
+    subPriceColumn: (data.sub_price_column as string | null) ?? null,
   };
 }
 
@@ -500,8 +509,60 @@ export async function saveSiteMapBinding(datasetId: string, binding: SiteMapBind
       lng_column: binding.lngColumn,
       label_column: binding.labelColumn,
       popup_columns: binding.popupColumns,
+      contract_value_column: binding.contractValueColumn,
+      sub_price_column: binding.subPriceColumn,
     },
     { onConflict: "user_id,dataset_id" },
   );
+  if (error) throw new Error(error.message);
+}
+
+// ---------- Procurement site map views ----------
+// Named "color the pins by ___" configs per dataset, switchable on the map.
+
+export async function listSiteMapViews(datasetId: string): Promise<SiteMapView[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("site_map_views")
+    .select("id, name, color_column, color_mode")
+    .eq("dataset_id", datasetId)
+    .eq("user_id", OWNER_USER_ID)
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((v) => ({
+    id: v.id as string,
+    name: v.name as string,
+    colorColumn: v.color_column as string,
+    colorMode: v.color_mode as SiteMapView["colorMode"],
+  }));
+}
+
+export async function saveSiteMapView(
+  datasetId: string,
+  view: { name: string; colorColumn: string; colorMode: SiteMapView["colorMode"] },
+): Promise<string> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("site_map_views")
+    .upsert(
+      {
+        user_id: OWNER_USER_ID,
+        dataset_id: datasetId,
+        name: view.name,
+        color_column: view.colorColumn,
+        color_mode: view.colorMode,
+      },
+      { onConflict: "user_id,dataset_id,name" },
+    )
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return data.id as string;
+}
+
+export async function deleteSiteMapView(viewId: string): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("site_map_views").delete().eq("id", viewId).eq("user_id", OWNER_USER_ID);
   if (error) throw new Error(error.message);
 }

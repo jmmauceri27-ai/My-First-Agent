@@ -5,18 +5,46 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import { inputClass } from "@/components/ui/formClasses";
-import type { DatasetRecord, DatasetRowWithId, DatasetSummary, SiteMapBinding } from "@/lib/types";
 import {
+  buildCategoricalPalette,
+  gradientColorForRatio,
+  NEUTRAL_PIN_COLOR,
+  resolveColorMetric,
+} from "@/lib/siteMapColor";
+import {
+  MARGIN_METRIC_KEY,
+  MARGIN_METRIC_LABEL,
+  type DatasetRecord,
+  type DatasetRowWithId,
+  type DatasetSummary,
+  type SiteMapBinding,
+  type SiteMapColorMode,
+  type SiteMapView,
+} from "@/lib/types";
+import {
+  deleteSiteMapViewAction,
   fetchDatasetRowsWithIdsAction,
   getSiteMapBindingAction,
+  listSiteMapViewsAction,
   saveSiteMapBindingAction,
+  saveSiteMapViewAction,
   updateSiteRowAction,
 } from "./actions";
 import EditSitePanel from "./EditSitePanel";
 import FilterSidebar from "./FilterSidebar";
+import MapLegend, { type MapLegendProps } from "./MapLegend";
 import type { MapPin } from "@/components/SiteMap";
 
 const SiteMap = dynamic(() => import("@/components/SiteMap"), { ssr: false });
+
+interface MappingDraft {
+  lat: string;
+  lng: string;
+  label: string;
+  popup: string[];
+  contractValue: string;
+  subPrice: string;
+}
 
 export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[] }) {
   const router = useRouter();
@@ -25,11 +53,13 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
   const [loadedDatasetId, setLoadedDatasetId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState<{ lat: string; lng: string; label: string; popup: string[] }>({
+  const [draft, setDraft] = useState<MappingDraft>({
     lat: "",
     lng: "",
     label: "",
     popup: [],
+    contractValue: "",
+    subPrice: "",
   });
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -39,6 +69,18 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
   const [rowsError, setRowsError] = useState<string | null>(null);
 
   const [editingRowId, setEditingRowId] = useState<number | null>(null);
+
+  const [views, setViews] = useState<SiteMapView[]>([]);
+  const [viewsError, setViewsError] = useState<string | null>(null);
+  const [activeViewId, setActiveViewId] = useState<string | null>(null);
+  const [addingView, setAddingView] = useState(false);
+  const [viewDraft, setViewDraft] = useState<{ name: string; colorColumn: string; colorMode: SiteMapColorMode }>({
+    name: "",
+    colorColumn: "",
+    colorMode: "categorical",
+  });
+  const [viewSaving, setViewSaving] = useState(false);
+  const [viewSaveError, setViewSaveError] = useState<string | null>(null);
 
   const dataset = datasets.find((d) => d.id === datasetId);
   const loading = datasetId !== "" && loadedDatasetId !== datasetId;
@@ -55,6 +97,8 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
           lng: result?.lngColumn ?? "",
           label: result?.labelColumn ?? "",
           popup: result?.popupColumns ?? [],
+          contractValue: result?.contractValueColumn ?? "",
+          subPrice: result?.subPriceColumn ?? "",
         });
         setLoadError(null);
         setEditing(!result);
@@ -92,6 +136,25 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
     };
   }, [dataset, binding]);
 
+  useEffect(() => {
+    if (!dataset || !binding) return;
+    let cancelled = false;
+    listSiteMapViewsAction(dataset.id)
+      .then((result) => {
+        if (cancelled) return;
+        setViews(result);
+        setViewsError(null);
+        setActiveViewId(null);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setViewsError(e instanceof Error ? e.message : "Failed to load saved views.");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [dataset, binding]);
+
   async function handleSaveMapping() {
     if (!dataset || !draft.lat || !draft.lng) return;
     setSaving(true);
@@ -102,6 +165,8 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
         lngColumn: draft.lng,
         labelColumn: draft.label || null,
         popupColumns: draft.popup,
+        contractValueColumn: draft.contractValue || null,
+        subPriceColumn: draft.subPrice || null,
       };
       await saveSiteMapBindingAction(dataset.id, newBinding);
       setBinding(newBinding);
@@ -113,25 +178,133 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
     }
   }
 
-  const pins = useMemo<MapPin[]>(() => {
-    if (!binding) return [];
-    const result: MapPin[] = [];
+  const hasMargin = Boolean(binding?.contractValueColumn && binding?.subPriceColumn);
+  const colorByOptions = useMemo(() => {
+    if (!dataset) return [];
+    return [
+      ...(hasMargin ? [{ key: MARGIN_METRIC_KEY, label: MARGIN_METRIC_LABEL }] : []),
+      ...dataset.columns.map((c) => ({ key: c, label: c })),
+    ];
+  }, [dataset, hasMargin]);
+
+  function suggestColorMode(column: string): SiteMapColorMode {
+    if (column === MARGIN_METRIC_KEY) return "gradient";
+    const sample = rows
+      .slice(0, 20)
+      .map((r) => r.data[column])
+      .filter((v) => v !== null && v !== undefined && v !== "");
+    if (sample.length === 0) return "categorical";
+    const numeric = sample.filter((v) => Number.isFinite(Number(v))).length;
+    return numeric / sample.length >= 0.8 ? "gradient" : "categorical";
+  }
+
+  async function handleSaveView() {
+    if (!dataset || !viewDraft.name.trim() || !viewDraft.colorColumn) return;
+    setViewSaving(true);
+    setViewSaveError(null);
+    try {
+      const id = await saveSiteMapViewAction(dataset.id, {
+        name: viewDraft.name.trim(),
+        colorColumn: viewDraft.colorColumn,
+        colorMode: viewDraft.colorMode,
+      });
+      const newView: SiteMapView = {
+        id,
+        name: viewDraft.name.trim(),
+        colorColumn: viewDraft.colorColumn,
+        colorMode: viewDraft.colorMode,
+      };
+      setViews((prev) => [...prev.filter((v) => v.id !== id), newView]);
+      setActiveViewId(id);
+      setAddingView(false);
+      setViewDraft({ name: "", colorColumn: "", colorMode: "categorical" });
+    } catch (e) {
+      setViewSaveError(e instanceof Error ? e.message : "Failed to save this view.");
+    } finally {
+      setViewSaving(false);
+    }
+  }
+
+  async function handleDeleteView(viewId: string) {
+    await deleteSiteMapViewAction(viewId);
+    setViews((prev) => prev.filter((v) => v.id !== viewId));
+    if (activeViewId === viewId) setActiveViewId(null);
+  }
+
+  const activeView = views.find((v) => v.id === activeViewId) ?? null;
+
+  const mapData = useMemo(() => {
+    if (!binding) return { pins: [] as MapPin[], legend: null as MapLegendProps | null };
+
+    const plotted: { row: DatasetRowWithId; lat: number; lng: number }[] = [];
     for (const row of rows) {
       const lat = Number(row.data[binding.latColumn]);
       const lng = Number(row.data[binding.lngColumn]);
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+      plotted.push({ row, lat, lng });
+    }
+
+    let colorByRowId: Map<number, string> | null = null;
+    let legend: MapLegendProps | null = null;
+
+    if (activeView) {
+      colorByRowId = new Map();
+      if (activeView.colorMode === "gradient") {
+        const numericValues: number[] = [];
+        for (const { row } of plotted) {
+          const raw = resolveColorMetric(row.data, activeView.colorColumn, binding);
+          const num = raw === null ? NaN : Number(raw);
+          if (Number.isFinite(num)) numericValues.push(num);
+        }
+        const min = numericValues.length ? Math.min(...numericValues) : 0;
+        const max = numericValues.length ? Math.max(...numericValues) : 0;
+        for (const { row } of plotted) {
+          const raw = resolveColorMetric(row.data, activeView.colorColumn, binding);
+          const num = raw === null ? NaN : Number(raw);
+          if (!Number.isFinite(num)) continue;
+          const ratio = max === min ? 0.5 : (num - min) / (max - min);
+          colorByRowId.set(row.id, gradientColorForRatio(ratio));
+        }
+        if (numericValues.length > 0) {
+          legend = { mode: "gradient", min, max, isCurrency: activeView.colorColumn === MARGIN_METRIC_KEY };
+        }
+      } else {
+        const stringValues: string[] = [];
+        for (const { row } of plotted) {
+          const raw = resolveColorMetric(row.data, activeView.colorColumn, binding);
+          if (raw !== null) stringValues.push(String(raw));
+        }
+        const palette = buildCategoricalPalette(stringValues);
+        for (const { row } of plotted) {
+          const raw = resolveColorMetric(row.data, activeView.colorColumn, binding);
+          if (raw === null) continue;
+          colorByRowId.set(row.id, palette.get(String(raw)) ?? NEUTRAL_PIN_COLOR);
+        }
+        if (palette.size > 0) {
+          legend = {
+            mode: "categorical",
+            entries: Array.from(palette.entries()).map(([label, color]) => ({ label, color })),
+          };
+        }
+      }
+    }
+
+    const pins: MapPin[] = plotted.map(({ row, lat, lng }) => {
       const label = binding.labelColumn ? String(row.data[binding.labelColumn] ?? "").trim() : "";
-      result.push({
+      return {
         rowId: row.id,
         lat,
         lng,
         label: label || "Site",
         fields: binding.popupColumns.map((col) => ({ key: col, value: String(row.data[col] ?? "") })),
-      });
-    }
-    return result;
-  }, [rows, binding]);
+        color: activeView ? (colorByRowId?.get(row.id) ?? NEUTRAL_PIN_COLOR) : undefined,
+      };
+    });
 
+    return { pins, legend };
+  }, [rows, binding, activeView]);
+
+  const { pins, legend } = mapData;
   const skippedCount = rows.length - pins.length;
   const editingRow = rows.find((r) => r.id === editingRowId) ?? null;
   const editingRowLabel =
@@ -149,9 +322,7 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-purple-400/20 bg-[#1c1430] px-4 py-3">
         <div>
           <h1 className="text-lg font-bold text-slate-50">🧾 Procurement — Site Map</h1>
-          <p className="text-xs text-slate-400">
-            Click a pin to view or edit that site&rsquo;s details.
-          </p>
+          <p className="text-xs text-slate-400">Click a pin to view or edit that site&rsquo;s details.</p>
         </div>
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium text-slate-300">Dataset</span>
@@ -240,6 +411,43 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
                 </label>
               </div>
 
+              <div className="flex flex-wrap gap-3">
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="font-medium text-slate-300">Contract Value column (optional)</span>
+                  <select
+                    value={draft.contractValue}
+                    onChange={(e) => setDraft((prev) => ({ ...prev, contractValue: e.target.value }))}
+                    className={inputClass}
+                  >
+                    <option value="">None</option>
+                    {dataset.columns.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="font-medium text-slate-300">Sub Price column (optional)</span>
+                  <select
+                    value={draft.subPrice}
+                    onChange={(e) => setDraft((prev) => ({ ...prev, subPrice: e.target.value }))}
+                    className={inputClass}
+                  >
+                    <option value="">None</option>
+                    {dataset.columns.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <p className="text-xs text-slate-500">
+                Map both to unlock a &ldquo;{MARGIN_METRIC_LABEL}&rdquo; color-by option in views (Contract
+                Value − Sub Price).
+              </p>
+
               <div>
                 <span className="text-sm font-medium text-slate-300">Show in pin popup (optional)</span>
                 <div className="mt-1 flex flex-wrap gap-3">
@@ -293,13 +501,111 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
 
           {dataset && !loading && !editing && binding && (
             <div className="flex h-full flex-col gap-3 p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  onClick={() => setActiveViewId(null)}
+                  variant={activeViewId === null ? "primary" : "secondary"}
+                  className="w-fit"
+                >
+                  All
+                </Button>
+                {views.map((v) => (
+                  <div key={v.id} className="flex items-center gap-1">
+                    <Button
+                      onClick={() => setActiveViewId(v.id)}
+                      variant={activeViewId === v.id ? "primary" : "secondary"}
+                      className="w-fit"
+                    >
+                      {v.name}
+                    </Button>
+                    <button
+                      onClick={() => handleDeleteView(v.id)}
+                      title={`Delete "${v.name}"`}
+                      className="text-slate-500 hover:text-critical"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                <Button onClick={() => setAddingView((prev) => !prev)} variant="ghost" className="w-fit">
+                  {addingView ? "Cancel" : "+ Add view"}
+                </Button>
+              </div>
+
+              {viewsError && <p className="text-sm text-critical">Couldn&rsquo;t load saved views: {viewsError}</p>}
+
+              {addingView && (
+                <div className="flex flex-wrap items-end gap-3 rounded-lg border border-dashed border-purple-400/30 p-3">
+                  <label className="flex flex-col gap-1 text-sm">
+                    <span className="font-medium text-slate-300">Name</span>
+                    <input
+                      value={viewDraft.name}
+                      onChange={(e) => setViewDraft((prev) => ({ ...prev, name: e.target.value }))}
+                      placeholder="e.g. Price"
+                      className={inputClass}
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1 text-sm">
+                    <span className="font-medium text-slate-300">Color by</span>
+                    <select
+                      value={viewDraft.colorColumn}
+                      onChange={(e) =>
+                        setViewDraft((prev) => ({
+                          ...prev,
+                          colorColumn: e.target.value,
+                          colorMode: suggestColorMode(e.target.value),
+                        }))
+                      }
+                      className={inputClass}
+                    >
+                      <option value="">Choose…</option>
+                      {colorByOptions.map((opt) => (
+                        <option key={opt.key} value={opt.key}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {viewDraft.colorColumn && viewDraft.colorColumn !== MARGIN_METRIC_KEY && (
+                    <label className="flex flex-col gap-1 text-sm">
+                      <span className="font-medium text-slate-300">Style</span>
+                      <select
+                        value={viewDraft.colorMode}
+                        onChange={(e) =>
+                          setViewDraft((prev) => ({ ...prev, colorMode: e.target.value as SiteMapColorMode }))
+                        }
+                        className={inputClass}
+                      >
+                        <option value="gradient">Gradient (numeric)</option>
+                        <option value="categorical">Category (distinct values)</option>
+                      </select>
+                    </label>
+                  )}
+                  <Button
+                    onClick={handleSaveView}
+                    disabled={viewSaving || !viewDraft.name.trim() || !viewDraft.colorColumn}
+                    variant="secondary"
+                    className="w-fit"
+                  >
+                    {viewSaving ? "Saving…" : "Save view"}
+                  </Button>
+                  {viewSaveError && <p className="text-sm text-critical">{viewSaveError}</p>}
+                </div>
+              )}
+
               <div className="flex items-center justify-between">
-                <p className="text-sm text-slate-400">
-                  {rowsLoading
-                    ? "Loading rows…"
-                    : `${pins.length} of ${rows.length} rows plotted` +
-                      (skippedCount > 0 ? ` (${skippedCount} missing valid coordinates)` : "")}
-                </p>
+                <div className="flex items-center gap-3">
+                  <p className="text-sm text-slate-400">
+                    {rowsLoading
+                      ? "Loading rows…"
+                      : `${pins.length} of ${rows.length} rows plotted` +
+                        (skippedCount > 0 ? ` (${skippedCount} missing valid coordinates)` : "")}
+                  </p>
+                  {activeView && legend && <MapLegend {...legend} />}
+                  {activeView && !legend && !rowsLoading && (
+                    <p className="text-xs text-slate-500">No sites have data for this view yet.</p>
+                  )}
+                </div>
                 <Button onClick={() => setEditing(true)} variant="ghost" className="w-fit">
                   Change columns
                 </Button>
