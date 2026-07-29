@@ -1,39 +1,102 @@
 "use client";
 
+import { useState } from "react";
 import Button from "@/components/ui/Button";
+import type { DatasetRowWithId } from "@/lib/types";
 
-export default function FilterSidebar({ columns }: { columns: string[] }) {
+const BLANK_LABEL = "(blank)";
+
+function distinctValuesFor(rows: DatasetRowWithId[], column: string): string[] {
+  const set = new Set<string>();
+  for (const row of rows) {
+    const raw = row.data[column];
+    set.add(raw === null || raw === undefined || raw === "" ? BLANK_LABEL : String(raw));
+  }
+  return Array.from(set).sort((a, b) => a.localeCompare(b));
+}
+
+export default function FilterSidebar({
+  filterColumns,
+  rows,
+  onApply,
+  onClear,
+}: {
+  filterColumns: string[];
+  rows: DatasetRowWithId[];
+  onApply: (filters: Record<string, string[]>) => void;
+  onClear: () => void;
+}) {
+  const [pending, setPending] = useState<Record<string, string[]>>({});
+
+  function toggleValue(column: string, value: string) {
+    setPending((prev) => {
+      const current = prev[column] ?? [];
+      const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
+      return { ...prev, [column]: next };
+    });
+  }
+
+  function handleClear() {
+    setPending({});
+    onClear();
+  }
+
   return (
     <aside className="flex w-72 shrink-0 flex-col border-r border-purple-400/20 bg-[#1c1430]">
       <div className="border-b border-purple-400/20 px-4 py-3">
         <h2 className="text-sm font-bold uppercase tracking-wide text-slate-400">Filter Sets</h2>
-        <p className="mt-1 text-xs text-slate-500">Layout preview — filtering isn&rsquo;t wired up yet.</p>
+        <p className="mt-1 text-xs text-slate-500">
+          Check values below, then Run Filters. Pick which columns show up here from &ldquo;Change columns.&rdquo;
+        </p>
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 py-2">
-        {columns.length === 0 ? (
-          <p className="px-2 py-4 text-sm text-slate-500">Pick a dataset to see filter groups here.</p>
+        {filterColumns.length === 0 ? (
+          <p className="px-2 py-4 text-sm text-slate-500">
+            No filter columns configured yet — open &ldquo;Change columns&rdquo; above the map and pick some
+            under &ldquo;Available as sidebar filters.&rdquo;
+          </p>
         ) : (
-          columns.map((column) => (
-            <details key={column} className="group border-b border-purple-400/10 px-2 py-2">
-              <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium text-slate-300 hover:text-slate-50">
-                {column}
-                <span className="text-slate-500 transition-transform group-open:rotate-180">⌄</span>
-              </summary>
-              <p className="mt-2 text-xs text-slate-500">Filtering by &ldquo;{column}&rdquo; is coming soon.</p>
-            </details>
-          ))
+          filterColumns.map((column) => {
+            const values = distinctValuesFor(rows, column);
+            const selectedCount = pending[column]?.length ?? 0;
+            return (
+              <details key={column} className="group border-b border-purple-400/10 px-2 py-2">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-sm font-medium text-slate-300 hover:text-slate-50">
+                  <span className="truncate">{column}</span>
+                  <span className="flex items-center gap-1.5 shrink-0">
+                    {selectedCount > 0 && (
+                      <span className="rounded-full bg-brand-600 px-1.5 py-0.5 text-xs text-white">
+                        {selectedCount}
+                      </span>
+                    )}
+                    <span className="text-slate-500 transition-transform group-open:rotate-180">⌄</span>
+                  </span>
+                </summary>
+                <div className="mt-2 flex max-h-48 flex-col gap-1 overflow-y-auto">
+                  {values.map((value) => (
+                    <label key={value} className="flex items-center gap-1.5 text-xs text-slate-300">
+                      <input
+                        type="checkbox"
+                        checked={(pending[column] ?? []).includes(value)}
+                        onChange={() => toggleValue(column, value)}
+                        className="accent-brand-600"
+                      />
+                      {value}
+                    </label>
+                  ))}
+                </div>
+              </details>
+            );
+          })
         )}
       </div>
 
       <div className="flex gap-2 border-t border-purple-400/20 p-3">
-        <Button disabled variant="primary" className="flex-1" title="Coming soon">
+        <Button onClick={() => onApply(pending)} variant="primary" className="flex-1">
           Run Filters
         </Button>
-        <Button disabled variant="secondary" title="Coming soon">
-          Save
-        </Button>
-        <Button disabled variant="ghost" title="Coming soon">
+        <Button onClick={handleClear} variant="ghost">
           Clear
         </Button>
       </div>

@@ -482,7 +482,9 @@ export async function getSiteMapBinding(datasetId: string): Promise<SiteMapBindi
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("site_map_bindings")
-    .select("lat_column, lng_column, label_column, popup_columns, contract_value_column, sub_price_column")
+    .select(
+      "lat_column, lng_column, label_column, popup_columns, contract_value_column, sub_price_column, filter_columns",
+    )
     .eq("dataset_id", datasetId)
     .eq("user_id", OWNER_USER_ID)
     .maybeSingle();
@@ -496,6 +498,7 @@ export async function getSiteMapBinding(datasetId: string): Promise<SiteMapBindi
     popupColumns: (data.popup_columns as string[]) ?? [],
     contractValueColumn: (data.contract_value_column as string | null) ?? null,
     subPriceColumn: (data.sub_price_column as string | null) ?? null,
+    filterColumns: (data.filter_columns as string[]) ?? [],
   };
 }
 
@@ -511,6 +514,7 @@ export async function saveSiteMapBinding(datasetId: string, binding: SiteMapBind
       popup_columns: binding.popupColumns,
       contract_value_column: binding.contractValueColumn,
       sub_price_column: binding.subPriceColumn,
+      filter_columns: binding.filterColumns,
     },
     { onConflict: "user_id,dataset_id" },
   );

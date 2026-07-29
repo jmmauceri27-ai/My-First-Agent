@@ -44,6 +44,7 @@ interface MappingDraft {
   popup: string[];
   contractValue: string;
   subPrice: string;
+  filter: string[];
 }
 
 export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[] }) {
@@ -60,9 +61,12 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
     popup: [],
     contractValue: "",
     subPrice: "",
+    filter: [],
   });
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  const [activeFilters, setActiveFilters] = useState<Record<string, string[]>>({});
 
   const [rows, setRows] = useState<DatasetRowWithId[]>([]);
   const [rowsLoadedFor, setRowsLoadedFor] = useState<string | null>(null);
@@ -99,10 +103,12 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
           popup: result?.popupColumns ?? [],
           contractValue: result?.contractValueColumn ?? "",
           subPrice: result?.subPriceColumn ?? "",
+          filter: result?.filterColumns ?? [],
         });
         setLoadError(null);
         setEditing(!result);
         setLoadedDatasetId(dataset.id);
+        setActiveFilters({});
       })
       .catch((e) => {
         if (cancelled) return;
@@ -167,6 +173,7 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
         popupColumns: draft.popup,
         contractValueColumn: draft.contractValue || null,
         subPriceColumn: draft.subPrice || null,
+        filterColumns: draft.filter,
       };
       await saveSiteMapBindingAction(dataset.id, newBinding);
       setBinding(newBinding);
@@ -233,11 +240,23 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
 
   const activeView = views.find((v) => v.id === activeViewId) ?? null;
 
+  const filteredRows = useMemo(() => {
+    const activeCols = Object.entries(activeFilters).filter(([, values]) => values.length > 0);
+    if (activeCols.length === 0) return rows;
+    return rows.filter((row) =>
+      activeCols.every(([column, values]) => {
+        const raw = row.data[column];
+        const display = raw === null || raw === undefined || raw === "" ? "(blank)" : String(raw);
+        return values.includes(display);
+      }),
+    );
+  }, [rows, activeFilters]);
+
   const mapData = useMemo(() => {
     if (!binding) return { pins: [] as MapPin[], legend: null as MapLegendProps | null };
 
     const plotted: { row: DatasetRowWithId; lat: number; lng: number }[] = [];
-    for (const row of rows) {
+    for (const row of filteredRows) {
       const lat = Number(row.data[binding.latColumn]);
       const lng = Number(row.data[binding.lngColumn]);
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
@@ -302,10 +321,11 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
     });
 
     return { pins, legend };
-  }, [rows, binding, activeView]);
+  }, [filteredRows, binding, activeView]);
 
   const { pins, legend } = mapData;
-  const skippedCount = rows.length - pins.length;
+  const skippedCount = filteredRows.length - pins.length;
+  const filteredOutCount = rows.length - filteredRows.length;
   const editingRow = rows.find((r) => r.id === editingRowId) ?? null;
   const editingRowLabel =
     editingRow && binding?.labelColumn ? String(editingRow.data[binding.labelColumn] ?? "").trim() : "";
@@ -338,7 +358,13 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
       </div>
 
       <div className="flex min-h-0 flex-1">
-        <FilterSidebar columns={dataset && binding && !editing ? dataset.columns : []} />
+        <FilterSidebar
+          key={`${dataset?.id ?? ""}:${binding?.filterColumns.join("|") ?? ""}`}
+          filterColumns={dataset && binding && !editing ? binding.filterColumns : []}
+          rows={rows}
+          onApply={setActiveFilters}
+          onClear={() => setActiveFilters({})}
+        />
 
         <div className="min-h-0 flex-1 overflow-y-auto">
           {!dataset && (
@@ -474,6 +500,31 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
                 </div>
               </div>
 
+              <div>
+                <span className="text-sm font-medium text-slate-300">Available as sidebar filters (optional)</span>
+                <p className="text-xs text-slate-500">Choose which columns show up as filter groups on the map.</p>
+                <div className="mt-1 flex flex-wrap gap-3">
+                  {dataset.columns.map((c) => (
+                    <label key={c} className="flex items-center gap-1.5 text-sm text-slate-300">
+                      <input
+                        type="checkbox"
+                        checked={draft.filter.includes(c)}
+                        onChange={() =>
+                          setDraft((prev) => ({
+                            ...prev,
+                            filter: prev.filter.includes(c)
+                              ? prev.filter.filter((f) => f !== c)
+                              : [...prev.filter, c],
+                          }))
+                        }
+                        className="accent-brand-600"
+                      />
+                      {c}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
               <div className="flex items-center gap-3">
                 <Button
                   onClick={handleSaveMapping}
@@ -598,8 +649,9 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
                   <p className="text-sm text-slate-400">
                     {rowsLoading
                       ? "Loading rows…"
-                      : `${pins.length} of ${rows.length} rows plotted` +
-                        (skippedCount > 0 ? ` (${skippedCount} missing valid coordinates)` : "")}
+                      : `${pins.length} of ${filteredRows.length} rows plotted` +
+                        (skippedCount > 0 ? ` (${skippedCount} missing valid coordinates)` : "") +
+                        (filteredOutCount > 0 ? ` (${filteredOutCount} hidden by filters)` : "")}
                   </p>
                   {activeView && legend && <MapLegend {...legend} />}
                   {activeView && !legend && !rowsLoading && (

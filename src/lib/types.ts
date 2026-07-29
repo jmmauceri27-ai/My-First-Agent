@@ -153,6 +153,7 @@ export interface SiteMapBinding {
   popupColumns: string[];
   contractValueColumn: string | null;
   subPriceColumn: string | null;
+  filterColumns: string[];
 }
 
 export interface DatasetRowWithId {
