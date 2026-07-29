@@ -6,6 +6,11 @@ import type { DatasetRowWithId } from "@/lib/types";
 
 const BLANK_LABEL = "(blank)";
 
+/** Strips a trailing parenthetical suffix (e.g. "Site Name (Mandatory)" -> "Site Name") for display only. */
+function cleanLabel(column: string): string {
+  return column.replace(/\s*\([^()]*\)\s*$/, "").trim() || column;
+}
+
 function distinctValuesFor(rows: DatasetRowWithId[], column: string): string[] {
   const set = new Set<string>();
   for (const row of rows) {
@@ -66,7 +71,7 @@ export default function FilterSidebar({
             return (
               <details key={column} className="group border-b border-purple-400/10 px-2 py-2">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-sm font-medium text-slate-300 hover:text-slate-50">
-                  <span className="truncate">{column}</span>
+                  <span className="truncate">{cleanLabel(column)}</span>
                   <span className="flex items-center gap-1.5 shrink-0">
                     {selectedCount > 0 && (
                       <span className="rounded-full bg-brand-600 px-1.5 py-0.5 text-xs text-white">
@@ -81,7 +86,7 @@ export default function FilterSidebar({
                     type="text"
                     value={search[column] ?? ""}
                     onChange={(e) => setSearch((prev) => ({ ...prev, [column]: e.target.value }))}
-                    placeholder={`Search ${column}…`}
+                    placeholder={`Search ${cleanLabel(column)}…`}
                     className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200 outline-none focus:border-brand-500"
                   />
                   <div className="flex max-h-48 flex-col gap-1 overflow-y-auto">
