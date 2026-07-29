@@ -359,6 +359,19 @@ export async function deleteDataset(id: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+export async function renameDataset(id: string, displayName: string): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("datasets")
+    .update({ display_name: displayName })
+    .eq("id", id)
+    .eq("user_id", OWNER_USER_ID);
+  if (error) {
+    if (error.code === "23505") throw new Error(`You already have a dataset named "${displayName}".`);
+    throw new Error(error.message);
+  }
+}
+
 export async function listDashboards(): Promise<{ id: string; name: string }[]> {
   const supabase = createAdminClient();
   const { data, error } = await supabase

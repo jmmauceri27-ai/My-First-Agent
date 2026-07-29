@@ -10,6 +10,7 @@ import {
   ingestDataset,
   insertUploadChunk,
   mergeDataset,
+  renameDataset,
 } from "@/lib/dal";
 import { parseBuffer, type ParsedSheet } from "@/lib/parse";
 
@@ -170,4 +171,19 @@ export async function removeDataset(formData: FormData): Promise<void> {
   await deleteDataset(id);
   revalidatePath("/upload");
   revalidatePath("/");
+}
+
+export async function renameDatasetAction(id: string, displayName: string): Promise<{ error?: string }> {
+  const trimmed = displayName.trim();
+  if (!trimmed) return { error: "Dataset name can't be empty." };
+  try {
+    await renameDataset(id, trimmed);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to rename dataset." };
+  }
+  revalidatePath("/upload");
+  revalidatePath("/");
+  revalidatePath("/dashboards");
+  revalidatePath("/procurement");
+  return {};
 }
