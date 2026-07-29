@@ -153,6 +153,11 @@ export interface SiteMapBinding {
   popupColumns: string[];
 }
 
+export interface DatasetRowWithId {
+  id: number;
+  data: DatasetRecord;
+}
+
 export const DATASET_CATEGORIES = [
   "Work Orders",
   "Invoices",

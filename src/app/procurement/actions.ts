@@ -1,10 +1,15 @@
 "use server";
 
-import { getDatasetRows, getSiteMapBinding, saveSiteMapBinding } from "@/lib/dal";
-import type { DatasetRecord, SiteMapBinding } from "@/lib/types";
+import {
+  getDatasetRowsWithIds,
+  getSiteMapBinding,
+  saveSiteMapBinding,
+  updateDatasetRowFields,
+} from "@/lib/dal";
+import type { DatasetRecord, DatasetRowWithId, SiteMapBinding } from "@/lib/types";
 
-export async function fetchDatasetRowsAction(datasetId: string): Promise<DatasetRecord[]> {
-  return getDatasetRows(datasetId);
+export async function fetchDatasetRowsWithIdsAction(datasetId: string): Promise<DatasetRowWithId[]> {
+  return getDatasetRowsWithIds(datasetId);
 }
 
 export async function getSiteMapBindingAction(datasetId: string): Promise<SiteMapBinding | null> {
@@ -13,4 +18,8 @@ export async function getSiteMapBindingAction(datasetId: string): Promise<SiteMa
 
 export async function saveSiteMapBindingAction(datasetId: string, binding: SiteMapBinding): Promise<void> {
   await saveSiteMapBinding(datasetId, binding);
+}
+
+export async function updateSiteRowAction(datasetId: string, rowId: number, data: DatasetRecord): Promise<void> {
+  await updateDatasetRowFields(datasetId, rowId, data);
 }

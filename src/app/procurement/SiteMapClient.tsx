@@ -1,17 +1,25 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
-import type { DatasetRecord, DatasetSummary, SiteMapBinding } from "@/lib/types";
-import { fetchDatasetRowsAction, getSiteMapBindingAction, saveSiteMapBindingAction } from "./actions";
+import type { DatasetRecord, DatasetRowWithId, DatasetSummary, SiteMapBinding } from "@/lib/types";
+import {
+  fetchDatasetRowsWithIdsAction,
+  getSiteMapBindingAction,
+  saveSiteMapBindingAction,
+  updateSiteRowAction,
+} from "./actions";
+import EditSitePanel from "./EditSitePanel";
 import type { MapPin } from "@/components/SiteMap";
 
 const SiteMap = dynamic(() => import("@/components/SiteMap"), { ssr: false });
 
 export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[] }) {
+  const router = useRouter();
   const [datasetId, setDatasetId] = useState("");
   const [binding, setBinding] = useState<SiteMapBinding | null>(null);
   const [loadedDatasetId, setLoadedDatasetId] = useState<string | null>(null);
@@ -26,9 +34,11 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const [rows, setRows] = useState<DatasetRecord[]>([]);
+  const [rows, setRows] = useState<DatasetRowWithId[]>([]);
   const [rowsLoadedFor, setRowsLoadedFor] = useState<string | null>(null);
   const [rowsError, setRowsError] = useState<string | null>(null);
+
+  const [editingRowId, setEditingRowId] = useState<number | null>(null);
 
   const dataset = datasets.find((d) => d.id === datasetId);
   const loading = datasetId !== "" && loadedDatasetId !== datasetId;
@@ -65,7 +75,7 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
   useEffect(() => {
     if (!dataset || !binding) return;
     let cancelled = false;
-    fetchDatasetRowsAction(dataset.id)
+    fetchDatasetRowsWithIdsAction(dataset.id)
       .then((result) => {
         if (cancelled) return;
         setRows(result);
@@ -107,21 +117,32 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
     if (!binding) return [];
     const result: MapPin[] = [];
     for (const row of rows) {
-      const lat = Number(row[binding.latColumn]);
-      const lng = Number(row[binding.lngColumn]);
+      const lat = Number(row.data[binding.latColumn]);
+      const lng = Number(row.data[binding.lngColumn]);
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-      const label = binding.labelColumn ? String(row[binding.labelColumn] ?? "").trim() : "";
+      const label = binding.labelColumn ? String(row.data[binding.labelColumn] ?? "").trim() : "";
       result.push({
+        rowId: row.id,
         lat,
         lng,
         label: label || "Site",
-        fields: binding.popupColumns.map((col) => ({ key: col, value: String(row[col] ?? "") })),
+        fields: binding.popupColumns.map((col) => ({ key: col, value: String(row.data[col] ?? "") })),
       });
     }
     return result;
   }, [rows, binding]);
 
   const skippedCount = rows.length - pins.length;
+  const editingRow = rows.find((r) => r.id === editingRowId) ?? null;
+  const editingRowLabel =
+    editingRow && binding?.labelColumn ? String(editingRow.data[binding.labelColumn] ?? "").trim() : "";
+
+  async function handleSaveRow(data: DatasetRecord) {
+    if (!dataset || editingRowId === null) return;
+    await updateSiteRowAction(dataset.id, editingRowId, data);
+    setRows((prev) => prev.map((r) => (r.id === editingRowId ? { ...r, data } : r)));
+    router.refresh();
+  }
 
   return (
     <Card className="p-4">
@@ -129,7 +150,8 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
         <div>
           <h2 className="text-lg font-bold text-slate-50">Site Map</h2>
           <p className="text-sm text-slate-400">
-            Upload a sheet of site locations (via Upload Data), then pick it here to plot pins.
+            Upload a sheet of site locations (via Upload Data), then pick it here to plot pins. Click a pin to
+            view or edit that site&rsquo;s details.
           </p>
         </div>
         <label className="flex flex-col gap-1 text-sm">
@@ -276,8 +298,17 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
           {!rowsLoading && !rowsError && pins.length === 0 && (
             <p className="text-sm text-slate-400">No rows have valid latitude/longitude values to plot.</p>
           )}
-          {!rowsLoading && pins.length > 0 && <SiteMap pins={pins} />}
+          {!rowsLoading && pins.length > 0 && <SiteMap pins={pins} onPinClick={setEditingRowId} />}
         </div>
+      )}
+
+      {editingRow && (
+        <EditSitePanel
+          title={editingRowLabel || "Edit site"}
+          data={editingRow.data}
+          onClose={() => setEditingRowId(null)}
+          onSave={handleSaveRow}
+        />
       )}
     </Card>
   );

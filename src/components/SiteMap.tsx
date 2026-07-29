@@ -4,35 +4,22 @@ import { useEffect, useRef } from "react";
 import "leaflet/dist/leaflet.css";
 
 export interface MapPin {
+  rowId: number;
   lat: number;
   lng: number;
   label: string;
   fields: { key: string; value: string }[];
 }
 
-function buildPopupContent(pin: MapPin): HTMLElement {
-  const el = document.createElement("div");
-  el.className = "text-sm";
-
-  const title = document.createElement("div");
-  title.className = "font-semibold text-slate-900";
-  title.textContent = pin.label;
-  el.appendChild(title);
-
-  for (const field of pin.fields) {
-    const row = document.createElement("div");
-    row.className = "text-slate-700";
-    row.textContent = `${field.key}: ${field.value}`;
-    el.appendChild(row);
-  }
-
-  return el;
-}
-
-export default function SiteMap({ pins }: { pins: MapPin[] }) {
+export default function SiteMap({ pins, onPinClick }: { pins: MapPin[]; onPinClick: (rowId: number) => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
   const markersLayerRef = useRef<import("leaflet").LayerGroup | null>(null);
+  const onPinClickRef = useRef(onPinClick);
+
+  useEffect(() => {
+    onPinClickRef.current = onPinClick;
+  }, [onPinClick]);
 
   useEffect(() => {
     let cancelled = false;
@@ -55,15 +42,16 @@ export default function SiteMap({ pins }: { pins: MapPin[] }) {
       const bounds: [number, number][] = [];
 
       for (const pin of pins) {
-        L.circleMarker([pin.lat, pin.lng], {
+        const marker = L.circleMarker([pin.lat, pin.lng], {
           radius: 8,
           weight: 2,
           color: "#7c3aed",
           fillColor: "#a78bfa",
           fillOpacity: 0.85,
-        })
-          .bindPopup(buildPopupContent(pin))
-          .addTo(markersLayer);
+        });
+        marker.bindTooltip(pin.label, { direction: "top", offset: [0, -8] });
+        marker.on("click", () => onPinClickRef.current(pin.rowId));
+        marker.addTo(markersLayer);
         bounds.push([pin.lat, pin.lng]);
       }
 

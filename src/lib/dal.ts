@@ -1,6 +1,6 @@
 import "server-only";
 import { createAdminClient, OWNER_USER_ID } from "./supabase/admin";
-import type { DashboardConfig, DatasetRecord, DatasetSummary, SiteMapBinding } from "./types";
+import type { DashboardConfig, DatasetRecord, DatasetRowWithId, DatasetSummary, SiteMapBinding } from "./types";
 
 // ---------- Upload chunk staging ----------
 // Temporary scratch space for large file uploads (see supabase/005_upload_chunks.sql).
@@ -107,6 +107,69 @@ export async function getDatasetRows(id: string): Promise<DatasetRecord[]> {
   }
 
   return rows;
+}
+
+export async function getDatasetRowsWithIds(id: string): Promise<DatasetRowWithId[]> {
+  const supabase = createAdminClient();
+  const pageSize = 1000;
+  let from = 0;
+  const rows: DatasetRowWithId[] = [];
+
+  for (;;) {
+    const { data, error } = await supabase
+      .from("dataset_rows")
+      .select("id, data")
+      .eq("dataset_id", id)
+      .eq("user_id", OWNER_USER_ID)
+      .order("row_index", { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (error) throw new Error(error.message);
+    if (!data || data.length === 0) break;
+    rows.push(...(data as { id: number; data: DatasetRecord }[]));
+    if (data.length < pageSize) break;
+    from += pageSize;
+  }
+
+  return rows;
+}
+
+/**
+ * Updates a single dataset row (e.g. from the Procurement site map's edit panel)
+ * and unions any newly-introduced field names into the dataset's column list,
+ * so fields added on the fly (contract value, subcontractor, etc.) are
+ * immediately selectable elsewhere (view color-by, filters, dashboards).
+ */
+export async function updateDatasetRowFields(datasetId: string, rowId: number, data: DatasetRecord): Promise<void> {
+  const supabase = createAdminClient();
+
+  const { error: updateError } = await supabase
+    .from("dataset_rows")
+    .update({ data })
+    .eq("id", rowId)
+    .eq("dataset_id", datasetId)
+    .eq("user_id", OWNER_USER_ID);
+  if (updateError) throw new Error(updateError.message);
+
+  const { data: datasetRow, error: dsError } = await supabase
+    .from("datasets")
+    .select("columns")
+    .eq("id", datasetId)
+    .eq("user_id", OWNER_USER_ID)
+    .single();
+  if (dsError) throw new Error(dsError.message);
+
+  const columnSet = new Set<string>((datasetRow.columns as string[]) ?? []);
+  const before = columnSet.size;
+  for (const col of Object.keys(data)) columnSet.add(col);
+
+  if (columnSet.size !== before) {
+    const { error: updateDatasetError } = await supabase
+      .from("datasets")
+      .update({ columns: Array.from(columnSet) })
+      .eq("id", datasetId)
+      .eq("user_id", OWNER_USER_ID);
+    if (updateDatasetError) throw new Error(updateDatasetError.message);
+  }
 }
 
 export async function ingestDataset(
