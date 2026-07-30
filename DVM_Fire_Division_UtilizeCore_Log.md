@@ -4,6 +4,14 @@
 
 ---
 
+## Meeting Notes
+
+### [2026-07-30] — Ryan Meeting
+- Payroll reports for the previous week get sent by EOD Monday
+- Change the "change reasons" in the UC time tracker to include cost codes and cost types
+
+---
+
 ## User Input Log
 
 1. **[2026-07-02]** "I need to create a project on adding DVM Fire Division to UtilizeCore. Please keep a log of everything I type as we go along"
@@ -66,6 +74,8 @@
 | 17 | Add Accumatica Customer ID's | Complete | |
 | 18 | Get employee rates for FLS Technicians | Complete | |
 | 19 | Meet w/ Anthony Wednesday to review Services, Reports, and Payroll | Complete | |
+| 20 | Set up payroll report to be sent by EOD Monday each week | Pending | For previous week's payroll |
+| 21 | Update UC time tracker "change reasons" to include cost codes and cost types | Pending | |
 
 ---
 
