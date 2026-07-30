@@ -14,7 +14,7 @@ type SortKey = "overallRank" | "positionRank" | "adp" | "tier" | "name" | "actua
 
 export default function PlayersTable({ players }: { players: Player[] }) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [search, setSearch] = useState("");
   const [positionFilter, setPositionFilter] = useState<string>("ALL");
   const [sortKey, setSortKey] = useState<SortKey>("overallRank");
@@ -96,16 +96,6 @@ export default function PlayersTable({ players }: { players: Player[] }) {
     if (dragOrderIds) persistOrder(dragOrderIds);
   }
 
-  function moveOne(id: string, direction: -1 | 1) {
-    const currentOrder = (dragOrderIds ?? filtered.map((p) => p.id)).slice();
-    const idx = currentOrder.indexOf(id);
-    const swapIdx = idx + direction;
-    if (idx === -1 || swapIdx < 0 || swapIdx >= currentOrder.length) return;
-    [currentOrder[idx], currentOrder[swapIdx]] = [currentOrder[swapIdx], currentOrder[idx]];
-    setDragOrderIds(currentOrder);
-    persistOrder(currentOrder);
-  }
-
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -153,7 +143,7 @@ export default function PlayersTable({ players }: { players: Player[] }) {
       <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
         Showing {filtered.length} of {players.length} players
         {canReorder
-          ? " — drag ⠿ (or use the arrows) to reorder rankings"
+          ? " — drag ⠿ to reorder rankings"
           : " — sort by Overall Rank with no filters/search active to drag-reorder rankings"}
       </p>
 
@@ -177,7 +167,7 @@ export default function PlayersTable({ players }: { players: Player[] }) {
             </tr>
           </thead>
           <tbody>
-            {displayList.map((p) => (
+            {displayList.map((p, index) => (
               <tr
                 key={p.id}
                 onDragOver={canReorder ? (e) => handleDragOver(e, p.id) : undefined}
@@ -187,35 +177,15 @@ export default function PlayersTable({ players }: { players: Player[] }) {
               >
                 {canReorder && (
                   <td className="px-2 py-2 text-center">
-                    <div className="flex flex-col items-center gap-0.5 leading-none">
-                      <button
-                        type="button"
-                        onClick={() => moveOne(p.id, -1)}
-                        disabled={isPending}
-                        title="Move up"
-                        className="text-zinc-400 hover:text-zinc-700 disabled:opacity-40 dark:hover:text-zinc-200"
-                      >
-                        ▲
-                      </button>
-                      <span
-                        draggable
-                        onDragStart={() => setDraggingId(p.id)}
-                        onDragEnd={handleDragEnd}
-                        title="Drag to reorder"
-                        className="cursor-grab select-none text-zinc-400 active:cursor-grabbing"
-                      >
-                        ⠿
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => moveOne(p.id, 1)}
-                        disabled={isPending}
-                        title="Move down"
-                        className="text-zinc-400 hover:text-zinc-700 disabled:opacity-40 dark:hover:text-zinc-200"
-                      >
-                        ▼
-                      </button>
-                    </div>
+                    <span
+                      draggable
+                      onDragStart={() => setDraggingId(p.id)}
+                      onDragEnd={handleDragEnd}
+                      title="Drag to reorder"
+                      className="cursor-grab select-none text-zinc-400 active:cursor-grabbing"
+                    >
+                      ⠿
+                    </span>
                   </td>
                 )}
                 <td className="px-3 py-2">
@@ -231,7 +201,7 @@ export default function PlayersTable({ players }: { players: Player[] }) {
                     </button>
                   </form>
                 </td>
-                <td className="px-3 py-2">{p.overallRank ?? "—"}</td>
+                <td className="px-3 py-2">{canReorder ? index + 1 : p.overallRank ?? "—"}</td>
                 <td className="px-3 py-2 font-medium">
                   <Link href={`/players/${p.id}`} className="flex items-center gap-2 hover:underline">
                     {p.headshotUrl ? (
