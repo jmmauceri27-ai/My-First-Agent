@@ -1,22 +1,40 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import type { Player } from "@prisma/client";
 import { POSITIONS, TAG_STYLES, tierColor } from "@/lib/constants";
 import TeamBadge from "@/components/TeamBadge";
 import PlayerFormModal from "./PlayerFormModal";
-import { deletePlayer, toggleWatchlist } from "./actions";
+import { deletePlayer, toggleWatchlist, reorderPlayers } from "./actions";
 
 type SortKey = "overallRank" | "positionRank" | "adp" | "tier" | "name" | "actualPointsPPR";
 
 export default function PlayersTable({ players }: { players: Player[] }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
   const [positionFilter, setPositionFilter] = useState<string>("ALL");
   const [sortKey, setSortKey] = useState<SortKey>("overallRank");
   const [hideDrafted, setHideDrafted] = useState(false);
   const [watchlistOnly, setWatchlistOnly] = useState(false);
+  const [dragOrderIds, setDragOrderIds] = useState<string[] | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+
+  // Dragging reassigns overallRank for the whole board, so it only makes
+  // sense against the full, unfiltered list sorted by rank — otherwise
+  // "drop it here" would be ambiguous about where it lands among players
+  // that aren't currently visible.
+  const canReorder =
+    sortKey === "overallRank" && positionFilter === "ALL" && !hideDrafted && !watchlistOnly && search.trim() === "";
+
+  // A fresh players prop (after a server reorder round-trips through
+  // revalidation) always wins over any stale local drag state.
+  useEffect(() => {
+    setDragOrderIds(null);
+  }, [players]);
 
   const filtered = useMemo(() => {
     let list = players.slice();
@@ -45,6 +63,48 @@ export default function PlayersTable({ players }: { players: Player[] }) {
     });
     return list;
   }, [players, search, positionFilter, sortKey, hideDrafted, watchlistOnly]);
+
+  // While actively dragging, show the locally-reordered list instead of
+  // re-deriving from `players` — the server write happens on drop.
+  const displayList = useMemo(() => {
+    if (!canReorder || !dragOrderIds) return filtered;
+    const byId = new Map(filtered.map((p) => [p.id, p]));
+    return dragOrderIds.map((id) => byId.get(id)).filter((p): p is Player => Boolean(p));
+  }, [filtered, canReorder, dragOrderIds]);
+
+  function persistOrder(orderedIds: string[]) {
+    startTransition(async () => {
+      await reorderPlayers(orderedIds);
+      router.refresh();
+    });
+  }
+
+  function handleDragOver(e: React.DragEvent, overId: string) {
+    e.preventDefault();
+    if (!draggingId || draggingId === overId) return;
+    const currentOrder = (dragOrderIds ?? filtered.map((p) => p.id)).slice();
+    const from = currentOrder.indexOf(draggingId);
+    const to = currentOrder.indexOf(overId);
+    if (from === -1 || to === -1) return;
+    currentOrder.splice(from, 1);
+    currentOrder.splice(to, 0, draggingId);
+    setDragOrderIds(currentOrder);
+  }
+
+  function handleDragEnd() {
+    setDraggingId(null);
+    if (dragOrderIds) persistOrder(dragOrderIds);
+  }
+
+  function moveOne(id: string, direction: -1 | 1) {
+    const currentOrder = (dragOrderIds ?? filtered.map((p) => p.id)).slice();
+    const idx = currentOrder.indexOf(id);
+    const swapIdx = idx + direction;
+    if (idx === -1 || swapIdx < 0 || swapIdx >= currentOrder.length) return;
+    [currentOrder[idx], currentOrder[swapIdx]] = [currentOrder[swapIdx], currentOrder[idx]];
+    setDragOrderIds(currentOrder);
+    persistOrder(currentOrder);
+  }
 
   return (
     <div>
@@ -92,12 +152,16 @@ export default function PlayersTable({ players }: { players: Player[] }) {
 
       <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
         Showing {filtered.length} of {players.length} players
+        {canReorder
+          ? " — drag ⠿ (or use the arrows) to reorder rankings"
+          : " — sort by Overall Rank with no filters/search active to drag-reorder rankings"}
       </p>
 
       <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white/90 backdrop-blur-md dark:border-ink-800 dark:bg-ink-900/70">
         <table className="w-full min-w-[900px] text-sm">
           <thead className="bg-zinc-100 text-left dark:bg-ink-900/60">
             <tr>
+              {canReorder && <th className="w-10 px-2 py-2"></th>}
               <th className="px-3 py-2">★</th>
               <th className="px-3 py-2">Rank</th>
               <th className="px-3 py-2">Name</th>
@@ -113,13 +177,47 @@ export default function PlayersTable({ players }: { players: Player[] }) {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((p) => (
+            {displayList.map((p) => (
               <tr
                 key={p.id}
+                onDragOver={canReorder ? (e) => handleDragOver(e, p.id) : undefined}
                 className={`border-t border-zinc-200 dark:border-ink-800 ${
                   p.draftedBy ? "opacity-50" : ""
-                }`}
+                } ${draggingId === p.id ? "opacity-40" : ""}`}
               >
+                {canReorder && (
+                  <td className="px-2 py-2 text-center">
+                    <div className="flex flex-col items-center gap-0.5 leading-none">
+                      <button
+                        type="button"
+                        onClick={() => moveOne(p.id, -1)}
+                        disabled={isPending}
+                        title="Move up"
+                        className="text-zinc-400 hover:text-zinc-700 disabled:opacity-40 dark:hover:text-zinc-200"
+                      >
+                        ▲
+                      </button>
+                      <span
+                        draggable
+                        onDragStart={() => setDraggingId(p.id)}
+                        onDragEnd={handleDragEnd}
+                        title="Drag to reorder"
+                        className="cursor-grab select-none text-zinc-400 active:cursor-grabbing"
+                      >
+                        ⠿
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => moveOne(p.id, 1)}
+                        disabled={isPending}
+                        title="Move down"
+                        className="text-zinc-400 hover:text-zinc-700 disabled:opacity-40 dark:hover:text-zinc-200"
+                      >
+                        ▼
+                      </button>
+                    </div>
+                  </td>
+                )}
                 <td className="px-3 py-2">
                   <form
                     action={async (fd) => {
@@ -213,9 +311,9 @@ export default function PlayersTable({ players }: { players: Player[] }) {
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && (
+            {displayList.length === 0 && (
               <tr>
-                <td colSpan={12} className="px-3 py-8 text-center text-zinc-500">
+                <td colSpan={canReorder ? 13 : 12} className="px-3 py-8 text-center text-zinc-500">
                   No players match your filters yet.
                 </td>
               </tr>

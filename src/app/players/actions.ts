@@ -78,6 +78,20 @@ export async function toggleWatchlist(formData: FormData): Promise<void> {
   revalidatePath("/");
 }
 
+// Persists a full drag-and-drop reorder of the rankings: `orderedIds` is
+// every player's id in their new top-to-bottom order, and each gets
+// overallRank = its position in that list (1-indexed).
+export async function reorderPlayers(orderedIds: string[]): Promise<void> {
+  await prisma.$transaction(
+    orderedIds.map((id, idx) => prisma.player.update({ where: { id }, data: { overallRank: idx + 1 } }))
+  );
+  revalidatePath("/players");
+  revalidatePath("/board");
+  revalidatePath("/draft");
+  revalidatePath("/");
+  revalidatePath("/players/[id]", "page");
+}
+
 export async function addNote(formData: FormData): Promise<void> {
   const playerId = String(formData.get("playerId"));
   const body = String(formData.get("body") ?? "").trim();
