@@ -76,6 +76,7 @@
 | 19 | Meet w/ Anthony Wednesday to review Services, Reports, and Payroll | Complete | |
 | 20 | Set up payroll report to be sent by EOD Monday each week | Pending | For previous week's payroll |
 | 21 | Update UC time tracker "change reasons" to include cost codes and cost types | Pending | |
+| 22 | Assign Anthony as Manager for all FLS sites in UC | Pending | |
 
 ---
 
