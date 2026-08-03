@@ -50,7 +50,8 @@ export function resolveColorMetric(
 const CURRENCY_FORMATTER = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
-  maximumFractionDigits: 0,
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
 });
 
 /** Computes Contract Value - Sub Price for a row, or null if either column isn't mapped or isn't numeric. */

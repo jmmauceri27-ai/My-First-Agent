@@ -319,7 +319,16 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
         lng,
         label: label || "Site",
         fields: [
-          ...binding.popupColumns.map((col) => ({ key: col, value: String(row.data[col] ?? "") })),
+          ...binding.popupColumns.map((col) => {
+            const raw = row.data[col];
+            const isMoneyColumn = col === binding.contractValueColumn || col === binding.subPriceColumn;
+            const num = Number(raw);
+            const value =
+              isMoneyColumn && raw !== null && raw !== undefined && raw !== "" && Number.isFinite(num)
+                ? formatCurrency(num)
+                : String(raw ?? "");
+            return { key: col, value };
+          }),
           ...(margin !== null ? [{ key: MARGIN_METRIC_LABEL, value: formatCurrency(margin) }] : []),
         ],
         color: activeView ? (colorByRowId?.get(row.id) ?? NEUTRAL_PIN_COLOR) : undefined,
