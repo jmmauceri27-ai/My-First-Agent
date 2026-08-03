@@ -13,6 +13,25 @@ export interface MapPin {
   color?: string;
 }
 
+function buildTooltipContent(pin: MapPin): HTMLElement {
+  const el = document.createElement("div");
+  el.className = "text-xs";
+
+  const title = document.createElement("div");
+  title.className = "font-semibold text-slate-900";
+  title.textContent = pin.label;
+  el.appendChild(title);
+
+  for (const field of pin.fields) {
+    const row = document.createElement("div");
+    row.className = "text-slate-700";
+    row.textContent = `${field.key}: ${field.value}`;
+    el.appendChild(row);
+  }
+
+  return el;
+}
+
 export default function SiteMap({ pins, onPinClick }: { pins: MapPin[]; onPinClick: (rowId: number) => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
@@ -52,7 +71,7 @@ export default function SiteMap({ pins, onPinClick }: { pins: MapPin[]; onPinCli
           fillColor,
           fillOpacity: 0.9,
         });
-        marker.bindTooltip(pin.label, { direction: "top", offset: [0, -8] });
+        marker.bindTooltip(buildTooltipContent(pin), { direction: "top", offset: [0, -8] });
         marker.on("click", () => onPinClickRef.current(pin.rowId));
         marker.addTo(markersLayer);
         bounds.push([pin.lat, pin.lng]);

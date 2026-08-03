@@ -47,6 +47,23 @@ export function resolveColorMetric(
   return raw;
 }
 
+const CURRENCY_FORMATTER = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 0,
+});
+
+/** Computes Contract Value - Sub Price for a row, or null if either column isn't mapped or isn't numeric. */
+export function computeMargin(row: DatasetRecord, binding: SiteMapBinding): number | null {
+  const raw = resolveColorMetric(row, MARGIN_METRIC_KEY, binding);
+  const num = raw === null ? NaN : Number(raw);
+  return Number.isFinite(num) ? num : null;
+}
+
+export function formatCurrency(value: number): string {
+  return CURRENCY_FORMATTER.format(value);
+}
+
 /** Assigns each distinct value a fixed categorical color, in first-seen order; overflow past 8 folds into "Other". */
 export function buildCategoricalPalette(values: string[]): Map<string, string> {
   const distinct: string[] = [];

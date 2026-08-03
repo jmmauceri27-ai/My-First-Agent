@@ -9,11 +9,13 @@ import type { DatasetRecord } from "@/lib/types";
 export default function EditSitePanel({
   title,
   data,
+  readOnlyFields = [],
   onClose,
   onSave,
 }: {
   title: string;
   data: DatasetRecord;
+  readOnlyFields?: { key: string; value: string }[];
   onClose: () => void;
   onSave: (data: DatasetRecord) => Promise<void>;
 }) {
@@ -67,6 +69,17 @@ export default function EditSitePanel({
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-lg font-bold text-slate-50">{title}</h2>
+
+        {readOnlyFields.length > 0 && (
+          <div className="mt-3 flex flex-col gap-1 rounded-lg bg-purple-500/10 px-3 py-2">
+            {readOnlyFields.map((field) => (
+              <div key={field.key} className="flex items-center justify-between text-sm">
+                <span className="text-slate-400">{field.key}</span>
+                <span className="font-semibold text-slate-100">{field.value}</span>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="mt-4 flex flex-col gap-3">
           {fields.map((field, i) => (

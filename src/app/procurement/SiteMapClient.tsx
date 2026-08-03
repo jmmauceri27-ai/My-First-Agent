@@ -7,6 +7,8 @@ import Button from "@/components/ui/Button";
 import { inputClass } from "@/components/ui/formClasses";
 import {
   buildCategoricalPalette,
+  computeMargin,
+  formatCurrency,
   gradientColorForRatio,
   NEUTRAL_PIN_COLOR,
   resolveColorMetric,
@@ -310,12 +312,16 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
 
     const pins: MapPin[] = plotted.map(({ row, lat, lng }) => {
       const label = binding.labelColumn ? String(row.data[binding.labelColumn] ?? "").trim() : "";
+      const margin = computeMargin(row.data, binding);
       return {
         rowId: row.id,
         lat,
         lng,
         label: label || "Site",
-        fields: binding.popupColumns.map((col) => ({ key: col, value: String(row.data[col] ?? "") })),
+        fields: [
+          ...binding.popupColumns.map((col) => ({ key: col, value: String(row.data[col] ?? "") })),
+          ...(margin !== null ? [{ key: MARGIN_METRIC_LABEL, value: formatCurrency(margin) }] : []),
+        ],
         color: activeView ? (colorByRowId?.get(row.id) ?? NEUTRAL_PIN_COLOR) : undefined,
       };
     });
@@ -329,6 +335,9 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
   const editingRow = rows.find((r) => r.id === editingRowId) ?? null;
   const editingRowLabel =
     editingRow && binding?.labelColumn ? String(editingRow.data[binding.labelColumn] ?? "").trim() : "";
+  const editingRowMargin = editingRow && binding ? computeMargin(editingRow.data, binding) : null;
+  const editingRowReadOnlyFields =
+    editingRowMargin !== null ? [{ key: MARGIN_METRIC_LABEL, value: formatCurrency(editingRowMargin) }] : [];
 
   async function handleSaveRow(data: DatasetRecord) {
     if (!dataset || editingRowId === null) return;
@@ -681,6 +690,7 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
         <EditSitePanel
           title={editingRowLabel || "Edit site"}
           data={editingRow.data}
+          readOnlyFields={editingRowReadOnlyFields}
           onClose={() => setEditingRowId(null)}
           onSave={handleSaveRow}
         />
