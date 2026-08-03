@@ -238,9 +238,12 @@ export interface MergeResult {
 
 /**
  * Upserts rows into an existing dataset by matching on `keyColumn`: rows whose
- * key matches an existing row update it in place, everything else is
- * inserted. Rows already in the dataset that aren't present in this upload
- * are left untouched (unlike ingestDataset's full replace).
+ * key matches an existing row have the upload's fields merged onto it (new
+ * values win, but existing fields the upload doesn't include -- e.g. lat/lng
+ * from a location sheet when merging in a rates sheet -- are preserved), and
+ * everything else is inserted. Rows already in the dataset that aren't
+ * present in this upload are left untouched (unlike ingestDataset's full
+ * replace).
  */
 export async function mergeDataset(
   datasetId: string,
@@ -270,7 +273,9 @@ export async function mergeDataset(
   }
 
   const existingIdByKey = new Map<string, number>();
+  const existingDataById = new Map<number, DatasetRecord>();
   for (const row of existing) {
+    existingDataById.set(row.id, row.data);
     const keyValue = row.data[keyColumn];
     if (keyValue === null || keyValue === undefined || keyValue === "") continue;
     existingIdByKey.set(String(keyValue), row.id);
@@ -286,7 +291,7 @@ export async function mergeDataset(
         ? undefined
         : existingIdByKey.get(String(keyValue));
     if (existingId !== undefined) {
-      updates.push({ id: existingId, row });
+      updates.push({ id: existingId, row: { ...existingDataById.get(existingId), ...row } });
     } else {
       toInsert.push(row);
     }
