@@ -26,6 +26,12 @@ every device the moment you save it — no local files to keep in sync.
 - **Draft Day Tracker** — mark players drafted (by you or an opponent) as
   they come off the board; the remaining board updates live; undo mistakes;
   reset the whole draft when you're done.
+- **Mock Draft** — run a full snake draft against computer opponents anytime,
+  using your saved league settings (team count, your draft slot, starting
+  roster construction) and your own rankings. Opponents draft best-available
+  by rank while respecting roster needs (they won't stockpile 3 QBs or a
+  backup kicker). Every mock is saved so you can review how a draft played
+  out.
 - **Dashboard** — quick counts, your still-available targets/sleepers, and
   the most recent notes across your whole player pool.
 - **Works on every device** — deployed as a normal website with a shared

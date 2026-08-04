@@ -122,3 +122,64 @@ model DraftHistoryPick {
   @@index([manager])
   @@index([position])
 }
+
+// Your reusable league setup for mock drafts: team count, your slot, and
+// starting-roster construction. Single-user app, so this is a singleton
+// row (there's only ever one, fetched with findFirst).
+model LeagueSettings {
+  id          String   @id @default(cuid())
+  numTeams    Int      @default(12)
+  myDraftSlot Int      @default(1) // 1-indexed pick position in round 1
+  qbSlots     Int      @default(1)
+  rbSlots     Int      @default(2)
+  wrSlots     Int      @default(2)
+  teSlots     Int      @default(1)
+  flexSlots   Int      @default(1) // RB/WR/TE eligible
+  kSlots      Int      @default(1)
+  dstSlots    Int      @default(1)
+  benchSlots  Int      @default(6)
+  updatedAt   DateTime @updatedAt
+}
+
+// One mock draft run. Snapshots the league settings at the time it was
+// started, so editing your saved settings later doesn't retroactively
+// change an in-progress or completed mock draft.
+model MockDraft {
+  id          String          @id @default(cuid())
+  createdAt   DateTime        @default(now())
+  completed   Boolean         @default(false)
+  numTeams    Int
+  myDraftSlot Int
+  qbSlots     Int
+  rbSlots     Int
+  wrSlots     Int
+  teSlots     Int
+  flexSlots   Int
+  kSlots      Int
+  dstSlots    Int
+  benchSlots  Int
+
+  picks MockDraftPick[]
+}
+
+// One pick within a mock draft — either yours or a simulated opponent's.
+// Player details are snapshotted at pick time (matching DraftHistoryPick's
+// pattern) so the pick record stays meaningful even if the Player row is
+// later edited or removed.
+model MockDraftPick {
+  id          String    @id @default(cuid())
+  mockDraftId String
+  mockDraft   MockDraft @relation(fields: [mockDraftId], references: [id], onDelete: Cascade)
+  overallPick Int
+  round       Int
+  teamSlot    Int // 1-indexed team position in the draft order
+  isUser      Boolean
+  playerId    String // the Player.id taken, used to exclude it from the remaining pool
+  playerName  String
+  position    String
+  nflTeam     String?
+  createdAt   DateTime  @default(now())
+
+  @@unique([mockDraftId, overallPick])
+  @@index([mockDraftId])
+}
