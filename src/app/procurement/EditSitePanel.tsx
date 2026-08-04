@@ -4,25 +4,38 @@ import { useState } from "react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
+import { formatCurrency } from "@/lib/siteMapColor";
 import type { DatasetRecord } from "@/lib/types";
+
+function initialFieldValue(key: string, value: DatasetRecord[string], currencyFields: string[]): string {
+  if (value === null || value === undefined) return "";
+  if (currencyFields.includes(key)) {
+    const num = Number(value);
+    if (value !== "" && Number.isFinite(num)) return formatCurrency(num);
+  }
+  return String(value);
+}
 
 export default function EditSitePanel({
   title,
   data,
   readOnlyFields = [],
+  currencyFields = [],
   onClose,
   onSave,
 }: {
   title: string;
   data: DatasetRecord;
   readOnlyFields?: { key: string; value: string }[];
+  /** Field keys to display/edit as currency (e.g. Contract Value, Sub Price) -- formatted on load and blur, parsed back to a plain number on save. */
+  currencyFields?: string[];
   onClose: () => void;
   onSave: (data: DatasetRecord) => Promise<void>;
 }) {
   const [fields, setFields] = useState<{ key: string; value: string }[]>(
     Object.entries(data).map(([key, value]) => ({
       key,
-      value: value === null || value === undefined ? "" : String(value),
+      value: initialFieldValue(key, value, currencyFields),
     })),
   );
   const [newKey, setNewKey] = useState("");
@@ -32,6 +45,17 @@ export default function EditSitePanel({
 
   function updateValue(index: number, value: string) {
     setFields((prev) => prev.map((f, i) => (i === index ? { ...f, value } : f)));
+  }
+
+  function formatOnBlur(index: number, key: string) {
+    if (!currencyFields.includes(key)) return;
+    setFields((prev) =>
+      prev.map((f, i) => {
+        if (i !== index) return f;
+        const num = Number(f.value.replace(/[^0-9.-]/g, ""));
+        return Number.isFinite(num) && f.value !== "" ? { ...f, value: formatCurrency(num) } : f;
+      }),
+    );
   }
 
   function addField() {
@@ -52,7 +76,9 @@ export default function EditSitePanel({
     setError(null);
     try {
       const result: DatasetRecord = {};
-      for (const f of fields) result[f.key] = f.value;
+      for (const f of fields) {
+        result[f.key] = currencyFields.includes(f.key) ? f.value.replace(/[^0-9.-]/g, "") : f.value;
+      }
       await onSave(result);
       onClose();
     } catch (e) {
@@ -85,7 +111,12 @@ export default function EditSitePanel({
           {fields.map((field, i) => (
             <label key={field.key} className="flex flex-col gap-1 text-sm">
               <span className="font-medium text-slate-300">{field.key}</span>
-              <input value={field.value} onChange={(e) => updateValue(i, e.target.value)} className={inputClass} />
+              <input
+                value={field.value}
+                onChange={(e) => updateValue(i, e.target.value)}
+                onBlur={() => formatOnBlur(i, field.key)}
+                className={inputClass}
+              />
             </label>
           ))}
           {fields.length === 0 && <p className="text-sm text-slate-400">No fields yet — add one below.</p>}

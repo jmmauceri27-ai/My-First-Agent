@@ -347,6 +347,9 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
   const editingRowMargin = editingRow && binding ? computeMargin(editingRow.data, binding) : null;
   const editingRowReadOnlyFields =
     editingRowMargin !== null ? [{ key: MARGIN_METRIC_LABEL, value: formatCurrency(editingRowMargin) }] : [];
+  const currencyFields = [binding?.contractValueColumn, binding?.subPriceColumn].filter(
+    (c): c is string => c !== null && c !== undefined,
+  );
 
   async function handleSaveRow(data: DatasetRecord) {
     if (!dataset || editingRowId === null) return;
@@ -699,6 +702,7 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
           title={editingRowLabel || "Edit site"}
           data={editingRow.data}
           readOnlyFields={editingRowReadOnlyFields}
+          currencyFields={currencyFields}
           onClose={() => setEditingRowId(null)}
           onSave={handleSaveRow}
         />
