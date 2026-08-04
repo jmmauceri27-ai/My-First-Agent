@@ -1,10 +1,10 @@
 export const dynamic = "force-dynamic";
 
 import { listDatasets } from "@/lib/dal";
-import SiteMapClient from "./SiteMapClient";
+import ProcurementClient from "./ProcurementClient";
 
 export default async function ProcurementPage() {
   const datasets = await listDatasets();
 
-  return <SiteMapClient datasets={datasets} />;
+  return <ProcurementClient datasets={datasets} />;
 }

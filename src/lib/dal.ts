@@ -7,6 +7,8 @@ import type {
   DatasetSummary,
   SiteMapBinding,
   SiteMapView,
+  VendorMapBinding,
+  VendorMapView,
 } from "./types";
 
 // ---------- Upload chunk staging ----------
@@ -586,5 +588,95 @@ export async function saveSiteMapView(
 export async function deleteSiteMapView(viewId: string): Promise<void> {
   const supabase = createAdminClient();
   const { error } = await supabase.from("site_map_views").delete().eq("id", viewId).eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
+}
+
+// ---------- Procurement vendor map bindings ----------
+// Same shape as site map bindings, minus the margin-specific columns --
+// backs the separate "Vendor Prospecting Network" map.
+
+export async function getVendorMapBinding(datasetId: string): Promise<VendorMapBinding | null> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("vendor_map_bindings")
+    .select("lat_column, lng_column, label_column, popup_columns, filter_columns")
+    .eq("dataset_id", datasetId)
+    .eq("user_id", OWNER_USER_ID)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+
+  return {
+    latColumn: data.lat_column as string,
+    lngColumn: data.lng_column as string,
+    labelColumn: (data.label_column as string | null) ?? null,
+    popupColumns: (data.popup_columns as string[]) ?? [],
+    filterColumns: (data.filter_columns as string[]) ?? [],
+  };
+}
+
+export async function saveVendorMapBinding(datasetId: string, binding: VendorMapBinding): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("vendor_map_bindings").upsert(
+    {
+      user_id: OWNER_USER_ID,
+      dataset_id: datasetId,
+      lat_column: binding.latColumn,
+      lng_column: binding.lngColumn,
+      label_column: binding.labelColumn,
+      popup_columns: binding.popupColumns,
+      filter_columns: binding.filterColumns,
+    },
+    { onConflict: "user_id,dataset_id" },
+  );
+  if (error) throw new Error(error.message);
+}
+
+// ---------- Procurement vendor map views ----------
+
+export async function listVendorMapViews(datasetId: string): Promise<VendorMapView[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("vendor_map_views")
+    .select("id, name, color_column, color_mode")
+    .eq("dataset_id", datasetId)
+    .eq("user_id", OWNER_USER_ID)
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((v) => ({
+    id: v.id as string,
+    name: v.name as string,
+    colorColumn: v.color_column as string,
+    colorMode: v.color_mode as VendorMapView["colorMode"],
+  }));
+}
+
+export async function saveVendorMapView(
+  datasetId: string,
+  view: { name: string; colorColumn: string; colorMode: VendorMapView["colorMode"] },
+): Promise<string> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("vendor_map_views")
+    .upsert(
+      {
+        user_id: OWNER_USER_ID,
+        dataset_id: datasetId,
+        name: view.name,
+        color_column: view.colorColumn,
+        color_mode: view.colorMode,
+      },
+      { onConflict: "user_id,dataset_id,name" },
+    )
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return data.id as string;
+}
+
+export async function deleteVendorMapView(viewId: string): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("vendor_map_views").delete().eq("id", viewId).eq("user_id", OWNER_USER_ID);
   if (error) throw new Error(error.message);
 }

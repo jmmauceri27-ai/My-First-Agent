@@ -5,31 +5,22 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import { inputClass } from "@/components/ui/formClasses";
-import {
-  buildCategoricalPalette,
-  computeMargin,
-  formatCurrency,
-  gradientColorForRatio,
-  NEUTRAL_PIN_COLOR,
-  resolveColorMetric,
-} from "@/lib/siteMapColor";
-import {
-  MARGIN_METRIC_KEY,
-  MARGIN_METRIC_LABEL,
-  type DatasetRecord,
-  type DatasetRowWithId,
-  type DatasetSummary,
-  type SiteMapBinding,
-  type SiteMapColorMode,
-  type SiteMapView,
+import { buildCategoricalPalette, gradientColorForRatio, NEUTRAL_PIN_COLOR } from "@/lib/siteMapColor";
+import type {
+  DatasetRecord,
+  DatasetRowWithId,
+  DatasetSummary,
+  SiteMapColorMode,
+  VendorMapBinding,
+  VendorMapView,
 } from "@/lib/types";
 import {
-  deleteSiteMapViewAction,
+  deleteVendorMapViewAction,
   fetchDatasetRowsWithIdsAction,
-  getSiteMapBindingAction,
-  listSiteMapViewsAction,
-  saveSiteMapBindingAction,
-  saveSiteMapViewAction,
+  getVendorMapBindingAction,
+  listVendorMapViewsAction,
+  saveVendorMapBindingAction,
+  saveVendorMapViewAction,
   updateSiteRowAction,
 } from "./actions";
 import EditSitePanel from "./EditSitePanel";
@@ -44,27 +35,24 @@ interface MappingDraft {
   lng: string;
   label: string;
   popup: string[];
-  contractValue: string;
-  subPrice: string;
   filter: string[];
 }
 
-export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[] }) {
+/** Reads a raw column value for a color-by view; unlike the site map there's no computed metric (e.g. margin) to resolve. */
+function resolveMetric(row: DatasetRecord, colorColumn: string): number | string | boolean | null {
+  const raw = row[colorColumn];
+  if (raw === null || raw === undefined || raw === "") return null;
+  return raw;
+}
+
+export default function VendorMapClient({ datasets }: { datasets: DatasetSummary[] }) {
   const router = useRouter();
   const [datasetId, setDatasetId] = useState("");
-  const [binding, setBinding] = useState<SiteMapBinding | null>(null);
+  const [binding, setBinding] = useState<VendorMapBinding | null>(null);
   const [loadedDatasetId, setLoadedDatasetId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState<MappingDraft>({
-    lat: "",
-    lng: "",
-    label: "",
-    popup: [],
-    contractValue: "",
-    subPrice: "",
-    filter: [],
-  });
+  const [draft, setDraft] = useState<MappingDraft>({ lat: "", lng: "", label: "", popup: [], filter: [] });
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -76,7 +64,7 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
 
   const [editingRowId, setEditingRowId] = useState<number | null>(null);
 
-  const [views, setViews] = useState<SiteMapView[]>([]);
+  const [views, setViews] = useState<VendorMapView[]>([]);
   const [viewsError, setViewsError] = useState<string | null>(null);
   const [activeViewId, setActiveViewId] = useState<string | null>(null);
   const [addingView, setAddingView] = useState(false);
@@ -94,7 +82,7 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
   useEffect(() => {
     if (!dataset) return;
     let cancelled = false;
-    getSiteMapBindingAction(dataset.id)
+    getVendorMapBindingAction(dataset.id)
       .then((result) => {
         if (cancelled) return;
         setBinding(result);
@@ -103,8 +91,6 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
           lng: result?.lngColumn ?? "",
           label: result?.labelColumn ?? "",
           popup: result?.popupColumns ?? [],
-          contractValue: result?.contractValueColumn ?? "",
-          subPrice: result?.subPriceColumn ?? "",
           filter: result?.filterColumns ?? [],
         });
         setLoadError(null);
@@ -147,7 +133,7 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
   useEffect(() => {
     if (!dataset || !binding) return;
     let cancelled = false;
-    listSiteMapViewsAction(dataset.id)
+    listVendorMapViewsAction(dataset.id)
       .then((result) => {
         if (cancelled) return;
         setViews(result);
@@ -168,16 +154,14 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
     setSaving(true);
     setSaveError(null);
     try {
-      const newBinding: SiteMapBinding = {
+      const newBinding: VendorMapBinding = {
         latColumn: draft.lat,
         lngColumn: draft.lng,
         labelColumn: draft.label || null,
         popupColumns: draft.popup,
-        contractValueColumn: draft.contractValue || null,
-        subPriceColumn: draft.subPrice || null,
         filterColumns: draft.filter,
       };
-      await saveSiteMapBindingAction(dataset.id, newBinding);
+      await saveVendorMapBindingAction(dataset.id, newBinding);
       setBinding(newBinding);
       setEditing(false);
     } catch (e) {
@@ -187,17 +171,12 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
     }
   }
 
-  const hasMargin = Boolean(binding?.contractValueColumn && binding?.subPriceColumn);
   const colorByOptions = useMemo(() => {
     if (!dataset) return [];
-    return [
-      ...(hasMargin ? [{ key: MARGIN_METRIC_KEY, label: MARGIN_METRIC_LABEL }] : []),
-      ...dataset.columns.map((c) => ({ key: c, label: c })),
-    ];
-  }, [dataset, hasMargin]);
+    return dataset.columns.map((c) => ({ key: c, label: c }));
+  }, [dataset]);
 
   function suggestColorMode(column: string): SiteMapColorMode {
-    if (column === MARGIN_METRIC_KEY) return "gradient";
     const sample = rows
       .slice(0, 20)
       .map((r) => r.data[column])
@@ -212,12 +191,12 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
     setViewSaving(true);
     setViewSaveError(null);
     try {
-      const id = await saveSiteMapViewAction(dataset.id, {
+      const id = await saveVendorMapViewAction(dataset.id, {
         name: viewDraft.name.trim(),
         colorColumn: viewDraft.colorColumn,
         colorMode: viewDraft.colorMode,
       });
-      const newView: SiteMapView = {
+      const newView: VendorMapView = {
         id,
         name: viewDraft.name.trim(),
         colorColumn: viewDraft.colorColumn,
@@ -235,7 +214,7 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
   }
 
   async function handleDeleteView(viewId: string) {
-    await deleteSiteMapViewAction(viewId);
+    await deleteVendorMapViewAction(viewId);
     setViews((prev) => prev.filter((v) => v.id !== viewId));
     if (activeViewId === viewId) setActiveViewId(null);
   }
@@ -273,31 +252,31 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
       if (activeView.colorMode === "gradient") {
         const numericValues: number[] = [];
         for (const { row } of plotted) {
-          const raw = resolveColorMetric(row.data, activeView.colorColumn, binding);
+          const raw = resolveMetric(row.data, activeView.colorColumn);
           const num = raw === null ? NaN : Number(raw);
           if (Number.isFinite(num)) numericValues.push(num);
         }
         const min = numericValues.length ? Math.min(...numericValues) : 0;
         const max = numericValues.length ? Math.max(...numericValues) : 0;
         for (const { row } of plotted) {
-          const raw = resolveColorMetric(row.data, activeView.colorColumn, binding);
+          const raw = resolveMetric(row.data, activeView.colorColumn);
           const num = raw === null ? NaN : Number(raw);
           if (!Number.isFinite(num)) continue;
           const ratio = max === min ? 0.5 : (num - min) / (max - min);
           colorByRowId.set(row.id, gradientColorForRatio(ratio));
         }
         if (numericValues.length > 0) {
-          legend = { mode: "gradient", min, max, isCurrency: activeView.colorColumn === MARGIN_METRIC_KEY };
+          legend = { mode: "gradient", min, max, isCurrency: false };
         }
       } else {
         const stringValues: string[] = [];
         for (const { row } of plotted) {
-          const raw = resolveColorMetric(row.data, activeView.colorColumn, binding);
+          const raw = resolveMetric(row.data, activeView.colorColumn);
           if (raw !== null) stringValues.push(String(raw));
         }
         const palette = buildCategoricalPalette(stringValues);
         for (const { row } of plotted) {
-          const raw = resolveColorMetric(row.data, activeView.colorColumn, binding);
+          const raw = resolveMetric(row.data, activeView.colorColumn);
           if (raw === null) continue;
           colorByRowId.set(row.id, palette.get(String(raw)) ?? NEUTRAL_PIN_COLOR);
         }
@@ -312,25 +291,12 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
 
     const pins: MapPin[] = plotted.map(({ row, lat, lng }) => {
       const label = binding.labelColumn ? String(row.data[binding.labelColumn] ?? "").trim() : "";
-      const margin = computeMargin(row.data, binding);
       return {
         rowId: row.id,
         lat,
         lng,
-        label: label || "Site",
-        fields: [
-          ...binding.popupColumns.map((col) => {
-            const raw = row.data[col];
-            const isMoneyColumn = col === binding.contractValueColumn || col === binding.subPriceColumn;
-            const num = Number(raw);
-            const value =
-              isMoneyColumn && raw !== null && raw !== undefined && raw !== "" && Number.isFinite(num)
-                ? formatCurrency(num)
-                : String(raw ?? "");
-            return { key: col, value };
-          }),
-          ...(margin !== null ? [{ key: MARGIN_METRIC_LABEL, value: formatCurrency(margin) }] : []),
-        ],
+        label: label || "Vendor",
+        fields: binding.popupColumns.map((col) => ({ key: col, value: String(row.data[col] ?? "") })),
         color: activeView ? (colorByRowId?.get(row.id) ?? NEUTRAL_PIN_COLOR) : undefined,
       };
     });
@@ -344,9 +310,6 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
   const editingRow = rows.find((r) => r.id === editingRowId) ?? null;
   const editingRowLabel =
     editingRow && binding?.labelColumn ? String(editingRow.data[binding.labelColumn] ?? "").trim() : "";
-  const editingRowMargin = editingRow && binding ? computeMargin(editingRow.data, binding) : null;
-  const editingRowReadOnlyFields =
-    editingRowMargin !== null ? [{ key: MARGIN_METRIC_LABEL, value: formatCurrency(editingRowMargin) }] : [];
 
   async function handleSaveRow(data: DatasetRecord) {
     if (!dataset || editingRowId === null) return;
@@ -359,7 +322,7 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-purple-400/20 bg-[#1c1430] px-4 py-3">
         <div>
-          <p className="text-xs text-slate-400">Click a pin to view or edit that site&rsquo;s details.</p>
+          <p className="text-xs text-slate-400">Click a pin to view or edit that vendor&rsquo;s details.</p>
         </div>
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium text-slate-300">Dataset</span>
@@ -386,8 +349,8 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
         <div className="min-h-0 flex-1 overflow-y-auto">
           {!dataset && (
             <p className="p-6 text-sm text-slate-400">
-              Choose a dataset above to view its site map. Upload one first on the Upload Data page if you
-              haven&rsquo;t already.
+              Choose a dataset above to view your vendor network. Upload a sheet of available vendors and the
+              services they cover on the Upload Data page if you haven&rsquo;t already.
             </p>
           )}
 
@@ -396,8 +359,8 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
           {dataset && !loading && loadError && (
             <p className="p-6 text-sm text-critical">
               Couldn&rsquo;t check for a saved mapping: {loadError}
-              {loadError.toLowerCase().includes("site_map_bindings") &&
-                " — have you run supabase/007_site_map_bindings.sql in your Supabase project yet?"}
+              {loadError.toLowerCase().includes("vendor_map_bindings") &&
+                " — have you run supabase/010_vendor_map.sql in your Supabase project yet?"}
             </p>
           )}
 
@@ -438,7 +401,7 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
                   </select>
                 </label>
                 <label className="flex flex-col gap-1 text-sm">
-                  <span className="font-medium text-slate-300">Site name column (optional)</span>
+                  <span className="font-medium text-slate-300">Vendor name column (optional)</span>
                   <select
                     value={draft.label}
                     onChange={(e) => setDraft((prev) => ({ ...prev, label: e.target.value }))}
@@ -453,43 +416,6 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
                   </select>
                 </label>
               </div>
-
-              <div className="flex flex-wrap gap-3">
-                <label className="flex flex-col gap-1 text-sm">
-                  <span className="font-medium text-slate-300">Contract Value column (optional)</span>
-                  <select
-                    value={draft.contractValue}
-                    onChange={(e) => setDraft((prev) => ({ ...prev, contractValue: e.target.value }))}
-                    className={inputClass}
-                  >
-                    <option value="">None</option>
-                    {dataset.columns.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="flex flex-col gap-1 text-sm">
-                  <span className="font-medium text-slate-300">Sub Price column (optional)</span>
-                  <select
-                    value={draft.subPrice}
-                    onChange={(e) => setDraft((prev) => ({ ...prev, subPrice: e.target.value }))}
-                    className={inputClass}
-                  >
-                    <option value="">None</option>
-                    {dataset.columns.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-              <p className="text-xs text-slate-500">
-                Map both to unlock a &ldquo;{MARGIN_METRIC_LABEL}&rdquo; color-by option in views (Contract
-                Value − Sub Price).
-              </p>
 
               <div>
                 <span className="text-sm font-medium text-slate-300">Show in pin popup (optional)</span>
@@ -560,8 +486,8 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
               {saveError && (
                 <p className="text-sm text-critical">
                   Couldn&rsquo;t save: {saveError}
-                  {saveError.toLowerCase().includes("site_map_bindings") &&
-                    " — have you run supabase/007_site_map_bindings.sql in your Supabase project yet?"}
+                  {saveError.toLowerCase().includes("vendor_map_bindings") &&
+                    " — have you run supabase/010_vendor_map.sql in your Supabase project yet?"}
                 </p>
               )}
             </div>
@@ -611,7 +537,7 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
                   </p>
                   {activeView && legend && <MapLegend {...legend} />}
                   {activeView && !legend && !rowsLoading && (
-                    <p className="text-xs text-slate-500">No sites have data for this view yet.</p>
+                    <p className="text-xs text-slate-500">No vendors have data for this view yet.</p>
                   )}
                   <Button onClick={() => setEditing(true)} variant="ghost" className="w-fit">
                     Change columns
@@ -628,7 +554,7 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
                     <input
                       value={viewDraft.name}
                       onChange={(e) => setViewDraft((prev) => ({ ...prev, name: e.target.value }))}
-                      placeholder="e.g. Price"
+                      placeholder="e.g. Service Type"
                       className={inputClass}
                     />
                   </label>
@@ -653,21 +579,19 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
                       ))}
                     </select>
                   </label>
-                  {viewDraft.colorColumn && viewDraft.colorColumn !== MARGIN_METRIC_KEY && (
-                    <label className="flex flex-col gap-1 text-sm">
-                      <span className="font-medium text-slate-300">Style</span>
-                      <select
-                        value={viewDraft.colorMode}
-                        onChange={(e) =>
-                          setViewDraft((prev) => ({ ...prev, colorMode: e.target.value as SiteMapColorMode }))
-                        }
-                        className={inputClass}
-                      >
-                        <option value="gradient">Gradient (numeric)</option>
-                        <option value="categorical">Category (distinct values)</option>
-                      </select>
-                    </label>
-                  )}
+                  <label className="flex flex-col gap-1 text-sm">
+                    <span className="font-medium text-slate-300">Style</span>
+                    <select
+                      value={viewDraft.colorMode}
+                      onChange={(e) =>
+                        setViewDraft((prev) => ({ ...prev, colorMode: e.target.value as SiteMapColorMode }))
+                      }
+                      className={inputClass}
+                    >
+                      <option value="gradient">Gradient (numeric)</option>
+                      <option value="categorical">Category (distinct values)</option>
+                    </select>
+                  </label>
                   <Button
                     onClick={handleSaveView}
                     disabled={viewSaving || !viewDraft.name.trim() || !viewDraft.colorColumn}
@@ -696,9 +620,8 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
 
       {editingRow && (
         <EditSitePanel
-          title={editingRowLabel || "Edit site"}
+          title={editingRowLabel || "Edit vendor"}
           data={editingRow.data}
-          readOnlyFields={editingRowReadOnlyFields}
           onClose={() => setEditingRowId(null)}
           onSave={handleSaveRow}
         />

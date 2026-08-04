@@ -174,6 +174,21 @@ export interface SiteMapView {
   colorMode: SiteMapColorMode;
 }
 
+export interface VendorMapBinding {
+  latColumn: string;
+  lngColumn: string;
+  labelColumn: string | null;
+  popupColumns: string[];
+  filterColumns: string[];
+}
+
+export interface VendorMapView {
+  id: string;
+  name: string;
+  colorColumn: string;
+  colorMode: SiteMapColorMode;
+}
+
 export const DATASET_CATEGORIES = [
   "Work Orders",
   "Invoices",
