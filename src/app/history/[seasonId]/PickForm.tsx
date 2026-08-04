@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { addPick } from "../actions";
 import { POSITIONS } from "@/lib/constants";
@@ -32,8 +33,9 @@ export default function PickForm({ seasonId, pick }: { seasonId: string; pick?: 
         {pick ? "Edit" : "+ Add Pick"}
       </button>
 
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      {open &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-ink-900">
             <h2 className="mb-4 text-lg font-bold">{pick ? "Edit Pick" : "Add Pick"}</h2>
             <form action={handleSubmit} className="space-y-3">
@@ -120,8 +122,9 @@ export default function PickForm({ seasonId, pick }: { seasonId: string; pick?: 
               </div>
             </form>
           </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </>
   );
 }
