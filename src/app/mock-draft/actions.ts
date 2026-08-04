@@ -118,7 +118,7 @@ export async function startMockDraft(): Promise<never> {
   });
 
   const allPlayers = await prisma.player.findMany({
-    select: { id: true, name: true, position: true, team: true, overallRank: true, adp: true },
+    select: { id: true, name: true, position: true, team: true, overallRank: true, adp: true, tier: true },
   });
 
   const { completed } = await simulateUntilUserTurn(mockDraft.id, mockDraft, 1, new Map(), new Set(), allPlayers);
@@ -179,7 +179,7 @@ export async function makeMockPick(formData: FormData): Promise<void> {
   rosterByTeam.get(teamSlot)!.push({ position: player.position });
 
   const allPlayers = await prisma.player.findMany({
-    select: { id: true, name: true, position: true, team: true, overallRank: true, adp: true },
+    select: { id: true, name: true, position: true, team: true, overallRank: true, adp: true, tier: true },
   });
 
   const { completed } = await simulateUntilUserTurn(

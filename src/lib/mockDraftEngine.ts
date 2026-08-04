@@ -35,6 +35,7 @@ export type CandidatePlayer = {
   team: string | null;
   overallRank: number | null;
   adp: number | null;
+  tier: number | null;
 };
 
 const FLEX_ELIGIBLE = ["RB", "WR", "TE"];
@@ -59,11 +60,34 @@ function effectiveRankValue(p: CandidatePlayer): number {
   return 9999; // unranked players sort to the back
 }
 
-// Picks a computer opponent's next player: best-available by rank, with a
-// penalty applied once a position's starter (or flex-group) slots are
-// already spoken for, so teams don't stockpile 3 QBs or a backup kicker by
-// round 5. A little randomness among the top few eligible options keeps
-// mocks from being identical every run.
+// Players you've grouped into the same tier are ones you've judged roughly
+// interchangeable — a real drafter treats them as a toss-up rather than
+// strictly by rank order within the group, so tiered players get wider
+// jitter than untiered ones (where we have less basis for treating nearby
+// ranks as equivalent).
+const TIER_JITTER = 6;
+const NO_TIER_JITTER = 3;
+
+// Average of three uniforms approximates a bounded, bell-shaped spread —
+// small swings are common, big reaches are rare but possible — instead of
+// a flat uniform range.
+function bellJitter(magnitude: number): number {
+  const u = (Math.random() + Math.random() + Math.random()) / 3;
+  return (u - 0.5) * 2 * magnitude;
+}
+
+const MANDATORY_POSITIONS = ["QB", "K", "DST", "TE"] as const;
+
+// Picks a computer opponent's next player. Base value is rank/ADP, adjusted
+// by three things real drafters actually do:
+//  1. Overflow penalty once a position's starters (or shared FLEX) are
+//     filled — small for RB/WR bench depth, steep for a 2nd K/DST.
+//  2. Late-draft panic: with only a couple picks left, a still-empty
+//     mandatory slot (QB/TE/K/DST) gets a growing pull to fill it before
+//     the draft ends, mirroring how managers scramble for their kicker in
+//     the last round instead of taking another bench WR.
+//  3. Tier-aware randomness, so equivalent-tier players aren't drafted in
+//     rigid rank order every single time.
 export function pickForTeam(
   available: CandidatePlayer[],
   rosterSoFar: { position: string }[],
@@ -94,12 +118,27 @@ export function pickForTeam(
     return false;
   }
 
-  const scored = available
-    .map((p) => ({ p, score: effectiveRankValue(p) + (needed(p.position) ? 0 : (OVERFLOW_PENALTY[p.position] ?? 30)) }))
-    .sort((a, b) => a.score - b.score);
+  const requiredCount: Record<string, number> = {
+    QB: settings.qbSlots,
+    K: settings.kSlots,
+    DST: settings.dstSlots,
+    TE: settings.teSlots,
+  };
+  const roundsLeft = totalRounds(settings) - rosterSoFar.length; // this pick counts as the last of them
+  function urgencyBonus(position: string): number {
+    if (roundsLeft > 3 || !MANDATORY_POSITIONS.includes(position as (typeof MANDATORY_POSITIONS)[number])) return 0;
+    if (have[position] >= requiredCount[position]) return 0;
+    // Strong enough to outweigh even a big rank gap — by the final couple of
+    // rounds, leaving a mandatory starter slot empty isn't a real option.
+    return -(4 - roundsLeft) * 150;
+  }
 
-  const pool = scored.slice(0, Math.min(3, scored.length));
-  const roll = Math.random();
-  const idx = roll < 0.6 ? 0 : roll < 0.85 ? Math.min(1, pool.length - 1) : Math.min(2, pool.length - 1);
-  return pool[idx].p;
+  const scored = available.map((p) => {
+    const overflow = needed(p.position) ? 0 : (OVERFLOW_PENALTY[p.position] ?? 30);
+    const jitter = bellJitter(p.tier != null ? TIER_JITTER : NO_TIER_JITTER);
+    return { p, score: effectiveRankValue(p) + overflow + urgencyBonus(p.position) + jitter };
+  });
+
+  scored.sort((a, b) => a.score - b.score);
+  return scored[0]?.p ?? null;
 }
