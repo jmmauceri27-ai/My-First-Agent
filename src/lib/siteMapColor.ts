@@ -65,6 +65,10 @@ export function formatCurrency(value: number): string {
   return CURRENCY_FORMATTER.format(value);
 }
 
+export function formatSquareFeet(value: number): string {
+  return `${Math.round(value).toLocaleString("en-US")} sq. ft`;
+}
+
 /** Assigns each distinct value a fixed categorical color, in first-seen order; overflow past 8 folds into "Other". */
 export function buildCategoricalPalette(values: string[]): Map<string, string> {
   const distinct: string[] = [];

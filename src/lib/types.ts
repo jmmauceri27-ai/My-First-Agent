@@ -154,6 +154,7 @@ export interface SiteMapBinding {
   contractValueColumn: string | null;
   subPriceColumn: string | null;
   filterColumns: string[];
+  measurementColumns: string[];
 }
 
 export interface DatasetRowWithId {

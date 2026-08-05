@@ -9,6 +9,7 @@ import {
   buildCategoricalPalette,
   computeMargin,
   formatCurrency,
+  formatSquareFeet,
   gradientColorForRatio,
   NEUTRAL_PIN_COLOR,
   resolveColorMetric,
@@ -47,6 +48,7 @@ interface MappingDraft {
   contractValue: string;
   subPrice: string;
   filter: string[];
+  measurement: string[];
 }
 
 export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[] }) {
@@ -64,6 +66,7 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
     contractValue: "",
     subPrice: "",
     filter: [],
+    measurement: [],
   });
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -106,6 +109,7 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
           contractValue: result?.contractValueColumn ?? "",
           subPrice: result?.subPriceColumn ?? "",
           filter: result?.filterColumns ?? [],
+          measurement: result?.measurementColumns ?? [],
         });
         setLoadError(null);
         setEditing(!result);
@@ -176,6 +180,7 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
         contractValueColumn: draft.contractValue || null,
         subPriceColumn: draft.subPrice || null,
         filterColumns: draft.filter,
+        measurementColumns: draft.measurement,
       };
       await saveSiteMapBindingAction(dataset.id, newBinding);
       setBinding(newBinding);
@@ -322,11 +327,12 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
           ...binding.popupColumns.map((col) => {
             const raw = row.data[col];
             const isMoneyColumn = col === binding.contractValueColumn || col === binding.subPriceColumn;
+            const isMeasurementColumn = binding.measurementColumns.includes(col);
             const num = Number(raw);
-            const value =
-              isMoneyColumn && raw !== null && raw !== undefined && raw !== "" && Number.isFinite(num)
-                ? formatCurrency(num)
-                : String(raw ?? "");
+            const hasNumericValue = raw !== null && raw !== undefined && raw !== "" && Number.isFinite(num);
+            let value = String(raw ?? "");
+            if (hasNumericValue && isMoneyColumn) value = formatCurrency(num);
+            else if (hasNumericValue && isMeasurementColumn) value = formatSquareFeet(num);
             return { key: col, value };
           }),
           ...(margin !== null ? [{ key: MARGIN_METRIC_LABEL, value: formatCurrency(margin) }] : []),
@@ -350,6 +356,7 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
   const currencyFields = [binding?.contractValueColumn, binding?.subPriceColumn].filter(
     (c): c is string => c !== null && c !== undefined,
   );
+  const measurementFields = binding?.measurementColumns ?? [];
 
   async function handleSaveRow(data: DatasetRecord) {
     if (!dataset || editingRowId === null) return;
@@ -545,6 +552,34 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
                 </div>
               </div>
 
+              <div>
+                <span className="text-sm font-medium text-slate-300">Show as square footage (optional)</span>
+                <p className="text-xs text-slate-500">
+                  Values in these columns display with a &ldquo;sq. ft&rdquo; suffix (e.g. Turf Area, Sidewalk,
+                  Parking Lot).
+                </p>
+                <div className="mt-1 flex flex-wrap gap-3">
+                  {dataset.columns.map((c) => (
+                    <label key={c} className="flex items-center gap-1.5 text-sm text-slate-300">
+                      <input
+                        type="checkbox"
+                        checked={draft.measurement.includes(c)}
+                        onChange={() =>
+                          setDraft((prev) => ({
+                            ...prev,
+                            measurement: prev.measurement.includes(c)
+                              ? prev.measurement.filter((m) => m !== c)
+                              : [...prev.measurement, c],
+                          }))
+                        }
+                        className="accent-brand-600"
+                      />
+                      {c}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
               <div className="flex items-center gap-3">
                 <Button
                   onClick={handleSaveMapping}
@@ -703,6 +738,7 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
           data={editingRow.data}
           readOnlyFields={editingRowReadOnlyFields}
           currencyFields={currencyFields}
+          measurementFields={measurementFields}
           onClose={() => setEditingRowId(null)}
           onSave={handleSaveRow}
         />
