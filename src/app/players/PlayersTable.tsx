@@ -10,7 +10,7 @@ import TeamBadge from "@/components/TeamBadge";
 import PlayerFormModal from "./PlayerFormModal";
 import { deletePlayer, toggleWatchlist, reorderPlayers } from "./actions";
 
-type SortKey = "overallRank" | "positionRank" | "adp" | "tier" | "name" | "actualPointsPPR";
+type SortKey = "overallRank" | "positionRank" | "adp" | "espnAdp" | "sleeperAdp" | "tier" | "name";
 
 export default function PlayersTable({ players }: { players: Player[] }) {
   const router = useRouter();
@@ -57,9 +57,7 @@ export default function PlayersTable({ players }: { players: Player[] }) {
       if (av === null && bv === null) return 0;
       if (av === null) return 1;
       if (bv === null) return -1;
-      // Higher is better for actual points scored; lower is better for ranks/ADP/tier.
-      const direction = sortKey === "actualPointsPPR" ? -1 : 1;
-      return ((av as number) - (bv as number)) * direction;
+      return (av as number) - (bv as number);
     });
     return list;
   }, [players, search, positionFilter, sortKey, hideDrafted, watchlistOnly]);
@@ -125,9 +123,10 @@ export default function PlayersTable({ players }: { players: Player[] }) {
           <option value="overallRank">Sort: Overall Rank</option>
           <option value="positionRank">Sort: Position Rank</option>
           <option value="adp">Sort: ADP</option>
+          <option value="espnAdp">Sort: ESPN ADP</option>
+          <option value="sleeperAdp">Sort: Sleeper ADP</option>
           <option value="tier">Sort: Tier</option>
           <option value="name">Sort: Name</option>
-          <option value="actualPointsPPR">Sort: 2025 PPR Points</option>
         </select>
         <label className="flex items-center gap-1 text-sm">
           <input type="checkbox" checked={hideDrafted} onChange={(e) => setHideDrafted(e.target.checked)} />
@@ -160,7 +159,8 @@ export default function PlayersTable({ players }: { players: Player[] }) {
               <th className="px-3 py-2">Bye</th>
               <th className="px-3 py-2">Tier</th>
               <th className="px-3 py-2">ADP</th>
-              <th className="px-3 py-2">2025 PPR</th>
+              <th className="px-3 py-2">ESPN ADP</th>
+              <th className="px-3 py-2">Sleeper ADP</th>
               <th className="px-3 py-2">Tags</th>
               <th className="px-3 py-2">Status</th>
               <th className="px-3 py-2"></th>
@@ -231,18 +231,8 @@ export default function PlayersTable({ players }: { players: Player[] }) {
                   )}
                 </td>
                 <td className="px-3 py-2">{p.adp ?? "—"}</td>
-                <td className="px-3 py-2">
-                  {p.actualPointsPPR != null ? (
-                    <>
-                      {p.actualPointsPPR.toFixed(1)}
-                      {p.actualGamesPlayed ? (
-                        <span className="text-zinc-400"> ({p.actualGamesPlayed}gp)</span>
-                      ) : null}
-                    </>
-                  ) : (
-                    "—"
-                  )}
-                </td>
+                <td className="px-3 py-2">{p.espnAdp ?? "—"}</td>
+                <td className="px-3 py-2">{p.sleeperAdp ?? "—"}</td>
                 <td className="px-3 py-2">
                   <div className="flex flex-wrap gap-1">
                     {p.tags.map((t) => (
@@ -283,7 +273,7 @@ export default function PlayersTable({ players }: { players: Player[] }) {
             ))}
             {displayList.length === 0 && (
               <tr>
-                <td colSpan={canReorder ? 13 : 12} className="px-3 py-8 text-center text-zinc-500">
+                <td colSpan={canReorder ? 14 : 13} className="px-3 py-8 text-center text-zinc-500">
                   No players match your filters yet.
                 </td>
               </tr>
