@@ -7,6 +7,13 @@ export interface ParsedSheet {
   rows: DatasetRecord[];
 }
 
+/** Collapses runs of whitespace (including non-breaking spaces) to a single space and trims, so near-identical
+ *  headers like "Site Name" and "Site Name " (or with stray internal spacing) collapse to the same column
+ *  instead of silently becoming two distinct columns. */
+function normalizeHeader(header: string): string {
+  return header.replace(/\s+/g, " ").trim();
+}
+
 function normalizeCellValue(value: ExcelJS.CellValue): string | number | boolean | null {
   if (value === null || value === undefined) return null;
 
@@ -45,7 +52,7 @@ async function parseXlsx(buffer: Buffer): Promise<ParsedSheet[]> {
     const headers: string[] = [];
     headerRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
       const value = normalizeCellValue(cell.value);
-      headers[colNumber] = value !== null ? String(value).trim() : `Column${colNumber}`;
+      headers[colNumber] = value !== null ? normalizeHeader(String(value)) : `Column${colNumber}`;
     });
 
     const rows: DatasetRecord[] = [];
@@ -75,6 +82,7 @@ function parseCsv(buffer: Buffer): ParsedSheet[] {
     header: true,
     skipEmptyLines: true,
     dynamicTyping: true,
+    transformHeader: normalizeHeader,
   });
   return [{ sheetName: "Sheet1", rows: result.data as DatasetRecord[] }];
 }
