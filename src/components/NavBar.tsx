@@ -5,12 +5,12 @@ import { usePathname } from "next/navigation";
 
 const LINKS = [
   { href: "/", label: "Overview" },
-  { href: "/upload", label: "Upload Data" },
+  { href: "/crm", label: "CRM" },
+  { href: "/procurement", label: "Procurement" },
   { href: "/dashboards", label: "Dashboards" },
   { href: "/builder", label: "Dashboard Builder" },
   { href: "/explorer", label: "Data Explorer" },
-  { href: "/crm", label: "CRM" },
-  { href: "/procurement", label: "Procurement" },
+  { href: "/upload", label: "Upload Data" },
 ];
 
 export default function NavBar() {
