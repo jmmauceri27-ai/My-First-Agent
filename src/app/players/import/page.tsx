@@ -2,6 +2,7 @@ import Link from "next/link";
 import ImportForm from "./ImportForm";
 import ActualStatsImportForm from "./ActualStatsImportForm";
 import GameLogsImportForm from "./GameLogsImportForm";
+import AdpImportForm from "./AdpImportForm";
 
 export default function ImportPage() {
   return (
@@ -11,6 +12,9 @@ export default function ImportPage() {
       </Link>
       <h1 className="mb-4 text-2xl font-bold">Bulk Import Rankings (CSV)</h1>
       <ImportForm />
+      <div className="mt-8">
+        <AdpImportForm />
+      </div>
       <div className="mt-8">
         <ActualStatsImportForm />
       </div>

@@ -17,7 +17,9 @@ model Player {
   byeWeek       Int?
   overallRank   Int? // your custom overall rank
   positionRank  Int? // your custom rank within position
-  adp           Float? // average draft position, if you track it
+  adp           Float? // your primary/blended average draft position, if you track it
+  espnAdp       Float? // ESPN's average draft position
+  sleeperAdp    Float? // Sleeper's average draft position
   tier          Int? // 1 = best tier; null = unranked / not tiered yet
   tags          String[] // sleeper, bust, breakout, injury-risk, rookie, handcuff, target, avoid, ...
   bio           String? // short freeform summary / cheat-sheet blurb

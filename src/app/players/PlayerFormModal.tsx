@@ -129,6 +129,28 @@ export default function PlayerFormModal({ player }: { player?: Player }) {
                       className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-ink-800"
                     />
                   </label>
+
+                  <label className="text-sm font-medium">
+                    ESPN ADP
+                    <input
+                      type="number"
+                      step="0.1"
+                      name="espnAdp"
+                      defaultValue={player?.espnAdp ?? ""}
+                      className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-ink-800"
+                    />
+                  </label>
+
+                  <label className="text-sm font-medium">
+                    Sleeper ADP
+                    <input
+                      type="number"
+                      step="0.1"
+                      name="sleeperAdp"
+                      defaultValue={player?.sleeperAdp ?? ""}
+                      className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-ink-800"
+                    />
+                  </label>
                 </div>
 
                 <fieldset>

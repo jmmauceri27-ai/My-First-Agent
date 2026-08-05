@@ -5,8 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { importPlayersFromCsv, type CsvImportResult } from "@/lib/importPlayers";
 import { importActualStatsFromCsv, type ActualStatsImportResult } from "@/lib/importActualStats";
 import { importGameLogsFromCsv, type GameLogImportResult } from "@/lib/importGameLogs";
+import { importAdpFromCsv, type AdpImportResult } from "@/lib/importAdp";
 
-export type { CsvImportResult, ActualStatsImportResult, GameLogImportResult };
+export type { CsvImportResult, ActualStatsImportResult, GameLogImportResult, AdpImportResult };
 
 function optInt(value: FormDataEntryValue | null): number | null {
   if (value === null || value === "") return null;
@@ -42,6 +43,8 @@ export async function savePlayer(formData: FormData): Promise<void> {
     overallRank: optInt(formData.get("overallRank")),
     positionRank: optInt(formData.get("positionRank")),
     adp: optFloat(formData.get("adp")),
+    espnAdp: optFloat(formData.get("espnAdp")),
+    sleeperAdp: optFloat(formData.get("sleeperAdp")),
     tier: optInt(formData.get("tier")),
     tags: formData.getAll("tags").map(String),
     bio: optStr(formData.get("bio")),
@@ -140,6 +143,18 @@ export async function importGameLogs(formData: FormData): Promise<GameLogImportR
   const result = await importGameLogsFromCsv(raw);
 
   revalidatePath("/players");
+  revalidatePath("/players/[id]", "page");
+  return result;
+}
+
+export async function importAdp(formData: FormData): Promise<AdpImportResult> {
+  const file = formData.get("file");
+  const raw = file instanceof File && file.size > 0 ? await file.text() : String(formData.get("csv") ?? "");
+  const result = await importAdpFromCsv(raw);
+
+  revalidatePath("/players");
+  revalidatePath("/board");
+  revalidatePath("/");
   revalidatePath("/players/[id]", "page");
   return result;
 }
