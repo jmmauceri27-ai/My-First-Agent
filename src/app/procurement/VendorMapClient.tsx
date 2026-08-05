@@ -23,7 +23,7 @@ import {
   saveVendorMapViewAction,
   updateSiteRowAction,
 } from "./actions";
-import EditSitePanel from "./EditSitePanel";
+import EditSitePanel from "@/components/EditSitePanel";
 import FilterSidebar from "./FilterSidebar";
 import MapLegend, { type MapLegendProps } from "./MapLegend";
 import type { MapPin } from "@/components/SiteMap";

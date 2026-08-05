@@ -12,12 +12,17 @@ import {
   deleteOpportunity,
   deleteOpportunityFile,
   getOpportunityFileDownloadUrl,
+  getOpportunitySiteBinding,
   listCompanies,
   listContacts,
   listEmployees,
+  listOpportunitySites,
+  replaceOpportunitySites,
+  saveOpportunitySiteBinding,
   updateCompany,
   updateContact,
   updateOpportunity,
+  updateOpportunitySiteFields,
   updateOpportunityStage,
   uploadOpportunityFile,
 } from "@/lib/crmDal";
@@ -28,8 +33,12 @@ import type {
   ContactInput,
   Employee,
   OpportunityInput,
+  OpportunitySiteBinding,
+  OpportunitySiteRow,
   OpportunityStage,
 } from "@/lib/crmTypes";
+import type { DatasetRecord } from "@/lib/types";
+import { parseBuffer } from "@/lib/parse";
 
 export async function saveOpportunityAction(id: string | null, input: OpportunityInput): Promise<void> {
   if (id) {
@@ -127,4 +136,53 @@ export async function deleteOpportunityFileAction(id: string, opportunityId: str
 
 export async function getOpportunityFileDownloadUrlAction(id: string): Promise<string> {
   return getOpportunityFileDownloadUrl(id);
+}
+
+export async function getOpportunitySiteBindingAction(opportunityId: string): Promise<OpportunitySiteBinding | null> {
+  return getOpportunitySiteBinding(opportunityId);
+}
+
+export async function saveOpportunitySiteBindingAction(
+  opportunityId: string,
+  binding: OpportunitySiteBinding,
+): Promise<void> {
+  await saveOpportunitySiteBinding(opportunityId, binding);
+  revalidatePath(`/crm/opportunities/${opportunityId}`);
+}
+
+export async function fetchOpportunitySitesAction(opportunityId: string): Promise<OpportunitySiteRow[]> {
+  return listOpportunitySites(opportunityId);
+}
+
+export async function updateOpportunitySiteRowAction(
+  opportunityId: string,
+  rowId: number,
+  data: DatasetRecord,
+): Promise<void> {
+  await updateOpportunitySiteFields(opportunityId, rowId, data);
+  revalidatePath(`/crm/opportunities/${opportunityId}`);
+}
+
+export async function uploadOpportunitySitesAction(
+  opportunityId: string,
+  formData: FormData,
+): Promise<{ error?: string }> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Please choose a file." };
+  }
+  try {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const sheets = await parseBuffer(buffer, file.name);
+    const rows = sheets.find((s) => s.rows.length > 0)?.rows ?? [];
+    if (rows.length === 0) {
+      return { error: "No data rows were found in this file." };
+    }
+    await replaceOpportunitySites(opportunityId, rows);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to upload sites." };
+  }
+  revalidatePath(`/crm/opportunities/${opportunityId}`);
+  revalidatePath("/crm");
+  return {};
 }

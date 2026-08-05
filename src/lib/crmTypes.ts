@@ -1,3 +1,5 @@
+import type { DatasetRecord } from "./types";
+
 export const OPPORTUNITY_STAGES = [
   "Prospecting",
   "Qualified",
@@ -96,4 +98,15 @@ export interface ContactInput {
   phone: string | null;
   title: string | null;
   notes: string | null;
+}
+
+export interface OpportunitySiteBinding {
+  latColumn: string;
+  lngColumn: string;
+  labelColumn: string | null;
+}
+
+export interface OpportunitySiteRow {
+  id: number;
+  data: DatasetRecord;
 }
