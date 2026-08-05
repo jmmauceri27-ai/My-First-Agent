@@ -36,6 +36,7 @@ import {
 import EditSitePanel from "./EditSitePanel";
 import FilterSidebar from "./FilterSidebar";
 import MapLegend, { type MapLegendProps } from "./MapLegend";
+import VendorDetailPanel from "./VendorDetailPanel";
 import type { MapPin } from "@/components/SiteMap";
 
 const SiteMap = dynamic(() => import("@/components/SiteMap"), { ssr: false });
@@ -49,6 +50,9 @@ interface MappingDraft {
   subPrice: string;
   filter: string[];
   measurement: string[];
+  vendorLinkColumn: string;
+  vendorLinkDatasetId: string;
+  vendorLinkKeyColumn: string;
 }
 
 export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[] }) {
@@ -67,9 +71,17 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
     subPrice: "",
     filter: [],
     measurement: [],
+    vendorLinkColumn: "",
+    vendorLinkDatasetId: "",
+    vendorLinkKeyColumn: "",
   });
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  const [vendorDatasetRows, setVendorDatasetRows] = useState<DatasetRowWithId[]>([]);
+  const [vendorDatasetRowsLoadedFor, setVendorDatasetRowsLoadedFor] = useState<string | null>(null);
+  const [vendorDatasetRowsError, setVendorDatasetRowsError] = useState<string | null>(null);
+  const [viewingVendorName, setViewingVendorName] = useState<string | null>(null);
 
   const [activeFilters, setActiveFilters] = useState<Record<string, string[]>>({});
 
@@ -110,6 +122,9 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
           subPrice: result?.subPriceColumn ?? "",
           filter: result?.filterColumns ?? [],
           measurement: result?.measurementColumns ?? [],
+          vendorLinkColumn: result?.vendorLinkColumn ?? "",
+          vendorLinkDatasetId: result?.vendorLinkDatasetId ?? "",
+          vendorLinkKeyColumn: result?.vendorLinkKeyColumn ?? "",
         });
         setLoadError(null);
         setEditing(!result);
@@ -149,6 +164,27 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
   }, [dataset, binding]);
 
   useEffect(() => {
+    if (!binding?.vendorLinkDatasetId) return;
+    let cancelled = false;
+    const vendorDatasetId = binding.vendorLinkDatasetId;
+    fetchDatasetRowsWithIdsAction(vendorDatasetId)
+      .then((result) => {
+        if (cancelled) return;
+        setVendorDatasetRows(result);
+        setVendorDatasetRowsError(null);
+        setVendorDatasetRowsLoadedFor(vendorDatasetId);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setVendorDatasetRowsError(e instanceof Error ? e.message : "Failed to load the linked vendor dataset.");
+        setVendorDatasetRowsLoadedFor(vendorDatasetId);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [binding?.vendorLinkDatasetId]);
+
+  useEffect(() => {
     if (!dataset || !binding) return;
     let cancelled = false;
     listSiteMapViewsAction(dataset.id)
@@ -181,6 +217,9 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
         subPriceColumn: draft.subPrice || null,
         filterColumns: draft.filter,
         measurementColumns: draft.measurement,
+        vendorLinkColumn: draft.vendorLinkColumn || null,
+        vendorLinkDatasetId: draft.vendorLinkDatasetId || null,
+        vendorLinkKeyColumn: draft.vendorLinkKeyColumn || null,
       };
       await saveSiteMapBindingAction(dataset.id, newBinding);
       setBinding(newBinding);
@@ -357,6 +396,18 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
     (c): c is string => c !== null && c !== undefined,
   );
   const measurementFields = binding?.measurementColumns ?? [];
+
+  const vendorLinkKeyColumn = binding?.vendorLinkKeyColumn ?? null;
+  const linkedVendorRow = useMemo(() => {
+    if (!viewingVendorName || !vendorLinkKeyColumn) return null;
+    const target = viewingVendorName.trim().toLowerCase();
+    const match = vendorDatasetRows.find(
+      (r) => String(r.data[vendorLinkKeyColumn] ?? "").trim().toLowerCase() === target,
+    );
+    return match?.data ?? null;
+  }, [viewingVendorName, vendorLinkKeyColumn, vendorDatasetRows]);
+
+  const vendorLinkDataset = datasets.find((d) => d.id === draft.vendorLinkDatasetId);
 
   async function handleSaveRow(data: DatasetRecord) {
     if (!dataset || editingRowId === null) return;
@@ -580,6 +631,68 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
                 </div>
               </div>
 
+              <div>
+                <span className="text-sm font-medium text-slate-300">Vendor link (optional)</span>
+                <p className="text-xs text-slate-500">
+                  Click this site&rsquo;s vendor field to see details from another dataset (e.g. a &ldquo;Snow
+                  Vendors&rdquo; sheet).
+                </p>
+                <div className="mt-1 flex flex-wrap gap-3">
+                  <label className="flex flex-col gap-1 text-sm">
+                    <span className="font-medium text-slate-300">Vendor name column on this site</span>
+                    <select
+                      value={draft.vendorLinkColumn}
+                      onChange={(e) => setDraft((prev) => ({ ...prev, vendorLinkColumn: e.target.value }))}
+                      className={inputClass}
+                    >
+                      <option value="">None</option>
+                      {dataset.columns.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-1 text-sm">
+                    <span className="font-medium text-slate-300">Linked dataset</span>
+                    <select
+                      value={draft.vendorLinkDatasetId}
+                      onChange={(e) =>
+                        setDraft((prev) => ({
+                          ...prev,
+                          vendorLinkDatasetId: e.target.value,
+                          vendorLinkKeyColumn: "",
+                        }))
+                      }
+                      className={inputClass}
+                    >
+                      <option value="">None</option>
+                      {datasets.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.displayName} ({d.category})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-1 text-sm">
+                    <span className="font-medium text-slate-300">Match on linked dataset&rsquo;s column</span>
+                    <select
+                      value={draft.vendorLinkKeyColumn}
+                      onChange={(e) => setDraft((prev) => ({ ...prev, vendorLinkKeyColumn: e.target.value }))}
+                      className={inputClass}
+                      disabled={!vendorLinkDataset}
+                    >
+                      <option value="">Choose a column…</option>
+                      {(vendorLinkDataset?.columns ?? []).map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              </div>
+
               <div className="flex items-center gap-3">
                 <Button
                   onClick={handleSaveMapping}
@@ -739,8 +852,20 @@ export default function SiteMapClient({ datasets }: { datasets: DatasetSummary[]
           readOnlyFields={editingRowReadOnlyFields}
           currencyFields={currencyFields}
           measurementFields={measurementFields}
+          linkColumn={binding?.vendorLinkColumn ?? null}
+          onOpenLink={binding?.vendorLinkDatasetId ? (value) => setViewingVendorName(value) : undefined}
           onClose={() => setEditingRowId(null)}
           onSave={handleSaveRow}
+        />
+      )}
+
+      {viewingVendorName && (
+        <VendorDetailPanel
+          vendorName={viewingVendorName}
+          data={linkedVendorRow}
+          loading={vendorDatasetRowsLoadedFor !== binding?.vendorLinkDatasetId}
+          error={vendorDatasetRowsError}
+          onClose={() => setViewingVendorName(null)}
         />
       )}
     </div>

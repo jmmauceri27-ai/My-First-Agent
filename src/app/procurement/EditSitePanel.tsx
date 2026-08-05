@@ -38,6 +38,8 @@ export default function EditSitePanel({
   readOnlyFields = [],
   currencyFields = [],
   measurementFields = [],
+  linkColumn = null,
+  onOpenLink,
   onClose,
   onSave,
 }: {
@@ -48,6 +50,9 @@ export default function EditSitePanel({
   currencyFields?: string[];
   /** Field keys to display/edit as square footage (e.g. Turf Area, Parking Lot) -- formatted on load and blur, parsed back to a plain number on save. */
   measurementFields?: string[];
+  /** Field key whose value can be clicked to open a linked record (e.g. Vendor Name -> vendor details). */
+  linkColumn?: string | null;
+  onOpenLink?: (value: string) => void;
   onClose: () => void;
   onSave: (data: DatasetRecord) => Promise<void>;
 }) {
@@ -142,6 +147,15 @@ export default function EditSitePanel({
                 onBlur={() => formatOnBlur(i, field.key)}
                 className={inputClass}
               />
+              {field.key === linkColumn && field.value.trim() && onOpenLink && (
+                <button
+                  type="button"
+                  onClick={() => onOpenLink(field.value.trim())}
+                  className="w-fit text-xs font-medium text-brand-400 hover:text-brand-300 hover:underline"
+                >
+                  View vendor details →
+                </button>
+              )}
             </label>
           ))}
           {fields.length === 0 && <p className="text-sm text-slate-400">No fields yet — add one below.</p>}

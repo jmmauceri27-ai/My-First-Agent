@@ -155,6 +155,12 @@ export interface SiteMapBinding {
   subPriceColumn: string | null;
   filterColumns: string[];
   measurementColumns: string[];
+  /** Column on this dataset holding a vendor's name, e.g. "Vendor Name". */
+  vendorLinkColumn: string | null;
+  /** Dataset to look the vendor up in, e.g. a "Snow Vendors" dataset. */
+  vendorLinkDatasetId: string | null;
+  /** Column on the linked dataset to match vendorLinkColumn's value against. */
+  vendorLinkKeyColumn: string | null;
 }
 
 export interface DatasetRowWithId {
