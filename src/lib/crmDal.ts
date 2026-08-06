@@ -6,6 +6,8 @@ import type {
   CompanyInput,
   Contact,
   ContactInput,
+  Contract,
+  ContractInput,
   Employee,
   Opportunity,
   OpportunityFile,
@@ -186,6 +188,93 @@ export async function createEmployee(name: string): Promise<string> {
 export async function deleteEmployee(id: string): Promise<void> {
   const supabase = createAdminClient();
   const { error } = await supabase.from("crm_employees").delete().eq("id", id).eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
+}
+
+// ---------- Contracts ----------
+// Existing signed contracts (as opposed to crm_opportunities, the open
+// pipeline): a validity window, rate, site count, and type of work.
+
+const CONTRACT_COLUMNS =
+  "id, company_id, name, work_type, site_count, rate_amount, rate_frequency, start_date, end_date, notes, created_at, updated_at, crm_companies(name)";
+
+function mapContract(c: Record<string, unknown>): Contract {
+  const company = c.crm_companies as unknown as { name: string } | null;
+  return {
+    id: c.id as string,
+    companyId: c.company_id as string | null,
+    companyName: company?.name ?? null,
+    name: c.name as string,
+    workType: c.work_type as string | null,
+    siteCount: c.site_count as number | null,
+    rateAmount: c.rate_amount as number | null,
+    rateFrequency: c.rate_frequency as string | null,
+    startDate: c.start_date as string | null,
+    endDate: c.end_date as string | null,
+    notes: c.notes as string | null,
+    createdAt: c.created_at as string,
+    updatedAt: c.updated_at as string,
+  };
+}
+
+export async function listContracts(): Promise<Contract[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("crm_contracts")
+    .select(CONTRACT_COLUMNS)
+    .eq("user_id", OWNER_USER_ID)
+    .order("end_date", { ascending: true, nullsFirst: false });
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map(mapContract);
+}
+
+export async function createContract(input: ContractInput): Promise<string> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("crm_contracts")
+    .insert({
+      user_id: OWNER_USER_ID,
+      company_id: input.companyId,
+      name: input.name,
+      work_type: input.workType,
+      site_count: input.siteCount,
+      rate_amount: input.rateAmount,
+      rate_frequency: input.rateFrequency,
+      start_date: input.startDate,
+      end_date: input.endDate,
+      notes: input.notes,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return data.id as string;
+}
+
+export async function updateContract(id: string, input: ContractInput): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("crm_contracts")
+    .update({
+      company_id: input.companyId,
+      name: input.name,
+      work_type: input.workType,
+      site_count: input.siteCount,
+      rate_amount: input.rateAmount,
+      rate_frequency: input.rateFrequency,
+      start_date: input.startDate,
+      end_date: input.endDate,
+      notes: input.notes,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteContract(id: string): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("crm_contracts").delete().eq("id", id).eq("user_id", OWNER_USER_ID);
   if (error) throw new Error(error.message);
 }
 

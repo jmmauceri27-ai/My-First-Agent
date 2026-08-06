@@ -4,10 +4,12 @@ import { revalidatePath } from "next/cache";
 import {
   createCompany,
   createContact,
+  createContract,
   createEmployee,
   createOpportunity,
   deleteCompany,
   deleteContact,
+  deleteContract,
   deleteEmployee,
   deleteOpportunity,
   deleteOpportunityFile,
@@ -21,6 +23,7 @@ import {
   saveOpportunitySiteBinding,
   updateCompany,
   updateContact,
+  updateContract,
   updateOpportunity,
   updateOpportunitySiteFields,
   updateOpportunityStage,
@@ -31,6 +34,7 @@ import type {
   CompanyInput,
   Contact,
   ContactInput,
+  ContractInput,
   Employee,
   OpportunityInput,
   OpportunitySiteBinding,
@@ -95,6 +99,25 @@ export async function deleteContactAction(id: string): Promise<void> {
   await deleteContact(id);
   revalidatePath("/crm");
   revalidatePath("/crm/contacts");
+}
+
+export async function saveContractAction(id: string | null, input: ContractInput): Promise<string> {
+  let contractId: string;
+  if (id) {
+    await updateContract(id, input);
+    contractId = id;
+  } else {
+    contractId = await createContract(input);
+  }
+  revalidatePath("/crm");
+  revalidatePath("/crm/contracts");
+  return contractId;
+}
+
+export async function deleteContractAction(id: string): Promise<void> {
+  await deleteContract(id);
+  revalidatePath("/crm");
+  revalidatePath("/crm/contracts");
 }
 
 export async function listCompaniesAction(): Promise<Company[]> {

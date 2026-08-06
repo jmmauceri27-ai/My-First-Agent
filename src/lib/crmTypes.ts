@@ -100,6 +100,44 @@ export interface ContactInput {
   notes: string | null;
 }
 
+export const RATE_FREQUENCIES = [
+  "One-time",
+  "Per visit",
+  "Monthly",
+  "Seasonal",
+  "Annual",
+] as const;
+
+export type RateFrequency = (typeof RATE_FREQUENCIES)[number];
+
+export interface Contract {
+  id: string;
+  companyId: string | null;
+  companyName: string | null;
+  name: string;
+  workType: string | null;
+  siteCount: number | null;
+  rateAmount: number | null;
+  rateFrequency: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ContractInput {
+  companyId: string | null;
+  name: string;
+  workType: string | null;
+  siteCount: number | null;
+  rateAmount: number | null;
+  rateFrequency: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  notes: string | null;
+}
+
 export interface OpportunitySiteBinding {
   latColumn: string;
   lngColumn: string;

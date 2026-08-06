@@ -2,11 +2,12 @@ import Link from "next/link";
 
 const LINKS = [
   { href: "/crm", label: "Pipeline", key: "pipeline" },
+  { href: "/crm/contracts", label: "Contracts", key: "contracts" },
   { href: "/crm/companies", label: "Companies", key: "companies" },
   { href: "/crm/contacts", label: "Contacts", key: "contacts" },
 ] as const;
 
-export default function CrmNav({ active }: { active: "pipeline" | "companies" | "contacts" }) {
+export default function CrmNav({ active }: { active: "pipeline" | "companies" | "contacts" | "contracts" }) {
   return (
     <nav className="flex flex-wrap items-center gap-1 border-b border-slate-200 pb-2 dark:border-slate-800">
       {LINKS.map((link) => {
