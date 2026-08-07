@@ -96,8 +96,52 @@ export default function SitesCard({
 
   async function handleSaveRow(data: DatasetRecord) {
     if (editingRowId === null) return;
-    await updateOpportunitySiteRowAction(opportunityId, editingRowId, data);
+    const result = await updateOpportunitySiteRowAction(opportunityId, editingRowId, data);
+    if (result.error) throw new Error(result.error);
     router.refresh();
+  }
+
+  const [renamingRowId, setRenamingRowId] = useState<number | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [renaming, setRenaming] = useState(false);
+  const [renameError, setRenameError] = useState<string | null>(null);
+
+  function siteDisplayName(row: OpportunitySiteRow, index: number): string {
+    const label = binding?.labelColumn ? String(row.data[binding.labelColumn] ?? "").trim() : "";
+    return label || `Site ${index + 1}`;
+  }
+
+  function startRenameSite(row: OpportunitySiteRow, index: number) {
+    setRenameError(null);
+    setRenamingRowId(row.id);
+    setRenameValue(siteDisplayName(row, index));
+  }
+
+  async function handleRenameSite() {
+    if (renamingRowId === null || !binding?.labelColumn) return;
+    const trimmed = renameValue.trim();
+    if (!trimmed) {
+      setRenameError("Please enter a site name.");
+      return;
+    }
+    setRenameError(null);
+    setRenaming(true);
+    try {
+      const row = rows.find((r) => r.id === renamingRowId);
+      if (!row) return;
+      const result = await updateOpportunitySiteRowAction(opportunityId, renamingRowId, {
+        ...row.data,
+        [binding.labelColumn]: trimmed,
+      });
+      if (result.error) {
+        setRenameError(result.error);
+        return;
+      }
+      setRenamingRowId(null);
+      router.refresh();
+    } finally {
+      setRenaming(false);
+    }
   }
 
   const pins: MapPin[] = binding
@@ -217,6 +261,73 @@ export default function SitesCard({
           ) : (
             <p className="text-sm text-slate-400">No sites have valid latitude/longitude values to plot.</p>
           )}
+        </div>
+      )}
+
+      {!showMappingForm && binding && rows.length > 0 && (
+        <div className="mt-4 flex flex-col gap-2">
+          <p className="text-xs font-medium text-slate-300">Site names</p>
+          {!binding.labelColumn && (
+            <p className="text-xs text-slate-400">
+              Set a site name column via &ldquo;Change columns&rdquo; above to rename sites.
+            </p>
+          )}
+          <div className="flex flex-col divide-y divide-purple-400/10 rounded-lg border border-purple-400/10">
+            {rows.map((row, index) =>
+              renamingRowId === row.id ? (
+                <div key={row.id} className="flex items-center gap-2 px-3 py-2">
+                  <input
+                    value={renameValue}
+                    onChange={(e) => setRenameValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleRenameSite();
+                      if (e.key === "Escape") setRenamingRowId(null);
+                    }}
+                    className={`${inputClass} py-1`}
+                    autoFocus
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleRenameSite}
+                    disabled={renaming}
+                    className="w-fit"
+                  >
+                    {renaming ? "…" : "Save"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setRenamingRowId(null)}
+                    disabled={renaming}
+                    className="w-fit"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
+                <div key={row.id} className="flex items-center justify-between gap-2 px-3 py-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingRowId(row.id)}
+                    className="min-w-0 truncate text-left text-sm font-medium text-slate-50 hover:text-brand-400 hover:underline"
+                  >
+                    {siteDisplayName(row, index)}
+                  </button>
+                  {binding.labelColumn && (
+                    <button
+                      type="button"
+                      onClick={() => startRenameSite(row, index)}
+                      className="shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-slate-400 hover:bg-purple-500/10"
+                    >
+                      Rename
+                    </button>
+                  )}
+                </div>
+              ),
+            )}
+          </div>
+          {renameError && <p className="text-xs text-critical">{renameError}</p>}
         </div>
       )}
 

@@ -256,9 +256,14 @@ export async function updateOpportunitySiteRowAction(
   opportunityId: string,
   rowId: number,
   data: DatasetRecord,
-): Promise<void> {
-  await updateOpportunitySiteFields(opportunityId, rowId, data);
+): Promise<{ error?: string }> {
+  try {
+    await updateOpportunitySiteFields(opportunityId, rowId, data);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to save site." };
+  }
   revalidatePath(`/crm/opportunities/${opportunityId}`);
+  return {};
 }
 
 export async function uploadOpportunitySitesAction(
