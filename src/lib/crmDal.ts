@@ -593,6 +593,16 @@ export async function uploadOpportunityFile(opportunityId: string, file: File): 
   return mapOpportunityFile(data);
 }
 
+export async function renameOpportunityFile(id: string, fileName: string): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("crm_opportunity_files")
+    .update({ file_name: fileName })
+    .eq("id", id)
+    .eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
+}
+
 export async function deleteOpportunityFile(id: string): Promise<void> {
   const supabase = createAdminClient();
   const { data, error: fetchError } = await supabase

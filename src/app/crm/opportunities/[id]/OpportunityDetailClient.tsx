@@ -24,6 +24,7 @@ import {
   deleteOpportunityAction,
   deleteOpportunityFileAction,
   getOpportunityFileDownloadUrlAction,
+  renameOpportunityFileAction,
   saveEmployeeAction,
   saveOpportunityAction,
   uploadOpportunityFileAction,
@@ -322,6 +323,7 @@ export default function OpportunityDetailClient({
             }}
             onDownload={(id) => getOpportunityFileDownloadUrlAction(id)}
             onDelete={(id) => deleteOpportunityFileAction(id, opportunity.id)}
+            onRename={(id, fileName) => renameOpportunityFileAction(id, opportunity.id, fileName)}
             onChange={() => router.refresh()}
           />
 

@@ -23,6 +23,7 @@ import {
   listEmployees,
   listOpportunitySites,
   renameContractFile,
+  renameOpportunityFile,
   replaceOpportunitySites,
   saveOpportunitySiteBinding,
   updateCompany,
@@ -234,6 +235,20 @@ export async function getOpportunityFileDownloadUrlAction(id: string): Promise<{
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to open file." };
   }
+}
+
+export async function renameOpportunityFileAction(
+  id: string,
+  opportunityId: string,
+  fileName: string,
+): Promise<{ error?: string }> {
+  try {
+    await renameOpportunityFile(id, fileName);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to rename file." };
+  }
+  revalidatePath(`/crm/opportunities/${opportunityId}`);
+  return {};
 }
 
 export async function getOpportunitySiteBindingAction(opportunityId: string): Promise<OpportunitySiteBinding | null> {
