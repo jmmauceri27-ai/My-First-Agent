@@ -333,6 +333,16 @@ export async function uploadContractFile(contractId: string, file: File): Promis
   return mapContractFile(data);
 }
 
+export async function renameContractFile(id: string, fileName: string): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("crm_contract_files")
+    .update({ file_name: fileName })
+    .eq("id", id)
+    .eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
+}
+
 export async function deleteContractFile(id: string): Promise<void> {
   const supabase = createAdminClient();
   const { data, error: fetchError } = await supabase

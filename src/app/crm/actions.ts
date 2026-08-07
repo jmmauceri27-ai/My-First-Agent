@@ -22,6 +22,7 @@ import {
   listContractFiles,
   listEmployees,
   listOpportunitySites,
+  renameContractFile,
   replaceOpportunitySites,
   saveOpportunitySiteBinding,
   updateCompany,
@@ -140,6 +141,11 @@ export async function uploadContractFileAction(contractId: string, formData: For
 
 export async function deleteContractFileAction(id: string): Promise<void> {
   await deleteContractFile(id);
+  revalidatePath("/crm/contracts");
+}
+
+export async function renameContractFileAction(id: string, fileName: string): Promise<void> {
+  await renameContractFile(id, fileName);
   revalidatePath("/crm/contracts");
 }
 

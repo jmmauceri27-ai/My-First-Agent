@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
+import { inputClass } from "@/components/ui/formClasses";
 
 export interface FileItem {
   id: string;
@@ -32,6 +33,7 @@ export default function FilesCard({
   onUpload,
   onDownload,
   onDelete,
+  onRename,
   onChange,
 }: {
   title?: string;
@@ -40,6 +42,7 @@ export default function FilesCard({
   onUpload: (file: File) => Promise<void>;
   onDownload: (id: string) => Promise<string>;
   onDelete: (id: string) => Promise<void>;
+  onRename?: (id: string, fileName: string) => Promise<void>;
   onChange?: () => void;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -47,6 +50,9 @@ export default function FilesCard({
   const [error, setError] = useState<string | null>(null);
   const [pendingDownloadId, setPendingDownloadId] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const [renaming, setRenaming] = useState(false);
 
   async function handleUpload() {
     const file = fileInputRef.current?.files?.[0];
@@ -93,6 +99,31 @@ export default function FilesCard({
     }
   }
 
+  function startRename(f: FileItem) {
+    setEditingId(f.id);
+    setEditingName(f.fileName);
+  }
+
+  async function handleRename() {
+    if (!editingId || !onRename) return;
+    const trimmed = editingName.trim();
+    if (!trimmed) {
+      setError("Please enter a file name.");
+      return;
+    }
+    setError(null);
+    setRenaming(true);
+    try {
+      await onRename(editingId, trimmed);
+      setEditingId(null);
+      onChange?.();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to rename file.");
+    } finally {
+      setRenaming(false);
+    }
+  }
+
   return (
     <Card className="flex flex-col p-5">
       <h2 className="text-lg font-bold text-slate-50">{title}</h2>
@@ -114,35 +145,75 @@ export default function FilesCard({
         {files.length === 0 ? (
           <p className="py-2 text-xs text-slate-400">No files attached yet.</p>
         ) : (
-          files.map((f) => (
-            <div key={f.id} className="flex items-center justify-between gap-2 py-2">
-              <div className="flex min-w-0 items-start gap-2">
+          files.map((f) =>
+            editingId === f.id ? (
+              <div key={f.id} className="flex items-center gap-2 py-2">
                 <span className="text-lg leading-none">{fileIcon(f.fileName)}</span>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-slate-50">{f.fileName}</p>
-                  <p className="text-xs text-slate-400">
-                    {formatSize(f.sizeBytes)} · {new Date(f.uploadedAt).toLocaleDateString()}
-                  </p>
+                <input
+                  value={editingName}
+                  onChange={(e) => setEditingName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleRename();
+                    if (e.key === "Escape") setEditingId(null);
+                  }}
+                  className={`${inputClass} py-1`}
+                  autoFocus
+                />
+                <div className="flex shrink-0 gap-1">
+                  <button
+                    onClick={handleRename}
+                    disabled={renaming}
+                    className="rounded-lg px-2 py-1 text-xs font-semibold text-brand-400 hover:bg-brand-500/10"
+                  >
+                    {renaming ? "…" : "Save"}
+                  </button>
+                  <button
+                    onClick={() => setEditingId(null)}
+                    disabled={renaming}
+                    className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-400 hover:bg-purple-500/10"
+                  >
+                    Cancel
+                  </button>
                 </div>
               </div>
-              <div className="flex shrink-0 gap-1">
-                <button
-                  onClick={() => handleDownload(f.id)}
-                  disabled={pendingDownloadId === f.id}
-                  className="rounded-lg px-2 py-1 text-xs font-semibold text-brand-400 hover:bg-brand-500/10"
-                >
-                  {pendingDownloadId === f.id ? "…" : "Download"}
-                </button>
-                <button
-                  onClick={() => handleDelete(f.id)}
-                  disabled={pendingDeleteId === f.id}
-                  className="rounded-lg px-2 py-1 text-xs font-semibold text-critical hover:bg-critical/10"
-                >
-                  {pendingDeleteId === f.id ? "…" : "Delete"}
-                </button>
+            ) : (
+              <div key={f.id} className="flex items-center justify-between gap-2 py-2">
+                <div className="flex min-w-0 items-start gap-2">
+                  <span className="text-lg leading-none">{fileIcon(f.fileName)}</span>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-slate-50">{f.fileName}</p>
+                    <p className="text-xs text-slate-400">
+                      {formatSize(f.sizeBytes)} · {new Date(f.uploadedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex shrink-0 gap-1">
+                  {onRename && (
+                    <button
+                      onClick={() => startRename(f)}
+                      className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-400 hover:bg-purple-500/10"
+                    >
+                      Rename
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleDownload(f.id)}
+                    disabled={pendingDownloadId === f.id}
+                    className="rounded-lg px-2 py-1 text-xs font-semibold text-brand-400 hover:bg-brand-500/10"
+                  >
+                    {pendingDownloadId === f.id ? "…" : "Download"}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(f.id)}
+                    disabled={pendingDeleteId === f.id}
+                    className="rounded-lg px-2 py-1 text-xs font-semibold text-critical hover:bg-critical/10"
+                  >
+                    {pendingDeleteId === f.id ? "…" : "Delete"}
+                  </button>
+                </div>
               </div>
-            </div>
-          ))
+            ),
+          )
         )}
       </div>
     </Card>

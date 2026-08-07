@@ -13,6 +13,7 @@ import {
   deleteContractFileAction,
   getContractFileDownloadUrlAction,
   listContractFilesAction,
+  renameContractFileAction,
   saveContractAction,
   uploadContractFileAction,
 } from "../actions";
@@ -206,6 +207,7 @@ export default function ContractModal({
               }}
               onDownload={(id) => getContractFileDownloadUrlAction(id)}
               onDelete={(id) => deleteContractFileAction(id)}
+              onRename={(id, fileName) => renameContractFileAction(id, fileName)}
               onChange={refreshFiles}
             />
           </div>
