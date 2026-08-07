@@ -315,10 +315,10 @@ export default function OpportunityDetailClient({
             title="Files"
             description="Attach proposals, quotes, site surveys — Excel, PDF, or any file type."
             files={files}
-            onUpload={async (file) => {
+            onUpload={(file) => {
               const formData = new FormData();
               formData.set("file", file);
-              await uploadOpportunityFileAction(opportunity.id, formData);
+              return uploadOpportunityFileAction(opportunity.id, formData);
             }}
             onDownload={(id) => getOpportunityFileDownloadUrlAction(id)}
             onDelete={(id) => deleteOpportunityFileAction(id, opportunity.id)}

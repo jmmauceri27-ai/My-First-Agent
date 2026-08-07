@@ -130,27 +130,49 @@ export async function listContractFilesAction(contractId: string): Promise<Contr
   return listContractFiles(contractId);
 }
 
-export async function uploadContractFileAction(contractId: string, formData: FormData): Promise<void> {
+export async function uploadContractFileAction(
+  contractId: string,
+  formData: FormData,
+): Promise<{ error?: string }> {
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
-    throw new Error("Please choose a file.");
+    return { error: "Please choose a file." };
   }
-  await uploadContractFile(contractId, file);
+  try {
+    await uploadContractFile(contractId, file);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to upload file." };
+  }
   revalidatePath("/crm/contracts");
+  return {};
 }
 
-export async function deleteContractFileAction(id: string): Promise<void> {
-  await deleteContractFile(id);
+export async function deleteContractFileAction(id: string): Promise<{ error?: string }> {
+  try {
+    await deleteContractFile(id);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to delete file." };
+  }
   revalidatePath("/crm/contracts");
+  return {};
 }
 
-export async function renameContractFileAction(id: string, fileName: string): Promise<void> {
-  await renameContractFile(id, fileName);
+export async function renameContractFileAction(id: string, fileName: string): Promise<{ error?: string }> {
+  try {
+    await renameContractFile(id, fileName);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to rename file." };
+  }
   revalidatePath("/crm/contracts");
+  return {};
 }
 
-export async function getContractFileDownloadUrlAction(id: string): Promise<string> {
-  return getContractFileDownloadUrl(id);
+export async function getContractFileDownloadUrlAction(id: string): Promise<{ url?: string; error?: string }> {
+  try {
+    return { url: await getContractFileDownloadUrl(id) };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to open file." };
+  }
 }
 
 export async function listCompaniesAction(): Promise<Company[]> {
@@ -176,22 +198,42 @@ export async function deleteEmployeeAction(id: string): Promise<void> {
   revalidatePath("/crm");
 }
 
-export async function uploadOpportunityFileAction(opportunityId: string, formData: FormData): Promise<void> {
+export async function uploadOpportunityFileAction(
+  opportunityId: string,
+  formData: FormData,
+): Promise<{ error?: string }> {
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
-    throw new Error("Please choose a file.");
+    return { error: "Please choose a file." };
   }
-  await uploadOpportunityFile(opportunityId, file);
+  try {
+    await uploadOpportunityFile(opportunityId, file);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to upload file." };
+  }
   revalidatePath(`/crm/opportunities/${opportunityId}`);
+  return {};
 }
 
-export async function deleteOpportunityFileAction(id: string, opportunityId: string): Promise<void> {
-  await deleteOpportunityFile(id);
+export async function deleteOpportunityFileAction(
+  id: string,
+  opportunityId: string,
+): Promise<{ error?: string }> {
+  try {
+    await deleteOpportunityFile(id);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to delete file." };
+  }
   revalidatePath(`/crm/opportunities/${opportunityId}`);
+  return {};
 }
 
-export async function getOpportunityFileDownloadUrlAction(id: string): Promise<string> {
-  return getOpportunityFileDownloadUrl(id);
+export async function getOpportunityFileDownloadUrlAction(id: string): Promise<{ url?: string; error?: string }> {
+  try {
+    return { url: await getOpportunityFileDownloadUrl(id) };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to open file." };
+  }
 }
 
 export async function getOpportunitySiteBindingAction(opportunityId: string): Promise<OpportunitySiteBinding | null> {

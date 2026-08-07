@@ -39,10 +39,10 @@ export default function FilesCard({
   title?: string;
   description?: string;
   files: FileItem[];
-  onUpload: (file: File) => Promise<void>;
-  onDownload: (id: string) => Promise<string>;
-  onDelete: (id: string) => Promise<void>;
-  onRename?: (id: string, fileName: string) => Promise<void>;
+  onUpload: (file: File) => Promise<{ error?: string }>;
+  onDownload: (id: string) => Promise<{ url?: string; error?: string }>;
+  onDelete: (id: string) => Promise<{ error?: string }>;
+  onRename?: (id: string, fileName: string) => Promise<{ error?: string }>;
   onChange?: () => void;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -63,7 +63,11 @@ export default function FilesCard({
     setError(null);
     setUploading(true);
     try {
-      await onUpload(file);
+      const result = await onUpload(file);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
       if (fileInputRef.current) fileInputRef.current.value = "";
       onChange?.();
     } catch (e) {
@@ -77,8 +81,12 @@ export default function FilesCard({
     setPendingDownloadId(id);
     setError(null);
     try {
-      const url = await onDownload(id);
-      window.open(url, "_blank");
+      const result = await onDownload(id);
+      if (result.error || !result.url) {
+        setError(result.error ?? "Failed to open file.");
+        return;
+      }
+      window.open(result.url, "_blank");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to open file.");
     } finally {
@@ -90,7 +98,11 @@ export default function FilesCard({
     setPendingDeleteId(id);
     setError(null);
     try {
-      await onDelete(id);
+      const result = await onDelete(id);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
       onChange?.();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to delete file.");
@@ -114,7 +126,11 @@ export default function FilesCard({
     setError(null);
     setRenaming(true);
     try {
-      await onRename(editingId, trimmed);
+      const result = await onRename(editingId, trimmed);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
       setEditingId(null);
       onChange?.();
     } catch (e) {

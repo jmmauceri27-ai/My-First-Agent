@@ -200,10 +200,10 @@ export default function ContractModal({
               title="Files"
               description="Site lists, signed agreements, insurance docs — any file type."
               files={files}
-              onUpload={async (file) => {
+              onUpload={(file) => {
                 const formData = new FormData();
                 formData.set("file", file);
-                await uploadContractFileAction(contract.id, formData);
+                return uploadContractFileAction(contract.id, formData);
               }}
               onDownload={(id) => getContractFileDownloadUrlAction(id)}
               onDelete={(id) => deleteContractFileAction(id)}
