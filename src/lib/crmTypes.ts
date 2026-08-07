@@ -138,6 +138,16 @@ export interface ContractInput {
   notes: string | null;
 }
 
+export interface ContractFile {
+  id: string;
+  contractId: string;
+  fileName: string;
+  storagePath: string;
+  contentType: string | null;
+  sizeBytes: number;
+  uploadedAt: string;
+}
+
 export interface OpportunitySiteBinding {
   latColumn: string;
   lngColumn: string;

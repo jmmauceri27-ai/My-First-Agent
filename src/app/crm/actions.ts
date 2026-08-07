@@ -10,13 +10,16 @@ import {
   deleteCompany,
   deleteContact,
   deleteContract,
+  deleteContractFile,
   deleteEmployee,
   deleteOpportunity,
   deleteOpportunityFile,
+  getContractFileDownloadUrl,
   getOpportunityFileDownloadUrl,
   getOpportunitySiteBinding,
   listCompanies,
   listContacts,
+  listContractFiles,
   listEmployees,
   listOpportunitySites,
   replaceOpportunitySites,
@@ -27,6 +30,7 @@ import {
   updateOpportunity,
   updateOpportunitySiteFields,
   updateOpportunityStage,
+  uploadContractFile,
   uploadOpportunityFile,
 } from "@/lib/crmDal";
 import type {
@@ -34,6 +38,7 @@ import type {
   CompanyInput,
   Contact,
   ContactInput,
+  ContractFile,
   ContractInput,
   Employee,
   OpportunityInput,
@@ -118,6 +123,28 @@ export async function deleteContractAction(id: string): Promise<void> {
   await deleteContract(id);
   revalidatePath("/crm");
   revalidatePath("/crm/contracts");
+}
+
+export async function listContractFilesAction(contractId: string): Promise<ContractFile[]> {
+  return listContractFiles(contractId);
+}
+
+export async function uploadContractFileAction(contractId: string, formData: FormData): Promise<void> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    throw new Error("Please choose a file.");
+  }
+  await uploadContractFile(contractId, file);
+  revalidatePath("/crm/contracts");
+}
+
+export async function deleteContractFileAction(id: string): Promise<void> {
+  await deleteContractFile(id);
+  revalidatePath("/crm/contracts");
+}
+
+export async function getContractFileDownloadUrlAction(id: string): Promise<string> {
+  return getContractFileDownloadUrl(id);
 }
 
 export async function listCompaniesAction(): Promise<Company[]> {

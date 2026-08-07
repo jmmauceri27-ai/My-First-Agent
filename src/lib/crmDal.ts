@@ -7,6 +7,7 @@ import type {
   Contact,
   ContactInput,
   Contract,
+  ContractFile,
   ContractInput,
   Employee,
   Opportunity,
@@ -276,6 +277,99 @@ export async function deleteContract(id: string): Promise<void> {
   const supabase = createAdminClient();
   const { error } = await supabase.from("crm_contracts").delete().eq("id", id).eq("user_id", OWNER_USER_ID);
   if (error) throw new Error(error.message);
+}
+
+// ---------- Contract file attachments ----------
+
+function mapContractFile(f: Record<string, unknown>): ContractFile {
+  return {
+    id: f.id as string,
+    contractId: f.contract_id as string,
+    fileName: f.file_name as string,
+    storagePath: f.storage_path as string,
+    contentType: f.content_type as string | null,
+    sizeBytes: Number(f.size_bytes),
+    uploadedAt: f.uploaded_at as string,
+  };
+}
+
+export async function listContractFiles(contractId: string): Promise<ContractFile[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("crm_contract_files")
+    .select("id, contract_id, file_name, storage_path, content_type, size_bytes, uploaded_at")
+    .eq("contract_id", contractId)
+    .eq("user_id", OWNER_USER_ID)
+    .order("uploaded_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(mapContractFile);
+}
+
+export async function uploadContractFile(contractId: string, file: File): Promise<ContractFile> {
+  const supabase = createAdminClient();
+  const storagePath = `${OWNER_USER_ID}/contracts/${contractId}/${randomUUID()}-${file.name}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(ATTACHMENTS_BUCKET)
+    .upload(storagePath, file, { contentType: file.type || undefined });
+  if (uploadError) throw new Error(uploadError.message);
+
+  const { data, error } = await supabase
+    .from("crm_contract_files")
+    .insert({
+      user_id: OWNER_USER_ID,
+      contract_id: contractId,
+      file_name: file.name,
+      storage_path: storagePath,
+      content_type: file.type || null,
+      size_bytes: file.size,
+    })
+    .select("id, contract_id, file_name, storage_path, content_type, size_bytes, uploaded_at")
+    .single();
+  if (error) {
+    await supabase.storage.from(ATTACHMENTS_BUCKET).remove([storagePath]);
+    throw new Error(error.message);
+  }
+  return mapContractFile(data);
+}
+
+export async function deleteContractFile(id: string): Promise<void> {
+  const supabase = createAdminClient();
+  const { data, error: fetchError } = await supabase
+    .from("crm_contract_files")
+    .select("storage_path")
+    .eq("id", id)
+    .eq("user_id", OWNER_USER_ID)
+    .maybeSingle();
+  if (fetchError) throw new Error(fetchError.message);
+  if (!data) return;
+
+  await supabase.storage.from(ATTACHMENTS_BUCKET).remove([data.storage_path as string]);
+
+  const { error } = await supabase
+    .from("crm_contract_files")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
+}
+
+export async function getContractFileDownloadUrl(id: string): Promise<string> {
+  const supabase = createAdminClient();
+  const { data, error: fetchError } = await supabase
+    .from("crm_contract_files")
+    .select("storage_path, file_name")
+    .eq("id", id)
+    .eq("user_id", OWNER_USER_ID)
+    .maybeSingle();
+  if (fetchError) throw new Error(fetchError.message);
+  if (!data) throw new Error("File not found.");
+
+  const { data: signed, error } = await supabase.storage
+    .from(ATTACHMENTS_BUCKET)
+    .createSignedUrl(data.storage_path as string, 300, { download: data.file_name as string });
+  if (error) throw new Error(error.message);
+  return signed.signedUrl;
 }
 
 // ---------- Opportunities ----------

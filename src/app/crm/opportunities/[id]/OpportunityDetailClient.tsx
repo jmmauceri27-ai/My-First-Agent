@@ -1,10 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
+import FilesCard from "@/components/FilesCard";
 import { inputClass } from "@/components/ui/formClasses";
 import { OPPORTUNITY_STAGES } from "@/lib/crmTypes";
 import type {
@@ -28,20 +29,6 @@ import {
   uploadOpportunityFileAction,
 } from "../../actions";
 import SitesCard from "./SitesCard";
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function fileIcon(fileName: string): string {
-  const ext = fileName.split(".").pop()?.toLowerCase();
-  if (ext === "pdf") return "📄";
-  if (ext === "xlsx" || ext === "xls" || ext === "csv") return "📊";
-  if (ext === "doc" || ext === "docx") return "📝";
-  return "📎";
-}
 
 export default function OpportunityDetailClient({
   opportunity,
@@ -80,12 +67,6 @@ export default function OpportunityDetailClient({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-  const [fileError, setFileError] = useState<string | null>(null);
-  const [pendingDownloadId, setPendingDownloadId] = useState<string | null>(null);
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   function toggleContact(id: string) {
     setContactIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
@@ -148,53 +129,6 @@ export default function OpportunityDetailClient({
       router.push("/crm");
     } finally {
       setDeleting(false);
-    }
-  }
-
-  async function handleUpload() {
-    const file = fileInputRef.current?.files?.[0];
-    if (!file) {
-      setFileError("Please choose a file.");
-      return;
-    }
-    setFileError(null);
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.set("file", file);
-      await uploadOpportunityFileAction(opportunity.id, formData);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      router.refresh();
-    } catch (e) {
-      setFileError(e instanceof Error ? e.message : "Failed to upload file.");
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  async function handleDownload(fileId: string) {
-    setPendingDownloadId(fileId);
-    setFileError(null);
-    try {
-      const url = await getOpportunityFileDownloadUrlAction(fileId);
-      window.open(url, "_blank");
-    } catch (e) {
-      setFileError(e instanceof Error ? e.message : "Failed to open file.");
-    } finally {
-      setPendingDownloadId(null);
-    }
-  }
-
-  async function handleDeleteFile(fileId: string) {
-    setPendingDeleteId(fileId);
-    setFileError(null);
-    try {
-      await deleteOpportunityFileAction(fileId, opportunity.id);
-      router.refresh();
-    } catch (e) {
-      setFileError(e instanceof Error ? e.message : "Failed to delete file.");
-    } finally {
-      setPendingDeleteId(null);
     }
   }
 
@@ -377,60 +311,19 @@ export default function OpportunityDetailClient({
         </Card>
 
         <div className="flex flex-col gap-6">
-          <Card className="flex flex-col p-5">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Files</h2>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              Attach proposals, quotes, site surveys — Excel, PDF, or any file type.
-            </p>
-
-            <div className="mt-4 flex flex-col gap-2">
-              <input
-                ref={fileInputRef}
-                type="file"
-                className="text-xs text-slate-700 file:mr-2 file:rounded-lg file:border-0 file:bg-brand-50 file:px-2.5 file:py-1 file:text-xs file:font-semibold file:text-brand-700 dark:text-slate-300 dark:file:bg-slate-800 dark:file:text-brand-400"
-              />
-              <Button type="button" variant="secondary" onClick={handleUpload} disabled={uploading}>
-                {uploading ? "Uploading…" : "Upload"}
-              </Button>
-              {fileError && <p className="text-xs text-critical">{fileError}</p>}
-            </div>
-
-            <div className="mt-4 flex flex-col divide-y divide-slate-100 dark:divide-slate-900">
-              {files.length === 0 ? (
-                <p className="py-2 text-xs text-slate-400">No files attached yet.</p>
-              ) : (
-                files.map((f) => (
-                  <div key={f.id} className="flex items-center justify-between gap-2 py-2">
-                    <div className="flex min-w-0 items-start gap-2">
-                      <span className="text-lg leading-none">{fileIcon(f.fileName)}</span>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-50">{f.fileName}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {formatSize(f.sizeBytes)} · {new Date(f.uploadedAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 gap-1">
-                      <button
-                        onClick={() => handleDownload(f.id)}
-                        disabled={pendingDownloadId === f.id}
-                        className="rounded-lg px-2 py-1 text-xs font-semibold text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-500/10"
-                      >
-                        {pendingDownloadId === f.id ? "…" : "Download"}
-                      </button>
-                      <button
-                        onClick={() => handleDeleteFile(f.id)}
-                        disabled={pendingDeleteId === f.id}
-                        className="rounded-lg px-2 py-1 text-xs font-semibold text-critical hover:bg-critical/10"
-                      >
-                        {pendingDeleteId === f.id ? "…" : "Delete"}
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </Card>
+          <FilesCard
+            title="Files"
+            description="Attach proposals, quotes, site surveys — Excel, PDF, or any file type."
+            files={files}
+            onUpload={async (file) => {
+              const formData = new FormData();
+              formData.set("file", file);
+              await uploadOpportunityFileAction(opportunity.id, formData);
+            }}
+            onDownload={(id) => getOpportunityFileDownloadUrlAction(id)}
+            onDelete={(id) => deleteOpportunityFileAction(id, opportunity.id)}
+            onChange={() => router.refresh()}
+          />
 
           <SitesCard opportunityId={opportunity.id} binding={siteBinding} rows={siteRows} />
         </div>

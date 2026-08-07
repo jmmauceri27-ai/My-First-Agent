@@ -1,13 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
+import FilesCard from "@/components/FilesCard";
 import { inputClass } from "@/components/ui/formClasses";
 import { RATE_FREQUENCIES } from "@/lib/crmTypes";
-import type { Company, Contract, ContractInput } from "@/lib/crmTypes";
-import { deleteContractAction, saveContractAction } from "../actions";
+import type { Company, Contract, ContractFile, ContractInput } from "@/lib/crmTypes";
+import {
+  deleteContractAction,
+  deleteContractFileAction,
+  getContractFileDownloadUrlAction,
+  listContractFilesAction,
+  saveContractAction,
+  uploadContractFileAction,
+} from "../actions";
 
 export default function ContractModal({
   contract,
@@ -31,6 +39,24 @@ export default function ContractModal({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [files, setFiles] = useState<ContractFile[]>([]);
+
+  useEffect(() => {
+    if (!contract) return;
+    let cancelled = false;
+    listContractFilesAction(contract.id).then((result) => {
+      if (!cancelled) setFiles(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [contract]);
+
+  function refreshFiles() {
+    if (!contract) return;
+    listContractFilesAction(contract.id).then(setFiles);
+  }
 
   async function handleSave() {
     setError(null);
@@ -166,6 +192,24 @@ export default function ContractModal({
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputClass} />
           </label>
         </div>
+
+        {contract && (
+          <div className="mt-4">
+            <FilesCard
+              title="Files"
+              description="Site lists, signed agreements, insurance docs — any file type."
+              files={files}
+              onUpload={async (file) => {
+                const formData = new FormData();
+                formData.set("file", file);
+                await uploadContractFileAction(contract.id, formData);
+              }}
+              onDownload={(id) => getContractFileDownloadUrlAction(id)}
+              onDelete={(id) => deleteContractFileAction(id)}
+              onChange={refreshFiles}
+            />
+          </div>
+        )}
 
         {error && <p className="mt-3 text-sm text-critical">{error}</p>}
 
