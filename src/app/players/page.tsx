@@ -12,14 +12,22 @@ export default async function PlayersPage() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between gap-2">
         <h1 className="text-2xl font-bold">Players</h1>
-        <Link
-          href="/players/import"
-          className="rounded-md border border-gridiron-500 px-3 py-2 text-sm font-medium text-gridiron-600 hover:bg-gridiron-50 dark:text-gridiron-100 dark:hover:bg-ink-800"
-        >
-          Bulk Import CSV
-        </Link>
+        <div className="flex items-center gap-2">
+          <a
+            href="/players/export"
+            className="rounded-md border border-gridiron-500 px-3 py-2 text-sm font-medium text-gridiron-600 hover:bg-gridiron-50 dark:text-gridiron-100 dark:hover:bg-ink-800"
+          >
+            Download Rankings
+          </a>
+          <Link
+            href="/players/import"
+            className="rounded-md border border-gridiron-500 px-3 py-2 text-sm font-medium text-gridiron-600 hover:bg-gridiron-50 dark:text-gridiron-100 dark:hover:bg-ink-800"
+          >
+            Bulk Import CSV
+          </Link>
+        </div>
       </div>
       {players.length === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 p-10 text-center dark:border-zinc-700">

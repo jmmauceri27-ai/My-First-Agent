@@ -57,12 +57,53 @@ export function normalizePlayerName(name: string): string {
     .replace(/\s+(jr|sr|ii|iii|iv|v)$/i, "");
 }
 
+// Quotes a single CSV field if it contains a comma, quote, or newline —
+// doubling any internal quotes — so exported rows round-trip cleanly
+// through spreadsheet apps and back through our own quote-aware parser.
+export function toCsvField(value: string | number | null | undefined): string {
+  const s = value == null ? "" : String(value);
+  if (/[",\n\r]/.test(s)) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+}
+
+export function toCsvRow(values: readonly (string | number | null | undefined)[]): string {
+  return values.map(toCsvField).join(",");
+}
+
+// Splits raw CSV text into records, only breaking on a newline when it's
+// outside a quoted field — a naive `split(/\r?\n/)` would otherwise chop a
+// quoted field's embedded newline (e.g. a multi-line bio) into two broken
+// records. A `"` always toggles quoted-state, including in an escaped `""`
+// pair, since two toggles net no change — exactly the behavior we want.
+function splitCsvRecords(raw: string): string[] {
+  const records: string[] = [];
+  let cur = "";
+  let inQuotes = false;
+  for (let i = 0; i < raw.length; i++) {
+    const ch = raw[i];
+    if (ch === '"') {
+      inQuotes = !inQuotes;
+      cur += ch;
+    } else if ((ch === "\n" || ch === "\r") && !inQuotes) {
+      if (ch === "\r" && raw[i + 1] === "\n") i++;
+      records.push(cur);
+      cur = "";
+    } else {
+      cur += ch;
+    }
+  }
+  if (cur !== "") records.push(cur);
+  return records;
+}
+
 export function parseDelimited(
   raw: string,
   expectedColumns: readonly string[]
 ): { columns: string[]; dataLines: string[]; delimiter: string } {
   const trimmed = raw.trim();
-  const lines = trimmed.split(/\r?\n/).filter((l) => l.trim() !== "");
+  const lines = splitCsvRecords(trimmed).filter((l) => l.trim() !== "");
   if (lines.length === 0) return { columns: [], dataLines: [], delimiter: "," };
 
   const delimiter = detectDelimiter(lines[0]);
