@@ -6,7 +6,7 @@ import { listOpportunities } from "@/lib/crmDal";
 import { OPPORTUNITY_STAGES } from "@/lib/crmTypes";
 import Card from "@/components/ui/Card";
 
-const CLOSED_STAGES = new Set(["Closed Won", "Closed Lost"]);
+const OPEN_STAGES = new Set(["Lead", "Site Walk/Measuring", "RFP Submitted", "Pricing/Negotiation"]);
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat("en-US", {
@@ -27,10 +27,10 @@ export default async function HomePage() {
   for (const o of opportunities) stageCounts.set(o.stage, (stageCounts.get(o.stage) ?? 0) + 1);
 
   const openPipelineValue = opportunities
-    .filter((o) => !CLOSED_STAGES.has(o.stage))
+    .filter((o) => OPEN_STAGES.has(o.stage))
     .reduce((sum, o) => sum + (o.amount ?? 0), 0);
 
-  const openCount = opportunities.filter((o) => !CLOSED_STAGES.has(o.stage)).length;
+  const openCount = opportunities.filter((o) => OPEN_STAGES.has(o.stage)).length;
 
   const recentOpportunities = [...opportunities]
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
@@ -56,9 +56,9 @@ export default async function HomePage() {
             <p className="mt-1.5 text-3xl font-extrabold tabular-nums text-slate-50">{openCount}</p>
           </Card>
           <Card className="border-t-4 p-5" style={{ borderTopColor: "#eda100" }}>
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Closed won</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Awarded</p>
             <p className="mt-1.5 text-3xl font-extrabold tabular-nums text-slate-50">
-              {stageCounts.get("Closed Won") ?? 0}
+              {stageCounts.get("Awarded") ?? 0}
             </p>
           </Card>
         </div>

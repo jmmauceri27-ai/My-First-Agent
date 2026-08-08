@@ -1,12 +1,15 @@
 import type { DatasetRecord } from "./types";
 
 export const OPPORTUNITY_STAGES = [
-  "Prospecting",
-  "Qualified",
-  "Proposal Sent",
-  "Negotiation",
-  "Closed Won",
-  "Closed Lost",
+  "Lead",
+  "Site Walk/Measuring",
+  "RFP Submitted",
+  "Pricing/Negotiation",
+  "Awarded",
+  "Onboarding",
+  "Active Contract",
+  "Renewal",
+  "Lost",
 ] as const;
 
 export type OpportunityStage = (typeof OPPORTUNITY_STAGES)[number];
