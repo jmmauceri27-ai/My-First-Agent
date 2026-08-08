@@ -6,18 +6,9 @@ import { toCsvRow } from "@/lib/csv";
 // A plain route handler under a normal page path stays covered by it.
 export const dynamic = "force-dynamic";
 
-const CSV_COLUMNS = [
-  "name",
-  "position",
-  "team",
-  "byeWeek",
-  "overallRank",
-  "positionRank",
-  "adp",
-  "tier",
-  "tags",
-  "bio",
-] as const;
+// positionRank isn't exported — it's derived from overallRank on import, so
+// there's nothing to edit and re-upload for it.
+const CSV_COLUMNS = ["name", "position", "team", "byeWeek", "overallRank", "adp", "tier", "tags", "bio"] as const;
 
 export async function GET() {
   const players = await prisma.player.findMany({
@@ -33,7 +24,6 @@ export async function GET() {
         p.team,
         p.byeWeek,
         p.overallRank,
-        p.positionRank,
         p.adp,
         p.tier,
         p.tags.join("|"),

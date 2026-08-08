@@ -6,6 +6,7 @@ import { importPlayersFromCsv, type CsvImportResult } from "@/lib/importPlayers"
 import { importActualStatsFromCsv, type ActualStatsImportResult } from "@/lib/importActualStats";
 import { importGameLogsFromCsv, type GameLogImportResult } from "@/lib/importGameLogs";
 import { importAdpFromCsv, type AdpImportResult } from "@/lib/importAdp";
+import { recomputePositionRanks } from "@/lib/playerRanks";
 
 export type { CsvImportResult, ActualStatsImportResult, GameLogImportResult, AdpImportResult };
 
@@ -41,7 +42,6 @@ export async function savePlayer(formData: FormData): Promise<void> {
     team: optStr(formData.get("team")),
     byeWeek: optInt(formData.get("byeWeek")),
     overallRank: optInt(formData.get("overallRank")),
-    positionRank: optInt(formData.get("positionRank")),
     adp: optFloat(formData.get("adp")),
     espnAdp: optFloat(formData.get("espnAdp")),
     sleeperAdp: optFloat(formData.get("sleeperAdp")),
@@ -56,6 +56,7 @@ export async function savePlayer(formData: FormData): Promise<void> {
   } else {
     await prisma.player.create({ data });
   }
+  await recomputePositionRanks();
 
   revalidatePath("/players");
   revalidatePath("/board");
@@ -88,6 +89,7 @@ export async function reorderPlayers(orderedIds: string[]): Promise<void> {
   await prisma.$transaction(
     orderedIds.map((id, idx) => prisma.player.update({ where: { id }, data: { overallRank: idx + 1 } }))
   );
+  await recomputePositionRanks();
   revalidatePath("/players");
   revalidatePath("/board");
   revalidatePath("/draft");

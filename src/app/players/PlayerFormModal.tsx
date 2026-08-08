@@ -107,16 +107,9 @@ export default function PlayerFormModal({ player }: { player?: Player }) {
                       defaultValue={player?.overallRank ?? ""}
                       className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-ink-800"
                     />
-                  </label>
-
-                  <label className="text-sm font-medium">
-                    Position Rank
-                    <input
-                      type="number"
-                      name="positionRank"
-                      defaultValue={player?.positionRank ?? ""}
-                      className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-ink-800"
-                    />
+                    <span className="mt-0.5 block text-xs font-normal text-zinc-400">
+                      Position Rank is calculated from this automatically.
+                    </span>
                   </label>
 
                   <label className="text-sm font-medium">

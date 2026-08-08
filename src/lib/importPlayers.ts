@@ -1,19 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import { parseDelimited, splitQuotedRow, normalizePlayerName } from "@/lib/csv";
+import { recomputePositionRanks } from "@/lib/playerRanks";
 
-const CSV_COLUMNS = [
-  "name",
-  "position",
-  "team",
-  "byeWeek",
-  "overallRank",
-  "positionRank",
-  "adp",
-  "tier",
-  "tags",
-  "bio",
-] as const;
+// positionRank isn't a CSV column — it's derived from overallRank after
+// every import (see recomputePositionRanks), so you only ever have to
+// maintain one ranking, not a second one per position.
+const CSV_COLUMNS = ["name", "position", "team", "byeWeek", "overallRank", "adp", "tier", "tags", "bio"] as const;
 
 export type CsvImportResult = { created: number; updated: number; errors: string[] };
 
@@ -49,7 +42,6 @@ export async function importPlayersFromCsv(raw: string): Promise<CsvImportResult
       team: row.team || null,
       byeWeek: row.byeWeek ? parseInt(row.byeWeek, 10) : null,
       overallRank: row.overallRank ? parseInt(row.overallRank, 10) : null,
-      positionRank: row.positionRank ? parseInt(row.positionRank, 10) : null,
       adp: row.adp ? parseFloat(row.adp) : null,
       tier: row.tier ? parseInt(row.tier, 10) : null,
       tags: row.tags ? row.tags.split("|").map((t) => t.trim()).filter(Boolean) : [],
@@ -85,6 +77,10 @@ export async function importPlayersFromCsv(raw: string): Promise<CsvImportResult
       toUpdate.map((u) => prisma.player.update({ where: { id: u.id }, data: u.data }))
     );
     result.updated = toUpdate.length;
+  }
+
+  if (toCreate.length > 0 || toUpdate.length > 0) {
+    await recomputePositionRanks();
   }
 
   return result;
