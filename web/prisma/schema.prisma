@@ -1,0 +1,115 @@
+// Prisma schema for the window & door e-commerce site.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ProductCategory {
+  WINDOW
+  DOOR
+  DOOR_SLAB
+  SCREEN
+  SKYLIGHT
+  ACCESSORY
+  OTHER
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FULFILLED
+  CANCELED
+  REFUNDED
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+}
+
+model Product {
+  id          String          @id @default(cuid())
+  sku         String          @unique
+  slug        String          @unique
+  name        String
+  category    ProductCategory @default(OTHER)
+  description String?
+  price       Decimal?        @db.Decimal(10, 2)
+  quantity    Int             @default(1)
+  published   Boolean         @default(false)
+
+  // Fields carried over from the manufacturer order / "graveyard" spreadsheet.
+  poNumber      String?
+  jobNumber     String?
+  lineNumbers   String[]
+  callSize      String?
+  exteriorColor String?
+  interiorColor String?
+  handing       String?
+  option1       String?
+  option2       String?
+  option3       String?
+  jambDepth     String?
+  miscNotes     String?
+
+  parentId String?
+  parent   Product?  @relation("ProductAddOns", fields: [parentId], references: [id], onDelete: SetNull)
+  addOns   Product[] @relation("ProductAddOns")
+
+  images     ProductImage[]
+  orderItems OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+  @@index([published])
+  @@index([parentId])
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  altText   String?
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  stripeSessionId String?     @unique
+  status          OrderStatus @default(PENDING)
+  customerEmail   String
+  customerName    String?
+  shippingAddress Json?
+  subtotal        Decimal     @db.Decimal(10, 2)
+  total           Decimal     @db.Decimal(10, 2)
+  items           OrderItem[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+
+  @@index([orderId])
+  @@index([productId])
+}
