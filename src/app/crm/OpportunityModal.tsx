@@ -80,7 +80,10 @@ export default function OpportunityModal({
   async function handleAddEmployee() {
     if (!newEmployeeName.trim()) return;
     const id = await saveEmployeeAction(newEmployeeName.trim());
-    setLocalEmployees((prev) => [...prev, { id, name: newEmployeeName.trim(), createdAt: new Date().toISOString() }]);
+    setLocalEmployees((prev) => [
+      ...prev,
+      { id, name: newEmployeeName.trim(), email: null, phone: null, title: null, createdAt: new Date().toISOString() },
+    ]);
     setSalesManagerId(id);
     setNewEmployeeName("");
     setAddingEmployee(false);

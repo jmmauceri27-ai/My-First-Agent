@@ -5,7 +5,7 @@ import "leaflet/dist/leaflet.css";
 import { DEFAULT_PIN_COLOR } from "@/lib/siteMapColor";
 
 export interface MapPin {
-  rowId: number;
+  id: string;
   lat: number;
   lng: number;
   label: string;
@@ -32,7 +32,7 @@ function buildTooltipContent(pin: MapPin): HTMLElement {
   return el;
 }
 
-export default function SiteMap({ pins, onPinClick }: { pins: MapPin[]; onPinClick: (rowId: number) => void }) {
+export default function SiteMap({ pins, onPinClick }: { pins: MapPin[]; onPinClick: (id: string) => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
   const markersLayerRef = useRef<import("leaflet").LayerGroup | null>(null);
@@ -72,7 +72,7 @@ export default function SiteMap({ pins, onPinClick }: { pins: MapPin[]; onPinCli
           fillOpacity: 0.9,
         });
         marker.bindTooltip(buildTooltipContent(pin), { direction: "top", offset: [0, -8] });
-        marker.on("click", () => onPinClickRef.current(pin.rowId));
+        marker.on("click", () => onPinClickRef.current(pin.id));
         marker.addTo(markersLayer);
         bounds.push([pin.lat, pin.lng]);
       }

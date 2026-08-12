@@ -10,14 +10,12 @@ import type {
   ContractFile,
   ContractInput,
   Employee,
+  EmployeeInput,
   Opportunity,
   OpportunityFile,
   OpportunityInput,
-  OpportunitySiteBinding,
-  OpportunitySiteRow,
   OpportunityStage,
 } from "./crmTypes";
-import type { DatasetRecord } from "./types";
 
 const ATTACHMENTS_BUCKET = "crm-attachments";
 
@@ -42,6 +40,29 @@ export async function listCompanies(): Promise<Company[]> {
     notes: c.notes as string | null,
     createdAt: c.created_at as string,
   }));
+}
+
+export async function getCompany(id: string): Promise<Company | null> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("crm_companies")
+    .select("id, name, address, city, state, website, notes, created_at")
+    .eq("id", id)
+    .eq("user_id", OWNER_USER_ID)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+
+  return {
+    id: data.id as string,
+    name: data.name as string,
+    address: data.address as string | null,
+    city: data.city as string | null,
+    state: data.state as string | null,
+    website: data.website as string | null,
+    notes: data.notes as string | null,
+    createdAt: data.created_at as string,
+  };
 }
 
 export async function createCompany(input: CompanyInput): Promise<string> {
@@ -159,20 +180,40 @@ export async function deleteContact(id: string): Promise<void> {
 
 // ---------- Employees ----------
 
+function mapEmployee(e: Record<string, unknown>): Employee {
+  return {
+    id: e.id as string,
+    name: e.name as string,
+    email: e.email as string | null,
+    phone: e.phone as string | null,
+    title: e.title as string | null,
+    createdAt: e.created_at as string,
+  };
+}
+
 export async function listEmployees(): Promise<Employee[]> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("crm_employees")
-    .select("id, name, created_at")
+    .select("id, name, email, phone, title, created_at")
     .eq("user_id", OWNER_USER_ID)
     .order("name", { ascending: true });
   if (error) throw new Error(error.message);
 
-  return (data ?? []).map((e) => ({
-    id: e.id as string,
-    name: e.name as string,
-    createdAt: e.created_at as string,
-  }));
+  return (data ?? []).map(mapEmployee);
+}
+
+export async function getEmployee(id: string): Promise<Employee | null> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("crm_employees")
+    .select("id, name, email, phone, title, created_at")
+    .eq("id", id)
+    .eq("user_id", OWNER_USER_ID)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  return mapEmployee(data);
 }
 
 export async function createEmployee(name: string): Promise<string> {
@@ -184,6 +225,27 @@ export async function createEmployee(name: string): Promise<string> {
     .single();
   if (error) throw new Error(error.message);
   return data.id as string;
+}
+
+export async function createEmployeeWithDetails(input: EmployeeInput): Promise<string> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("crm_employees")
+    .insert({ user_id: OWNER_USER_ID, name: input.name, email: input.email, phone: input.phone, title: input.title })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return data.id as string;
+}
+
+export async function updateEmployee(id: string, input: EmployeeInput): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("crm_employees")
+    .update({ name: input.name, email: input.email, phone: input.phone, title: input.title })
+    .eq("id", id)
+    .eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
 }
 
 export async function deleteEmployee(id: string): Promise<void> {
@@ -640,111 +702,4 @@ export async function getOpportunityFileDownloadUrl(id: string): Promise<string>
     .createSignedUrl(data.storage_path as string, 300, { download: data.file_name as string });
   if (error) throw new Error(error.message);
   return signed.signedUrl;
-}
-
-// ---------- Opportunity sites ----------
-// A dedicated, per-opportunity site list (e.g. the properties covered by an
-// RFP), separate from Procurement's shared datasets. Re-uploading replaces
-// the whole list; crm_opportunities.site_count is kept in sync with the
-// real row count so it stops being a manually-typed guess once real data
-// exists.
-
-export async function getOpportunitySiteBinding(opportunityId: string): Promise<OpportunitySiteBinding | null> {
-  const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("crm_opportunity_site_bindings")
-    .select("lat_column, lng_column, label_column")
-    .eq("opportunity_id", opportunityId)
-    .eq("user_id", OWNER_USER_ID)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) return null;
-
-  return {
-    latColumn: data.lat_column as string,
-    lngColumn: data.lng_column as string,
-    labelColumn: (data.label_column as string | null) ?? null,
-  };
-}
-
-export async function saveOpportunitySiteBinding(opportunityId: string, binding: OpportunitySiteBinding): Promise<void> {
-  const supabase = createAdminClient();
-  const { error } = await supabase.from("crm_opportunity_site_bindings").upsert(
-    {
-      user_id: OWNER_USER_ID,
-      opportunity_id: opportunityId,
-      lat_column: binding.latColumn,
-      lng_column: binding.lngColumn,
-      label_column: binding.labelColumn,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "opportunity_id" },
-  );
-  if (error) throw new Error(error.message);
-}
-
-export async function listOpportunitySites(opportunityId: string): Promise<OpportunitySiteRow[]> {
-  const supabase = createAdminClient();
-  const pageSize = 1000;
-  let from = 0;
-  const rows: OpportunitySiteRow[] = [];
-
-  for (;;) {
-    const { data, error } = await supabase
-      .from("crm_opportunity_sites")
-      .select("id, data")
-      .eq("opportunity_id", opportunityId)
-      .eq("user_id", OWNER_USER_ID)
-      .order("row_index", { ascending: true })
-      .range(from, from + pageSize - 1);
-    if (error) throw new Error(error.message);
-    if (!data || data.length === 0) break;
-    rows.push(...(data as { id: number; data: DatasetRecord }[]));
-    if (data.length < pageSize) break;
-    from += pageSize;
-  }
-
-  return rows;
-}
-
-/** Fully replaces an opportunity's site list and syncs crm_opportunities.site_count to match. */
-export async function replaceOpportunitySites(opportunityId: string, rows: DatasetRecord[]): Promise<void> {
-  const supabase = createAdminClient();
-
-  const { error: deleteError } = await supabase
-    .from("crm_opportunity_sites")
-    .delete()
-    .eq("opportunity_id", opportunityId)
-    .eq("user_id", OWNER_USER_ID);
-  if (deleteError) throw new Error(deleteError.message);
-
-  const batchSize = 500;
-  for (let i = 0; i < rows.length; i += batchSize) {
-    const batch = rows.slice(i, i + batchSize).map((row, idx) => ({
-      opportunity_id: opportunityId,
-      user_id: OWNER_USER_ID,
-      row_index: i + idx,
-      data: row,
-    }));
-    const { error: insertError } = await supabase.from("crm_opportunity_sites").insert(batch);
-    if (insertError) throw new Error(insertError.message);
-  }
-
-  const { error: countError } = await supabase
-    .from("crm_opportunities")
-    .update({ site_count: rows.length, updated_at: new Date().toISOString() })
-    .eq("id", opportunityId)
-    .eq("user_id", OWNER_USER_ID);
-  if (countError) throw new Error(countError.message);
-}
-
-export async function updateOpportunitySiteFields(opportunityId: string, rowId: number, data: DatasetRecord): Promise<void> {
-  const supabase = createAdminClient();
-  const { error } = await supabase
-    .from("crm_opportunity_sites")
-    .update({ data })
-    .eq("id", rowId)
-    .eq("opportunity_id", opportunityId)
-    .eq("user_id", OWNER_USER_ID);
-  if (error) throw new Error(error.message);
 }

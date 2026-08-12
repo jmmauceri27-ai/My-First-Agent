@@ -1,5 +1,3 @@
-import type { DatasetRecord } from "./types";
-
 export const OPPORTUNITY_STAGES = [
   "Lead",
   "Site Walk/Measuring",
@@ -40,7 +38,17 @@ export interface Contact {
 export interface Employee {
   id: string;
   name: string;
+  email: string | null;
+  phone: string | null;
+  title: string | null;
   createdAt: string;
+}
+
+export interface EmployeeInput {
+  name: string;
+  email: string | null;
+  phone: string | null;
+  title: string | null;
 }
 
 export interface Opportunity {
@@ -149,15 +157,4 @@ export interface ContractFile {
   contentType: string | null;
   sizeBytes: number;
   uploadedAt: string;
-}
-
-export interface OpportunitySiteBinding {
-  latColumn: string;
-  lngColumn: string;
-  labelColumn: string | null;
-}
-
-export interface OpportunitySiteRow {
-  id: number;
-  data: DatasetRecord;
 }

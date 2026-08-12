@@ -6,6 +6,7 @@ import {
   createContact,
   createContract,
   createEmployee,
+  createEmployeeWithDetails,
   createOpportunity,
   deleteCompany,
   deleteContact,
@@ -14,23 +15,21 @@ import {
   deleteEmployee,
   deleteOpportunity,
   deleteOpportunityFile,
+  getCompany,
   getContractFileDownloadUrl,
+  getEmployee,
   getOpportunityFileDownloadUrl,
-  getOpportunitySiteBinding,
   listCompanies,
   listContacts,
   listContractFiles,
   listEmployees,
-  listOpportunitySites,
   renameContractFile,
   renameOpportunityFile,
-  replaceOpportunitySites,
-  saveOpportunitySiteBinding,
   updateCompany,
   updateContact,
   updateContract,
+  updateEmployee,
   updateOpportunity,
-  updateOpportunitySiteFields,
   updateOpportunityStage,
   uploadContractFile,
   uploadOpportunityFile,
@@ -43,13 +42,10 @@ import type {
   ContractFile,
   ContractInput,
   Employee,
+  EmployeeInput,
   OpportunityInput,
-  OpportunitySiteBinding,
-  OpportunitySiteRow,
   OpportunityStage,
 } from "@/lib/crmTypes";
-import type { DatasetRecord } from "@/lib/types";
-import { parseBuffer } from "@/lib/parse";
 
 export async function saveOpportunityAction(id: string | null, input: OpportunityInput): Promise<void> {
   if (id) {
@@ -197,6 +193,18 @@ export async function saveEmployeeAction(name: string): Promise<string> {
 export async function deleteEmployeeAction(id: string): Promise<void> {
   await deleteEmployee(id);
   revalidatePath("/crm");
+  revalidatePath("/network/employees");
+}
+
+export async function createEmployeeWithDetailsAction(input: EmployeeInput): Promise<{ id?: string; error?: string }> {
+  try {
+    const id = await createEmployeeWithDetails(input);
+    revalidatePath("/crm");
+    revalidatePath("/network/employees");
+    return { id };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to create employee." };
+  }
 }
 
 export async function uploadOpportunityFileAction(
@@ -251,56 +259,16 @@ export async function renameOpportunityFileAction(
   return {};
 }
 
-export async function getOpportunitySiteBindingAction(opportunityId: string): Promise<OpportunitySiteBinding | null> {
-  return getOpportunitySiteBinding(opportunityId);
+export async function getCompanyAction(id: string): Promise<Company | null> {
+  return getCompany(id);
 }
 
-export async function saveOpportunitySiteBindingAction(
-  opportunityId: string,
-  binding: OpportunitySiteBinding,
-): Promise<void> {
-  await saveOpportunitySiteBinding(opportunityId, binding);
-  revalidatePath(`/crm/opportunities/${opportunityId}`);
+export async function getEmployeeAction(id: string): Promise<Employee | null> {
+  return getEmployee(id);
 }
 
-export async function fetchOpportunitySitesAction(opportunityId: string): Promise<OpportunitySiteRow[]> {
-  return listOpportunitySites(opportunityId);
-}
-
-export async function updateOpportunitySiteRowAction(
-  opportunityId: string,
-  rowId: number,
-  data: DatasetRecord,
-): Promise<{ error?: string }> {
-  try {
-    await updateOpportunitySiteFields(opportunityId, rowId, data);
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : "Failed to save site." };
-  }
-  revalidatePath(`/crm/opportunities/${opportunityId}`);
-  return {};
-}
-
-export async function uploadOpportunitySitesAction(
-  opportunityId: string,
-  formData: FormData,
-): Promise<{ error?: string }> {
-  const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) {
-    return { error: "Please choose a file." };
-  }
-  try {
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const sheets = await parseBuffer(buffer, file.name);
-    const rows = sheets.find((s) => s.rows.length > 0)?.rows ?? [];
-    if (rows.length === 0) {
-      return { error: "No data rows were found in this file." };
-    }
-    await replaceOpportunitySites(opportunityId, rows);
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : "Failed to upload sites." };
-  }
-  revalidatePath(`/crm/opportunities/${opportunityId}`);
+export async function updateEmployeeAction(id: string, input: EmployeeInput): Promise<void> {
+  await updateEmployee(id, input);
   revalidatePath("/crm");
-  return {};
+  revalidatePath(`/network/employees/${id}`);
 }

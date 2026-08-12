@@ -1,5 +1,4 @@
 import { CHART_COLORS_LIGHT, STATUS_COLORS } from "./chartPalette";
-import { MARGIN_METRIC_KEY, type DatasetRecord, type SiteMapBinding } from "./types";
 
 /** Fallback pin color for rows with no color-by value under the active view. */
 export const NEUTRAL_PIN_COLOR = "#898781";
@@ -29,23 +28,7 @@ export function gradientColorForRatio(ratio: number): string {
   return lerpColor(STATUS_COLORS.warning, STATUS_COLORS.good, (t - 0.5) / 0.5);
 }
 
-/** Resolves the raw value a color-by view should read for a row: either a real column, or the computed margin. */
-export function resolveColorMetric(
-  row: DatasetRecord,
-  colorColumn: string,
-  binding: SiteMapBinding,
-): number | string | boolean | null {
-  if (colorColumn === MARGIN_METRIC_KEY) {
-    if (!binding.contractValueColumn || !binding.subPriceColumn) return null;
-    const contractValue = Number(row[binding.contractValueColumn]);
-    const subPrice = Number(row[binding.subPriceColumn]);
-    if (!Number.isFinite(contractValue) || !Number.isFinite(subPrice)) return null;
-    return contractValue - subPrice;
-  }
-  const raw = row[colorColumn];
-  if (raw === null || raw === undefined || raw === "") return null;
-  return raw;
-}
+export const MARGIN_METRIC_LABEL = "Margin ($)";
 
 const CURRENCY_FORMATTER = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -54,11 +37,11 @@ const CURRENCY_FORMATTER = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 });
 
-/** Computes Contract Value - Sub Price for a row, or null if either column isn't mapped or isn't numeric. */
-export function computeMargin(row: DatasetRecord, binding: SiteMapBinding): number | null {
-  const raw = resolveColorMetric(row, MARGIN_METRIC_KEY, binding);
-  const num = raw === null ? NaN : Number(raw);
-  return Number.isFinite(num) ? num : null;
+/** Computes Contract Value - Sub Price for a site, or null if either value is missing/non-numeric. */
+export function computeSiteMargin(contractValue: number | null, subPrice: number | null): number | null {
+  if (contractValue === null || subPrice === null) return null;
+  if (!Number.isFinite(contractValue) || !Number.isFinite(subPrice)) return null;
+  return contractValue - subPrice;
 }
 
 export function formatCurrency(value: number): string {
@@ -67,6 +50,16 @@ export function formatCurrency(value: number): string {
 
 export function formatSquareFeet(value: number): string {
   return `${Math.round(value).toLocaleString("en-US")} sq. ft`;
+}
+
+/** Strips currency formatting ($, commas) back to a plain numeric string. */
+export function parseCurrencyInput(value: string): string {
+  return value.replace(/[^0-9.-]/g, "");
+}
+
+/** Strips the "sq. ft" suffix and commas back to a plain numeric string. */
+export function parseMeasurementInput(value: string): string {
+  return value.replace(/sq\.?\s*ft\.?/i, "").replace(/[^0-9.-]/g, "");
 }
 
 /** Assigns each distinct value a fixed categorical color, in first-seen order; overflow past 8 folds into "Other". */

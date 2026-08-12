@@ -8,17 +8,8 @@ import Card from "@/components/ui/Card";
 import FilesCard from "@/components/FilesCard";
 import { inputClass } from "@/components/ui/formClasses";
 import { OPPORTUNITY_STAGES } from "@/lib/crmTypes";
-import type {
-  Company,
-  Contact,
-  Employee,
-  Opportunity,
-  OpportunityFile,
-  OpportunityInput,
-  OpportunitySiteBinding,
-  OpportunitySiteRow,
-  OpportunityStage,
-} from "@/lib/crmTypes";
+import type { Company, Contact, Employee, Opportunity, OpportunityFile, OpportunityInput, OpportunityStage } from "@/lib/crmTypes";
+import type { Site } from "@/lib/networkTypes";
 import {
   deleteEmployeeAction,
   deleteOpportunityAction,
@@ -37,16 +28,14 @@ export default function OpportunityDetailClient({
   contacts,
   employees,
   files,
-  siteBinding,
-  siteRows,
+  sites,
 }: {
   opportunity: Opportunity;
   companies: Company[];
   contacts: Contact[];
   employees: Employee[];
   files: OpportunityFile[];
-  siteBinding: OpportunitySiteBinding | null;
-  siteRows: OpportunitySiteRow[];
+  sites: Site[];
 }) {
   const router = useRouter();
   const [name, setName] = useState(opportunity.name);
@@ -76,7 +65,10 @@ export default function OpportunityDetailClient({
   async function handleAddEmployee() {
     if (!newEmployeeName.trim()) return;
     const id = await saveEmployeeAction(newEmployeeName.trim());
-    setLocalEmployees((prev) => [...prev, { id, name: newEmployeeName.trim(), createdAt: new Date().toISOString() }]);
+    setLocalEmployees((prev) => [
+      ...prev,
+      { id, name: newEmployeeName.trim(), email: null, phone: null, title: null, createdAt: new Date().toISOString() },
+    ]);
     setSalesManagerId(id);
     setNewEmployeeName("");
     setAddingEmployee(false);
@@ -236,7 +228,7 @@ export default function OpportunityDetailClient({
             <div className="grid grid-cols-2 gap-3">
               <label className="flex flex-col gap-1 text-sm">
                 <span className="font-medium text-slate-700 dark:text-slate-300"># of sites</span>
-                {siteBinding ? (
+                {sites.length > 0 ? (
                   <div className={`${inputClass} flex items-center bg-slate-100 dark:bg-slate-900`}>
                     {siteCount || 0}
                     <span className="ml-1.5 text-xs text-slate-400">(from uploaded sites, see below)</span>
@@ -327,7 +319,7 @@ export default function OpportunityDetailClient({
             onChange={() => router.refresh()}
           />
 
-          <SitesCard opportunityId={opportunity.id} binding={siteBinding} rows={siteRows} />
+          <SitesCard opportunityId={opportunity.id} companyId={opportunity.companyId} sites={sites} />
         </div>
       </div>
     </div>

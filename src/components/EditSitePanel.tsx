@@ -4,18 +4,8 @@ import { useState } from "react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
-import { formatCurrency, formatSquareFeet } from "@/lib/siteMapColor";
+import { formatCurrency, formatSquareFeet, parseCurrencyInput, parseMeasurementInput } from "@/lib/siteMapColor";
 import type { DatasetRecord } from "@/lib/types";
-
-/** Strips currency formatting ($, commas) back to a plain numeric string. */
-function parseCurrencyInput(value: string): string {
-  return value.replace(/[^0-9.-]/g, "");
-}
-
-/** Strips the "sq. ft" suffix and commas back to a plain numeric string. */
-function parseMeasurementInput(value: string): string {
-  return value.replace(/sq\.?\s*ft\.?/i, "").replace(/[^0-9.-]/g, "");
-}
 
 function initialFieldValue(
   key: string,
