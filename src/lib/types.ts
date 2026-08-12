@@ -146,56 +146,6 @@ export interface DashboardTemplate {
   filterRoles?: string[];
 }
 
-export interface SiteMapBinding {
-  latColumn: string;
-  lngColumn: string;
-  labelColumn: string | null;
-  popupColumns: string[];
-  contractValueColumn: string | null;
-  subPriceColumn: string | null;
-  filterColumns: string[];
-  measurementColumns: string[];
-  /** Column on this dataset holding a vendor's name, e.g. "Vendor Name". */
-  vendorLinkColumn: string | null;
-  /** Dataset to look the vendor up in, e.g. a "Snow Vendors" dataset. */
-  vendorLinkDatasetId: string | null;
-  /** Column on the linked dataset to match vendorLinkColumn's value against. */
-  vendorLinkKeyColumn: string | null;
-}
-
-export interface DatasetRowWithId {
-  id: number;
-  data: DatasetRecord;
-}
-
-/** Sentinel "column" for the computed Contract Value − Sub Price metric. */
-export const MARGIN_METRIC_KEY = "__margin__";
-export const MARGIN_METRIC_LABEL = "Margin ($)";
-
-export type SiteMapColorMode = "gradient" | "categorical";
-
-export interface SiteMapView {
-  id: string;
-  name: string;
-  colorColumn: string;
-  colorMode: SiteMapColorMode;
-}
-
-export interface VendorMapBinding {
-  latColumn: string;
-  lngColumn: string;
-  labelColumn: string | null;
-  popupColumns: string[];
-  filterColumns: string[];
-}
-
-export interface VendorMapView {
-  id: string;
-  name: string;
-  colorColumn: string;
-  colorMode: SiteMapColorMode;
-}
-
 export const DATASET_CATEGORIES = [
   "Work Orders",
   "Invoices",

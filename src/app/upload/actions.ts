@@ -184,6 +184,5 @@ export async function renameDatasetAction(id: string, displayName: string): Prom
   revalidatePath("/upload");
   revalidatePath("/");
   revalidatePath("/dashboards");
-  revalidatePath("/procurement");
   return {};
 }

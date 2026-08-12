@@ -7,8 +7,9 @@ import NavBar from "./NavBar";
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const showNav = pathname !== "/login";
-  const isWide = pathname === "/crm" || pathname === "/procurement";
-  const isFullBleed = pathname === "/procurement";
+  const isNetworkMapRoute = pathname === "/network" || pathname === "/network/sites";
+  const isWide = pathname === "/crm" || isNetworkMapRoute;
+  const isFullBleed = isNetworkMapRoute;
 
   return (
     <div
