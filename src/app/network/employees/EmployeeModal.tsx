@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
+import { DEPARTMENTS } from "@/lib/crmTypes";
 import type { EmployeeInput } from "@/lib/crmTypes";
 import { createEmployeeWithDetailsAction } from "@/app/crm/actions";
 
@@ -14,6 +15,7 @@ export default function EmployeeModal({ onClose, onSaved }: { onClose: () => voi
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [title, setTitle] = useState("");
+  const [department, setDepartment] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,6 +32,7 @@ export default function EmployeeModal({ onClose, onSaved }: { onClose: () => voi
         email: email.trim() || null,
         phone: phone.trim() || null,
         title: title.trim() || null,
+        department: department || null,
       };
       const result = await createEmployeeWithDetailsAction(input);
       if (result.error || !result.id) {
@@ -57,6 +60,17 @@ export default function EmployeeModal({ onClose, onSaved }: { onClose: () => voi
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-slate-300">Title</span>
             <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-slate-300">Department</span>
+            <select value={department} onChange={(e) => setDepartment(e.target.value)} className={inputClass}>
+              <option value="">(none)</option>
+              {DEPARTMENTS.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </select>
           </label>
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1 text-sm">

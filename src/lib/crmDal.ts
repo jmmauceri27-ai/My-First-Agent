@@ -187,6 +187,7 @@ function mapEmployee(e: Record<string, unknown>): Employee {
     email: e.email as string | null,
     phone: e.phone as string | null,
     title: e.title as string | null,
+    department: e.department as string | null,
     createdAt: e.created_at as string,
   };
 }
@@ -195,7 +196,7 @@ export async function listEmployees(): Promise<Employee[]> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("crm_employees")
-    .select("id, name, email, phone, title, created_at")
+    .select("id, name, email, phone, title, department, created_at")
     .eq("user_id", OWNER_USER_ID)
     .order("name", { ascending: true });
   if (error) throw new Error(error.message);
@@ -207,7 +208,7 @@ export async function getEmployee(id: string): Promise<Employee | null> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("crm_employees")
-    .select("id, name, email, phone, title, created_at")
+    .select("id, name, email, phone, title, department, created_at")
     .eq("id", id)
     .eq("user_id", OWNER_USER_ID)
     .maybeSingle();
@@ -231,7 +232,14 @@ export async function createEmployeeWithDetails(input: EmployeeInput): Promise<s
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("crm_employees")
-    .insert({ user_id: OWNER_USER_ID, name: input.name, email: input.email, phone: input.phone, title: input.title })
+    .insert({
+      user_id: OWNER_USER_ID,
+      name: input.name,
+      email: input.email,
+      phone: input.phone,
+      title: input.title,
+      department: input.department,
+    })
     .select("id")
     .single();
   if (error) throw new Error(error.message);
@@ -242,7 +250,13 @@ export async function updateEmployee(id: string, input: EmployeeInput): Promise<
   const supabase = createAdminClient();
   const { error } = await supabase
     .from("crm_employees")
-    .update({ name: input.name, email: input.email, phone: input.phone, title: input.title })
+    .update({
+      name: input.name,
+      email: input.email,
+      phone: input.phone,
+      title: input.title,
+      department: input.department,
+    })
     .eq("id", id)
     .eq("user_id", OWNER_USER_ID);
   if (error) throw new Error(error.message);

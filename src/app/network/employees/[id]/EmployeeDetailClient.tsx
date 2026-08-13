@@ -7,6 +7,7 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import { formatCurrency } from "@/lib/siteMapColor";
+import { DEPARTMENTS } from "@/lib/crmTypes";
 import type { Employee, EmployeeInput, Opportunity } from "@/lib/crmTypes";
 import { deleteEmployeeAction, updateEmployeeAction } from "@/app/crm/actions";
 
@@ -22,6 +23,7 @@ export default function EmployeeDetailClient({
   const [email, setEmail] = useState(employee.email ?? "");
   const [phone, setPhone] = useState(employee.phone ?? "");
   const [title, setTitle] = useState(employee.title ?? "");
+  const [department, setDepartment] = useState(employee.department ?? "");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +41,7 @@ export default function EmployeeDetailClient({
         email: email.trim() || null,
         phone: phone.trim() || null,
         title: title.trim() || null,
+        department: department || null,
       };
       await updateEmployeeAction(employee.id, input);
       router.refresh();
@@ -78,6 +81,17 @@ export default function EmployeeDetailClient({
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium text-slate-300">Title</span>
               <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium text-slate-300">Department</span>
+              <select value={department} onChange={(e) => setDepartment(e.target.value)} className={inputClass}>
+                <option value="">(none)</option>
+                {DEPARTMENTS.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
             </label>
             <div className="grid grid-cols-2 gap-3">
               <label className="flex flex-col gap-1 text-sm">

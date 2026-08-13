@@ -67,7 +67,15 @@ export default function OpportunityDetailClient({
     const id = await saveEmployeeAction(newEmployeeName.trim());
     setLocalEmployees((prev) => [
       ...prev,
-      { id, name: newEmployeeName.trim(), email: null, phone: null, title: null, createdAt: new Date().toISOString() },
+      {
+        id,
+        name: newEmployeeName.trim(),
+        email: null,
+        phone: null,
+        title: null,
+        department: null,
+        createdAt: new Date().toISOString(),
+      },
     ]);
     setSalesManagerId(id);
     setNewEmployeeName("");

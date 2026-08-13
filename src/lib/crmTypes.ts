@@ -35,12 +35,17 @@ export interface Contact {
   createdAt: string;
 }
 
+export const DEPARTMENTS = ["Facility Services", "Fire & Life Safety"] as const;
+
+export type Department = (typeof DEPARTMENTS)[number];
+
 export interface Employee {
   id: string;
   name: string;
   email: string | null;
   phone: string | null;
   title: string | null;
+  department: string | null;
   createdAt: string;
 }
 
@@ -49,6 +54,7 @@ export interface EmployeeInput {
   email: string | null;
   phone: string | null;
   title: string | null;
+  department: string | null;
 }
 
 export interface Opportunity {
