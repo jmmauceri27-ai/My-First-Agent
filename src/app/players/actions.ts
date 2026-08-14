@@ -45,6 +45,7 @@ export async function savePlayer(formData: FormData): Promise<void> {
     adp: optFloat(formData.get("adp")),
     espnAdp: optFloat(formData.get("espnAdp")),
     sleeperAdp: optFloat(formData.get("sleeperAdp")),
+    projectedPoints: optFloat(formData.get("projectedPoints")),
     tier: optInt(formData.get("tier")),
     tags: formData.getAll("tags").map(String),
     bio: optStr(formData.get("bio")),

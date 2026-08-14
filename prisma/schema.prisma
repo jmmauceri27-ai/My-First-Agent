@@ -21,6 +21,7 @@ model Player {
   espnAdp       Float? // ESPN's average draft position
   sleeperAdp    Float? // Sleeper's average draft position
   tier          Int? // 1 = best tier; null = unranked / not tiered yet
+  projectedPoints Float? // your projected PPR points for the upcoming season, used for VORP
   tags          String[] // sleeper, bust, breakout, injury-risk, rookie, handcuff, target, avoid, ...
   bio           String? // short freeform summary / cheat-sheet blurb
   watchlisted   Boolean  @default(false)

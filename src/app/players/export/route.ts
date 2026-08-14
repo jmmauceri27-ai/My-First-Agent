@@ -8,7 +8,18 @@ export const dynamic = "force-dynamic";
 
 // positionRank isn't exported — it's derived from overallRank on import, so
 // there's nothing to edit and re-upload for it.
-const CSV_COLUMNS = ["name", "position", "team", "byeWeek", "overallRank", "adp", "tier", "tags", "bio"] as const;
+const CSV_COLUMNS = [
+  "name",
+  "position",
+  "team",
+  "byeWeek",
+  "overallRank",
+  "adp",
+  "projectedPoints",
+  "tier",
+  "tags",
+  "bio",
+] as const;
 
 export async function GET() {
   const players = await prisma.player.findMany({
@@ -25,6 +36,7 @@ export async function GET() {
         p.byeWeek,
         p.overallRank,
         p.adp,
+        p.projectedPoints,
         p.tier,
         p.tags.join("|"),
         p.bio,

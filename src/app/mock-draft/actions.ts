@@ -11,12 +11,9 @@ import {
   type RosterSettings,
   type CandidatePlayer,
 } from "@/lib/mockDraftEngine";
+import { getOrCreateLeagueSettings } from "@/lib/leagueSettings";
 
-export async function getOrCreateLeagueSettings() {
-  const existing = await prisma.leagueSettings.findFirst();
-  if (existing) return existing;
-  return prisma.leagueSettings.create({ data: {} });
-}
+export { getOrCreateLeagueSettings };
 
 function intField(formData: FormData, name: string, fallback: number): number {
   const raw = formData.get(name);

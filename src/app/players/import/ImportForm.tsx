@@ -4,8 +4,8 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { importCsv, type CsvImportResult } from "../actions";
 
-const TEMPLATE = `name,position,team,byeWeek,overallRank,adp,tier,tags,bio
-Example Player,RB,KC,10,1,1.2,1,target|value,Example row - edit or delete me`;
+const TEMPLATE = `name,position,team,byeWeek,overallRank,adp,projectedPoints,tier,tags,bio
+Example Player,RB,KC,10,1,1.2,250.5,1,target|value,Example row - edit or delete me`;
 
 export default function ImportForm() {
   const [csv, setCsv] = useState("");
@@ -30,7 +30,8 @@ export default function ImportForm() {
           Separate multiple tags within a cell using <code>|</code> (pipe), e.g. <code>target|value</code>.
           Matching is done by name + position — importing the same player again updates their existing row
           instead of duplicating it. Position Rank isn't in the file — it's recalculated automatically
-          from Overall Rank after every import, so you only maintain one ranking.
+          from Overall Rank after every import, so you only maintain one ranking. Projected Points feeds
+          VORP (see each player's VORP column/stat) — leave it blank for players you haven't projected.
         </p>
         <button
           type="button"

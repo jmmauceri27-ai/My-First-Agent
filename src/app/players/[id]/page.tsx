@@ -3,6 +3,8 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { TAG_STYLES, tierColor } from "@/lib/constants";
+import { getOrCreateLeagueSettings } from "@/lib/leagueSettings";
+import { computeReplacementLevels, computeVorp } from "@/lib/vorp";
 import TeamBadge from "@/components/TeamBadge";
 import PlayerFormModal from "../PlayerFormModal";
 import NoteForm from "./NoteForm";
@@ -12,15 +14,22 @@ import { deleteNote } from "../actions";
 export const dynamic = "force-dynamic";
 
 export default async function PlayerDetailPage({ params }: { params: { id: string } }) {
-  const player = await prisma.player.findUnique({
-    where: { id: params.id },
-    include: {
-      notes: { orderBy: { createdAt: "desc" } },
-      gameLogs: { orderBy: [{ season: "desc" }, { week: "asc" }] },
-    },
-  });
+  const [player, allPlayers, leagueSettings] = await Promise.all([
+    prisma.player.findUnique({
+      where: { id: params.id },
+      include: {
+        notes: { orderBy: { createdAt: "desc" } },
+        gameLogs: { orderBy: [{ season: "desc" }, { week: "asc" }] },
+      },
+    }),
+    prisma.player.findMany({ select: { position: true, projectedPoints: true } }),
+    getOrCreateLeagueSettings(),
+  ]);
 
   if (!player) notFound();
+
+  const replacementLevels = computeReplacementLevels(allPlayers, leagueSettings);
+  const vorp = computeVorp(player, replacementLevels);
 
   const kindEmoji: Record<string, string> = { note: "📝", trend: "📈", news: "📰", injury: "🩹" };
 
@@ -57,13 +66,18 @@ export default async function PlayerDetailPage({ params }: { params: { id: strin
           <PlayerFormModal player={player} />
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4 lg:grid-cols-7">
+        <div className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4 lg:grid-cols-9">
           <Stat label="Overall Rank" value={player.overallRank ?? "—"} />
           <Stat label="Position Rank" value={player.positionRank ?? "—"} />
           <Stat label="ADP" value={player.adp ?? "—"} />
           <Stat label="ESPN ADP" value={player.espnAdp ?? "—"} />
           <Stat label="Sleeper ADP" value={player.sleeperAdp ?? "—"} />
           <Stat label="Tier" value={player.tier ? `Tier ${player.tier}` : "—"} />
+          <Stat label="Proj Pts" value={player.projectedPoints ?? "—"} />
+          <Stat
+            label="VORP"
+            value={vorp != null ? `${vorp >= 0 ? "+" : ""}${vorp.toFixed(1)}` : "—"}
+          />
           <Stat
             label="2025 PPR"
             value={

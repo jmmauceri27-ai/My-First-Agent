@@ -6,7 +6,18 @@ import { recomputePositionRanks } from "@/lib/playerRanks";
 // positionRank isn't a CSV column — it's derived from overallRank after
 // every import (see recomputePositionRanks), so you only ever have to
 // maintain one ranking, not a second one per position.
-const CSV_COLUMNS = ["name", "position", "team", "byeWeek", "overallRank", "adp", "tier", "tags", "bio"] as const;
+const CSV_COLUMNS = [
+  "name",
+  "position",
+  "team",
+  "byeWeek",
+  "overallRank",
+  "adp",
+  "projectedPoints",
+  "tier",
+  "tags",
+  "bio",
+] as const;
 
 export type CsvImportResult = { created: number; updated: number; errors: string[] };
 
@@ -43,6 +54,7 @@ export async function importPlayersFromCsv(raw: string): Promise<CsvImportResult
       byeWeek: row.byeWeek ? parseInt(row.byeWeek, 10) : null,
       overallRank: row.overallRank ? parseInt(row.overallRank, 10) : null,
       adp: row.adp ? parseFloat(row.adp) : null,
+      projectedPoints: row.projectedPoints ? parseFloat(row.projectedPoints) : null,
       tier: row.tier ? parseInt(row.tier, 10) : null,
       tags: row.tags ? row.tags.split("|").map((t) => t.trim()).filter(Boolean) : [],
       bio: row.bio || null,

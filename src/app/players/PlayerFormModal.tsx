@@ -144,6 +144,18 @@ export default function PlayerFormModal({ player }: { player?: Player }) {
                       className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-ink-800"
                     />
                   </label>
+
+                  <label className="text-sm font-medium">
+                    Projected Points
+                    <input
+                      type="number"
+                      step="0.1"
+                      name="projectedPoints"
+                      defaultValue={player?.projectedPoints ?? ""}
+                      className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-ink-800"
+                    />
+                    <span className="mt-0.5 block text-xs font-normal text-zinc-400">Used to calculate VORP.</span>
+                  </label>
                 </div>
 
                 <fieldset>

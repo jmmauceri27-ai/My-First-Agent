@@ -7,12 +7,33 @@ import Image from "next/image";
 import type { Player } from "@prisma/client";
 import { POSITIONS, TAG_STYLES, tierColor } from "@/lib/constants";
 import TeamBadge from "@/components/TeamBadge";
+import { computeVorp } from "@/lib/vorp";
 import PlayerFormModal from "./PlayerFormModal";
 import { deletePlayer, toggleWatchlist, reorderPlayers } from "./actions";
 
-type SortKey = "overallRank" | "positionRank" | "adp" | "espnAdp" | "sleeperAdp" | "tier" | "name";
+type SortKey =
+  | "overallRank"
+  | "positionRank"
+  | "adp"
+  | "espnAdp"
+  | "sleeperAdp"
+  | "tier"
+  | "name"
+  | "projectedPoints"
+  | "vorp";
 
-export default function PlayersTable({ players }: { players: Player[] }) {
+// Higher is better for these — everything else (ranks, ADP, tier) is lower-is-better.
+const DESCENDING_SORT_KEYS = new Set<SortKey>(["projectedPoints", "vorp"]);
+
+type PlayerWithVorp = Player & { vorp: number | null };
+
+export default function PlayersTable({
+  players,
+  replacementLevels,
+}: {
+  players: Player[];
+  replacementLevels: Record<string, number | null>;
+}) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [search, setSearch] = useState("");
@@ -36,8 +57,13 @@ export default function PlayersTable({ players }: { players: Player[] }) {
     setDragOrderIds(null);
   }, [players]);
 
+  const playersWithVorp = useMemo<PlayerWithVorp[]>(
+    () => players.map((p) => ({ ...p, vorp: computeVorp(p, replacementLevels) })),
+    [players, replacementLevels]
+  );
+
   const filtered = useMemo(() => {
-    let list = players.slice();
+    let list = playersWithVorp.slice();
     if (positionFilter !== "ALL") list = list.filter((p) => p.position === positionFilter);
     if (hideDrafted) list = list.filter((p) => !p.draftedBy);
     if (watchlistOnly) list = list.filter((p) => p.watchlisted);
@@ -57,17 +83,18 @@ export default function PlayersTable({ players }: { players: Player[] }) {
       if (av === null && bv === null) return 0;
       if (av === null) return 1;
       if (bv === null) return -1;
-      return (av as number) - (bv as number);
+      const direction = DESCENDING_SORT_KEYS.has(sortKey) ? -1 : 1;
+      return ((av as number) - (bv as number)) * direction;
     });
     return list;
-  }, [players, search, positionFilter, sortKey, hideDrafted, watchlistOnly]);
+  }, [playersWithVorp, search, positionFilter, sortKey, hideDrafted, watchlistOnly]);
 
   // While actively dragging, show the locally-reordered list instead of
   // re-deriving from `players` — the server write happens on drop.
   const displayList = useMemo(() => {
     if (!canReorder || !dragOrderIds) return filtered;
     const byId = new Map(filtered.map((p) => [p.id, p]));
-    return dragOrderIds.map((id) => byId.get(id)).filter((p): p is Player => Boolean(p));
+    return dragOrderIds.map((id) => byId.get(id)).filter((p): p is PlayerWithVorp => Boolean(p));
   }, [filtered, canReorder, dragOrderIds]);
 
   function persistOrder(orderedIds: string[]) {
@@ -127,6 +154,8 @@ export default function PlayersTable({ players }: { players: Player[] }) {
           <option value="sleeperAdp">Sort: Sleeper ADP</option>
           <option value="tier">Sort: Tier</option>
           <option value="name">Sort: Name</option>
+          <option value="projectedPoints">Sort: Projected Points</option>
+          <option value="vorp">Sort: VORP</option>
         </select>
         <label className="flex items-center gap-1 text-sm">
           <input type="checkbox" checked={hideDrafted} onChange={(e) => setHideDrafted(e.target.checked)} />
@@ -161,6 +190,8 @@ export default function PlayersTable({ players }: { players: Player[] }) {
               <th className="px-3 py-2">ADP</th>
               <th className="px-3 py-2">ESPN ADP</th>
               <th className="px-3 py-2">Sleeper ADP</th>
+              <th className="px-3 py-2">Proj Pts</th>
+              <th className="px-3 py-2">VORP</th>
               <th className="px-3 py-2">Tags</th>
               <th className="px-3 py-2">Status</th>
               <th className="px-3 py-2"></th>
@@ -233,6 +264,17 @@ export default function PlayersTable({ players }: { players: Player[] }) {
                 <td className="px-3 py-2">{p.adp ?? "—"}</td>
                 <td className="px-3 py-2">{p.espnAdp ?? "—"}</td>
                 <td className="px-3 py-2">{p.sleeperAdp ?? "—"}</td>
+                <td className="px-3 py-2">{p.projectedPoints ?? "—"}</td>
+                <td className="px-3 py-2">
+                  {p.vorp != null ? (
+                    <span className={p.vorp >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}>
+                      {p.vorp >= 0 ? "+" : ""}
+                      {p.vorp.toFixed(1)}
+                    </span>
+                  ) : (
+                    "—"
+                  )}
+                </td>
                 <td className="px-3 py-2">
                   <div className="flex flex-wrap gap-1">
                     {p.tags.map((t) => (
@@ -273,7 +315,7 @@ export default function PlayersTable({ players }: { players: Player[] }) {
             ))}
             {displayList.length === 0 && (
               <tr>
-                <td colSpan={canReorder ? 14 : 13} className="px-3 py-8 text-center text-zinc-500">
+                <td colSpan={canReorder ? 16 : 15} className="px-3 py-8 text-center text-zinc-500">
                   No players match your filters yet.
                 </td>
               </tr>

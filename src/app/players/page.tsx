@@ -1,14 +1,20 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { getOrCreateLeagueSettings } from "@/lib/leagueSettings";
+import { computeReplacementLevels } from "@/lib/vorp";
 import PlayersTable from "./PlayersTable";
 import PlayerFormModal from "./PlayerFormModal";
 
 export const dynamic = "force-dynamic";
 
 export default async function PlayersPage() {
-  const players = await prisma.player.findMany({
-    orderBy: [{ overallRank: "asc" }, { name: "asc" }],
-  });
+  const [players, leagueSettings] = await Promise.all([
+    prisma.player.findMany({
+      orderBy: [{ overallRank: "asc" }, { name: "asc" }],
+    }),
+    getOrCreateLeagueSettings(),
+  ]);
+  const replacementLevels = computeReplacementLevels(players, leagueSettings);
 
   return (
     <div>
@@ -45,7 +51,7 @@ export default async function PlayersPage() {
           </div>
         </div>
       ) : (
-        <PlayersTable players={players} />
+        <PlayersTable players={players} replacementLevels={replacementLevels} />
       )}
     </div>
   );
