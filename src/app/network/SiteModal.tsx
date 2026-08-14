@@ -306,7 +306,6 @@ export default function SiteModal({
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-slate-300">Trade</span>
             <TradeSelect value={trades} onChange={setTrades} />
-            <span className="text-xs text-slate-500">Ctrl/Cmd-click (or tap) to select more than one.</span>
           </label>
 
           <label className="flex flex-col gap-1 text-sm">

@@ -175,7 +175,7 @@ export default function SitesClient({
             </option>
           ))}
         </select>
-        <TradeSelect value={tradeFilter} onChange={setTradeFilter} className="w-auto" size={4} />
+        <TradeSelect value={tradeFilter} onChange={setTradeFilter} className="w-44" placeholder="All trades" />
         <select
           value={colorMode}
           onChange={(e) => setColorMode(e.target.value as ColorMode)}
