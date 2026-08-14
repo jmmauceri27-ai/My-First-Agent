@@ -289,7 +289,7 @@ export default function OpportunityModal({
           </div>
 
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-300">Type of work</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Trade</span>
             <input
               value={workType}
               onChange={(e) => setWorkType(e.target.value)}

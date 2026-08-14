@@ -55,6 +55,7 @@ export default function UploadSitesModal({
 
   const [opportunityId, setOpportunityId] = useState("");
   const [vendorId, setVendorId] = useState("");
+  const [trade, setTrade] = useState("");
 
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
@@ -193,6 +194,7 @@ export default function UploadSitesModal({
           contractId: contractId || null,
           opportunityId: opportunityId || null,
           vendorId: vendorId || null,
+          trade: trade.trim() || null,
         },
         rows,
       );
@@ -341,7 +343,16 @@ export default function UploadSitesModal({
                   </div>
                 ) : (
                   <div className="flex gap-2">
-                    <select value={contractId} onChange={(e) => setContractId(e.target.value)} className={inputClass}>
+                    <select
+                      value={contractId}
+                      onChange={(e) => {
+                        const nextId = e.target.value;
+                        setContractId(nextId);
+                        const contract = contractsForCompany.find((c) => c.id === nextId);
+                        if (contract?.workType && !trade.trim()) setTrade(contract.workType);
+                      }}
+                      className={inputClass}
+                    >
                       <option value="">(none)</option>
                       {contractsForCompany.map((c) => (
                         <option key={c.id} value={c.id}>
@@ -358,7 +369,16 @@ export default function UploadSitesModal({
 
               <label className="flex flex-col gap-1 text-sm">
                 <span className="font-medium text-slate-300">Opportunity (optional)</span>
-                <select value={opportunityId} onChange={(e) => setOpportunityId(e.target.value)} className={inputClass}>
+                <select
+                  value={opportunityId}
+                  onChange={(e) => {
+                    const nextId = e.target.value;
+                    setOpportunityId(nextId);
+                    const opportunity = opportunitiesForCompany.find((o) => o.id === nextId);
+                    if (opportunity?.workType && !trade.trim()) setTrade(opportunity.workType);
+                  }}
+                  className={inputClass}
+                >
                   <option value="">(none)</option>
                   {opportunitiesForCompany.map((o) => (
                     <option key={o.id} value={o.id}>
@@ -366,6 +386,16 @@ export default function UploadSitesModal({
                     </option>
                   ))}
                 </select>
+              </label>
+
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium text-slate-300">Trade (optional)</span>
+                <input
+                  value={trade}
+                  onChange={(e) => setTrade(e.target.value)}
+                  placeholder="e.g. Snow Removal, Fire & Life Safety"
+                  className={inputClass}
+                />
               </label>
 
               <label className="flex flex-col gap-1 text-sm">

@@ -23,7 +23,7 @@ import UploadSitesModal from "../UploadSitesModal";
 const SiteMap = dynamic(() => import("@/components/SiteMap"), { ssr: false });
 const MapLegend = dynamic(() => import("@/components/MapLegend"), { ssr: false });
 
-type ColorMode = "none" | "margin" | "vendor";
+type ColorMode = "none" | "margin" | "vendor" | "trade";
 
 export default function SitesClient({
   sites,
@@ -44,7 +44,13 @@ export default function SitesClient({
   const [companyFilter, setCompanyFilter] = useState("");
   const [vendorFilter, setVendorFilter] = useState("");
   const [contractFilter, setContractFilter] = useState("");
+  const [tradeFilter, setTradeFilter] = useState("");
   const [colorMode, setColorMode] = useState<ColorMode>("none");
+
+  const trades = useMemo(
+    () => Array.from(new Set(sites.map((s) => s.trade).filter((t): t is string => !!t))).sort(),
+    [sites],
+  );
 
   const filteredSites = useMemo(
     () =>
@@ -52,9 +58,10 @@ export default function SitesClient({
         (s) =>
           (!companyFilter || s.companyId === companyFilter) &&
           (!vendorFilter || s.vendorId === vendorFilter) &&
-          (!contractFilter || s.contractId === contractFilter),
+          (!contractFilter || s.contractId === contractFilter) &&
+          (!tradeFilter || s.trade === tradeFilter),
       ),
-    [sites, companyFilter, vendorFilter, contractFilter],
+    [sites, companyFilter, vendorFilter, contractFilter, tradeFilter],
   );
 
   const { pins, legend } = useMemo(() => {
@@ -91,6 +98,23 @@ export default function SitesClient({
         label: s.name,
         color: palette.get(s.vendorName ?? "Unassigned"),
         fields: s.vendorName ? [{ key: "Vendor", value: s.vendorName }] : [],
+      }));
+      const legend: MapLegendProps = {
+        mode: "categorical",
+        entries: Array.from(palette.entries()).map(([label, color]) => ({ label, color })),
+      };
+      return { pins, legend };
+    }
+
+    if (colorMode === "trade") {
+      const palette = buildCategoricalPalette(plottable.map((s) => s.trade ?? "Unassigned"));
+      const pins: MapPin[] = plottable.map((s) => ({
+        id: s.id,
+        lat: s.lat as number,
+        lng: s.lng as number,
+        label: s.name,
+        color: palette.get(s.trade ?? "Unassigned"),
+        fields: s.trade ? [{ key: "Trade", value: s.trade }] : [],
       }));
       const legend: MapLegendProps = {
         mode: "categorical",
@@ -153,6 +177,14 @@ export default function SitesClient({
             </option>
           ))}
         </select>
+        <select value={tradeFilter} onChange={(e) => setTradeFilter(e.target.value)} className={`${inputClass} w-auto`}>
+          <option value="">All trades</option>
+          {trades.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+        </select>
         <select
           value={colorMode}
           onChange={(e) => setColorMode(e.target.value as ColorMode)}
@@ -161,6 +193,7 @@ export default function SitesClient({
           <option value="none">Color: none</option>
           <option value="margin">Color: by margin</option>
           <option value="vendor">Color: by vendor</option>
+          <option value="trade">Color: by trade</option>
         </select>
         {legend && (
           <div className="ml-auto">
@@ -192,7 +225,7 @@ export default function SitesClient({
               >
                 <span className="text-sm font-semibold text-slate-50">{s.name}</span>
                 <span className="text-xs text-slate-400">
-                  {[s.companyName, s.vendorName].filter(Boolean).join(" · ") || "No details"}
+                  {[s.companyName, s.vendorName, s.trade].filter(Boolean).join(" · ") || "No details"}
                 </span>
               </button>
             ))
