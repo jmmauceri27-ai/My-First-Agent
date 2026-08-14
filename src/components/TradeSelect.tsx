@@ -47,7 +47,7 @@ export default function TradeSelect({
         <span className="shrink-0 text-slate-500">▾</span>
       </button>
       {open && (
-        <div className="absolute z-50 mt-1 max-h-64 w-56 overflow-y-auto rounded-lg border border-purple-400/40 bg-[#3c2b6b] p-2 shadow-xl shadow-black/50">
+        <div className="absolute z-[2000] mt-1 max-h-64 w-56 overflow-y-auto rounded-lg border border-purple-400/40 bg-[#3c2b6b] p-2 shadow-xl shadow-black/50">
           {TRADE_OPTIONS.map((t) => (
             <label
               key={t}
