@@ -81,3 +81,11 @@ export interface SiteImportRow {
   contractValue: number | null;
   subPrice: number | null;
 }
+
+/** Shared Client/Opportunity/Contract/Vendor links applied to every row in a bulk site import. */
+export interface SiteBulkLinks {
+  companyId: string | null;
+  opportunityId: string | null;
+  contractId: string | null;
+  vendorId: string | null;
+}

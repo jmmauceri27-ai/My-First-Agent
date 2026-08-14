@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { parseBuffer } from "@/lib/parse";
 import {
+  bulkCreateSites,
   bulkCreateSitesForOpportunity,
   createSite,
   createVendor,
@@ -18,7 +19,7 @@ import {
   updateSite,
   updateVendor,
 } from "@/lib/networkDal";
-import type { Site, SiteImportRow, SiteInput, Vendor, VendorInput } from "@/lib/networkTypes";
+import type { Site, SiteBulkLinks, SiteImportRow, SiteInput, Vendor, VendorInput } from "@/lib/networkTypes";
 
 // ---------- Vendors ----------
 
@@ -134,6 +135,21 @@ export async function bulkCreateSitesForOpportunityAction(
     const result = await bulkCreateSitesForOpportunity(opportunityId, companyId, rows);
     revalidatePath(`/crm/opportunities/${opportunityId}`);
     revalidatePath("/network/sites");
+    return result;
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to import sites." };
+  }
+}
+
+export async function bulkCreateSitesAction(
+  links: SiteBulkLinks,
+  rows: SiteImportRow[],
+): Promise<{ inserted?: number; error?: string }> {
+  try {
+    const result = await bulkCreateSites(links, rows);
+    revalidatePath("/network/sites");
+    if (links.opportunityId) revalidatePath(`/crm/opportunities/${links.opportunityId}`);
+    if (links.contractId) revalidatePath("/crm/contracts");
     return result;
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to import sites." };

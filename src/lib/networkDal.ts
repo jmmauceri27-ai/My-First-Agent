@@ -1,6 +1,6 @@
 import "server-only";
 import { createAdminClient, OWNER_USER_ID } from "./supabase/admin";
-import type { Site, SiteImportRow, SiteInput, Vendor, VendorInput } from "./networkTypes";
+import type { Site, SiteBulkLinks, SiteImportRow, SiteInput, Vendor, VendorInput } from "./networkTypes";
 
 // ---------- Vendors ----------
 
@@ -312,19 +312,15 @@ export async function deleteSite(id: string): Promise<void> {
   if (contractId) await syncContractSiteCount(contractId);
 }
 
-/** Bulk-imports uploaded sheet rows as new sites, scoped to one opportunity (and its company). Appends -- does not replace existing sites. */
-export async function bulkCreateSitesForOpportunity(
-  opportunityId: string,
-  companyId: string | null,
-  rows: SiteImportRow[],
-): Promise<{ inserted: number }> {
+/** Bulk-imports uploaded sheet rows as new sites, all sharing the same Client/Opportunity/Contract/Vendor links. Appends -- does not replace existing sites. */
+export async function bulkCreateSites(links: SiteBulkLinks, rows: SiteImportRow[]): Promise<{ inserted: number }> {
   const supabase = createAdminClient();
   const batch = rows.map((row) => ({
     user_id: OWNER_USER_ID,
-    company_id: companyId,
-    opportunity_id: opportunityId,
-    contract_id: null,
-    vendor_id: null,
+    company_id: links.companyId,
+    opportunity_id: links.opportunityId,
+    contract_id: links.contractId,
+    vendor_id: links.vendorId,
     name: row.name,
     address: row.address,
     lat: row.lat,
@@ -335,9 +331,22 @@ export async function bulkCreateSitesForOpportunity(
     notes: null,
   }));
 
-  const { error } = await supabase.from("sites").insert(batch);
-  if (error) throw new Error(error.message);
+  const batchSize = 500;
+  for (let i = 0; i < batch.length; i += batchSize) {
+    const { error } = await supabase.from("sites").insert(batch.slice(i, i + batchSize));
+    if (error) throw new Error(error.message);
+  }
 
-  await syncOpportunitySiteCount(opportunityId);
+  if (links.opportunityId) await syncOpportunitySiteCount(links.opportunityId);
+  if (links.contractId) await syncContractSiteCount(links.contractId);
   return { inserted: batch.length };
+}
+
+/** Bulk-imports uploaded sheet rows as new sites, scoped to one opportunity (and its company). Appends -- does not replace existing sites. */
+export async function bulkCreateSitesForOpportunity(
+  opportunityId: string,
+  companyId: string | null,
+  rows: SiteImportRow[],
+): Promise<{ inserted: number }> {
+  return bulkCreateSites({ companyId, opportunityId, contractId: null, vendorId: null }, rows);
 }

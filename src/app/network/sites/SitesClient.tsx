@@ -18,6 +18,7 @@ import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
 import type { Site, Vendor } from "@/lib/networkTypes";
 import NetworkNav from "../NetworkNav";
 import SiteModal from "../SiteModal";
+import UploadSitesModal from "../UploadSitesModal";
 
 const SiteMap = dynamic(() => import("@/components/SiteMap"), { ssr: false });
 const MapLegend = dynamic(() => import("@/components/MapLegend"), { ssr: false });
@@ -39,6 +40,7 @@ export default function SitesClient({
 }) {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [companyFilter, setCompanyFilter] = useState("");
   const [vendorFilter, setVendorFilter] = useState("");
   const [contractFilter, setContractFilter] = useState("");
@@ -114,7 +116,12 @@ export default function SitesClient({
           <h1 className="text-lg font-bold text-slate-50">🌐 Network</h1>
           <NetworkNav active="sites" />
         </div>
-        <Button onClick={() => setCreating(true)}>+ New site</Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={() => setUploading(true)}>
+            Upload sites
+          </Button>
+          <Button onClick={() => setCreating(true)}>+ New site</Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3 border-b border-purple-400/10 bg-[#150f26] px-4 py-2">
@@ -202,6 +209,16 @@ export default function SitesClient({
           contracts={contracts}
           onClose={() => setCreating(false)}
           onSaved={(id) => router.push(`/network/sites/${id}`)}
+        />
+      )}
+
+      {uploading && (
+        <UploadSitesModal
+          companies={companies}
+          vendors={vendors}
+          opportunities={opportunities}
+          contracts={contracts}
+          onClose={() => setUploading(false)}
         />
       )}
     </div>
