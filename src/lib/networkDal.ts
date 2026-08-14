@@ -1,6 +1,7 @@
 import "server-only";
 import { createAdminClient, OWNER_USER_ID } from "./supabase/admin";
 import type { Site, SiteBulkLinks, SiteImportRow, SiteInput, Vendor, VendorInput } from "./networkTypes";
+import { matchTrade } from "./trades";
 
 // ---------- Vendors ----------
 
@@ -95,7 +96,7 @@ export async function deleteVendor(id: string): Promise<void> {
 // ---------- Sites ----------
 
 const SITE_COLUMNS =
-  "id, company_id, opportunity_id, contract_id, vendor_id, name, address, lat, lng, trade, contract_value, sub_price, measurements, notes, created_at, updated_at, crm_companies(name), crm_opportunities(name), crm_contracts(name), vendors(name)";
+  "id, company_id, opportunity_id, contract_id, vendor_id, name, address, lat, lng, trades, contract_value, sub_price, measurements, notes, created_at, updated_at, crm_companies(name), crm_opportunities(name), crm_contracts(name), vendors(name)";
 
 function mapSite(s: Record<string, unknown>): Site {
   const company = s.crm_companies as unknown as { name: string } | null;
@@ -116,7 +117,7 @@ function mapSite(s: Record<string, unknown>): Site {
     address: s.address as string | null,
     lat: s.lat as number | null,
     lng: s.lng as number | null,
-    trade: s.trade as string | null,
+    trades: (s.trades as string[] | null) ?? [],
     contractValue: s.contract_value as number | null,
     subPrice: s.sub_price as number | null,
     measurements: (s.measurements as Site["measurements"] | null) ?? {},
@@ -242,7 +243,7 @@ function siteRow(input: SiteInput) {
     address: input.address,
     lat: input.lat,
     lng: input.lng,
-    trade: input.trade,
+    trades: input.trades,
     contract_value: input.contractValue,
     sub_price: input.subPrice,
     measurements: input.measurements,
@@ -327,7 +328,7 @@ export async function bulkCreateSites(links: SiteBulkLinks, rows: SiteImportRow[
     address: row.address,
     lat: row.lat,
     lng: row.lng,
-    trade: links.trade,
+    trades: links.trades,
     contract_value: row.contractValue,
     sub_price: row.subPrice,
     measurements: {},
@@ -345,7 +346,7 @@ export async function bulkCreateSites(links: SiteBulkLinks, rows: SiteImportRow[
   return { inserted: batch.length };
 }
 
-/** Bulk-imports uploaded sheet rows as new sites, scoped to one opportunity (and its company). Trade defaults to the opportunity's own "Type of work". Appends -- does not replace existing sites. */
+/** Bulk-imports uploaded sheet rows as new sites, scoped to one opportunity (and its company). Trades default to the opportunity's own "Trade" field, when it matches one of the fixed options. Appends -- does not replace existing sites. */
 export async function bulkCreateSitesForOpportunity(
   opportunityId: string,
   companyId: string | null,
@@ -360,8 +361,9 @@ export async function bulkCreateSitesForOpportunity(
     .maybeSingle();
   if (error) throw new Error(error.message);
 
+  const matched = matchTrade(opportunity?.work_type as string | null);
   return bulkCreateSites(
-    { companyId, opportunityId, contractId: null, vendorId: null, trade: (opportunity?.work_type as string | null) ?? null },
+    { companyId, opportunityId, contractId: null, vendorId: null, trades: matched ? [matched] : [] },
     rows,
   );
 }

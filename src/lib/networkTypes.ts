@@ -49,8 +49,8 @@ export interface Site {
   address: string | null;
   lat: number | null;
   lng: number | null;
-  /** Type of work performed at this site (e.g. Snow Removal, Fire & Life Safety). */
-  trade: string | null;
+  /** Trades performed at this site, chosen from the fixed TRADE_OPTIONS list -- a site can have more than one. */
+  trades: string[];
   contractValue: number | null;
   subPrice: number | null;
   measurements: SiteMeasurements;
@@ -68,7 +68,7 @@ export interface SiteInput {
   address: string | null;
   lat: number | null;
   lng: number | null;
-  trade: string | null;
+  trades: string[];
   contractValue: number | null;
   subPrice: number | null;
   measurements: SiteMeasurements;
@@ -85,11 +85,11 @@ export interface SiteImportRow {
   subPrice: number | null;
 }
 
-/** Shared Client/Opportunity/Contract/Vendor/Trade links applied to every row in a bulk site import. */
+/** Shared Client/Opportunity/Contract/Vendor/Trades links applied to every row in a bulk site import. */
 export interface SiteBulkLinks {
   companyId: string | null;
   opportunityId: string | null;
   contractId: string | null;
   vendorId: string | null;
-  trade: string | null;
+  trades: string[];
 }

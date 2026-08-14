@@ -6,7 +6,9 @@ import { useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
+import TradeSelect from "@/components/TradeSelect";
 import { formatCurrency, formatSquareFeet, parseCurrencyInput, parseMeasurementInput } from "@/lib/siteMapColor";
+import { matchTrade } from "@/lib/trades";
 import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
 import type { Site, SiteInput, SiteMeasurements, Vendor } from "@/lib/networkTypes";
 import { deleteSiteAction, saveSiteAction } from "../../actions";
@@ -33,7 +35,7 @@ export default function SiteDetailClient({
   const [address, setAddress] = useState(site.address ?? "");
   const [lat, setLat] = useState(site.lat != null ? String(site.lat) : "");
   const [lng, setLng] = useState(site.lng != null ? String(site.lng) : "");
-  const [trade, setTrade] = useState(site.trade ?? "");
+  const [trades, setTrades] = useState<string[]>(site.trades ?? []);
   const [contractValue, setContractValue] = useState(site.contractValue != null ? formatCurrency(site.contractValue) : "");
   const [subPrice, setSubPrice] = useState(site.subPrice != null ? formatCurrency(site.subPrice) : "");
   const [notes, setNotes] = useState(site.notes ?? "");
@@ -89,7 +91,7 @@ export default function SiteDetailClient({
         address: address.trim() || null,
         lat: lat.trim() ? Number(lat) : null,
         lng: lng.trim() ? Number(lng) : null,
-        trade: trade.trim() || null,
+        trades,
         contractValue: contractValue.trim() ? Number(parseCurrencyInput(contractValue)) : null,
         subPrice: subPrice.trim() ? Number(parseCurrencyInput(subPrice)) : null,
         measurements,
@@ -167,7 +169,8 @@ export default function SiteDetailClient({
                   const nextId = e.target.value;
                   setContractId(nextId);
                   const contract = contracts.find((c) => c.id === nextId);
-                  if (contract?.workType && !trade.trim()) setTrade(contract.workType);
+                  const matched = matchTrade(contract?.workType);
+                  if (matched && trades.length === 0) setTrades([matched]);
                 }}
                 className={inputClass}
               >
@@ -188,7 +191,8 @@ export default function SiteDetailClient({
                   const nextId = e.target.value;
                   setOpportunityId(nextId);
                   const opportunity = opportunities.find((o) => o.id === nextId);
-                  if (opportunity?.workType && !trade.trim()) setTrade(opportunity.workType);
+                  const matched = matchTrade(opportunity?.workType);
+                  if (matched && trades.length === 0) setTrades([matched]);
                 }}
                 className={inputClass}
               >
@@ -203,12 +207,8 @@ export default function SiteDetailClient({
 
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium text-slate-300">Trade</span>
-              <input
-                value={trade}
-                onChange={(e) => setTrade(e.target.value)}
-                placeholder="e.g. Snow Removal, Fire & Life Safety"
-                className={inputClass}
-              />
+              <TradeSelect value={trades} onChange={setTrades} />
+              <span className="text-xs text-slate-500">Ctrl/Cmd-click (or tap) to select more than one.</span>
             </label>
 
             <label className="flex flex-col gap-1 text-sm">

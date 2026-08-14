@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
+import TradeSelect from "@/components/TradeSelect";
+import { matchTrade } from "@/lib/trades";
 import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
 import type { SiteImportRow, Vendor } from "@/lib/networkTypes";
 import { saveCompanyAction, saveContractAction } from "@/app/crm/actions";
@@ -55,7 +57,7 @@ export default function UploadSitesModal({
 
   const [opportunityId, setOpportunityId] = useState("");
   const [vendorId, setVendorId] = useState("");
-  const [trade, setTrade] = useState("");
+  const [trades, setTrades] = useState<string[]>([]);
 
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
@@ -194,7 +196,7 @@ export default function UploadSitesModal({
           contractId: contractId || null,
           opportunityId: opportunityId || null,
           vendorId: vendorId || null,
-          trade: trade.trim() || null,
+          trades,
         },
         rows,
       );
@@ -349,7 +351,8 @@ export default function UploadSitesModal({
                         const nextId = e.target.value;
                         setContractId(nextId);
                         const contract = contractsForCompany.find((c) => c.id === nextId);
-                        if (contract?.workType && !trade.trim()) setTrade(contract.workType);
+                        const matched = matchTrade(contract?.workType);
+                        if (matched && trades.length === 0) setTrades([matched]);
                       }}
                       className={inputClass}
                     >
@@ -375,7 +378,8 @@ export default function UploadSitesModal({
                     const nextId = e.target.value;
                     setOpportunityId(nextId);
                     const opportunity = opportunitiesForCompany.find((o) => o.id === nextId);
-                    if (opportunity?.workType && !trade.trim()) setTrade(opportunity.workType);
+                    const matched = matchTrade(opportunity?.workType);
+                    if (matched && trades.length === 0) setTrades([matched]);
                   }}
                   className={inputClass}
                 >
@@ -390,12 +394,8 @@ export default function UploadSitesModal({
 
               <label className="flex flex-col gap-1 text-sm">
                 <span className="font-medium text-slate-300">Trade (optional)</span>
-                <input
-                  value={trade}
-                  onChange={(e) => setTrade(e.target.value)}
-                  placeholder="e.g. Snow Removal, Fire & Life Safety"
-                  className={inputClass}
-                />
+                <TradeSelect value={trades} onChange={setTrades} />
+                <span className="text-xs text-slate-500">Ctrl/Cmd-click (or tap) to select more than one.</span>
               </label>
 
               <label className="flex flex-col gap-1 text-sm">

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import { inputClass } from "@/components/ui/formClasses";
+import TradeSelect from "@/components/TradeSelect";
 import type { MapPin } from "@/components/SiteMap";
 import type { MapLegendProps } from "@/components/MapLegend";
 import {
@@ -44,13 +45,8 @@ export default function SitesClient({
   const [companyFilter, setCompanyFilter] = useState("");
   const [vendorFilter, setVendorFilter] = useState("");
   const [contractFilter, setContractFilter] = useState("");
-  const [tradeFilter, setTradeFilter] = useState("");
+  const [tradeFilter, setTradeFilter] = useState<string[]>([]);
   const [colorMode, setColorMode] = useState<ColorMode>("none");
-
-  const trades = useMemo(
-    () => Array.from(new Set(sites.map((s) => s.trade).filter((t): t is string => !!t))).sort(),
-    [sites],
-  );
 
   const filteredSites = useMemo(
     () =>
@@ -59,7 +55,7 @@ export default function SitesClient({
           (!companyFilter || s.companyId === companyFilter) &&
           (!vendorFilter || s.vendorId === vendorFilter) &&
           (!contractFilter || s.contractId === contractFilter) &&
-          (!tradeFilter || s.trade === tradeFilter),
+          (tradeFilter.length === 0 || s.trades.some((t) => tradeFilter.includes(t))),
       ),
     [sites, companyFilter, vendorFilter, contractFilter, tradeFilter],
   );
@@ -107,14 +103,16 @@ export default function SitesClient({
     }
 
     if (colorMode === "trade") {
-      const palette = buildCategoricalPalette(plottable.map((s) => s.trade ?? "Unassigned"));
+      const tradeGroup = (s: Site) =>
+        s.trades.length === 0 ? "Unassigned" : s.trades.length === 1 ? s.trades[0] : "Multiple trades";
+      const palette = buildCategoricalPalette(plottable.map(tradeGroup));
       const pins: MapPin[] = plottable.map((s) => ({
         id: s.id,
         lat: s.lat as number,
         lng: s.lng as number,
         label: s.name,
-        color: palette.get(s.trade ?? "Unassigned"),
-        fields: s.trade ? [{ key: "Trade", value: s.trade }] : [],
+        color: palette.get(tradeGroup(s)),
+        fields: s.trades.length ? [{ key: "Trade", value: s.trades.join(", ") }] : [],
       }));
       const legend: MapLegendProps = {
         mode: "categorical",
@@ -177,14 +175,7 @@ export default function SitesClient({
             </option>
           ))}
         </select>
-        <select value={tradeFilter} onChange={(e) => setTradeFilter(e.target.value)} className={`${inputClass} w-auto`}>
-          <option value="">All trades</option>
-          {trades.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
+        <TradeSelect value={tradeFilter} onChange={setTradeFilter} className="w-auto" size={4} />
         <select
           value={colorMode}
           onChange={(e) => setColorMode(e.target.value as ColorMode)}
@@ -225,7 +216,7 @@ export default function SitesClient({
               >
                 <span className="text-sm font-semibold text-slate-50">{s.name}</span>
                 <span className="text-xs text-slate-400">
-                  {[s.companyName, s.vendorName, s.trade].filter(Boolean).join(" · ") || "No details"}
+                  {[s.companyName, s.vendorName, ...s.trades].filter(Boolean).join(" · ") || "No details"}
                 </span>
               </button>
             ))
