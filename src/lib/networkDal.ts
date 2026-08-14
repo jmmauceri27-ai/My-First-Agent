@@ -95,11 +95,12 @@ export async function deleteVendor(id: string): Promise<void> {
 // ---------- Sites ----------
 
 const SITE_COLUMNS =
-  "id, company_id, opportunity_id, vendor_id, name, address, lat, lng, contract_value, sub_price, measurements, notes, created_at, updated_at, crm_companies(name), crm_opportunities(name), vendors(name)";
+  "id, company_id, opportunity_id, contract_id, vendor_id, name, address, lat, lng, contract_value, sub_price, measurements, notes, created_at, updated_at, crm_companies(name), crm_opportunities(name), crm_contracts(name), vendors(name)";
 
 function mapSite(s: Record<string, unknown>): Site {
   const company = s.crm_companies as unknown as { name: string } | null;
   const opportunity = s.crm_opportunities as unknown as { name: string } | null;
+  const contract = s.crm_contracts as unknown as { name: string } | null;
   const vendor = s.vendors as unknown as { name: string } | null;
   return {
     id: s.id as string,
@@ -107,6 +108,8 @@ function mapSite(s: Record<string, unknown>): Site {
     companyName: company?.name ?? null,
     opportunityId: s.opportunity_id as string | null,
     opportunityName: opportunity?.name ?? null,
+    contractId: s.contract_id as string | null,
+    contractName: contract?.name ?? null,
     vendorId: s.vendor_id as string | null,
     vendorName: vendor?.name ?? null,
     name: s.name as string,
@@ -182,6 +185,18 @@ export async function listSitesForOpportunity(opportunityId: string): Promise<Si
   return (data ?? []).map(mapSite);
 }
 
+export async function listSitesForContract(contractId: string): Promise<Site[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("sites")
+    .select(SITE_COLUMNS)
+    .eq("contract_id", contractId)
+    .eq("user_id", OWNER_USER_ID)
+    .order("name", { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(mapSite);
+}
+
 async function syncOpportunitySiteCount(opportunityId: string): Promise<void> {
   const supabase = createAdminClient();
   const { count, error: countError } = await supabase
@@ -199,10 +214,28 @@ async function syncOpportunitySiteCount(opportunityId: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+async function syncContractSiteCount(contractId: string): Promise<void> {
+  const supabase = createAdminClient();
+  const { count, error: countError } = await supabase
+    .from("sites")
+    .select("id", { count: "exact", head: true })
+    .eq("contract_id", contractId)
+    .eq("user_id", OWNER_USER_ID);
+  if (countError) throw new Error(countError.message);
+
+  const { error } = await supabase
+    .from("crm_contracts")
+    .update({ site_count: count ?? 0, updated_at: new Date().toISOString() })
+    .eq("id", contractId)
+    .eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
+}
+
 function siteRow(input: SiteInput) {
   return {
     company_id: input.companyId,
     opportunity_id: input.opportunityId,
+    contract_id: input.contractId,
     vendor_id: input.vendorId,
     name: input.name,
     address: input.address,
@@ -225,6 +258,7 @@ export async function createSite(input: SiteInput): Promise<string> {
   if (error) throw new Error(error.message);
 
   if (input.opportunityId) await syncOpportunitySiteCount(input.opportunityId);
+  if (input.contractId) await syncContractSiteCount(input.contractId);
   return data.id as string;
 }
 
@@ -232,7 +266,7 @@ export async function updateSite(id: string, input: SiteInput): Promise<void> {
   const supabase = createAdminClient();
   const { data: existing, error: fetchError } = await supabase
     .from("sites")
-    .select("opportunity_id")
+    .select("opportunity_id, contract_id")
     .eq("id", id)
     .eq("user_id", OWNER_USER_ID)
     .maybeSingle();
@@ -250,13 +284,19 @@ export async function updateSite(id: string, input: SiteInput): Promise<void> {
     await syncOpportunitySiteCount(previousOpportunityId);
   }
   if (input.opportunityId) await syncOpportunitySiteCount(input.opportunityId);
+
+  const previousContractId = existing?.contract_id as string | null | undefined;
+  if (previousContractId && previousContractId !== input.contractId) {
+    await syncContractSiteCount(previousContractId);
+  }
+  if (input.contractId) await syncContractSiteCount(input.contractId);
 }
 
 export async function deleteSite(id: string): Promise<void> {
   const supabase = createAdminClient();
   const { data: existing, error: fetchError } = await supabase
     .from("sites")
-    .select("opportunity_id")
+    .select("opportunity_id, contract_id")
     .eq("id", id)
     .eq("user_id", OWNER_USER_ID)
     .maybeSingle();
@@ -267,6 +307,9 @@ export async function deleteSite(id: string): Promise<void> {
 
   const opportunityId = existing?.opportunity_id as string | null | undefined;
   if (opportunityId) await syncOpportunitySiteCount(opportunityId);
+
+  const contractId = existing?.contract_id as string | null | undefined;
+  if (contractId) await syncContractSiteCount(contractId);
 }
 
 /** Bulk-imports uploaded sheet rows as new sites, scoped to one opportunity (and its company). Appends -- does not replace existing sites. */
@@ -280,6 +323,7 @@ export async function bulkCreateSitesForOpportunity(
     user_id: OWNER_USER_ID,
     company_id: companyId,
     opportunity_id: opportunityId,
+    contract_id: null,
     vendor_id: null,
     name: row.name,
     address: row.address,

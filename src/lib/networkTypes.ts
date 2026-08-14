@@ -40,6 +40,9 @@ export interface Site {
   companyName: string | null;
   opportunityId: string | null;
   opportunityName: string | null;
+  /** The signed contract (crm_contracts) this site belongs to, if any -- separate from an Opportunity/RFP. */
+  contractId: string | null;
+  contractName: string | null;
   vendorId: string | null;
   vendorName: string | null;
   name: string;
@@ -57,6 +60,7 @@ export interface Site {
 export interface SiteInput {
   companyId: string | null;
   opportunityId: string | null;
+  contractId: string | null;
   vendorId: string | null;
   name: string;
   address: string | null;

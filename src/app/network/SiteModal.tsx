@@ -6,8 +6,9 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import { parseCurrencyInput, formatCurrency } from "@/lib/siteMapColor";
-import type { Company, Opportunity } from "@/lib/crmTypes";
+import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
 import type { Site, SiteInput, Vendor } from "@/lib/networkTypes";
+import { saveCompanyAction, saveContractAction } from "@/app/crm/actions";
 import { deleteSiteAction, saveSiteAction } from "./actions";
 
 export default function SiteModal({
@@ -15,8 +16,10 @@ export default function SiteModal({
   companies,
   vendors,
   opportunities,
+  contracts,
   defaultCompanyId = null,
   defaultOpportunityId = null,
+  defaultContractId = null,
   defaultVendorId = null,
   onClose,
   onSaved,
@@ -25,8 +28,10 @@ export default function SiteModal({
   companies: Company[];
   vendors: Vendor[];
   opportunities: Opportunity[];
+  contracts: Contract[];
   defaultCompanyId?: string | null;
   defaultOpportunityId?: string | null;
+  defaultContractId?: string | null;
   defaultVendorId?: string | null;
   onClose: () => void;
   onSaved?: (id: string) => void;
@@ -35,6 +40,7 @@ export default function SiteModal({
   const [name, setName] = useState(site?.name ?? "");
   const [companyId, setCompanyId] = useState(site?.companyId ?? defaultCompanyId ?? "");
   const [opportunityId, setOpportunityId] = useState(site?.opportunityId ?? defaultOpportunityId ?? "");
+  const [contractId, setContractId] = useState(site?.contractId ?? defaultContractId ?? "");
   const [vendorId, setVendorId] = useState(site?.vendorId ?? defaultVendorId ?? "");
   const [address, setAddress] = useState(site?.address ?? "");
   const [lat, setLat] = useState(site?.lat != null ? String(site.lat) : "");
@@ -46,10 +52,88 @@ export default function SiteModal({
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [localCompanies, setLocalCompanies] = useState(companies);
+  const [addingCompany, setAddingCompany] = useState(false);
+  const [newCompanyName, setNewCompanyName] = useState("");
+
+  const [localContracts, setLocalContracts] = useState(contracts);
+  const [addingContract, setAddingContract] = useState(false);
+  const [newContractName, setNewContractName] = useState("");
+
   const opportunitiesForCompany = useMemo(
     () => (companyId ? opportunities.filter((o) => o.companyId === companyId) : opportunities),
     [opportunities, companyId],
   );
+
+  const contractsForCompany = useMemo(
+    () => (companyId ? localContracts.filter((c) => c.companyId === companyId) : localContracts),
+    [localContracts, companyId],
+  );
+
+  async function handleAddCompany() {
+    if (!newCompanyName.trim()) return;
+    const id = await saveCompanyAction(null, {
+      name: newCompanyName.trim(),
+      address: null,
+      city: null,
+      state: null,
+      website: null,
+      notes: null,
+    });
+    setLocalCompanies((prev) => [
+      ...prev,
+      {
+        id,
+        name: newCompanyName.trim(),
+        address: null,
+        city: null,
+        state: null,
+        website: null,
+        notes: null,
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+    setCompanyId(id);
+    setNewCompanyName("");
+    setAddingCompany(false);
+  }
+
+  async function handleAddContract() {
+    if (!newContractName.trim()) return;
+    const id = await saveContractAction(null, {
+      companyId: companyId || null,
+      name: newContractName.trim(),
+      workType: null,
+      siteCount: null,
+      rateAmount: null,
+      rateFrequency: null,
+      startDate: null,
+      endDate: null,
+      notes: null,
+    });
+    const company = localCompanies.find((c) => c.id === companyId);
+    setLocalContracts((prev) => [
+      ...prev,
+      {
+        id,
+        companyId: companyId || null,
+        companyName: company?.name ?? null,
+        name: newContractName.trim(),
+        workType: null,
+        siteCount: null,
+        rateAmount: null,
+        rateFrequency: null,
+        startDate: null,
+        endDate: null,
+        notes: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ]);
+    setContractId(id);
+    setNewContractName("");
+    setAddingContract(false);
+  }
 
   async function handleSave() {
     setError(null);
@@ -62,6 +146,7 @@ export default function SiteModal({
       const input: SiteInput = {
         companyId: companyId || null,
         opportunityId: opportunityId || null,
+        contractId: contractId || null,
         vendorId: vendorId || null,
         name: name.trim(),
         address: address.trim() || null,
@@ -112,24 +197,75 @@ export default function SiteModal({
             <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} autoFocus />
           </label>
 
-          <label className="flex flex-col gap-1 text-sm">
+          <div className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-slate-300">Client</span>
-            <select
-              value={companyId}
-              onChange={(e) => {
-                setCompanyId(e.target.value);
-                setOpportunityId("");
-              }}
-              className={inputClass}
-            >
-              <option value="">(none)</option>
-              {companies.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </label>
+            {addingCompany ? (
+              <div className="flex gap-2">
+                <input
+                  value={newCompanyName}
+                  onChange={(e) => setNewCompanyName(e.target.value)}
+                  placeholder="New client name"
+                  className={inputClass}
+                />
+                <Button type="button" variant="secondary" onClick={handleAddCompany}>
+                  Add
+                </Button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <select
+                  value={companyId}
+                  onChange={(e) => {
+                    setCompanyId(e.target.value);
+                    setOpportunityId("");
+                    setContractId("");
+                  }}
+                  className={inputClass}
+                >
+                  <option value="">(none)</option>
+                  {localCompanies.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                <Button type="button" variant="secondary" onClick={() => setAddingCompany(true)}>
+                  + New
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-slate-300">Contract (optional)</span>
+            {addingContract ? (
+              <div className="flex gap-2">
+                <input
+                  value={newContractName}
+                  onChange={(e) => setNewContractName(e.target.value)}
+                  placeholder="New contract name"
+                  className={inputClass}
+                />
+                <Button type="button" variant="secondary" onClick={handleAddContract}>
+                  Add
+                </Button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <select value={contractId} onChange={(e) => setContractId(e.target.value)} className={inputClass}>
+                  <option value="">(none)</option>
+                  {contractsForCompany.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                <Button type="button" variant="secondary" onClick={() => setAddingContract(true)}>
+                  + New
+                </Button>
+              </div>
+            )}
+          </div>
 
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-slate-300">Opportunity (optional)</span>

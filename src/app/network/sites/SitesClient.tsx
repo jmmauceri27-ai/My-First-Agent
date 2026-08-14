@@ -14,7 +14,7 @@ import {
   formatCurrency,
   gradientColorForRatio,
 } from "@/lib/siteMapColor";
-import type { Company, Opportunity } from "@/lib/crmTypes";
+import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
 import type { Site, Vendor } from "@/lib/networkTypes";
 import NetworkNav from "../NetworkNav";
 import SiteModal from "../SiteModal";
@@ -29,24 +29,30 @@ export default function SitesClient({
   companies,
   vendors,
   opportunities,
+  contracts,
 }: {
   sites: Site[];
   companies: Company[];
   vendors: Vendor[];
   opportunities: Opportunity[];
+  contracts: Contract[];
 }) {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
   const [companyFilter, setCompanyFilter] = useState("");
   const [vendorFilter, setVendorFilter] = useState("");
+  const [contractFilter, setContractFilter] = useState("");
   const [colorMode, setColorMode] = useState<ColorMode>("none");
 
   const filteredSites = useMemo(
     () =>
       sites.filter(
-        (s) => (!companyFilter || s.companyId === companyFilter) && (!vendorFilter || s.vendorId === vendorFilter),
+        (s) =>
+          (!companyFilter || s.companyId === companyFilter) &&
+          (!vendorFilter || s.vendorId === vendorFilter) &&
+          (!contractFilter || s.contractId === contractFilter),
       ),
-    [sites, companyFilter, vendorFilter],
+    [sites, companyFilter, vendorFilter, contractFilter],
   );
 
   const { pins, legend } = useMemo(() => {
@@ -129,6 +135,18 @@ export default function SitesClient({
           ))}
         </select>
         <select
+          value={contractFilter}
+          onChange={(e) => setContractFilter(e.target.value)}
+          className={`${inputClass} w-auto`}
+        >
+          <option value="">All contracts</option>
+          {contracts.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+        <select
           value={colorMode}
           onChange={(e) => setColorMode(e.target.value as ColorMode)}
           className={`${inputClass} w-auto`}
@@ -181,6 +199,7 @@ export default function SitesClient({
           companies={companies}
           vendors={vendors}
           opportunities={opportunities}
+          contracts={contracts}
           onClose={() => setCreating(false)}
           onSaved={(id) => router.push(`/network/sites/${id}`)}
         />

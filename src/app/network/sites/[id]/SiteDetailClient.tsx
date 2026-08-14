@@ -7,7 +7,7 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import { formatCurrency, formatSquareFeet, parseCurrencyInput, parseMeasurementInput } from "@/lib/siteMapColor";
-import type { Company, Opportunity } from "@/lib/crmTypes";
+import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
 import type { Site, SiteInput, SiteMeasurements, Vendor } from "@/lib/networkTypes";
 import { deleteSiteAction, saveSiteAction } from "../../actions";
 
@@ -16,16 +16,19 @@ export default function SiteDetailClient({
   companies,
   vendors,
   opportunities,
+  contracts,
 }: {
   site: Site;
   companies: Company[];
   vendors: Vendor[];
   opportunities: Opportunity[];
+  contracts: Contract[];
 }) {
   const router = useRouter();
   const [name, setName] = useState(site.name);
   const [companyId, setCompanyId] = useState(site.companyId ?? "");
   const [opportunityId, setOpportunityId] = useState(site.opportunityId ?? "");
+  const [contractId, setContractId] = useState(site.contractId ?? "");
   const [vendorId, setVendorId] = useState(site.vendorId ?? "");
   const [address, setAddress] = useState(site.address ?? "");
   const [lat, setLat] = useState(site.lat != null ? String(site.lat) : "");
@@ -43,6 +46,11 @@ export default function SiteDetailClient({
   const opportunitiesForCompany = useMemo(
     () => (companyId ? opportunities.filter((o) => o.companyId === companyId) : opportunities),
     [opportunities, companyId],
+  );
+
+  const contractsForCompany = useMemo(
+    () => (companyId ? contracts.filter((c) => c.companyId === companyId) : contracts),
+    [contracts, companyId],
   );
 
   function addMeasurement() {
@@ -74,6 +82,7 @@ export default function SiteDetailClient({
       const input: SiteInput = {
         companyId: companyId || null,
         opportunityId: opportunityId || null,
+        contractId: contractId || null,
         vendorId: vendorId || null,
         name: name.trim(),
         address: address.trim() || null,
@@ -135,11 +144,24 @@ export default function SiteDetailClient({
                 onChange={(e) => {
                   setCompanyId(e.target.value);
                   setOpportunityId("");
+                  setContractId("");
                 }}
                 className={inputClass}
               >
                 <option value="">(none)</option>
                 {companies.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium text-slate-300">Contract</span>
+              <select value={contractId} onChange={(e) => setContractId(e.target.value)} className={inputClass}>
+                <option value="">(none)</option>
+                {contractsForCompany.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
                   </option>
@@ -304,6 +326,16 @@ export default function SiteDetailClient({
                   className="font-medium text-brand-400 hover:underline"
                 >
                   {site.opportunityName}
+                </Link>
+              ) : (
+                <p className="text-slate-500">Not linked</p>
+              )}
+            </div>
+            <div>
+              <p className="text-xs text-slate-400">Contract</p>
+              {site.contractId ? (
+                <Link href="/crm/contracts" className="font-medium text-brand-400 hover:underline">
+                  {site.contractName}
                 </Link>
               ) : (
                 <p className="text-slate-500">Not linked</p>
