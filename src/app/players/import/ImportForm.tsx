@@ -4,8 +4,8 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { importCsv, type CsvImportResult } from "../actions";
 
-const TEMPLATE = `name,position,team,byeWeek,overallRank,adp,projectedPoints,tier,tags,bio
-Example Player,RB,KC,10,1,1.2,250.5,1,target|value,Example row - edit or delete me`;
+const TEMPLATE = `name,position,team,byeWeek,overallRank,projectedPoints,tier,tags,bio
+Example Player,RB,KC,10,1,250.5,1,target|value,Example row - edit or delete me`;
 
 export default function ImportForm() {
   const [csv, setCsv] = useState("");

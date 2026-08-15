@@ -34,7 +34,8 @@ export type CandidatePlayer = {
   position: string;
   team: string | null;
   overallRank: number | null;
-  adp: number | null;
+  espnAdp: number | null;
+  sleeperAdp: number | null;
   tier: number | null;
 };
 
@@ -56,7 +57,9 @@ const OVERFLOW_PENALTY: Record<string, number> = {
 
 function effectiveRankValue(p: CandidatePlayer): number {
   if (p.overallRank != null) return p.overallRank;
-  if (p.adp != null) return p.adp;
+  if (p.espnAdp != null && p.sleeperAdp != null) return (p.espnAdp + p.sleeperAdp) / 2;
+  if (p.espnAdp != null) return p.espnAdp;
+  if (p.sleeperAdp != null) return p.sleeperAdp;
   return 9999; // unranked players sort to the back
 }
 

@@ -14,7 +14,6 @@ import { deletePlayer, toggleWatchlist, reorderPlayers } from "./actions";
 type SortKey =
   | "overallRank"
   | "positionRank"
-  | "adp"
   | "espnAdp"
   | "sleeperAdp"
   | "tier"
@@ -149,7 +148,6 @@ export default function PlayersTable({
         >
           <option value="overallRank">Sort: Overall Rank</option>
           <option value="positionRank">Sort: Position Rank</option>
-          <option value="adp">Sort: ADP</option>
           <option value="espnAdp">Sort: ESPN ADP</option>
           <option value="sleeperAdp">Sort: Sleeper ADP</option>
           <option value="tier">Sort: Tier</option>
@@ -187,7 +185,6 @@ export default function PlayersTable({
               <th className="px-3 py-2">Team</th>
               <th className="px-3 py-2">Bye</th>
               <th className="px-3 py-2">Tier</th>
-              <th className="px-3 py-2">ADP</th>
               <th className="px-3 py-2">ESPN ADP</th>
               <th className="px-3 py-2">Sleeper ADP</th>
               <th className="px-3 py-2">Proj Pts</th>
@@ -261,7 +258,6 @@ export default function PlayersTable({
                     "—"
                   )}
                 </td>
-                <td className="px-3 py-2">{p.adp ?? "—"}</td>
                 <td className="px-3 py-2">{p.espnAdp ?? "—"}</td>
                 <td className="px-3 py-2">{p.sleeperAdp ?? "—"}</td>
                 <td className="px-3 py-2">{p.projectedPoints ?? "—"}</td>
@@ -315,7 +311,7 @@ export default function PlayersTable({
             ))}
             {displayList.length === 0 && (
               <tr>
-                <td colSpan={canReorder ? 16 : 15} className="px-3 py-8 text-center text-zinc-500">
+                <td colSpan={canReorder ? 15 : 14} className="px-3 py-8 text-center text-zinc-500">
                   No players match your filters yet.
                 </td>
               </tr>

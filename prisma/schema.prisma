@@ -17,7 +17,7 @@ model Player {
   byeWeek       Int?
   overallRank   Int? // your custom overall rank
   positionRank  Int? // your custom rank within position
-  adp           Float? // your primary/blended average draft position, if you track it
+  adp           Float? // deprecated — superseded by espnAdp/sleeperAdp; no longer read or written anywhere
   espnAdp       Float? // ESPN's average draft position
   sleeperAdp    Float? // Sleeper's average draft position
   tier          Int? // 1 = best tier; null = unranked / not tiered yet

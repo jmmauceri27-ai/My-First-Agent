@@ -42,7 +42,6 @@ export async function savePlayer(formData: FormData): Promise<void> {
     team: optStr(formData.get("team")),
     byeWeek: optInt(formData.get("byeWeek")),
     overallRank: optInt(formData.get("overallRank")),
-    adp: optFloat(formData.get("adp")),
     espnAdp: optFloat(formData.get("espnAdp")),
     sleeperAdp: optFloat(formData.get("sleeperAdp")),
     projectedPoints: optFloat(formData.get("projectedPoints")),
