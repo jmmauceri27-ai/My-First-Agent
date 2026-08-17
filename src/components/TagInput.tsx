@@ -5,8 +5,10 @@ import { inputClass } from "@/components/ui/formClasses";
 
 /**
  * A multi-value "equals any" filter: type a value and press Enter to add it, paste a
- * newline/comma/tab-separated list to add many at once, or pick from a live dropdown of
- * matching known values (pass `suggestions`) and select as many as you want.
+ * newline/tab-separated list to add many at once (a comma inside a line is kept as part of
+ * that value, not treated as a separator -- some site names legitimately contain commas), or
+ * pick from a live dropdown of matching known values (pass `suggestions`) and select as many
+ * as you want.
  */
 export default function TagInput({
   values,
@@ -36,7 +38,7 @@ export default function TagInput({
 
   function addTokens(raw: string) {
     const tokens = raw
-      .split(/[\r\n,\t]+/)
+      .split(/[\r\n\t]+/)
       .map((t) => t.trim())
       .filter(Boolean);
     if (tokens.length === 0) return;
@@ -54,7 +56,7 @@ export default function TagInput({
 
   function handlePaste(e: ClipboardEvent<HTMLInputElement>) {
     const text = e.clipboardData.getData("text");
-    if (/[\r\n,\t]/.test(text)) {
+    if (/[\r\n\t]/.test(text)) {
       e.preventDefault();
       addTokens(text);
       setDraft("");
@@ -62,7 +64,7 @@ export default function TagInput({
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter" || e.key === ",") {
+    if (e.key === "Enter") {
       e.preventDefault();
       if (filteredSuggestions.length > 0) selectSuggestion(filteredSuggestions[0]);
       else addTokens(draft);
