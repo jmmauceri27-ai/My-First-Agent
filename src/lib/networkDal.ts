@@ -379,16 +379,24 @@ export async function bulkAssignTrades(siteIds: string[], trades: string[]): Pro
     .eq("user_id", OWNER_USER_ID);
   if (fetchError) throw new Error(fetchError.message);
 
-  const rows = (existing ?? []).map((s) => ({
+  const updates = (existing ?? []).map((s) => ({
     id: s.id as string,
-    user_id: OWNER_USER_ID,
     trades: Array.from(new Set([...(((s.trades as string[] | null) ?? [])), ...trades])),
-    updated_at: new Date().toISOString(),
   }));
 
-  const batchSize = 500;
-  for (let i = 0; i < rows.length; i += batchSize) {
-    const { error } = await supabase.from("sites").upsert(rows.slice(i, i + batchSize), { onConflict: "id" });
-    if (error) throw new Error(error.message);
+  const concurrency = 20;
+  for (let i = 0; i < updates.length; i += concurrency) {
+    const batch = updates.slice(i, i + concurrency);
+    const results = await Promise.all(
+      batch.map((u) =>
+        supabase
+          .from("sites")
+          .update({ trades: u.trades, updated_at: new Date().toISOString() })
+          .eq("id", u.id)
+          .eq("user_id", OWNER_USER_ID),
+      ),
+    );
+    const failed = results.find((r) => r.error);
+    if (failed?.error) throw new Error(failed.error.message);
   }
 }
