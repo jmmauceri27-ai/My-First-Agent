@@ -12,12 +12,15 @@ import type { MapPin } from "@/components/SiteMap";
 import type { MapLegendProps } from "@/components/MapLegend";
 import {
   DEFAULT_PIN_COLOR,
+  NEUTRAL_PIN_COLOR,
   buildCategoricalPalette,
   computeSiteMargin,
   formatCurrency,
   formatSquareFeet,
   gradientColorForRatio,
 } from "@/lib/siteMapColor";
+import { TRADE_COLORS, TRADE_OPTIONS } from "@/lib/trades";
+import type { Trade } from "@/lib/trades";
 import type { DatasetRecord } from "@/lib/types";
 import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
 import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
@@ -270,21 +273,20 @@ export default function SitesClient({
     }
 
     if (colorMode === "trade") {
-      const tradeGroup = (s: Site) =>
-        s.trades.length === 0 ? "Unassigned" : s.trades.length === 1 ? s.trades[0] : "Multiple trades";
-      const palette = buildCategoricalPalette(plottable.map(tradeGroup));
       const pins: MapPin[] = plottable.map((s) => ({
         id: s.id,
         lat: s.lat as number,
         lng: s.lng as number,
         label: s.name,
-        color: palette.get(tradeGroup(s)),
+        colors: s.trades.length ? s.trades.map((t) => TRADE_COLORS[t as Trade] ?? NEUTRAL_PIN_COLOR) : [NEUTRAL_PIN_COLOR],
         fields: s.trades.length ? [{ key: "Trade", value: s.trades.join(", ") }] : [],
       }));
-      const legend: MapLegendProps = {
-        mode: "categorical",
-        entries: Array.from(palette.entries()).map(([label, color]) => ({ label, color })),
-      };
+      const presentTrades = TRADE_OPTIONS.filter((t) => plottable.some((s) => s.trades.includes(t)));
+      const entries: { label: string; color: string }[] = presentTrades.map((t) => ({ label: t, color: TRADE_COLORS[t] }));
+      if (plottable.some((s) => s.trades.length === 0)) {
+        entries.push({ label: "Unassigned", color: NEUTRAL_PIN_COLOR });
+      }
+      const legend: MapLegendProps = { mode: "categorical", entries };
       return { pins, legend };
     }
 
