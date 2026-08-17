@@ -7,6 +7,7 @@ import Button from "@/components/ui/Button";
 import { inputClass } from "@/components/ui/formClasses";
 import TradeSelect from "@/components/TradeSelect";
 import TagInput from "@/components/TagInput";
+import MultiSelectDropdown from "@/components/MultiSelectDropdown";
 import type { MapPin } from "@/components/SiteMap";
 import type { MapLegendProps } from "@/components/MapLegend";
 import {
@@ -103,7 +104,7 @@ export default function SitesClient({
   const [addressValues, setAddressValues] = useState<string[]>([]);
   const [infoField, setInfoField] = useState<InfoField>("name");
   const [infoValues, setInfoValues] = useState<string[]>([]);
-  const [companyFilter, setCompanyFilter] = useState("");
+  const [companyFilters, setCompanyFilters] = useState<string[]>([]);
   const [vendorFilter, setVendorFilter] = useState("");
   const [contractFilter, setContractFilter] = useState("");
   const [tradeFilter, setTradeFilter] = useState<string[]>([]);
@@ -148,7 +149,7 @@ export default function SitesClient({
     const addressSet = new Set(addressValues.map((v) => v.trim().toLowerCase()));
     const infoSet = new Set(infoValues.map((v) => v.trim().toLowerCase()));
     return sites.filter((s) => {
-      if (companyFilter && s.companyId !== companyFilter) return false;
+      if (companyFilters.length > 0 && !companyFilters.includes(s.companyId ?? "")) return false;
       if (vendorFilter && s.vendorId !== vendorFilter) return false;
       if (contractFilter && s.contractId !== contractFilter) return false;
       if (tradeFilter.length > 0 && !s.trades.some((t) => tradeFilter.includes(t))) return false;
@@ -169,7 +170,7 @@ export default function SitesClient({
       }
       return true;
     });
-  }, [sites, companyFilter, vendorFilter, contractFilter, tradeFilter, addressField, addressValues, infoField, infoValues]);
+  }, [sites, companyFilters, vendorFilter, contractFilter, tradeFilter, addressField, addressValues, infoField, infoValues]);
 
   const allFilteredSelected = filteredSites.length > 0 && filteredSites.every((s) => selectedIds.has(s.id));
 
@@ -394,14 +395,14 @@ export default function SitesClient({
             Clear searches
           </Button>
         )}
-        <select value={companyFilter} onChange={(e) => setCompanyFilter(e.target.value)} className={`${inputClass} w-auto`}>
-          <option value="">All clients</option>
-          {companies.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+        <MultiSelectDropdown
+          options={companies.map((c) => ({ value: c.id, label: c.name }))}
+          values={companyFilters}
+          onChange={setCompanyFilters}
+          className="w-44"
+          placeholder="All clients"
+          noun="clients selected"
+        />
         <select value={vendorFilter} onChange={(e) => setVendorFilter(e.target.value)} className={`${inputClass} w-auto`}>
           <option value="">All vendors</option>
           {vendors.map((v) => (
