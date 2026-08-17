@@ -367,3 +367,28 @@ export async function bulkCreateSitesForOpportunity(
     rows,
   );
 }
+
+/** Adds the given trades to every listed site's existing Trade selection (union, not replace). */
+export async function bulkAssignTrades(siteIds: string[], trades: string[]): Promise<void> {
+  if (siteIds.length === 0 || trades.length === 0) return;
+  const supabase = createAdminClient();
+  const { data: existing, error: fetchError } = await supabase
+    .from("sites")
+    .select("id, trades")
+    .in("id", siteIds)
+    .eq("user_id", OWNER_USER_ID);
+  if (fetchError) throw new Error(fetchError.message);
+
+  const rows = (existing ?? []).map((s) => ({
+    id: s.id as string,
+    user_id: OWNER_USER_ID,
+    trades: Array.from(new Set([...(((s.trades as string[] | null) ?? [])), ...trades])),
+    updated_at: new Date().toISOString(),
+  }));
+
+  const batchSize = 500;
+  for (let i = 0; i < rows.length; i += batchSize) {
+    const { error } = await supabase.from("sites").upsert(rows.slice(i, i + batchSize), { onConflict: "id" });
+    if (error) throw new Error(error.message);
+  }
+}

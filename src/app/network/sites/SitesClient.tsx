@@ -20,6 +20,7 @@ import type { Site, Vendor } from "@/lib/networkTypes";
 import NetworkNav from "../NetworkNav";
 import SiteModal from "../SiteModal";
 import UploadSitesModal from "../UploadSitesModal";
+import { bulkAssignTradesAction } from "../actions";
 
 const SiteMap = dynamic(() => import("@/components/SiteMap"), { ssr: false });
 const MapLegend = dynamic(() => import("@/components/MapLegend"), { ssr: false });
@@ -47,6 +48,10 @@ export default function SitesClient({
   const [contractFilter, setContractFilter] = useState("");
   const [tradeFilter, setTradeFilter] = useState<string[]>([]);
   const [colorMode, setColorMode] = useState<ColorMode>("none");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkTrades, setBulkTrades] = useState<string[]>([]);
+  const [assigning, setAssigning] = useState(false);
+  const [bulkError, setBulkError] = useState<string | null>(null);
 
   const filteredSites = useMemo(
     () =>
@@ -59,6 +64,48 @@ export default function SitesClient({
       ),
     [sites, companyFilter, vendorFilter, contractFilter, tradeFilter],
   );
+
+  const allFilteredSelected = filteredSites.length > 0 && filteredSites.every((s) => selectedIds.has(s.id));
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAllFiltered() {
+    setSelectedIds((prev) => {
+      if (allFilteredSelected) {
+        const next = new Set(prev);
+        for (const s of filteredSites) next.delete(s.id);
+        return next;
+      }
+      const next = new Set(prev);
+      for (const s of filteredSites) next.add(s.id);
+      return next;
+    });
+  }
+
+  async function handleBulkAssign() {
+    if (selectedIds.size === 0 || bulkTrades.length === 0) return;
+    setBulkError(null);
+    setAssigning(true);
+    try {
+      const result = await bulkAssignTradesAction(Array.from(selectedIds), bulkTrades);
+      if (result.error) {
+        setBulkError(result.error);
+        return;
+      }
+      setSelectedIds(new Set());
+      setBulkTrades([]);
+      router.refresh();
+    } finally {
+      setAssigning(false);
+    }
+  }
 
   const { pins, legend } = useMemo(() => {
     const plottable = filteredSites.filter((s) => s.lat != null && s.lng != null);
@@ -193,6 +240,27 @@ export default function SitesClient({
         )}
       </div>
 
+      {selectedIds.size > 0 && (
+        <div className="flex flex-wrap items-center gap-3 border-b border-purple-400/10 bg-[#1a1330] px-4 py-2">
+          <span className="text-sm text-slate-300">{selectedIds.size} selected</span>
+          <TradeSelect value={bulkTrades} onChange={setBulkTrades} className="w-56" placeholder="Add trade(s)…" />
+          <Button variant="secondary" onClick={handleBulkAssign} disabled={bulkTrades.length === 0 || assigning}>
+            {assigning ? "Assigning…" : "Assign to selected"}
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setSelectedIds(new Set());
+              setBulkTrades([]);
+              setBulkError(null);
+            }}
+          >
+            Clear selection
+          </Button>
+          {bulkError && <span className="text-xs text-critical">{bulkError}</span>}
+        </div>
+      )}
+
       <div className="flex min-h-0 flex-1">
         <div className="min-h-0 flex-1">
           {pins.length > 0 ? (
@@ -208,18 +276,36 @@ export default function SitesClient({
           {filteredSites.length === 0 ? (
             <p className="p-4 text-sm text-slate-400">No sites match these filters.</p>
           ) : (
-            filteredSites.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => router.push(`/network/sites/${s.id}`)}
-                className="flex flex-col gap-0.5 px-4 py-3 text-left hover:bg-purple-500/5"
-              >
-                <span className="text-sm font-semibold text-slate-50">{s.name}</span>
-                <span className="text-xs text-slate-400">
-                  {[s.companyName, s.vendorName, ...s.trades].filter(Boolean).join(" · ") || "No details"}
-                </span>
-              </button>
-            ))
+            <>
+              <label className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-slate-400">
+                <input
+                  type="checkbox"
+                  checked={allFilteredSelected}
+                  onChange={toggleSelectAllFiltered}
+                  className="rounded border-slate-500 text-brand-500 focus:ring-2 focus:ring-brand-500/40"
+                />
+                Select all {filteredSites.length} filtered
+              </label>
+              {filteredSites.map((s) => (
+                <div key={s.id} className="flex items-center gap-2 px-4 py-3 hover:bg-purple-500/5">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(s.id)}
+                    onChange={() => toggleSelect(s.id)}
+                    className="shrink-0 rounded border-slate-500 text-brand-500 focus:ring-2 focus:ring-brand-500/40"
+                  />
+                  <button
+                    onClick={() => router.push(`/network/sites/${s.id}`)}
+                    className="flex min-w-0 flex-1 flex-col gap-0.5 text-left"
+                  >
+                    <span className="truncate text-sm font-semibold text-slate-50">{s.name}</span>
+                    <span className="truncate text-xs text-slate-400">
+                      {[s.companyName, s.vendorName, ...s.trades].filter(Boolean).join(" · ") || "No details"}
+                    </span>
+                  </button>
+                </div>
+              ))}
+            </>
           )}
         </div>
       </div>

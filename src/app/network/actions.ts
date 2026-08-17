@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { parseBuffer } from "@/lib/parse";
 import {
+  bulkAssignTrades,
   bulkCreateSites,
   bulkCreateSitesForOpportunity,
   createSite,
@@ -154,4 +155,15 @@ export async function bulkCreateSitesAction(
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to import sites." };
   }
+}
+
+/** Adds the given trades to every listed site's existing Trade selection -- doesn't remove any trade a site already has. */
+export async function bulkAssignTradesAction(siteIds: string[], trades: string[]): Promise<{ error?: string }> {
+  try {
+    await bulkAssignTrades(siteIds, trades);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to assign trades." };
+  }
+  revalidatePath("/network/sites");
+  return {};
 }
