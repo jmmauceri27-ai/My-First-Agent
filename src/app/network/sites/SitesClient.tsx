@@ -113,6 +113,8 @@ export default function SitesClient({
   const [addressSearch, setAddressSearch] = useState("");
   const [infoField, setInfoField] = useState<InfoField>("name");
   const [infoSearch, setInfoSearch] = useState("");
+  const [infoBulkMode, setInfoBulkMode] = useState(false);
+  const [infoBulkText, setInfoBulkText] = useState("");
   const [companyFilter, setCompanyFilter] = useState("");
   const [vendorFilter, setVendorFilter] = useState("");
   const [contractFilter, setContractFilter] = useState("");
@@ -123,6 +125,24 @@ export default function SitesClient({
   const [assigning, setAssigning] = useState(false);
   const [bulkError, setBulkError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+
+  const infoBulkValues = useMemo(() => {
+    if (!infoBulkMode) return [];
+    return Array.from(
+      new Set(
+        infoBulkText
+          .split(/[\r\n,]+/)
+          .map((v) => v.trim().toLowerCase())
+          .filter(Boolean),
+      ),
+    );
+  }, [infoBulkMode, infoBulkText]);
+
+  const infoBulkUnmatched = useMemo(() => {
+    if (infoBulkValues.length === 0) return [];
+    const existingValues = new Set(sites.map((s) => (infoField === "name" ? s.name : s.id).toLowerCase()));
+    return infoBulkValues.filter((v) => !existingValues.has(v));
+  }, [infoBulkValues, sites, infoField]);
 
   const filteredSites = useMemo(() => {
     const addressTerm = addressSearch.trim().toLowerCase();
@@ -143,13 +163,30 @@ export default function SitesClient({
                 : s.zip;
         if (!(value ?? "").toLowerCase().includes(addressTerm)) return false;
       }
-      if (infoTerm) {
+      if (infoBulkMode) {
+        if (infoBulkValues.length > 0) {
+          const value = (infoField === "name" ? s.name : s.id).toLowerCase();
+          if (!infoBulkValues.includes(value)) return false;
+        }
+      } else if (infoTerm) {
         const value = infoField === "name" ? s.name : s.id;
         if (!value.toLowerCase().includes(infoTerm)) return false;
       }
       return true;
     });
-  }, [sites, companyFilter, vendorFilter, contractFilter, tradeFilter, addressField, addressSearch, infoField, infoSearch]);
+  }, [
+    sites,
+    companyFilter,
+    vendorFilter,
+    contractFilter,
+    tradeFilter,
+    addressField,
+    addressSearch,
+    infoField,
+    infoSearch,
+    infoBulkMode,
+    infoBulkValues,
+  ]);
 
   const allFilteredSelected = filteredSites.length > 0 && filteredSites.every((s) => selectedIds.has(s.id));
 
@@ -332,12 +369,27 @@ export default function SitesClient({
             <option value="name">Site Name</option>
             <option value="id">Site ID</option>
           </select>
-          <input
-            value={infoSearch}
-            onChange={(e) => setInfoSearch(e.target.value)}
-            placeholder="Search…"
-            className={`${inputClass} w-40`}
-          />
+          {infoBulkMode ? (
+            <Button variant="secondary" onClick={() => setInfoBulkMode(false)}>
+              Bulk list ({infoBulkValues.length}) — edit
+            </Button>
+          ) : (
+            <>
+              <input
+                value={infoSearch}
+                onChange={(e) => setInfoSearch(e.target.value)}
+                placeholder="Search…"
+                className={`${inputClass} w-40`}
+              />
+              <button
+                type="button"
+                onClick={() => setInfoBulkMode(true)}
+                className="text-xs font-medium text-brand-400 hover:underline"
+              >
+                Paste list…
+              </button>
+            </>
+          )}
         </div>
         <select value={companyFilter} onChange={(e) => setCompanyFilter(e.target.value)} className={`${inputClass} w-auto`}>
           <option value="">All clients</option>
@@ -384,6 +436,40 @@ export default function SitesClient({
           </div>
         )}
       </div>
+
+      {infoBulkMode && (
+        <div className="flex flex-col gap-2 border-b border-purple-400/10 bg-[#1a1330] px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-sm text-slate-300">
+              Paste one {infoField === "name" ? "site name" : "site ID"} per line (or comma-separated) —{" "}
+              {infoBulkValues.length} entered, {filteredSites.length} matched
+            </span>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setInfoBulkMode(false);
+                setInfoBulkText("");
+              }}
+            >
+              Clear & close
+            </Button>
+          </div>
+          <textarea
+            value={infoBulkText}
+            onChange={(e) => setInfoBulkText(e.target.value)}
+            rows={5}
+            placeholder={infoField === "name" ? "e.g.\nMain St Plaza\nOak Ave Center\n…" : "e.g.\nsite-uuid-1\nsite-uuid-2\n…"}
+            className={`${inputClass} font-mono text-xs`}
+          />
+          {infoBulkUnmatched.length > 0 && (
+            <p className="text-xs text-critical">
+              {infoBulkUnmatched.length} entr{infoBulkUnmatched.length === 1 ? "y" : "ies"} didn&rsquo;t match any
+              site: {infoBulkUnmatched.slice(0, 10).join(", ")}
+              {infoBulkUnmatched.length > 10 ? `, +${infoBulkUnmatched.length - 10} more` : ""}
+            </p>
+          )}
+        </div>
+      )}
 
       {selectedIds.size > 0 && (
         <div className="flex flex-wrap items-center gap-3 border-b border-purple-400/10 bg-[#1a1330] px-4 py-2">
