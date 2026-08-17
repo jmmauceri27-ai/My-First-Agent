@@ -77,6 +77,10 @@ function siteToExportRow(s: Site): DatasetRecord {
   };
 }
 
+function distinctValues(sites: Site[], pick: (s: Site) => string | null): string[] {
+  return Array.from(new Set(sites.map(pick).filter((v): v is string => !!v))).sort();
+}
+
 function downloadBase64Xlsx(base64: string, filename: string) {
   const byteChars = atob(base64);
   const byteNumbers = new Array(byteChars.length);
@@ -111,7 +115,7 @@ export default function SitesClient({
   const [uploading, setUploading] = useState(false);
   const [updatingSheet, setUpdatingSheet] = useState(false);
   const [addressField, setAddressField] = useState<AddressField>("address");
-  const [addressSearch, setAddressSearch] = useState("");
+  const [addressValues, setAddressValues] = useState<string[]>([]);
   const [infoField, setInfoField] = useState<InfoField>("name");
   const [infoValues, setInfoValues] = useState<string[]>([]);
   const [companyFilter, setCompanyFilter] = useState("");
@@ -125,6 +129,30 @@ export default function SitesClient({
   const [bulkError, setBulkError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
 
+  const addressOptions = useMemo(() => distinctValues(sites, (s) => s.address), [sites]);
+  const cityOptions = useMemo(() => distinctValues(sites, (s) => s.city), [sites]);
+  const stateOptions = useMemo(() => distinctValues(sites, (s) => s.state), [sites]);
+  const zipOptions = useMemo(() => distinctValues(sites, (s) => s.zip), [sites]);
+  const nameOptions = useMemo(() => distinctValues(sites, (s) => s.name), [sites]);
+  const idOptions = useMemo(() => distinctValues(sites, (s) => s.id), [sites]);
+
+  const addressSuggestions =
+    addressField === "address"
+      ? addressOptions
+      : addressField === "city"
+        ? cityOptions
+        : addressField === "state"
+          ? stateOptions
+          : zipOptions;
+
+  const infoSuggestions = infoField === "name" ? nameOptions : idOptions;
+
+  const addressUnmatched = useMemo(() => {
+    if (addressValues.length === 0) return [];
+    const existingValues = new Set(addressSuggestions.map((v) => v.toLowerCase()));
+    return addressValues.filter((v) => !existingValues.has(v.trim().toLowerCase()));
+  }, [addressValues, addressSuggestions]);
+
   const infoUnmatched = useMemo(() => {
     if (infoValues.length === 0) return [];
     const existingValues = new Set(sites.map((s) => (infoField === "name" ? s.name : s.id).toLowerCase()));
@@ -132,14 +160,14 @@ export default function SitesClient({
   }, [infoValues, sites, infoField]);
 
   const filteredSites = useMemo(() => {
-    const addressTerm = addressSearch.trim().toLowerCase();
+    const addressSet = new Set(addressValues.map((v) => v.trim().toLowerCase()));
     const infoSet = new Set(infoValues.map((v) => v.trim().toLowerCase()));
     return sites.filter((s) => {
       if (companyFilter && s.companyId !== companyFilter) return false;
       if (vendorFilter && s.vendorId !== vendorFilter) return false;
       if (contractFilter && s.contractId !== contractFilter) return false;
       if (tradeFilter.length > 0 && !s.trades.some((t) => tradeFilter.includes(t))) return false;
-      if (addressTerm) {
+      if (addressSet.size > 0) {
         const value =
           addressField === "address"
             ? s.address
@@ -148,7 +176,7 @@ export default function SitesClient({
               : addressField === "state"
                 ? s.state
                 : s.zip;
-        if (!(value ?? "").toLowerCase().includes(addressTerm)) return false;
+        if (!addressSet.has((value ?? "").toLowerCase())) return false;
       }
       if (infoSet.size > 0) {
         const value = (infoField === "name" ? s.name : s.id).toLowerCase();
@@ -156,7 +184,7 @@ export default function SitesClient({
       }
       return true;
     });
-  }, [sites, companyFilter, vendorFilter, contractFilter, tradeFilter, addressField, addressSearch, infoField, infoValues]);
+  }, [sites, companyFilter, vendorFilter, contractFilter, tradeFilter, addressField, addressValues, infoField, infoValues]);
 
   const allFilteredSelected = filteredSites.length > 0 && filteredSites.every((s) => selectedIds.has(s.id));
 
@@ -310,11 +338,14 @@ export default function SitesClient({
       </div>
 
       <div className="flex flex-wrap items-center gap-3 border-b border-purple-400/10 bg-[#150f26] px-4 py-2">
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-medium text-slate-400">Site Address</span>
+        <div className="flex items-start gap-1.5">
+          <span className="pt-2 text-xs font-medium text-slate-400">Site Address</span>
           <select
             value={addressField}
-            onChange={(e) => setAddressField(e.target.value as AddressField)}
+            onChange={(e) => {
+              setAddressField(e.target.value as AddressField);
+              setAddressValues([]);
+            }}
             className={`${inputClass} w-auto`}
           >
             <option value="address">Address</option>
@@ -322,24 +353,21 @@ export default function SitesClient({
             <option value="state">State</option>
             <option value="zip">Zip</option>
           </select>
-          <div className="relative">
-            <input
-              value={addressSearch}
-              onChange={(e) => setAddressSearch(e.target.value)}
-              placeholder="Search…"
-              className={`${inputClass} w-40 ${addressSearch ? "pr-6" : ""}`}
-            />
-            {addressSearch && (
-              <button
-                type="button"
-                onClick={() => setAddressSearch("")}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-critical"
-                aria-label="Clear address search"
-              >
-                ×
-              </button>
-            )}
-          </div>
+          <TagInput
+            values={addressValues}
+            onChange={setAddressValues}
+            suggestions={addressSuggestions}
+            placeholder="Type to see matches…"
+            className="w-56"
+            footer={
+              addressUnmatched.length > 0 ? (
+                <p className="border-t border-purple-400/10 px-2 py-1.5 text-xs text-critical">
+                  {addressUnmatched.length} didn&rsquo;t match any site: {addressUnmatched.slice(0, 5).join(", ")}
+                  {addressUnmatched.length > 5 ? `, +${addressUnmatched.length - 5} more` : ""}
+                </p>
+              ) : null
+            }
+          />
         </div>
         <div className="flex items-start gap-1.5">
           <span className="pt-2 text-xs font-medium text-slate-400">Site Info</span>
@@ -357,7 +385,8 @@ export default function SitesClient({
           <TagInput
             values={infoValues}
             onChange={setInfoValues}
-            placeholder="Type or paste a list…"
+            suggestions={infoSuggestions}
+            placeholder="Type to see matches…"
             className="w-64"
             footer={
               infoUnmatched.length > 0 ? (
@@ -369,11 +398,11 @@ export default function SitesClient({
             }
           />
         </div>
-        {(addressSearch || infoValues.length > 0) && (
+        {(addressValues.length > 0 || infoValues.length > 0) && (
           <Button
             variant="ghost"
             onClick={() => {
-              setAddressSearch("");
+              setAddressValues([]);
               setInfoValues([]);
             }}
           >
