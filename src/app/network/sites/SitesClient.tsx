@@ -29,6 +29,8 @@ const SiteMap = dynamic(() => import("@/components/SiteMap"), { ssr: false });
 const MapLegend = dynamic(() => import("@/components/MapLegend"), { ssr: false });
 
 type ColorMode = "none" | "margin" | "vendor" | "trade";
+type AddressField = "address" | "city" | "state" | "zip";
+type InfoField = "name" | "id";
 
 const SITE_EXPORT_COLUMNS = [
   "Site ID",
@@ -107,7 +109,10 @@ export default function SitesClient({
   const [creating, setCreating] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [updatingSheet, setUpdatingSheet] = useState(false);
-  const [search, setSearch] = useState("");
+  const [addressField, setAddressField] = useState<AddressField>("address");
+  const [addressSearch, setAddressSearch] = useState("");
+  const [infoField, setInfoField] = useState<InfoField>("name");
+  const [infoSearch, setInfoSearch] = useState("");
   const [companyFilter, setCompanyFilter] = useState("");
   const [vendorFilter, setVendorFilter] = useState("");
   const [contractFilter, setContractFilter] = useState("");
@@ -120,22 +125,31 @@ export default function SitesClient({
   const [exporting, setExporting] = useState(false);
 
   const filteredSites = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return sites.filter(
-      (s) =>
-        (!companyFilter || s.companyId === companyFilter) &&
-        (!vendorFilter || s.vendorId === vendorFilter) &&
-        (!contractFilter || s.contractId === contractFilter) &&
-        (tradeFilter.length === 0 || s.trades.some((t) => tradeFilter.includes(t))) &&
-        (!term ||
-          s.name.toLowerCase().includes(term) ||
-          s.id.toLowerCase().includes(term) ||
-          (s.address ?? "").toLowerCase().includes(term) ||
-          (s.city ?? "").toLowerCase().includes(term) ||
-          (s.state ?? "").toLowerCase().includes(term) ||
-          (s.zip ?? "").toLowerCase().includes(term)),
-    );
-  }, [sites, companyFilter, vendorFilter, contractFilter, tradeFilter, search]);
+    const addressTerm = addressSearch.trim().toLowerCase();
+    const infoTerm = infoSearch.trim().toLowerCase();
+    return sites.filter((s) => {
+      if (companyFilter && s.companyId !== companyFilter) return false;
+      if (vendorFilter && s.vendorId !== vendorFilter) return false;
+      if (contractFilter && s.contractId !== contractFilter) return false;
+      if (tradeFilter.length > 0 && !s.trades.some((t) => tradeFilter.includes(t))) return false;
+      if (addressTerm) {
+        const value =
+          addressField === "address"
+            ? s.address
+            : addressField === "city"
+              ? s.city
+              : addressField === "state"
+                ? s.state
+                : s.zip;
+        if (!(value ?? "").toLowerCase().includes(addressTerm)) return false;
+      }
+      if (infoTerm) {
+        const value = infoField === "name" ? s.name : s.id;
+        if (!value.toLowerCase().includes(infoTerm)) return false;
+      }
+      return true;
+    });
+  }, [sites, companyFilter, vendorFilter, contractFilter, tradeFilter, addressField, addressSearch, infoField, infoSearch]);
 
   const allFilteredSelected = filteredSites.length > 0 && filteredSites.every((s) => selectedIds.has(s.id));
 
@@ -289,12 +303,42 @@ export default function SitesClient({
       </div>
 
       <div className="flex flex-wrap items-center gap-3 border-b border-purple-400/10 bg-[#150f26] px-4 py-2">
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search name, ID, address, city, state, zip…"
-          className={`${inputClass} w-64`}
-        />
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-medium text-slate-400">Site Address</span>
+          <select
+            value={addressField}
+            onChange={(e) => setAddressField(e.target.value as AddressField)}
+            className={`${inputClass} w-auto`}
+          >
+            <option value="address">Address</option>
+            <option value="city">City</option>
+            <option value="state">State</option>
+            <option value="zip">Zip</option>
+          </select>
+          <input
+            value={addressSearch}
+            onChange={(e) => setAddressSearch(e.target.value)}
+            placeholder="Search…"
+            className={`${inputClass} w-40`}
+          />
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-medium text-slate-400">Site Info</span>
+          <select
+            value={infoField}
+            onChange={(e) => setInfoField(e.target.value as InfoField)}
+            className={`${inputClass} w-auto`}
+          >
+            <option value="name">Site Name</option>
+            <option value="id">Site ID</option>
+          </select>
+          <input
+            value={infoSearch}
+            onChange={(e) => setInfoSearch(e.target.value)}
+            placeholder="Search…"
+            className={`${inputClass} w-40`}
+          />
+        </div>
         <select value={companyFilter} onChange={(e) => setCompanyFilter(e.target.value)} className={`${inputClass} w-auto`}>
           <option value="">All clients</option>
           {companies.map((c) => (
