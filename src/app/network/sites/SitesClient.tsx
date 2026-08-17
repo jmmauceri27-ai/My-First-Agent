@@ -322,12 +322,24 @@ export default function SitesClient({
             <option value="state">State</option>
             <option value="zip">Zip</option>
           </select>
-          <input
-            value={addressSearch}
-            onChange={(e) => setAddressSearch(e.target.value)}
-            placeholder="Search…"
-            className={`${inputClass} w-40`}
-          />
+          <div className="relative">
+            <input
+              value={addressSearch}
+              onChange={(e) => setAddressSearch(e.target.value)}
+              placeholder="Search…"
+              className={`${inputClass} w-40 ${addressSearch ? "pr-6" : ""}`}
+            />
+            {addressSearch && (
+              <button
+                type="button"
+                onClick={() => setAddressSearch("")}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-critical"
+                aria-label="Clear address search"
+              >
+                ×
+              </button>
+            )}
+          </div>
         </div>
         <div className="flex items-start gap-1.5">
           <span className="pt-2 text-xs font-medium text-slate-400">Site Info</span>
@@ -357,6 +369,17 @@ export default function SitesClient({
             }
           />
         </div>
+        {(addressSearch || infoValues.length > 0) && (
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setAddressSearch("");
+              setInfoValues([]);
+            }}
+          >
+            Clear searches
+          </Button>
+        )}
         <select value={companyFilter} onChange={(e) => setCompanyFilter(e.target.value)} className={`${inputClass} w-auto`}>
           <option value="">All clients</option>
           {companies.map((c) => (

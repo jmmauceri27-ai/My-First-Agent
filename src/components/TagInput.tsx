@@ -75,7 +75,12 @@ export default function TagInput({
             <span>
               {values.length} value{values.length === 1 ? "" : "s"}
             </span>
-            <span className="font-medium">Equals Any</span>
+            <div className="flex items-center gap-2">
+              <span className="font-medium">Equals Any</span>
+              <button type="button" onClick={() => onChange([])} className="text-brand-400 hover:underline">
+                Clear all
+              </button>
+            </div>
           </div>
           <div className="max-h-40 overflow-y-auto">
             {values.map((v, i) => (
