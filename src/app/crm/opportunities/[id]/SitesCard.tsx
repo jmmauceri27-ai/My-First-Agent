@@ -38,6 +38,9 @@ export default function SitesCard({
     lat: NONE,
     lng: NONE,
     address: NONE,
+    city: NONE,
+    state: NONE,
+    zip: NONE,
     contractValue: NONE,
     subPrice: NONE,
   });
@@ -69,6 +72,9 @@ export default function SitesCard({
         lat: result.columns.find((c) => /^lat/i.test(c)) ?? NONE,
         lng: result.columns.find((c) => /^(lng|lon)/i.test(c)) ?? NONE,
         address: result.columns.find((c) => /address/i.test(c)) ?? NONE,
+        city: result.columns.find((c) => /^city/i.test(c)) ?? NONE,
+        state: result.columns.find((c) => /^state|^st$/i.test(c)) ?? NONE,
+        zip: result.columns.find((c) => /zip|postal/i.test(c)) ?? NONE,
         contractValue: result.columns.find((c) => /contract/i.test(c)) ?? NONE,
         subPrice: result.columns.find((c) => /sub.?price/i.test(c)) ?? NONE,
       });
@@ -101,6 +107,9 @@ export default function SitesCard({
           lat: Number.isFinite(lat) ? lat : null,
           lng: Number.isFinite(lng) ? lng : null,
           address: mapping.address ? String(row[mapping.address] ?? "").trim() || null : null,
+          city: mapping.city ? String(row[mapping.city] ?? "").trim() || null : null,
+          state: mapping.state ? String(row[mapping.state] ?? "").trim() || null : null,
+          zip: mapping.zip ? String(row[mapping.zip] ?? "").trim() || null : null,
           contractValue: Number.isFinite(contractValue) ? contractValue : null,
           subPrice: Number.isFinite(subPrice) ? subPrice : null,
         };
@@ -167,6 +176,9 @@ export default function SitesCard({
                 ["lat", "Latitude column", true],
                 ["lng", "Longitude column", true],
                 ["address", "Address column (optional)", false],
+                ["city", "City column (optional)", false],
+                ["state", "State column (optional)", false],
+                ["zip", "Zip column (optional)", false],
                 ["contractValue", "Contract value column (optional)", false],
                 ["subPrice", "Sub price column (optional)", false],
               ] as const

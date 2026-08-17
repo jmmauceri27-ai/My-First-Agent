@@ -65,7 +65,10 @@ export default function SitesClient({
         (!term ||
           s.name.toLowerCase().includes(term) ||
           s.id.toLowerCase().includes(term) ||
-          (s.address ?? "").toLowerCase().includes(term)),
+          (s.address ?? "").toLowerCase().includes(term) ||
+          (s.city ?? "").toLowerCase().includes(term) ||
+          (s.state ?? "").toLowerCase().includes(term) ||
+          (s.zip ?? "").toLowerCase().includes(term)),
     );
   }, [sites, companyFilter, vendorFilter, contractFilter, tradeFilter, search]);
 

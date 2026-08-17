@@ -47,6 +47,9 @@ export interface Site {
   vendorName: string | null;
   name: string;
   address: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
   lat: number | null;
   lng: number | null;
   /** Trades performed at this site, chosen from the fixed TRADE_OPTIONS list -- a site can have more than one. */
@@ -66,6 +69,9 @@ export interface SiteInput {
   vendorId: string | null;
   name: string;
   address: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
   lat: number | null;
   lng: number | null;
   trades: string[];
@@ -81,6 +87,9 @@ export interface SiteImportRow {
   lat: number | null;
   lng: number | null;
   address: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
   contractValue: number | null;
   subPrice: number | null;
 }

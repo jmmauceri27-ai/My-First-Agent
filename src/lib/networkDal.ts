@@ -96,7 +96,7 @@ export async function deleteVendor(id: string): Promise<void> {
 // ---------- Sites ----------
 
 const SITE_COLUMNS =
-  "id, company_id, opportunity_id, contract_id, vendor_id, name, address, lat, lng, trades, contract_value, sub_price, measurements, notes, created_at, updated_at, crm_companies(name), crm_opportunities(name), crm_contracts(name), vendors(name)";
+  "id, company_id, opportunity_id, contract_id, vendor_id, name, address, city, state, zip, lat, lng, trades, contract_value, sub_price, measurements, notes, created_at, updated_at, crm_companies(name), crm_opportunities(name), crm_contracts(name), vendors(name)";
 
 function mapSite(s: Record<string, unknown>): Site {
   const company = s.crm_companies as unknown as { name: string } | null;
@@ -115,6 +115,9 @@ function mapSite(s: Record<string, unknown>): Site {
     vendorName: vendor?.name ?? null,
     name: s.name as string,
     address: s.address as string | null,
+    city: s.city as string | null,
+    state: s.state as string | null,
+    zip: s.zip as string | null,
     lat: s.lat as number | null,
     lng: s.lng as number | null,
     trades: (s.trades as string[] | null) ?? [],
@@ -241,6 +244,9 @@ function siteRow(input: SiteInput) {
     vendor_id: input.vendorId,
     name: input.name,
     address: input.address,
+    city: input.city,
+    state: input.state,
+    zip: input.zip,
     lat: input.lat,
     lng: input.lng,
     trades: input.trades,
@@ -326,6 +332,9 @@ export async function bulkCreateSites(links: SiteBulkLinks, rows: SiteImportRow[
     vendor_id: links.vendorId,
     name: row.name,
     address: row.address,
+    city: row.city,
+    state: row.state,
+    zip: row.zip,
     lat: row.lat,
     lng: row.lng,
     trades: links.trades,

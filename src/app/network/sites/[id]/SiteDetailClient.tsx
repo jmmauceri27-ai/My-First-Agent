@@ -33,6 +33,9 @@ export default function SiteDetailClient({
   const [contractId, setContractId] = useState(site.contractId ?? "");
   const [vendorId, setVendorId] = useState(site.vendorId ?? "");
   const [address, setAddress] = useState(site.address ?? "");
+  const [city, setCity] = useState(site.city ?? "");
+  const [state, setState] = useState(site.state ?? "");
+  const [zip, setZip] = useState(site.zip ?? "");
   const [lat, setLat] = useState(site.lat != null ? String(site.lat) : "");
   const [lng, setLng] = useState(site.lng != null ? String(site.lng) : "");
   const [trades, setTrades] = useState<string[]>(site.trades ?? []);
@@ -89,6 +92,9 @@ export default function SiteDetailClient({
         vendorId: vendorId || null,
         name: name.trim(),
         address: address.trim() || null,
+        city: city.trim() || null,
+        state: state.trim() || null,
+        zip: zip.trim() || null,
         lat: lat.trim() ? Number(lat) : null,
         lng: lng.trim() ? Number(lng) : null,
         trades,
@@ -226,6 +232,21 @@ export default function SiteDetailClient({
               <span className="font-medium text-slate-300">Address</span>
               <input value={address} onChange={(e) => setAddress(e.target.value)} className={inputClass} />
             </label>
+
+            <div className="grid grid-cols-3 gap-3">
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium text-slate-300">City</span>
+                <input value={city} onChange={(e) => setCity(e.target.value)} className={inputClass} />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium text-slate-300">State</span>
+                <input value={state} onChange={(e) => setState(e.target.value)} className={inputClass} />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium text-slate-300">Zip</span>
+                <input value={zip} onChange={(e) => setZip(e.target.value)} className={inputClass} />
+              </label>
+            </div>
 
             <div className="grid grid-cols-2 gap-3">
               <label className="flex flex-col gap-1 text-sm">
