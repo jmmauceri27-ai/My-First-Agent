@@ -13,19 +13,79 @@ import {
   buildCategoricalPalette,
   computeSiteMargin,
   formatCurrency,
+  formatSquareFeet,
   gradientColorForRatio,
 } from "@/lib/siteMapColor";
+import type { DatasetRecord } from "@/lib/types";
 import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
 import type { Site, Vendor } from "@/lib/networkTypes";
 import NetworkNav from "../NetworkNav";
 import SiteModal from "../SiteModal";
 import UploadSitesModal from "../UploadSitesModal";
-import { bulkAssignTradesAction } from "../actions";
+import { bulkAssignTradesAction, exportSitesToExcelAction } from "../actions";
 
 const SiteMap = dynamic(() => import("@/components/SiteMap"), { ssr: false });
 const MapLegend = dynamic(() => import("@/components/MapLegend"), { ssr: false });
 
 type ColorMode = "none" | "margin" | "vendor" | "trade";
+
+const SITE_EXPORT_COLUMNS = [
+  "Site Name",
+  "Client",
+  "Vendor",
+  "Opportunity",
+  "Contract",
+  "Trade",
+  "Address",
+  "City",
+  "State",
+  "Zip",
+  "Latitude",
+  "Longitude",
+  "Contract Value",
+  "Sub Price",
+  "Measurements",
+  "Notes",
+];
+
+function siteToExportRow(s: Site): DatasetRecord {
+  return {
+    "Site Name": s.name,
+    Client: s.companyName ?? "",
+    Vendor: s.vendorName ?? "",
+    Opportunity: s.opportunityName ?? "",
+    Contract: s.contractName ?? "",
+    Trade: s.trades.join(", "),
+    Address: s.address ?? "",
+    City: s.city ?? "",
+    State: s.state ?? "",
+    Zip: s.zip ?? "",
+    Latitude: s.lat,
+    Longitude: s.lng,
+    "Contract Value": s.contractValue,
+    "Sub Price": s.subPrice,
+    Measurements: Object.entries(s.measurements)
+      .map(([label, value]) => `${label}: ${formatSquareFeet(value)}`)
+      .join("; "),
+    Notes: s.notes ?? "",
+  };
+}
+
+function downloadBase64Xlsx(base64: string, filename: string) {
+  const byteChars = atob(base64);
+  const byteNumbers = new Array(byteChars.length);
+  for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
+  const byteArray = new Uint8Array(byteNumbers);
+  const blob = new Blob([byteArray], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export default function SitesClient({
   sites,
@@ -53,6 +113,7 @@ export default function SitesClient({
   const [bulkTrades, setBulkTrades] = useState<string[]>([]);
   const [assigning, setAssigning] = useState(false);
   const [bulkError, setBulkError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const filteredSites = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -111,6 +172,19 @@ export default function SitesClient({
       router.refresh();
     } finally {
       setAssigning(false);
+    }
+  }
+
+  async function handleExport() {
+    if (filteredSites.length === 0) return;
+    setExporting(true);
+    try {
+      const rows = filteredSites.map(siteToExportRow);
+      const base64 = await exportSitesToExcelAction(rows, SITE_EXPORT_COLUMNS);
+      const date = new Date().toISOString().slice(0, 10);
+      downloadBase64Xlsx(base64, `sites_export_${date}.xlsx`);
+    } finally {
+      setExporting(false);
     }
   }
 
@@ -193,6 +267,13 @@ export default function SitesClient({
           <NetworkNav active="sites" />
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="secondary"
+            onClick={handleExport}
+            disabled={filteredSites.length === 0 || exporting}
+          >
+            {exporting ? "Downloading…" : `Download ${filteredSites.length} site${filteredSites.length === 1 ? "" : "s"}`}
+          </Button>
           <Button variant="secondary" onClick={() => setUploading(true)}>
             Upload sites
           </Button>

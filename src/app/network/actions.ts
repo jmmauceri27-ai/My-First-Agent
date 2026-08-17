@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { buildXlsxBase64 } from "@/lib/exportExcel";
 import { parseBuffer } from "@/lib/parse";
+import type { DatasetRecord } from "@/lib/types";
 import {
   bulkAssignTrades,
   bulkCreateSites,
@@ -166,4 +168,9 @@ export async function bulkAssignTradesAction(siteIds: string[], trades: string[]
   }
   revalidatePath("/network/sites");
   return {};
+}
+
+/** Builds a .xlsx workbook from already-shaped rows (e.g. the caller's currently filtered sites), returned as base64. */
+export async function exportSitesToExcelAction(rows: DatasetRecord[], columns: string[]): Promise<string> {
+  return buildXlsxBase64(rows, columns);
 }
