@@ -102,3 +102,31 @@ export interface SiteBulkLinks {
   vendorId: string | null;
   trades: string[];
 }
+
+/**
+ * A single row parsed from an uploaded sheet meant to UPDATE existing sites rather than create new ones.
+ * Matched to an existing site by `matchId` (a Site ID column) if present, else by `matchName` (case-insensitive).
+ * Only the fields actually present on the row are touched -- an omitted field leaves the site's existing value alone.
+ */
+export interface SiteUpdateRow {
+  matchId: string | null;
+  matchName: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  trades?: string[];
+  contractValue?: number | null;
+  subPrice?: number | null;
+  notes?: string | null;
+}
+
+export interface SiteUpdateResult {
+  updated: number;
+  /** Match keys (ID or name) from the sheet that didn't correspond to any existing site. */
+  notFound: string[];
+  /** Names that matched more than one site (no Site ID and no Client scope to disambiguate). */
+  ambiguous: string[];
+}

@@ -1,6 +1,15 @@
 import "server-only";
 import { createAdminClient, OWNER_USER_ID } from "./supabase/admin";
-import type { Site, SiteBulkLinks, SiteImportRow, SiteInput, Vendor, VendorInput } from "./networkTypes";
+import type {
+  Site,
+  SiteBulkLinks,
+  SiteImportRow,
+  SiteInput,
+  SiteUpdateResult,
+  SiteUpdateRow,
+  Vendor,
+  VendorInput,
+} from "./networkTypes";
 import { matchTrade } from "./trades";
 
 // ---------- Vendors ----------
@@ -408,4 +417,79 @@ export async function bulkAssignTrades(siteIds: string[], trades: string[]): Pro
     const failed = results.find((r) => r.error);
     if (failed?.error) throw new Error(failed.error.message);
   }
+}
+
+/**
+ * Updates existing sites in place from an uploaded sheet -- never creates new rows. Each row is matched by
+ * `matchId` (a Site ID column, if the sheet has one) or else by `matchName` (case-insensitive, optionally
+ * scoped to `companyId` to disambiguate sites that share a name across different clients). Only the fields
+ * present on the row are written; anything the row doesn't include is left exactly as it was.
+ */
+export async function bulkUpdateSites(rows: SiteUpdateRow[], companyId: string | null): Promise<SiteUpdateResult> {
+  const supabase = createAdminClient();
+  let query = supabase.from("sites").select("id, name").eq("user_id", OWNER_USER_ID);
+  if (companyId) query = query.eq("company_id", companyId);
+  const { data: existing, error: fetchError } = await query;
+  if (fetchError) throw new Error(fetchError.message);
+
+  const byId = new Map<string, string>();
+  const byName = new Map<string, string[]>();
+  for (const s of existing ?? []) {
+    const id = s.id as string;
+    byId.set(id, id);
+    const key = (s.name as string).trim().toLowerCase();
+    byName.set(key, [...(byName.get(key) ?? []), id]);
+  }
+
+  const notFound: string[] = [];
+  const ambiguous: string[] = [];
+  const updates: { id: string; payload: Record<string, unknown> }[] = [];
+
+  for (const row of rows) {
+    let siteId: string | null = null;
+    if (row.matchId) {
+      siteId = byId.get(row.matchId) ?? null;
+      if (!siteId) notFound.push(row.matchId);
+    } else if (row.matchName) {
+      const key = row.matchName.trim().toLowerCase();
+      const matches = byName.get(key) ?? [];
+      if (matches.length === 1) siteId = matches[0];
+      else if (matches.length === 0) notFound.push(row.matchName);
+      else ambiguous.push(row.matchName);
+    }
+    if (!siteId) continue;
+
+    const payload: Record<string, unknown> = {};
+    if ("address" in row) payload.address = row.address;
+    if ("city" in row) payload.city = row.city;
+    if ("state" in row) payload.state = row.state;
+    if ("zip" in row) payload.zip = row.zip;
+    if ("lat" in row) payload.lat = row.lat;
+    if ("lng" in row) payload.lng = row.lng;
+    if ("trades" in row) payload.trades = row.trades;
+    if ("contractValue" in row) payload.contract_value = row.contractValue;
+    if ("subPrice" in row) payload.sub_price = row.subPrice;
+    if ("notes" in row) payload.notes = row.notes;
+    if (Object.keys(payload).length === 0) continue;
+
+    updates.push({ id: siteId, payload });
+  }
+
+  const concurrency = 20;
+  for (let i = 0; i < updates.length; i += concurrency) {
+    const batch = updates.slice(i, i + concurrency);
+    const results = await Promise.all(
+      batch.map((u) =>
+        supabase
+          .from("sites")
+          .update({ ...u.payload, updated_at: new Date().toISOString() })
+          .eq("id", u.id)
+          .eq("user_id", OWNER_USER_ID),
+      ),
+    );
+    const failed = results.find((r) => r.error);
+    if (failed?.error) throw new Error(failed.error.message);
+  }
+
+  return { updated: updates.length, notFound, ambiguous };
 }

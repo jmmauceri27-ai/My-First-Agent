@@ -21,3 +21,13 @@ export function matchTrade(value: string | null | undefined): Trade | null {
   const normalized = value.trim().toLowerCase();
   return TRADE_OPTIONS.find((t) => t.toLowerCase() === normalized) ?? null;
 }
+
+/** Splits a cell like "Snow Removal, HVAC" into its recognized Trade values, dropping anything that doesn't match the fixed list. */
+export function matchTrades(value: string | null | undefined): string[] {
+  if (!value) return [];
+  const matches = value
+    .split(/[,;]/)
+    .map((part) => matchTrade(part))
+    .filter((t): t is Trade => t !== null);
+  return Array.from(new Set(matches));
+}

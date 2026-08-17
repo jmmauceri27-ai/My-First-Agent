@@ -22,6 +22,7 @@ import type { Site, Vendor } from "@/lib/networkTypes";
 import NetworkNav from "../NetworkNav";
 import SiteModal from "../SiteModal";
 import UploadSitesModal from "../UploadSitesModal";
+import UpdateSitesModal from "../UpdateSitesModal";
 import { bulkAssignTradesAction, exportSitesToExcelAction } from "../actions";
 
 const SiteMap = dynamic(() => import("@/components/SiteMap"), { ssr: false });
@@ -30,6 +31,7 @@ const MapLegend = dynamic(() => import("@/components/MapLegend"), { ssr: false }
 type ColorMode = "none" | "margin" | "vendor" | "trade";
 
 const SITE_EXPORT_COLUMNS = [
+  "Site ID",
   "Site Name",
   "Client",
   "Vendor",
@@ -50,6 +52,7 @@ const SITE_EXPORT_COLUMNS = [
 
 function siteToExportRow(s: Site): DatasetRecord {
   return {
+    "Site ID": s.id,
     "Site Name": s.name,
     Client: s.companyName ?? "",
     Vendor: s.vendorName ?? "",
@@ -103,6 +106,7 @@ export default function SitesClient({
   const router = useRouter();
   const [creating, setCreating] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [updatingSheet, setUpdatingSheet] = useState(false);
   const [search, setSearch] = useState("");
   const [companyFilter, setCompanyFilter] = useState("");
   const [vendorFilter, setVendorFilter] = useState("");
@@ -277,6 +281,9 @@ export default function SitesClient({
           <Button variant="secondary" onClick={() => setUploading(true)}>
             Upload sites
           </Button>
+          <Button variant="secondary" onClick={() => setUpdatingSheet(true)}>
+            Update sites
+          </Button>
           <Button onClick={() => setCreating(true)}>+ New site</Button>
         </div>
       </div>
@@ -425,6 +432,8 @@ export default function SitesClient({
           onClose={() => setUploading(false)}
         />
       )}
+
+      {updatingSheet && <UpdateSitesModal companies={companies} onClose={() => setUpdatingSheet(false)} />}
     </div>
   );
 }

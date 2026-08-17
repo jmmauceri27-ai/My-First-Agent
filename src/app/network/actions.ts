@@ -8,6 +8,7 @@ import {
   bulkAssignTrades,
   bulkCreateSites,
   bulkCreateSitesForOpportunity,
+  bulkUpdateSites,
   createSite,
   createVendor,
   deleteSite,
@@ -22,7 +23,16 @@ import {
   updateSite,
   updateVendor,
 } from "@/lib/networkDal";
-import type { Site, SiteBulkLinks, SiteImportRow, SiteInput, Vendor, VendorInput } from "@/lib/networkTypes";
+import type {
+  Site,
+  SiteBulkLinks,
+  SiteImportRow,
+  SiteInput,
+  SiteUpdateResult,
+  SiteUpdateRow,
+  Vendor,
+  VendorInput,
+} from "@/lib/networkTypes";
 
 // ---------- Vendors ----------
 
@@ -173,4 +183,18 @@ export async function bulkAssignTradesAction(siteIds: string[], trades: string[]
 /** Builds a .xlsx workbook from already-shaped rows (e.g. the caller's currently filtered sites), returned as base64. */
 export async function exportSitesToExcelAction(rows: DatasetRecord[], columns: string[]): Promise<string> {
   return buildXlsxBase64(rows, columns);
+}
+
+/** Updates existing sites in place from an uploaded sheet -- never creates new sites. See bulkUpdateSites for matching rules. */
+export async function bulkUpdateSitesAction(
+  rows: SiteUpdateRow[],
+  companyId: string | null,
+): Promise<SiteUpdateResult & { error?: string }> {
+  try {
+    const result = await bulkUpdateSites(rows, companyId);
+    revalidatePath("/network/sites");
+    return result;
+  } catch (e) {
+    return { updated: 0, notFound: [], ambiguous: [], error: e instanceof Error ? e.message : "Failed to update sites." };
+  }
 }
