@@ -43,6 +43,7 @@ export default function SitesClient({
   const router = useRouter();
   const [creating, setCreating] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [search, setSearch] = useState("");
   const [companyFilter, setCompanyFilter] = useState("");
   const [vendorFilter, setVendorFilter] = useState("");
   const [contractFilter, setContractFilter] = useState("");
@@ -53,17 +54,20 @@ export default function SitesClient({
   const [assigning, setAssigning] = useState(false);
   const [bulkError, setBulkError] = useState<string | null>(null);
 
-  const filteredSites = useMemo(
-    () =>
-      sites.filter(
-        (s) =>
-          (!companyFilter || s.companyId === companyFilter) &&
-          (!vendorFilter || s.vendorId === vendorFilter) &&
-          (!contractFilter || s.contractId === contractFilter) &&
-          (tradeFilter.length === 0 || s.trades.some((t) => tradeFilter.includes(t))),
-      ),
-    [sites, companyFilter, vendorFilter, contractFilter, tradeFilter],
-  );
+  const filteredSites = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return sites.filter(
+      (s) =>
+        (!companyFilter || s.companyId === companyFilter) &&
+        (!vendorFilter || s.vendorId === vendorFilter) &&
+        (!contractFilter || s.contractId === contractFilter) &&
+        (tradeFilter.length === 0 || s.trades.some((t) => tradeFilter.includes(t))) &&
+        (!term ||
+          s.name.toLowerCase().includes(term) ||
+          s.id.toLowerCase().includes(term) ||
+          (s.address ?? "").toLowerCase().includes(term)),
+    );
+  }, [sites, companyFilter, vendorFilter, contractFilter, tradeFilter, search]);
 
   const allFilteredSelected = filteredSites.length > 0 && filteredSites.every((s) => selectedIds.has(s.id));
 
@@ -194,6 +198,12 @@ export default function SitesClient({
       </div>
 
       <div className="flex flex-wrap items-center gap-3 border-b border-purple-400/10 bg-[#150f26] px-4 py-2">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search name, ID, address, city, state, zip…"
+          className={`${inputClass} w-64`}
+        />
         <select value={companyFilter} onChange={(e) => setCompanyFilter(e.target.value)} className={`${inputClass} w-auto`}>
           <option value="">All clients</option>
           {companies.map((c) => (
