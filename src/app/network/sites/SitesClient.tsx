@@ -273,17 +273,25 @@ export default function SitesClient({
     }
 
     if (colorMode === "trade") {
-      const pins: MapPin[] = plottable.map((s) => ({
-        id: s.id,
-        lat: s.lat as number,
-        lng: s.lng as number,
-        label: s.name,
-        colors: s.trades.length ? s.trades.map((t) => TRADE_COLORS[t as Trade] ?? NEUTRAL_PIN_COLOR) : [NEUTRAL_PIN_COLOR],
-        fields: s.trades.length ? [{ key: "Trade", value: s.trades.join(", ") }] : [],
-      }));
-      const presentTrades = TRADE_OPTIONS.filter((t) => plottable.some((s) => s.trades.includes(t)));
+      // If the Trade filter is narrowed to specific trades, a pin only shows wedges for those
+      // trades (not every trade the site has) -- so filtering to "Snow Removal" colors a
+      // Snow Removal + Fire & Life Safety site solid blue instead of half red.
+      const shownTrades = (s: Site) => (tradeFilter.length > 0 ? s.trades.filter((t) => tradeFilter.includes(t)) : s.trades);
+
+      const pins: MapPin[] = plottable.map((s) => {
+        const trades = shownTrades(s);
+        return {
+          id: s.id,
+          lat: s.lat as number,
+          lng: s.lng as number,
+          label: s.name,
+          colors: trades.length ? trades.map((t) => TRADE_COLORS[t as Trade] ?? NEUTRAL_PIN_COLOR) : [NEUTRAL_PIN_COLOR],
+          fields: s.trades.length ? [{ key: "Trade", value: s.trades.join(", ") }] : [],
+        };
+      });
+      const presentTrades = TRADE_OPTIONS.filter((t) => plottable.some((s) => shownTrades(s).includes(t)));
       const entries: { label: string; color: string }[] = presentTrades.map((t) => ({ label: t, color: TRADE_COLORS[t] }));
-      if (plottable.some((s) => s.trades.length === 0)) {
+      if (plottable.some((s) => shownTrades(s).length === 0)) {
         entries.push({ label: "Unassigned", color: NEUTRAL_PIN_COLOR });
       }
       const legend: MapLegendProps = { mode: "categorical", entries };
@@ -298,7 +306,7 @@ export default function SitesClient({
       fields: [],
     }));
     return { pins, legend: null as MapLegendProps | null };
-  }, [filteredSites, colorMode]);
+  }, [filteredSites, colorMode, tradeFilter]);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
