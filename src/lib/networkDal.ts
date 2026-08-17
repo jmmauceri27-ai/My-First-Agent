@@ -8,6 +8,7 @@ import type {
   SiteUpdateResult,
   SiteUpdateRow,
   Vendor,
+  VendorImportRow,
   VendorInput,
 } from "./networkTypes";
 import { matchTrade } from "./trades";
@@ -100,6 +101,31 @@ export async function deleteVendor(id: string): Promise<void> {
   const supabase = createAdminClient();
   const { error } = await supabase.from("vendors").delete().eq("id", id).eq("user_id", OWNER_USER_ID);
   if (error) throw new Error(error.message);
+}
+
+/** Bulk-imports uploaded sheet rows as new vendors. Appends -- does not de-duplicate against existing vendors. */
+export async function bulkCreateVendors(rows: VendorImportRow[]): Promise<{ inserted: number }> {
+  const supabase = createAdminClient();
+  const batch = rows.map((row) => ({
+    user_id: OWNER_USER_ID,
+    name: row.name,
+    services: row.services,
+    contact_name: row.contactName,
+    email: row.email,
+    phone: row.phone,
+    website: row.website,
+    address: row.address,
+    city: row.city,
+    state: row.state,
+    notes: row.notes,
+  }));
+
+  const batchSize = 500;
+  for (let i = 0; i < batch.length; i += batchSize) {
+    const { error } = await supabase.from("vendors").insert(batch.slice(i, i + batchSize));
+    if (error) throw new Error(error.message);
+  }
+  return { inserted: batch.length };
 }
 
 // ---------- Sites ----------

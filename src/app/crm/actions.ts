@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import {
+  bulkCreateCompanies,
+  bulkCreateEmployees,
   createCompany,
   createContact,
   createContract,
@@ -36,12 +38,14 @@ import {
 } from "@/lib/crmDal";
 import type {
   Company,
+  CompanyImportRow,
   CompanyInput,
   Contact,
   ContactInput,
   ContractFile,
   ContractInput,
   Employee,
+  EmployeeImportRow,
   EmployeeInput,
   OpportunityInput,
   OpportunityStage,
@@ -271,4 +275,29 @@ export async function updateEmployeeAction(id: string, input: EmployeeInput): Pr
   await updateEmployee(id, input);
   revalidatePath("/crm");
   revalidatePath(`/network/employees/${id}`);
+}
+
+/** Bulk-imports uploaded sheet rows as new companies. Appends -- does not de-duplicate against existing clients. */
+export async function bulkCreateCompaniesAction(rows: CompanyImportRow[]): Promise<{ inserted?: number; error?: string }> {
+  try {
+    const result = await bulkCreateCompanies(rows);
+    revalidatePath("/crm");
+    revalidatePath("/crm/companies");
+    revalidatePath("/network/clients");
+    return result;
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to import clients." };
+  }
+}
+
+/** Bulk-imports uploaded sheet rows as new employees. Appends -- does not de-duplicate against existing employees. */
+export async function bulkCreateEmployeesAction(rows: EmployeeImportRow[]): Promise<{ inserted?: number; error?: string }> {
+  try {
+    const result = await bulkCreateEmployees(rows);
+    revalidatePath("/crm");
+    revalidatePath("/network/employees");
+    return result;
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to import employees." };
+  }
 }

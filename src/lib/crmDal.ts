@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { createAdminClient, OWNER_USER_ID } from "./supabase/admin";
 import type {
   Company,
+  CompanyImportRow,
   CompanyInput,
   Contact,
   ContactInput,
@@ -10,6 +11,7 @@ import type {
   ContractFile,
   ContractInput,
   Employee,
+  EmployeeImportRow,
   EmployeeInput,
   Opportunity,
   OpportunityFile,
@@ -106,6 +108,27 @@ export async function deleteCompany(id: string): Promise<void> {
   const supabase = createAdminClient();
   const { error } = await supabase.from("crm_companies").delete().eq("id", id).eq("user_id", OWNER_USER_ID);
   if (error) throw new Error(error.message);
+}
+
+/** Bulk-imports uploaded sheet rows as new companies. Appends -- does not de-duplicate against existing companies. */
+export async function bulkCreateCompanies(rows: CompanyImportRow[]): Promise<{ inserted: number }> {
+  const supabase = createAdminClient();
+  const batch = rows.map((row) => ({
+    user_id: OWNER_USER_ID,
+    name: row.name,
+    address: row.address,
+    city: row.city,
+    state: row.state,
+    website: row.website,
+    notes: row.notes,
+  }));
+
+  const batchSize = 500;
+  for (let i = 0; i < batch.length; i += batchSize) {
+    const { error } = await supabase.from("crm_companies").insert(batch.slice(i, i + batchSize));
+    if (error) throw new Error(error.message);
+  }
+  return { inserted: batch.length };
 }
 
 // ---------- Contacts ----------
@@ -266,6 +289,26 @@ export async function deleteEmployee(id: string): Promise<void> {
   const supabase = createAdminClient();
   const { error } = await supabase.from("crm_employees").delete().eq("id", id).eq("user_id", OWNER_USER_ID);
   if (error) throw new Error(error.message);
+}
+
+/** Bulk-imports uploaded sheet rows as new employees. Appends -- does not de-duplicate against existing employees. */
+export async function bulkCreateEmployees(rows: EmployeeImportRow[]): Promise<{ inserted: number }> {
+  const supabase = createAdminClient();
+  const batch = rows.map((row) => ({
+    user_id: OWNER_USER_ID,
+    name: row.name,
+    email: row.email,
+    phone: row.phone,
+    title: row.title,
+    department: row.department,
+  }));
+
+  const batchSize = 500;
+  for (let i = 0; i < batch.length; i += batchSize) {
+    const { error } = await supabase.from("crm_employees").insert(batch.slice(i, i + batchSize));
+    if (error) throw new Error(error.message);
+  }
+  return { inserted: batch.length };
 }
 
 // ---------- Contracts ----------

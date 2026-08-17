@@ -5,14 +5,19 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import type { Company } from "@/lib/crmTypes";
 import CompanyModal from "./CompanyModal";
+import UploadCompaniesModal from "./UploadCompaniesModal";
 
 export default function CompaniesClient({ companies }: { companies: Company[] }) {
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [creating, setCreating] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Button variant="secondary" onClick={() => setUploading(true)}>
+          Upload companies
+        </Button>
         <Button onClick={() => setCreating(true)}>+ New company</Button>
       </div>
 
@@ -47,6 +52,8 @@ export default function CompaniesClient({ companies }: { companies: Company[] })
           }}
         />
       )}
+
+      {uploading && <UploadCompaniesModal onClose={() => setUploading(false)} />}
     </div>
   );
 }

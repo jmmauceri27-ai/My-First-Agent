@@ -8,12 +8,14 @@ import Card from "@/components/ui/Card";
 import { DEPARTMENTS } from "@/lib/crmTypes";
 import type { Employee } from "@/lib/crmTypes";
 import EmployeeModal from "./EmployeeModal";
+import UploadEmployeesModal from "./UploadEmployeesModal";
 
 const UNASSIGNED = "Unassigned";
 
 export default function EmployeesClient({ employees }: { employees: Employee[] }) {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const groups = useMemo(() => {
     const byDepartment = new Map<string, Employee[]>();
@@ -28,7 +30,10 @@ export default function EmployeesClient({ employees }: { employees: Employee[] }
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Button variant="secondary" onClick={() => setUploading(true)}>
+          Upload employees
+        </Button>
         <Button onClick={() => setCreating(true)}>+ New employee</Button>
       </div>
 
@@ -65,6 +70,8 @@ export default function EmployeesClient({ employees }: { employees: Employee[] }
       {creating && (
         <EmployeeModal onClose={() => setCreating(false)} onSaved={(id) => router.push(`/network/employees/${id}`)} />
       )}
+
+      {uploading && <UploadEmployeesModal onClose={() => setUploading(false)} />}
     </div>
   );
 }

@@ -8,6 +8,7 @@ import {
   bulkAssignTrades,
   bulkCreateSites,
   bulkCreateSitesForOpportunity,
+  bulkCreateVendors,
   bulkUpdateSites,
   createSite,
   createVendor,
@@ -31,6 +32,7 @@ import type {
   SiteUpdateResult,
   SiteUpdateRow,
   Vendor,
+  VendorImportRow,
   VendorInput,
 } from "@/lib/networkTypes";
 
@@ -68,6 +70,17 @@ export async function deleteVendorAction(id: string): Promise<{ error?: string }
   }
   revalidatePath("/network");
   return {};
+}
+
+/** Bulk-imports uploaded sheet rows as new vendors. Appends -- does not de-duplicate against existing vendors. */
+export async function bulkCreateVendorsAction(rows: VendorImportRow[]): Promise<{ inserted?: number; error?: string }> {
+  try {
+    const result = await bulkCreateVendors(rows);
+    revalidatePath("/network");
+    return result;
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to import vendors." };
+  }
 }
 
 // ---------- Sites ----------

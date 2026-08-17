@@ -5,15 +5,20 @@ import { useState } from "react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import CompanyModal from "@/app/crm/companies/CompanyModal";
+import UploadCompaniesModal from "@/app/crm/companies/UploadCompaniesModal";
 import type { Company } from "@/lib/crmTypes";
 
 export default function ClientsClient({ companies }: { companies: Company[] }) {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Button variant="secondary" onClick={() => setUploading(true)}>
+          Upload clients
+        </Button>
         <Button onClick={() => setCreating(true)}>+ New client</Button>
       </div>
 
@@ -48,6 +53,8 @@ export default function ClientsClient({ companies }: { companies: Company[] }) {
           }}
         />
       )}
+
+      {uploading && <UploadCompaniesModal onClose={() => setUploading(false)} />}
     </div>
   );
 }

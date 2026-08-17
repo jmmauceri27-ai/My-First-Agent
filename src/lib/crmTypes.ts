@@ -108,6 +108,25 @@ export interface CompanyInput {
   notes: string | null;
 }
 
+/** A single row parsed from an uploaded sheet, mapped onto Company's fixed fields, for bulk import. */
+export interface CompanyImportRow {
+  name: string;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  website: string | null;
+  notes: string | null;
+}
+
+/** A single row parsed from an uploaded sheet, mapped onto Employee's fixed fields, for bulk import. */
+export interface EmployeeImportRow {
+  name: string;
+  email: string | null;
+  phone: string | null;
+  title: string | null;
+  department: string | null;
+}
+
 export interface ContactInput {
   name: string;
   companyId: string | null;

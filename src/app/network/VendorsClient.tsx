@@ -8,12 +8,14 @@ import type { MapPin } from "@/components/SiteMap";
 import type { Vendor } from "@/lib/networkTypes";
 import NetworkNav from "./NetworkNav";
 import VendorModal from "./VendorModal";
+import UploadVendorsModal from "./UploadVendorsModal";
 
 const SiteMap = dynamic(() => import("@/components/SiteMap"), { ssr: false });
 
 export default function VendorsClient({ vendors }: { vendors: Vendor[] }) {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const pins: MapPin[] = useMemo(
     () =>
@@ -36,7 +38,12 @@ export default function VendorsClient({ vendors }: { vendors: Vendor[] }) {
           <h1 className="text-lg font-bold text-slate-50">🌐 Network</h1>
           <NetworkNav active="vendors" />
         </div>
-        <Button onClick={() => setCreating(true)}>+ New vendor</Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={() => setUploading(true)}>
+            Upload vendors
+          </Button>
+          <Button onClick={() => setCreating(true)}>+ New vendor</Button>
+        </div>
       </div>
 
       <div className="flex min-h-0 flex-1">
@@ -78,6 +85,8 @@ export default function VendorsClient({ vendors }: { vendors: Vendor[] }) {
           onSaved={(id) => router.push(`/network/vendors/${id}`)}
         />
       )}
+
+      {uploading && <UploadVendorsModal onClose={() => setUploading(false)} />}
     </div>
   );
 }

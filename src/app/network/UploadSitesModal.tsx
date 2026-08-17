@@ -7,6 +7,8 @@ import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import TradeSelect from "@/components/TradeSelect";
 import { matchTrade } from "@/lib/trades";
+import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
+import { buildTemplateXlsxAction } from "@/lib/sheetActions";
 import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
 import type { SiteImportRow, Vendor } from "@/lib/networkTypes";
 import { saveCompanyAction, saveContractAction } from "@/app/crm/actions";
@@ -15,6 +17,35 @@ import { bulkCreateSitesAction, parseSiteSheetAction } from "./actions";
 type ParsedRow = Record<string, string | number | boolean | null>;
 
 const NONE = "";
+
+const SITE_TEMPLATE_COLUMNS = [
+  "Site Name",
+  "Latitude",
+  "Longitude",
+  "Address",
+  "City",
+  "State",
+  "Zip",
+  "Contract Value",
+  "Sub Price",
+];
+
+const SITE_TEMPLATE_EXAMPLE = {
+  "Site Name": "Example Site",
+  Latitude: 39.7392,
+  Longitude: -104.9903,
+  Address: "123 Main St",
+  City: "Denver",
+  State: "CO",
+  Zip: "80202",
+  "Contract Value": 12000,
+  "Sub Price": 9000,
+};
+
+async function handleDownloadSiteTemplate() {
+  const base64 = await buildTemplateXlsxAction([SITE_TEMPLATE_EXAMPLE], SITE_TEMPLATE_COLUMNS);
+  downloadBase64Xlsx(base64, "site_upload_template.xlsx");
+}
 
 export default function UploadSitesModal({
   companies,
@@ -242,7 +273,10 @@ export default function UploadSitesModal({
         <h2 className="text-lg font-bold text-slate-50">Upload sites</h2>
         <p className="mt-1 text-xs text-slate-400">
           Upload an .xlsx or .csv sheet of sites — every row shares the Client/Contract/Vendor/Opportunity links you
-          pick below.
+          pick below.{" "}
+          <button type="button" onClick={handleDownloadSiteTemplate} className="text-brand-400 hover:underline">
+            Download example template
+          </button>
         </p>
 
         <div className="mt-4 flex flex-col gap-2">

@@ -31,6 +31,20 @@ export interface VendorInput {
   notes: string | null;
 }
 
+/** A single row parsed from an uploaded sheet, mapped onto Vendor's fixed fields, for bulk import. */
+export interface VendorImportRow {
+  name: string;
+  services: string | null;
+  contactName: string | null;
+  email: string | null;
+  phone: string | null;
+  website: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  notes: string | null;
+}
+
 /** Flexible bag of numeric sq. ft measurements (Turf Area, Sidewalk, Parking Lot, Bed Space, Public Walk, etc.). */
 export type SiteMeasurements = Record<string, number>;
 
