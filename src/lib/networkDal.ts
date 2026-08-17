@@ -361,7 +361,7 @@ export async function bulkCreateSites(links: SiteBulkLinks, rows: SiteImportRow[
   const supabase = createAdminClient();
   const batch = rows.map((row) => ({
     user_id: OWNER_USER_ID,
-    company_id: links.companyId,
+    company_id: row.companyId !== undefined ? row.companyId : links.companyId,
     opportunity_id: links.opportunityId,
     contract_id: links.contractId,
     vendor_id: links.vendorId,

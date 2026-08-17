@@ -106,6 +106,8 @@ export interface SiteImportRow {
   zip: string | null;
   contractValue: number | null;
   subPrice: number | null;
+  /** Per-row Client override (e.g. matched from a "Client Name" column) -- takes precedence over the batch's SiteBulkLinks.companyId. */
+  companyId?: string | null;
 }
 
 /** Shared Client/Opportunity/Contract/Vendor/Trades links applied to every row in a bulk site import. */

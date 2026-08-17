@@ -77,6 +77,7 @@ export default function UploadSitesModal({
     zip: NONE,
     contractValue: NONE,
     subPrice: NONE,
+    clientName: NONE,
   });
 
   const [localCompanies, setLocalCompanies] = useState(companies);
@@ -96,6 +97,7 @@ export default function UploadSitesModal({
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [importedCount, setImportedCount] = useState<number | null>(null);
+  const [unmatchedClientNames, setUnmatchedClientNames] = useState<string[]>([]);
 
   const opportunitiesForCompany = useMemo(
     () => (companyId ? opportunities.filter((o) => o.companyId === companyId) : opportunities),
@@ -200,6 +202,7 @@ export default function UploadSitesModal({
         zip: result.columns.find((c) => /zip|postal/i.test(c)) ?? NONE,
         contractValue: result.columns.find((c) => /contract/i.test(c)) ?? NONE,
         subPrice: result.columns.find((c) => /sub.?price/i.test(c)) ?? NONE,
+        clientName: result.columns.find((c) => /client|company/i.test(c)) ?? NONE,
       });
     } catch (e) {
       setUploadError(e instanceof Error ? e.message : "Failed to upload sites.");
@@ -213,11 +216,24 @@ export default function UploadSitesModal({
     setImportError(null);
     setImporting(true);
     try {
+      const companyByName = new Map(localCompanies.map((c) => [c.name.trim().toLowerCase(), c.id]));
+      const unmatched: string[] = [];
       const rows: SiteImportRow[] = parsedRows.map((row) => {
         const lat = Number(row[mapping.lat]);
         const lng = Number(row[mapping.lng]);
         const contractValue = mapping.contractValue ? Number(row[mapping.contractValue]) : NaN;
         const subPrice = mapping.subPrice ? Number(row[mapping.subPrice]) : NaN;
+
+        let rowCompanyId: string | null | undefined;
+        if (mapping.clientName) {
+          const rawClientName = String(row[mapping.clientName] ?? "").trim();
+          if (rawClientName) {
+            const matchedId = companyByName.get(rawClientName.toLowerCase());
+            if (matchedId) rowCompanyId = matchedId;
+            else unmatched.push(rawClientName);
+          }
+        }
+
         return {
           name: String(row[mapping.name] ?? "").trim() || "Untitled site",
           lat: Number.isFinite(lat) ? lat : null,
@@ -228,6 +244,7 @@ export default function UploadSitesModal({
           zip: mapping.zip ? String(row[mapping.zip] ?? "").trim() || null : null,
           contractValue: Number.isFinite(contractValue) ? contractValue : null,
           subPrice: Number.isFinite(subPrice) ? subPrice : null,
+          companyId: rowCompanyId,
         };
       });
       const result = await bulkCreateSitesAction(
@@ -244,6 +261,7 @@ export default function UploadSitesModal({
         setImportError(result.error ?? "Failed to import sites.");
         return;
       }
+      setUnmatchedClientNames(Array.from(new Set(unmatched)));
       setImportedCount(result.inserted);
       router.refresh();
     } finally {
@@ -259,6 +277,14 @@ export default function UploadSitesModal({
           <p className="mt-2 text-sm text-slate-300">
             Added {importedCount} site{importedCount === 1 ? "" : "s"} to Network → Sites.
           </p>
+          {unmatchedClientNames.length > 0 && (
+            <p className="mt-2 text-xs text-critical">
+              {unmatchedClientNames.length} client name{unmatchedClientNames.length === 1 ? "" : "s"} from the sheet
+              didn&rsquo;t match any existing client (those sites used the selected Client above, or were left
+              unassigned): {unmatchedClientNames.slice(0, 10).join(", ")}
+              {unmatchedClientNames.length > 10 ? `, +${unmatchedClientNames.length - 10} more` : ""}
+            </p>
+          )}
           <div className="mt-6">
             <Button onClick={onClose}>Done</Button>
           </div>
@@ -310,6 +336,7 @@ export default function UploadSitesModal({
                     ["zip", "Zip column (optional)"],
                     ["contractValue", "Contract value column (optional)"],
                     ["subPrice", "Sub price column (optional)"],
+                    ["clientName", "Client Name column (optional, matched per-row)"],
                   ] as const
                 ).map(([key, label]) => (
                   <label key={key} className="flex flex-col gap-1 text-sm">
@@ -334,10 +361,14 @@ export default function UploadSitesModal({
             </div>
 
             <div className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-purple-400/30 p-3">
-              <p className="text-sm text-slate-300">Apply to every imported site</p>
+              <p className="text-sm text-slate-300">
+                {mapping.clientName
+                  ? "Applied to every imported site, except Client — each row uses its matched Client Name (this is the fallback for rows that don't match)"
+                  : "Apply to every imported site"}
+              </p>
 
               <div className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Client</span>
+                <span className="font-medium text-slate-300">Client{mapping.clientName ? " (fallback)" : ""}</span>
                 {addingCompany ? (
                   <div className="flex gap-2">
                     <input
