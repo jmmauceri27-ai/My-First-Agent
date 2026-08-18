@@ -156,3 +156,25 @@ export interface SiteUpdateResult {
   /** Names that matched more than one site (no Site ID and no Client scope to disambiguate). */
   ambiguous: string[];
 }
+
+/** A saved snapshot of the Sites screen's filter controls -- re-applying one sets every filter at once. */
+export interface SiteFilters {
+  companyFilters: string[];
+  vendorFilter: string;
+  subVendorFilter: string;
+  contractFilter: string;
+  tradeFilter: string[];
+  colorMode: string;
+  addressField: string;
+  addressValues: string[];
+  infoField: string;
+  infoValues: string[];
+}
+
+export interface SiteFilterTemplate {
+  id: string;
+  name: string;
+  filters: SiteFilters;
+  createdAt: string;
+  updatedAt: string;
+}

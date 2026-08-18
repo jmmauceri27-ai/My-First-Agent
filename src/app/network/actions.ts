@@ -11,11 +11,14 @@ import {
   bulkCreateVendors,
   bulkUpdateSites,
   createSite,
+  createSiteFilterTemplate,
   createVendor,
   deleteSite,
+  deleteSiteFilterTemplate,
   deleteVendor,
   getSite,
   getVendor,
+  listSiteFilterTemplates,
   listSites,
   listSitesForCompany,
   listSitesForOpportunity,
@@ -23,11 +26,14 @@ import {
   listSitesForVendor,
   listVendors,
   updateSite,
+  updateSiteFilterTemplate,
   updateVendor,
 } from "@/lib/networkDal";
 import type {
   Site,
   SiteBulkLinks,
+  SiteFilterTemplate,
+  SiteFilters,
   SiteImportRow,
   SiteInput,
   SiteUpdateResult,
@@ -215,4 +221,39 @@ export async function bulkUpdateSitesAction(
   } catch (e) {
     return { updated: 0, notFound: [], ambiguous: [], error: e instanceof Error ? e.message : "Failed to update sites." };
   }
+}
+
+// ---------- Site Filter Templates ----------
+
+export async function listSiteFilterTemplatesAction(): Promise<SiteFilterTemplate[]> {
+  return listSiteFilterTemplates();
+}
+
+export async function saveSiteFilterTemplateAction(
+  id: string | null,
+  name: string,
+  filters: SiteFilters,
+): Promise<{ id?: string; error?: string }> {
+  try {
+    if (id) {
+      await updateSiteFilterTemplate(id, name, filters);
+      revalidatePath("/network/sites");
+      return { id };
+    }
+    const newId = await createSiteFilterTemplate(name, filters);
+    revalidatePath("/network/sites");
+    return { id: newId };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to save filter template." };
+  }
+}
+
+export async function deleteSiteFilterTemplateAction(id: string): Promise<{ error?: string }> {
+  try {
+    await deleteSiteFilterTemplate(id);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to delete filter template." };
+  }
+  revalidatePath("/network/sites");
+  return {};
 }

@@ -24,12 +24,17 @@ import type { Trade } from "@/lib/trades";
 import type { DatasetRecord } from "@/lib/types";
 import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
 import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
-import type { Site, Vendor } from "@/lib/networkTypes";
+import type { Site, SiteFilterTemplate, SiteFilters, Vendor } from "@/lib/networkTypes";
 import NetworkNav from "../NetworkNav";
 import SiteModal from "../SiteModal";
 import UploadSitesModal from "../UploadSitesModal";
 import UpdateSitesModal from "../UpdateSitesModal";
-import { bulkAssignTradesAction, exportSitesToExcelAction } from "../actions";
+import {
+  bulkAssignTradesAction,
+  deleteSiteFilterTemplateAction,
+  exportSitesToExcelAction,
+  saveSiteFilterTemplateAction,
+} from "../actions";
 
 const SiteMap = dynamic(() => import("@/components/SiteMap"), { ssr: false });
 const MapLegend = dynamic(() => import("@/components/MapLegend"), { ssr: false });
@@ -96,12 +101,14 @@ export default function SitesClient({
   vendors,
   opportunities,
   contracts,
+  filterTemplates,
 }: {
   sites: Site[];
   companies: Company[];
   vendors: Vendor[];
   opportunities: Opportunity[];
   contracts: Contract[];
+  filterTemplates: SiteFilterTemplate[];
 }) {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
@@ -122,6 +129,12 @@ export default function SitesClient({
   const [assigning, setAssigning] = useState(false);
   const [bulkError, setBulkError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [localFilterTemplates, setLocalFilterTemplates] = useState(filterTemplates);
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const [newTemplateName, setNewTemplateName] = useState("");
+  const [templateError, setTemplateError] = useState<string | null>(null);
+  const [deletingTemplate, setDeletingTemplate] = useState(false);
 
   const addressOptions = useMemo(() => distinctValues(sites, (s) => s.address), [sites]);
   const cityOptions = useMemo(() => distinctValues(sites, (s) => s.city), [sites]);
@@ -231,6 +244,84 @@ export default function SitesClient({
       router.refresh();
     } finally {
       setAssigning(false);
+    }
+  }
+
+  function currentFilters(): SiteFilters {
+    return {
+      companyFilters,
+      vendorFilter,
+      subVendorFilter,
+      contractFilter,
+      tradeFilter,
+      colorMode,
+      addressField,
+      addressValues,
+      infoField,
+      infoValues,
+    };
+  }
+
+  function applyTemplate(id: string) {
+    setSelectedTemplateId(id);
+    const template = localFilterTemplates.find((t) => t.id === id);
+    if (!template) return;
+    const f = template.filters;
+    setCompanyFilters(f.companyFilters);
+    setVendorFilter(f.vendorFilter);
+    setSubVendorFilter(f.subVendorFilter);
+    setContractFilter(f.contractFilter);
+    setTradeFilter(f.tradeFilter);
+    setColorMode((["none", "margin", "vendor", "trade"].includes(f.colorMode) ? f.colorMode : "none") as ColorMode);
+    setAddressField((["address", "city", "state", "zip"].includes(f.addressField) ? f.addressField : "address") as AddressField);
+    setAddressValues(f.addressValues);
+    setInfoField((["name", "id"].includes(f.infoField) ? f.infoField : "name") as InfoField);
+    setInfoValues(f.infoValues);
+  }
+
+  async function handleSaveTemplate() {
+    if (!newTemplateName.trim()) return;
+    setTemplateError(null);
+    setSavingTemplate(true);
+    try {
+      const result = await saveSiteFilterTemplateAction(null, newTemplateName.trim(), currentFilters());
+      if (result.error || !result.id) {
+        setTemplateError(result.error ?? "Failed to save filter template.");
+        return;
+      }
+      setLocalFilterTemplates((prev) =>
+        [
+          ...prev,
+          {
+            id: result.id as string,
+            name: newTemplateName.trim(),
+            filters: currentFilters(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        ].sort((a, b) => a.name.localeCompare(b.name)),
+      );
+      setSelectedTemplateId(result.id);
+      setNewTemplateName("");
+    } finally {
+      setSavingTemplate(false);
+    }
+  }
+
+  async function handleDeleteTemplate() {
+    if (!selectedTemplateId) return;
+    setTemplateError(null);
+    setDeletingTemplate(true);
+    try {
+      const result = await deleteSiteFilterTemplateAction(selectedTemplateId);
+      if (result.error) {
+        setTemplateError(result.error);
+        return;
+      }
+      setLocalFilterTemplates((prev) => prev.filter((t) => t.id !== selectedTemplateId));
+      setSelectedTemplateId("");
+    } finally {
+      setDeletingTemplate(false);
     }
   }
 
@@ -473,6 +564,60 @@ export default function SitesClient({
           <option value="vendor">Color: by vendor</option>
           <option value="trade">Color: by trade</option>
         </select>
+
+        <div className="flex items-center gap-1.5">
+          <select
+            value={selectedTemplateId}
+            onChange={(e) => {
+              setTemplateError(null);
+              if (e.target.value) applyTemplate(e.target.value);
+              else setSelectedTemplateId("");
+            }}
+            className={`${inputClass} w-auto`}
+          >
+            <option value="">Load filter template…</option>
+            {localFilterTemplates.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+          {selectedTemplateId && (
+            <Button variant="ghost" onClick={handleDeleteTemplate} disabled={deletingTemplate}>
+              {deletingTemplate ? "Deleting…" : "Delete"}
+            </Button>
+          )}
+          {!savingTemplate && (
+            <Button variant="secondary" onClick={() => setSavingTemplate(true)}>
+              Save filters…
+            </Button>
+          )}
+        </div>
+        {savingTemplate && (
+          <div className="flex items-center gap-2">
+            <input
+              value={newTemplateName}
+              onChange={(e) => setNewTemplateName(e.target.value)}
+              placeholder="Template name"
+              className={`${inputClass} w-48`}
+              autoFocus
+            />
+            <Button type="button" onClick={handleSaveTemplate} disabled={!newTemplateName.trim()}>
+              Save
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setSavingTemplate(false);
+                setNewTemplateName("");
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
+        )}
+        {templateError && <span className="text-xs text-critical">{templateError}</span>}
         {legend && (
           <div className="ml-auto">
             <MapLegend {...legend} />

@@ -3,6 +3,8 @@ import { createAdminClient, OWNER_USER_ID } from "./supabase/admin";
 import type {
   Site,
   SiteBulkLinks,
+  SiteFilterTemplate,
+  SiteFilters,
   SiteImportRow,
   SiteInput,
   SiteUpdateResult,
@@ -540,4 +542,67 @@ export async function bulkUpdateSites(rows: SiteUpdateRow[], companyId: string |
   }
 
   return { updated: updates.length, notFound, ambiguous };
+}
+
+// ---------- Site Filter Templates ----------
+
+const EMPTY_SITE_FILTERS: SiteFilters = {
+  companyFilters: [],
+  vendorFilter: "",
+  subVendorFilter: "",
+  contractFilter: "",
+  tradeFilter: [],
+  colorMode: "none",
+  addressField: "address",
+  addressValues: [],
+  infoField: "name",
+  infoValues: [],
+};
+
+function mapSiteFilterTemplate(t: Record<string, unknown>): SiteFilterTemplate {
+  return {
+    id: t.id as string,
+    name: t.name as string,
+    filters: { ...EMPTY_SITE_FILTERS, ...((t.filters as Partial<SiteFilters> | null) ?? {}) },
+    createdAt: t.created_at as string,
+    updatedAt: t.updated_at as string,
+  };
+}
+
+export async function listSiteFilterTemplates(): Promise<SiteFilterTemplate[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("site_filter_templates")
+    .select("*")
+    .eq("user_id", OWNER_USER_ID)
+    .order("name", { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(mapSiteFilterTemplate);
+}
+
+export async function createSiteFilterTemplate(name: string, filters: SiteFilters): Promise<string> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("site_filter_templates")
+    .insert({ user_id: OWNER_USER_ID, name, filters })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return data.id as string;
+}
+
+export async function updateSiteFilterTemplate(id: string, name: string, filters: SiteFilters): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("site_filter_templates")
+    .update({ name, filters, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteSiteFilterTemplate(id: string): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("site_filter_templates").delete().eq("id", id).eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
 }
