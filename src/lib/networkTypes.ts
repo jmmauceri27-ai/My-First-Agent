@@ -70,7 +70,10 @@ export interface Site {
   trades: string[];
   /** Per-trade Vendor/Sub-Vendor + pricing -- a site commonly has a different vendor for each trade (e.g. one for Land, another for Snow Removal). */
   tradeAssignments: SiteTradeAssignment[];
+  /** Sq. ft areas -- Turf Area, Sidewalk, Parking Lot, etc. */
   measurements: SiteMeasurements;
+  /** Plain counts -- Palm Trees, Deciduous Tree, Shrubs, etc. -- kept separate from `measurements` so each displays with the right unit. */
+  counts: SiteMeasurements;
   notes: string | null;
   createdAt: string;
   updatedAt: string;
@@ -90,6 +93,7 @@ export interface SiteInput {
   lng: number | null;
   trades: string[];
   measurements: SiteMeasurements;
+  counts: SiteMeasurements;
   notes: string | null;
 }
 
@@ -183,6 +187,19 @@ export interface SiteTradeAssignmentUpdateRow {
   contractValue?: number | null;
   subPrice?: number | null;
   subVendorPrice?: number | null;
+}
+
+/**
+ * A single row parsed from an uploaded sheet meant to bulk-set Measurements (sq. ft) and/or Counts (plain
+ * counts) on existing sites. Matched the same way as SiteUpdateRow. Labels present in `measurements`/`counts`
+ * are merged into the site's existing bag (added or overwritten) -- labels not included are left untouched.
+ */
+export interface SiteMeasurementsUpdateRow {
+  matchCode: string | null;
+  matchId: string | null;
+  matchName: string | null;
+  measurements: Record<string, number>;
+  counts: Record<string, number>;
 }
 
 export interface SiteUpdateResult {

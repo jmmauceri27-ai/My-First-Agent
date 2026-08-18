@@ -166,6 +166,7 @@ export default function SiteModal({
         lng: lng.trim() ? Number(lng) : null,
         trades,
         measurements: site?.measurements ?? {},
+        counts: site?.counts ?? {},
         notes: notes.trim() || null,
       };
       const result = await saveSiteAction(site?.id ?? null, input);

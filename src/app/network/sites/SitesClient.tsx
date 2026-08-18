@@ -30,6 +30,7 @@ import SiteModal from "../SiteModal";
 import UploadSitesModal from "../UploadSitesModal";
 import UpdateSitesModal from "../UpdateSitesModal";
 import UpdateSiteTradeAssignmentsModal from "../UpdateSiteTradeAssignmentsModal";
+import UpdateSiteMeasurementsModal from "../UpdateSiteMeasurementsModal";
 import {
   bulkAssignTradesAction,
   deleteSiteFilterTemplateAction,
@@ -64,6 +65,7 @@ const SITE_EXPORT_COLUMNS = [
   "Sub Price",
   "Sub-Vendor Price",
   "Measurements",
+  "Counts",
   "Notes",
 ];
 
@@ -98,6 +100,9 @@ function siteToExportRow(s: Site): DatasetRecord {
     Measurements: Object.entries(s.measurements)
       .map(([label, value]) => `${label}: ${formatSquareFeet(value)}`)
       .join("; "),
+    Counts: Object.entries(s.counts)
+      .map(([label, value]) => `${label}: ${value}`)
+      .join("; "),
     Notes: s.notes ?? "",
   };
 }
@@ -130,6 +135,7 @@ export default function SitesClient({
   const [uploading, setUploading] = useState(false);
   const [updatingSheet, setUpdatingSheet] = useState(false);
   const [updatingAssignments, setUpdatingAssignments] = useState(false);
+  const [updatingMeasurements, setUpdatingMeasurements] = useState(false);
   const [addressField, setAddressField] = useState<AddressField>("address");
   const [addressValues, setAddressValues] = useState<string[]>([]);
   const [infoField, setInfoField] = useState<InfoField>("name");
@@ -473,6 +479,9 @@ export default function SitesClient({
           <Button variant="secondary" onClick={() => setUpdatingAssignments(true)}>
             Update trade assignments
           </Button>
+          <Button variant="secondary" onClick={() => setUpdatingMeasurements(true)}>
+            Update measurements
+          </Button>
           <Button onClick={() => setCreating(true)}>+ New site</Button>
         </div>
       </div>
@@ -770,6 +779,10 @@ export default function SitesClient({
           vendors={vendors}
           onClose={() => setUpdatingAssignments(false)}
         />
+      )}
+
+      {updatingMeasurements && (
+        <UpdateSiteMeasurementsModal companies={companies} onClose={() => setUpdatingMeasurements(false)} />
       )}
     </div>
   );

@@ -7,6 +7,7 @@ import type {
   SiteFilters,
   SiteImportRow,
   SiteInput,
+  SiteMeasurementsUpdateRow,
   SiteTradeAssignment,
   SiteTradeAssignmentInput,
   SiteTradeAssignmentUpdateRow,
@@ -156,7 +157,7 @@ function mapAssignment(a: Record<string, unknown>): SiteTradeAssignment {
   };
 }
 
-const SITE_COLUMNS = `id, company_id, opportunity_id, contract_id, site_code, name, address, city, state, zip, lat, lng, trades, measurements, notes, created_at, updated_at, crm_companies(name), crm_opportunities(name), crm_contracts(name), site_trade_assignments(${ASSIGNMENT_COLUMNS})`;
+const SITE_COLUMNS = `id, company_id, opportunity_id, contract_id, site_code, name, address, city, state, zip, lat, lng, trades, measurements, counts, notes, created_at, updated_at, crm_companies(name), crm_opportunities(name), crm_contracts(name), site_trade_assignments(${ASSIGNMENT_COLUMNS})`;
 
 function mapSite(s: Record<string, unknown>): Site {
   const company = s.crm_companies as unknown as { name: string } | null;
@@ -182,6 +183,7 @@ function mapSite(s: Record<string, unknown>): Site {
     trades: (s.trades as string[] | null) ?? [],
     tradeAssignments: assignments.map(mapAssignment),
     measurements: (s.measurements as Site["measurements"] | null) ?? {},
+    counts: (s.counts as Site["counts"] | null) ?? {},
     notes: s.notes as string | null,
     createdAt: s.created_at as string,
     updatedAt: s.updated_at as string,
@@ -369,6 +371,7 @@ function siteRow(input: SiteInput) {
     lng: input.lng,
     trades: input.trades,
     measurements: input.measurements,
+    counts: input.counts,
     notes: input.notes,
   };
 }
@@ -455,6 +458,7 @@ export async function bulkCreateSites(links: SiteBulkLinks, rows: SiteImportRow[
     lng: row.lng,
     trades: links.trades,
     measurements: {},
+    counts: {},
     notes: null,
   }));
 
@@ -701,6 +705,60 @@ export async function bulkUpdateSiteTradeAssignments(
         }
         return { error: null };
       }),
+    );
+    const failed = results.find((r) => r.error);
+    if (failed?.error) throw new Error(failed.error.message);
+  }
+
+  return { updated: updates.length, notFound, ambiguous };
+}
+
+/**
+ * Merges each matched row's `measurements`/`counts` labels into the site's existing bags (added or
+ * overwritten by label) -- never replaces the whole bag, so uploading one batch of labels doesn't erase
+ * labels set by an earlier upload or entered manually. Matching rules are identical to bulkUpdateSites.
+ */
+export async function bulkUpdateSiteMeasurements(
+  rows: SiteMeasurementsUpdateRow[],
+  companyId: string | null,
+): Promise<SiteUpdateResult> {
+  const supabase = createAdminClient();
+  const { siteIds, notFound, ambiguous } = await matchSiteIds(rows, companyId);
+
+  const matchedIds = Array.from(new Set(siteIds.filter((id): id is string => !!id)));
+  const { data: existingSites, error: fetchError } =
+    matchedIds.length > 0
+      ? await supabase.from("sites").select("id, measurements, counts").in("id", matchedIds).eq("user_id", OWNER_USER_ID)
+      : { data: [] as { id: string; measurements: unknown; counts: unknown }[], error: null };
+  if (fetchError) throw new Error(fetchError.message);
+  const existingById = new Map((existingSites ?? []).map((s) => [s.id as string, s]));
+
+  const updates: { id: string; payload: Record<string, unknown> }[] = [];
+  rows.forEach((row, i) => {
+    const siteId = siteIds[i];
+    if (!siteId) return;
+    if (Object.keys(row.measurements).length === 0 && Object.keys(row.counts).length === 0) return;
+
+    const existing = existingById.get(siteId);
+    const mergedMeasurements = {
+      ...((existing?.measurements as Record<string, number> | null) ?? {}),
+      ...row.measurements,
+    };
+    const mergedCounts = { ...((existing?.counts as Record<string, number> | null) ?? {}), ...row.counts };
+    updates.push({ id: siteId, payload: { measurements: mergedMeasurements, counts: mergedCounts } });
+  });
+
+  const concurrency = 20;
+  for (let i = 0; i < updates.length; i += concurrency) {
+    const batch = updates.slice(i, i + concurrency);
+    const results = await Promise.all(
+      batch.map((u) =>
+        supabase
+          .from("sites")
+          .update({ ...u.payload, updated_at: new Date().toISOString() })
+          .eq("id", u.id)
+          .eq("user_id", OWNER_USER_ID),
+      ),
     );
     const failed = results.find((r) => r.error);
     if (failed?.error) throw new Error(failed.error.message);

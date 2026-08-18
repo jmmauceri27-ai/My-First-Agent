@@ -51,6 +51,9 @@ export default function SiteDetailClient({
   const [measurements, setMeasurements] = useState<SiteMeasurements>(site.measurements);
   const [newMeasurementLabel, setNewMeasurementLabel] = useState("");
   const [newMeasurementValue, setNewMeasurementValue] = useState("");
+  const [counts, setCounts] = useState<SiteMeasurements>(site.counts);
+  const [newCountLabel, setNewCountLabel] = useState("");
+  const [newCountValue, setNewCountValue] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -83,6 +86,24 @@ export default function SiteDetailClient({
     });
   }
 
+  function addCount() {
+    const label = newCountLabel.trim();
+    if (!label) return;
+    const value = Number(newCountValue);
+    if (!Number.isFinite(value)) return;
+    setCounts((prev) => ({ ...prev, [label]: value }));
+    setNewCountLabel("");
+    setNewCountValue("");
+  }
+
+  function removeCount(label: string) {
+    setCounts((prev) => {
+      const next = { ...prev };
+      delete next[label];
+      return next;
+    });
+  }
+
   async function handleSave() {
     setError(null);
     if (!name.trim()) {
@@ -105,6 +126,7 @@ export default function SiteDetailClient({
         lng: lng.trim() ? Number(lng) : null,
         trades,
         measurements,
+        counts,
         notes: notes.trim() || null,
       };
       const result = await saveSiteAction(site.id, input);
@@ -326,6 +348,47 @@ export default function SiteDetailClient({
                 className={`${inputClass} min-w-[100px] flex-1`}
               />
               <Button type="button" variant="secondary" onClick={addMeasurement} className="w-fit">
+                Add
+              </Button>
+            </div>
+          </div>
+
+          <div className="mt-6 border-t border-purple-400/10 pt-4">
+            <h3 className="text-sm font-bold text-slate-50">Counts</h3>
+            <div className="mt-2 flex flex-col gap-1">
+              {Object.entries(counts).length === 0 ? (
+                <p className="text-xs text-slate-400">No counts yet.</p>
+              ) : (
+                Object.entries(counts).map(([label, value]) => (
+                  <div key={label} className="flex items-center justify-between gap-2 text-sm">
+                    <span className="text-slate-300">{label}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="tabular-nums text-slate-50">{value.toLocaleString("en-US")}</span>
+                      <button
+                        onClick={() => removeCount(label)}
+                        className="text-xs font-semibold text-critical hover:underline"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <input
+                value={newCountLabel}
+                onChange={(e) => setNewCountLabel(e.target.value)}
+                placeholder="e.g. Palm Trees"
+                className={`${inputClass} min-w-[140px] flex-1`}
+              />
+              <input
+                value={newCountValue}
+                onChange={(e) => setNewCountValue(e.target.value)}
+                placeholder="Count"
+                className={`${inputClass} min-w-[100px] flex-1`}
+              />
+              <Button type="button" variant="secondary" onClick={addCount} className="w-fit">
                 Add
               </Button>
             </div>

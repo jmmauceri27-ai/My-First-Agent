@@ -9,6 +9,7 @@ import {
   bulkCreateSites,
   bulkCreateSitesForOpportunity,
   bulkCreateVendors,
+  bulkUpdateSiteMeasurements,
   bulkUpdateSites,
   bulkUpdateSiteTradeAssignments,
   createSite,
@@ -38,6 +39,7 @@ import type {
   SiteFilters,
   SiteImportRow,
   SiteInput,
+  SiteMeasurementsUpdateRow,
   SiteTradeAssignmentInput,
   SiteTradeAssignmentUpdateRow,
   SiteUpdateResult,
@@ -259,6 +261,25 @@ export async function bulkUpdateSiteTradeAssignmentsAction(
       notFound: [],
       ambiguous: [],
       error: e instanceof Error ? e.message : "Failed to update trade assignments.",
+    };
+  }
+}
+
+/** Bulk-sets Measurements (sq. ft) and/or Counts on matched sites from a sheet -- merges by label, never replaces the whole bag. See bulkUpdateSiteMeasurements for matching rules. */
+export async function bulkUpdateSiteMeasurementsAction(
+  rows: SiteMeasurementsUpdateRow[],
+  companyId: string | null,
+): Promise<SiteUpdateResult & { error?: string }> {
+  try {
+    const result = await bulkUpdateSiteMeasurements(rows, companyId);
+    revalidatePath("/network/sites");
+    return result;
+  } catch (e) {
+    return {
+      updated: 0,
+      notFound: [],
+      ambiguous: [],
+      error: e instanceof Error ? e.message : "Failed to update measurements.",
     };
   }
 }
