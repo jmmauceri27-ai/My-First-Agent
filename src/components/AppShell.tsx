@@ -8,7 +8,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const showNav = pathname !== "/login";
   const isNetworkMapRoute = pathname === "/network" || pathname === "/network/sites";
-  const isWide = pathname === "/crm" || isNetworkMapRoute;
+  const isSiteDetailRoute = (pathname ?? "").startsWith("/network/sites/");
+  const isWide = pathname === "/crm" || isNetworkMapRoute || isSiteDetailRoute;
   const isFullBleed = isNetworkMapRoute;
 
   return (

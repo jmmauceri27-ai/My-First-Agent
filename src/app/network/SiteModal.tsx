@@ -11,9 +11,10 @@ import SiteTradeAssignmentsEditor, {
   draftsToAssignmentInputs,
   type AssignmentDraft,
 } from "@/components/SiteTradeAssignmentsEditor";
+import SiteMeasurementsEditor from "@/components/SiteMeasurementsEditor";
 import { matchTrade } from "@/lib/trades";
 import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
-import type { Site, SiteInput, Vendor } from "@/lib/networkTypes";
+import type { Site, SiteInput, SiteMeasurements, Vendor } from "@/lib/networkTypes";
 import { saveCompanyAction, saveContractAction } from "@/app/crm/actions";
 import { deleteSiteAction, saveSiteAction, saveSiteTradeAssignmentsAction } from "./actions";
 
@@ -57,6 +58,8 @@ export default function SiteModal({
     site ? assignmentsToDrafts(site.tradeAssignments) : {},
   );
   const [notes, setNotes] = useState(site?.notes ?? "");
+  const [measurements, setMeasurements] = useState<SiteMeasurements>(site?.measurements ?? {});
+  const [counts, setCounts] = useState<SiteMeasurements>(site?.counts ?? {});
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -165,8 +168,8 @@ export default function SiteModal({
         lat: lat.trim() ? Number(lat) : null,
         lng: lng.trim() ? Number(lng) : null,
         trades,
-        measurements: site?.measurements ?? {},
-        counts: site?.counts ?? {},
+        measurements,
+        counts,
         notes: notes.trim() || null,
       };
       const result = await saveSiteAction(site?.id ?? null, input);
@@ -208,7 +211,7 @@ export default function SiteModal({
 
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <Card className="max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+      <Card className="max-h-[90vh] w-full max-w-2xl overflow-y-auto p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-lg font-bold text-slate-50">{site ? "Edit site" : "New site"}</h2>
 
         <div className="mt-4 flex flex-col gap-4">
@@ -383,6 +386,15 @@ export default function SiteModal({
             <span className="font-medium text-slate-300">Notes</span>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputClass} />
           </label>
+        </div>
+
+        <div className="mt-6 border-t border-purple-400/10 pt-4">
+          <SiteMeasurementsEditor
+            measurements={measurements}
+            onChangeMeasurements={setMeasurements}
+            counts={counts}
+            onChangeCounts={setCounts}
+          />
         </div>
 
         {error && <p className="mt-3 text-sm text-critical">{error}</p>}
