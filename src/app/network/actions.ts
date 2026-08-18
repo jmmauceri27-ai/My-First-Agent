@@ -10,6 +10,7 @@ import {
   bulkCreateSitesForOpportunity,
   bulkCreateVendors,
   bulkUpdateSites,
+  bulkUpdateSiteTradeAssignments,
   createSite,
   createSiteFilterTemplate,
   createVendor,
@@ -38,6 +39,7 @@ import type {
   SiteImportRow,
   SiteInput,
   SiteTradeAssignmentInput,
+  SiteTradeAssignmentUpdateRow,
   SiteUpdateResult,
   SiteUpdateRow,
   Vendor,
@@ -238,6 +240,26 @@ export async function bulkUpdateSitesAction(
     return result;
   } catch (e) {
     return { updated: 0, notFound: [], ambiguous: [], error: e instanceof Error ? e.message : "Failed to update sites." };
+  }
+}
+
+/** Updates (or creates) one Trade's assignment -- Vendor/Sub-Vendor + pricing -- on each matched site, without touching any other trade. See bulkUpdateSiteTradeAssignments for matching rules. */
+export async function bulkUpdateSiteTradeAssignmentsAction(
+  trade: string,
+  rows: SiteTradeAssignmentUpdateRow[],
+  companyId: string | null,
+): Promise<SiteUpdateResult & { error?: string }> {
+  try {
+    const result = await bulkUpdateSiteTradeAssignments(trade, rows, companyId);
+    revalidatePath("/network/sites");
+    return result;
+  } catch (e) {
+    return {
+      updated: 0,
+      notFound: [],
+      ambiguous: [],
+      error: e instanceof Error ? e.message : "Failed to update trade assignments.",
+    };
   }
 }
 

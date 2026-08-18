@@ -9,6 +9,7 @@ import type {
   SiteInput,
   SiteTradeAssignment,
   SiteTradeAssignmentInput,
+  SiteTradeAssignmentUpdateRow,
   SiteUpdateResult,
   SiteUpdateRow,
   Vendor,
@@ -530,7 +531,22 @@ export async function bulkAssignTrades(siteIds: string[], trades: string[]): Pro
  * always falls through to the next configured method. Only the fields present on the row are written;
  * anything the row doesn't include is left exactly as it was.
  */
-export async function bulkUpdateSites(rows: SiteUpdateRow[], companyId: string | null): Promise<SiteUpdateResult> {
+interface SiteMatchKeys {
+  matchCode: string | null;
+  matchId: string | null;
+  matchName: string | null;
+}
+
+/**
+ * Resolves each row's `matchCode` (custom Site ID) / `matchId` (record id) / `matchName` (case-insensitive,
+ * optionally scoped to `companyId`) to a site id, trying each in order and falling through on "not found"
+ * (but not on ambiguous, which is reported immediately). Shared by every bulk-update flow that matches rows
+ * to existing sites, so Site-field updates and per-trade assignment updates use identical matching rules.
+ */
+async function matchSiteIds<T extends SiteMatchKeys>(
+  rows: T[],
+  companyId: string | null,
+): Promise<{ siteIds: (string | null)[]; notFound: string[]; ambiguous: string[] }> {
   const supabase = createAdminClient();
   let query = supabase.from("sites").select("id, name, site_code").eq("user_id", OWNER_USER_ID);
   if (companyId) query = query.eq("company_id", companyId);
@@ -554,7 +570,7 @@ export async function bulkUpdateSites(rows: SiteUpdateRow[], companyId: string |
 
   const notFound: string[] = [];
   const ambiguous: string[] = [];
-  const updates: { id: string; payload: Record<string, unknown> }[] = [];
+  const siteIds: (string | null)[] = [];
 
   for (const row of rows) {
     let siteId: string | null = null;
@@ -584,8 +600,21 @@ export async function bulkUpdateSites(rows: SiteUpdateRow[], companyId: string |
     if (!siteId) {
       if (ambiguousKey) ambiguous.push(ambiguousKey);
       else if (notFoundKey) notFound.push(notFoundKey);
-      continue;
     }
+    siteIds.push(siteId);
+  }
+
+  return { siteIds, notFound, ambiguous };
+}
+
+export async function bulkUpdateSites(rows: SiteUpdateRow[], companyId: string | null): Promise<SiteUpdateResult> {
+  const supabase = createAdminClient();
+  const { siteIds, notFound, ambiguous } = await matchSiteIds(rows, companyId);
+
+  const updates: { id: string; payload: Record<string, unknown> }[] = [];
+  rows.forEach((row, i) => {
+    const siteId = siteIds[i];
+    if (!siteId) return;
 
     const payload: Record<string, unknown> = {};
     if ("siteCode" in row) payload.site_code = row.siteCode;
@@ -597,10 +626,10 @@ export async function bulkUpdateSites(rows: SiteUpdateRow[], companyId: string |
     if ("lng" in row) payload.lng = row.lng;
     if ("trades" in row) payload.trades = row.trades;
     if ("notes" in row) payload.notes = row.notes;
-    if (Object.keys(payload).length === 0) continue;
+    if (Object.keys(payload).length === 0) return;
 
     updates.push({ id: siteId, payload });
-  }
+  });
 
   const concurrency = 20;
   for (let i = 0; i < updates.length; i += concurrency) {
@@ -613,6 +642,65 @@ export async function bulkUpdateSites(rows: SiteUpdateRow[], companyId: string |
           .eq("id", u.id)
           .eq("user_id", OWNER_USER_ID),
       ),
+    );
+    const failed = results.find((r) => r.error);
+    if (failed?.error) throw new Error(failed.error.message);
+  }
+
+  return { updated: updates.length, notFound, ambiguous };
+}
+
+/**
+ * Updates (or creates, if the site doesn't have one yet) the single named Trade's assignment -- Vendor,
+ * Sub-Vendor, Contract Value, Sub Price, Sub-Vendor Price -- for each matched site. Scoped to exactly one
+ * trade so e.g. bulk-updating "Land" contract values can never touch a site's "Snow Removal" assignment.
+ * Only the fields present on a row are written; matching rules are identical to bulkUpdateSites.
+ */
+export async function bulkUpdateSiteTradeAssignments(
+  trade: string,
+  rows: SiteTradeAssignmentUpdateRow[],
+  companyId: string | null,
+): Promise<SiteUpdateResult> {
+  const supabase = createAdminClient();
+  const { siteIds, notFound, ambiguous } = await matchSiteIds(rows, companyId);
+
+  const updates: { siteId: string; payload: Record<string, unknown> }[] = [];
+  rows.forEach((row, i) => {
+    const siteId = siteIds[i];
+    if (!siteId) return;
+
+    const payload: Record<string, unknown> = {};
+    if ("vendorId" in row) payload.vendor_id = row.vendorId;
+    if ("subVendorId" in row) payload.sub_vendor_id = row.subVendorId;
+    if ("contractValue" in row) payload.contract_value = row.contractValue;
+    if ("subPrice" in row) payload.sub_price = row.subPrice;
+    if ("subVendorPrice" in row) payload.sub_vendor_price = row.subVendorPrice;
+    if (Object.keys(payload).length === 0) return;
+
+    updates.push({ siteId, payload });
+  });
+
+  const concurrency = 20;
+  for (let i = 0; i < updates.length; i += concurrency) {
+    const batch = updates.slice(i, i + concurrency);
+    const results = await Promise.all(
+      batch.map(async (u) => {
+        const { data, error } = await supabase
+          .from("site_trade_assignments")
+          .update({ ...u.payload, updated_at: new Date().toISOString() })
+          .eq("site_id", u.siteId)
+          .eq("trade", trade)
+          .eq("user_id", OWNER_USER_ID)
+          .select("id");
+        if (error) return { error };
+        if (!data || data.length === 0) {
+          const { error: insertError } = await supabase
+            .from("site_trade_assignments")
+            .insert({ user_id: OWNER_USER_ID, site_id: u.siteId, trade, ...u.payload });
+          if (insertError) return { error: insertError };
+        }
+        return { error: null };
+      }),
     );
     const failed = results.find((r) => r.error);
     if (failed?.error) throw new Error(failed.error.message);

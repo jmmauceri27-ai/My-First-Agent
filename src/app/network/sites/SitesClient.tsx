@@ -29,6 +29,7 @@ import NetworkNav from "../NetworkNav";
 import SiteModal from "../SiteModal";
 import UploadSitesModal from "../UploadSitesModal";
 import UpdateSitesModal from "../UpdateSitesModal";
+import UpdateSiteTradeAssignmentsModal from "../UpdateSiteTradeAssignmentsModal";
 import {
   bulkAssignTradesAction,
   deleteSiteFilterTemplateAction,
@@ -128,6 +129,7 @@ export default function SitesClient({
   const [creating, setCreating] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [updatingSheet, setUpdatingSheet] = useState(false);
+  const [updatingAssignments, setUpdatingAssignments] = useState(false);
   const [addressField, setAddressField] = useState<AddressField>("address");
   const [addressValues, setAddressValues] = useState<string[]>([]);
   const [infoField, setInfoField] = useState<InfoField>("name");
@@ -468,6 +470,9 @@ export default function SitesClient({
           <Button variant="secondary" onClick={() => setUpdatingSheet(true)}>
             Update sites
           </Button>
+          <Button variant="secondary" onClick={() => setUpdatingAssignments(true)}>
+            Update trade assignments
+          </Button>
           <Button onClick={() => setCreating(true)}>+ New site</Button>
         </div>
       </div>
@@ -758,6 +763,14 @@ export default function SitesClient({
       )}
 
       {updatingSheet && <UpdateSitesModal companies={companies} onClose={() => setUpdatingSheet(false)} />}
+
+      {updatingAssignments && (
+        <UpdateSiteTradeAssignmentsModal
+          companies={companies}
+          vendors={vendors}
+          onClose={() => setUpdatingAssignments(false)}
+        />
+      )}
     </div>
   );
 }

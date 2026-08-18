@@ -169,6 +169,22 @@ export interface SiteUpdateRow {
   notes?: string | null;
 }
 
+/**
+ * A single row parsed from an uploaded sheet meant to UPDATE one Trade's assignment (Vendor/Sub-Vendor +
+ * pricing) on existing sites -- scoped to exactly one trade per call, so it never touches a site's other
+ * trades. Matched the same way as SiteUpdateRow. Only the fields present on the row are touched.
+ */
+export interface SiteTradeAssignmentUpdateRow {
+  matchCode: string | null;
+  matchId: string | null;
+  matchName: string | null;
+  vendorId?: string | null;
+  subVendorId?: string | null;
+  contractValue?: number | null;
+  subPrice?: number | null;
+  subVendorPrice?: number | null;
+}
+
 export interface SiteUpdateResult {
   updated: number;
   /** Match keys (ID or name) from the sheet that didn't correspond to any existing site. */
