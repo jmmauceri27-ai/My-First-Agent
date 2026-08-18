@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Button from "@/components/ui/Button";
 import { inputClass } from "@/components/ui/formClasses";
 import TradeSelect from "@/components/TradeSelect";
@@ -136,6 +136,18 @@ export default function SitesClient({
   const [updatingSheet, setUpdatingSheet] = useState(false);
   const [updatingAssignments, setUpdatingAssignments] = useState(false);
   const [updatingMeasurements, setUpdatingMeasurements] = useState(false);
+  const [showUpdateMenu, setShowUpdateMenu] = useState(false);
+  const updateMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (updateMenuRef.current && !updateMenuRef.current.contains(e.target as Node)) {
+        setShowUpdateMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
   const [addressField, setAddressField] = useState<AddressField>("address");
   const [addressValues, setAddressValues] = useState<string[]>([]);
   const [infoField, setInfoField] = useState<InfoField>("name");
@@ -471,17 +483,47 @@ export default function SitesClient({
             {exporting ? "Downloading…" : `Download ${filteredSites.length} site${filteredSites.length === 1 ? "" : "s"}`}
           </Button>
           <Button variant="secondary" onClick={() => setUploading(true)}>
-            Upload sites
+            Upload
           </Button>
-          <Button variant="secondary" onClick={() => setUpdatingSheet(true)}>
-            Update sites
-          </Button>
-          <Button variant="secondary" onClick={() => setUpdatingAssignments(true)}>
-            Update trade assignments
-          </Button>
-          <Button variant="secondary" onClick={() => setUpdatingMeasurements(true)}>
-            Update measurements
-          </Button>
+          <div ref={updateMenuRef} className="relative">
+            <Button variant="secondary" onClick={() => setShowUpdateMenu((prev) => !prev)}>
+              Update
+            </Button>
+            {showUpdateMenu && (
+              <div className="absolute right-0 z-[2000] mt-1 w-56 rounded-lg border border-purple-400/40 bg-[#3c2b6b] p-1.5 shadow-xl shadow-black/50">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUpdatingSheet(true);
+                    setShowUpdateMenu(false);
+                  }}
+                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-100 hover:bg-purple-500/10"
+                >
+                  Sites
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUpdatingAssignments(true);
+                    setShowUpdateMenu(false);
+                  }}
+                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-100 hover:bg-purple-500/10"
+                >
+                  Trade assignments
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUpdatingMeasurements(true);
+                    setShowUpdateMenu(false);
+                  }}
+                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-100 hover:bg-purple-500/10"
+                >
+                  Measurements
+                </button>
+              </div>
+            )}
+          </div>
           <Button onClick={() => setCreating(true)}>+ New site</Button>
         </div>
       </div>
