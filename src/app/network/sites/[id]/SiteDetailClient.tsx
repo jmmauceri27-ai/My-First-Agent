@@ -13,6 +13,7 @@ import SiteTradeAssignmentsEditor, {
   type AssignmentDraft,
 } from "@/components/SiteTradeAssignmentsEditor";
 import { formatSquareFeet, parseMeasurementInput } from "@/lib/siteMapColor";
+import { MEASUREMENT_FIELDS, MEASUREMENT_GROUPS } from "@/lib/measurementGroups";
 import { matchTrade } from "@/lib/trades";
 import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
 import type { Site, SiteInput, SiteMeasurements, Vendor } from "@/lib/networkTypes";
@@ -57,6 +58,19 @@ export default function SiteDetailClient({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const groupedMeasurements = useMemo(() => {
+    const knownLabels = new Set(MEASUREMENT_FIELDS);
+    const groups = MEASUREMENT_GROUPS.map((g) => ({
+      label: g.label,
+      entries: g.fields
+        .filter((f) => f in measurements)
+        .map((f): [string, number] => [f, measurements[f]]),
+    }));
+    const other = Object.entries(measurements).filter(([label]) => !knownLabels.has(label));
+    if (other.length > 0) groups.push({ label: "Other", entries: other });
+    return groups;
+  }, [measurements]);
 
   const opportunitiesForCompany = useMemo(
     () => (companyId ? opportunities.filter((o) => o.companyId === companyId) : opportunities),
@@ -314,24 +328,31 @@ export default function SiteDetailClient({
 
           <div className="mt-6 border-t border-purple-400/10 pt-4">
             <h3 className="text-sm font-bold text-slate-50">Measurements</h3>
-            <div className="mt-2 flex flex-col gap-1">
-              {Object.entries(measurements).length === 0 ? (
+            <div className="mt-2 flex flex-col gap-3">
+              {groupedMeasurements.every((g) => g.entries.length === 0) ? (
                 <p className="text-xs text-slate-400">No measurements yet.</p>
               ) : (
-                Object.entries(measurements).map(([label, value]) => (
-                  <div key={label} className="flex items-center justify-between gap-2 text-sm">
-                    <span className="text-slate-300">{label}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="tabular-nums text-slate-50">{formatSquareFeet(value)}</span>
-                      <button
-                        onClick={() => removeMeasurement(label)}
-                        className="text-xs font-semibold text-critical hover:underline"
-                      >
-                        Remove
-                      </button>
+                groupedMeasurements
+                  .filter((g) => g.entries.length > 0)
+                  .map((group) => (
+                    <div key={group.label} className="flex flex-col gap-1">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{group.label}</p>
+                      {group.entries.map(([label, value]) => (
+                        <div key={label} className="flex items-center justify-between gap-2 text-sm">
+                          <span className="text-slate-300">{label}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="tabular-nums text-slate-50">{formatSquareFeet(value)}</span>
+                            <button
+                              onClick={() => removeMeasurement(label)}
+                              className="text-xs font-semibold text-critical hover:underline"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                ))
+                  ))
               )}
             </div>
             <div className="mt-3 flex flex-wrap gap-2">

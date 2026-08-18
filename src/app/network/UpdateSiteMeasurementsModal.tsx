@@ -8,6 +8,7 @@ import { inputClass } from "@/components/ui/formClasses";
 import { parseMeasurementInput } from "@/lib/siteMapColor";
 import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
 import { buildTemplateXlsxAction } from "@/lib/sheetActions";
+import { MEASUREMENT_FIELDS, MEASUREMENT_GROUPS } from "@/lib/measurementGroups";
 import type { Company } from "@/lib/crmTypes";
 import type { SiteMeasurementsUpdateRow } from "@/lib/networkTypes";
 import { bulkUpdateSiteMeasurementsAction, parseSiteSheetAction } from "./actions";
@@ -15,19 +16,6 @@ import { bulkUpdateSiteMeasurementsAction, parseSiteSheetAction } from "./action
 type ParsedRow = Record<string, string | number | boolean | null>;
 
 const NONE = "";
-
-/** Fixed set of measurement (sq. ft) and count labels this modal can map -- covers what the site detail page's Measurements/Counts sections track. */
-const MEASUREMENT_FIELDS = [
-  "Parking Lot",
-  "Sidewalk",
-  "Public Walk",
-  "Bed Space",
-  "Turf Area",
-  "Retention Wall",
-  "Rock Bed",
-  "Native Mow",
-  "Hedges",
-] as const;
 
 const COUNT_FIELDS = ["Palm Trees", "Deciduous Tree", "Shrubs"] as const;
 
@@ -287,28 +275,35 @@ export default function UpdateSiteMeasurementsModal({
               )}
             </div>
 
-            <div className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-purple-400/30 p-3">
-              <p className="text-sm text-slate-300">Measurements (sq. ft) — leave as None to leave untouched</p>
-              <div className="flex flex-wrap gap-3">
-                {MEASUREMENT_FIELDS.map((field) => (
-                  <label key={field} className="flex flex-col gap-1 text-sm">
-                    <span className="font-medium text-slate-300">{field}</span>
-                    <select
-                      value={fieldMapping[field]}
-                      onChange={(e) => setFieldMapping((prev) => ({ ...prev, [field]: e.target.value }))}
-                      className={inputClass}
-                    >
-                      <option value={NONE}>None</option>
-                      {parsedColumns.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                ))}
+            {MEASUREMENT_GROUPS.map((group) => (
+              <div
+                key={group.label}
+                className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-purple-400/30 p-3"
+              >
+                <p className="text-sm text-slate-300">
+                  {group.label} (sq. ft) — leave as None to leave untouched
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  {group.fields.map((field) => (
+                    <label key={field} className="flex flex-col gap-1 text-sm">
+                      <span className="font-medium text-slate-300">{field}</span>
+                      <select
+                        value={fieldMapping[field]}
+                        onChange={(e) => setFieldMapping((prev) => ({ ...prev, [field]: e.target.value }))}
+                        className={inputClass}
+                      >
+                        <option value={NONE}>None</option>
+                        {parsedColumns.map((c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ))}
+                </div>
               </div>
-            </div>
+            ))}
 
             <div className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-purple-400/30 p-3">
               <p className="text-sm text-slate-300">Counts — leave as None to leave untouched</p>
