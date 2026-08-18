@@ -41,10 +41,11 @@ const MapLegend = dynamic(() => import("@/components/MapLegend"), { ssr: false }
 
 type ColorMode = "none" | "margin" | "vendor" | "trade";
 type AddressField = "address" | "city" | "state" | "zip";
-type InfoField = "name" | "id";
+type InfoField = "name" | "code" | "id";
 
 const SITE_EXPORT_COLUMNS = [
   "Site ID",
+  "Record ID",
   "Site Name",
   "Client",
   "Vendor",
@@ -67,7 +68,8 @@ const SITE_EXPORT_COLUMNS = [
 
 function siteToExportRow(s: Site): DatasetRecord {
   return {
-    "Site ID": s.id,
+    "Site ID": s.siteCode ?? "",
+    "Record ID": s.id,
     "Site Name": s.name,
     Client: s.companyName ?? "",
     Vendor: s.vendorName ?? "",
@@ -93,6 +95,10 @@ function siteToExportRow(s: Site): DatasetRecord {
 
 function distinctValues(sites: Site[], pick: (s: Site) => string | null): string[] {
   return Array.from(new Set(sites.map(pick).filter((v): v is string => !!v))).sort();
+}
+
+function infoValueOf(s: Site, field: InfoField): string {
+  return field === "name" ? s.name : field === "code" ? (s.siteCode ?? "") : s.id;
 }
 
 export default function SitesClient({
@@ -141,6 +147,7 @@ export default function SitesClient({
   const stateOptions = useMemo(() => distinctValues(sites, (s) => s.state), [sites]);
   const zipOptions = useMemo(() => distinctValues(sites, (s) => s.zip), [sites]);
   const nameOptions = useMemo(() => distinctValues(sites, (s) => s.name), [sites]);
+  const codeOptions = useMemo(() => distinctValues(sites, (s) => s.siteCode), [sites]);
   const idOptions = useMemo(() => distinctValues(sites, (s) => s.id), [sites]);
 
   const addressSuggestions =
@@ -152,7 +159,7 @@ export default function SitesClient({
           ? stateOptions
           : zipOptions;
 
-  const infoSuggestions = infoField === "name" ? nameOptions : idOptions;
+  const infoSuggestions = infoField === "name" ? nameOptions : infoField === "code" ? codeOptions : idOptions;
 
   const addressUnmatched = useMemo(() => {
     if (addressValues.length === 0) return [];
@@ -162,7 +169,7 @@ export default function SitesClient({
 
   const infoUnmatched = useMemo(() => {
     if (infoValues.length === 0) return [];
-    const existingValues = new Set(sites.map((s) => (infoField === "name" ? s.name : s.id).toLowerCase()));
+    const existingValues = new Set(sites.map((s) => infoValueOf(s, infoField).toLowerCase()));
     return infoValues.filter((v) => !existingValues.has(v.trim().toLowerCase()));
   }, [infoValues, sites, infoField]);
 
@@ -187,7 +194,7 @@ export default function SitesClient({
         if (!addressSet.has((value ?? "").toLowerCase())) return false;
       }
       if (infoSet.size > 0) {
-        const value = (infoField === "name" ? s.name : s.id).toLowerCase();
+        const value = infoValueOf(s, infoField).toLowerCase();
         if (!infoSet.has(value)) return false;
       }
       return true;
@@ -275,7 +282,7 @@ export default function SitesClient({
     setColorMode((["none", "margin", "vendor", "trade"].includes(f.colorMode) ? f.colorMode : "none") as ColorMode);
     setAddressField((["address", "city", "state", "zip"].includes(f.addressField) ? f.addressField : "address") as AddressField);
     setAddressValues(f.addressValues);
-    setInfoField((["name", "id"].includes(f.infoField) ? f.infoField : "name") as InfoField);
+    setInfoField((["name", "code", "id"].includes(f.infoField) ? f.infoField : "name") as InfoField);
     setInfoValues(f.infoValues);
   }
 
@@ -484,7 +491,8 @@ export default function SitesClient({
             className={`${inputClass} w-auto`}
           >
             <option value="name">Site Name</option>
-            <option value="id">Site ID</option>
+            <option value="code">Site ID</option>
+            <option value="id">Record ID</option>
           </select>
           <TagInput
             values={infoValues}
@@ -683,7 +691,10 @@ export default function SitesClient({
                     onClick={() => router.push(`/network/sites/${s.id}`)}
                     className="flex min-w-0 flex-1 flex-col gap-0.5 text-left"
                   >
-                    <span className="truncate text-sm font-semibold text-slate-50">{s.name}</span>
+                    <span className="truncate text-sm font-semibold text-slate-50">
+                      {s.name}
+                      {s.siteCode ? <span className="font-normal text-slate-400"> · {s.siteCode}</span> : null}
+                    </span>
                     <span className="truncate text-xs text-slate-400">
                       {[s.companyName, s.vendorName, s.subVendorName, ...s.trades].filter(Boolean).join(" · ") ||
                         "No details"}

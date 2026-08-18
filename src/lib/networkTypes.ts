@@ -62,6 +62,8 @@ export interface Site {
   /** The vendor's own subcontractor for this site -- e.g. a vendor we treat as a self-perform team who further subs the work out. */
   subVendorId: string | null;
   subVendorName: string | null;
+  /** A user-entered identifier/code (e.g. from your own facility system) -- separate from `id`, the database's own record id. */
+  siteCode: string | null;
   name: string;
   address: string | null;
   city: string | null;
@@ -87,6 +89,7 @@ export interface SiteInput {
   contractId: string | null;
   vendorId: string | null;
   subVendorId: string | null;
+  siteCode: string | null;
   name: string;
   address: string | null;
   city: string | null;
@@ -114,6 +117,7 @@ export interface SiteImportRow {
   contractValue: number | null;
   subPrice: number | null;
   subVendorPrice: number | null;
+  siteCode: string | null;
   /** Per-row Client override (e.g. matched from a "Client Name" column) -- takes precedence over the batch's SiteBulkLinks.companyId. */
   companyId?: string | null;
 }
@@ -130,12 +134,15 @@ export interface SiteBulkLinks {
 
 /**
  * A single row parsed from an uploaded sheet meant to UPDATE existing sites rather than create new ones.
- * Matched to an existing site by `matchId` (a Site ID column) if present, else by `matchName` (case-insensitive).
- * Only the fields actually present on the row are touched -- an omitted field leaves the site's existing value alone.
+ * Matched to an existing site by `matchCode` (the custom Site ID) if present, else `matchId` (the database's own
+ * record id), else `matchName` (case-insensitive). Only the fields actually present on the row are touched --
+ * an omitted field leaves the site's existing value alone.
  */
 export interface SiteUpdateRow {
+  matchCode: string | null;
   matchId: string | null;
   matchName: string | null;
+  siteCode?: string | null;
   address?: string | null;
   city?: string | null;
   state?: string | null;

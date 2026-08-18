@@ -19,6 +19,7 @@ type ParsedRow = Record<string, string | number | boolean | null>;
 const NONE = "";
 
 const SITE_TEMPLATE_COLUMNS = [
+  "Site ID",
   "Site Name",
   "Latitude",
   "Longitude",
@@ -31,6 +32,7 @@ const SITE_TEMPLATE_COLUMNS = [
 ];
 
 const SITE_TEMPLATE_EXAMPLE = {
+  "Site ID": "TDC0234",
   "Site Name": "Example Site",
   Latitude: 39.7392,
   Longitude: -104.9903,
@@ -68,6 +70,7 @@ export default function UploadSitesModal({
   const [parsedRows, setParsedRows] = useState<ParsedRow[] | null>(null);
   const [parsedColumns, setParsedColumns] = useState<string[]>([]);
   const [mapping, setMapping] = useState({
+    siteCode: NONE,
     name: NONE,
     lat: NONE,
     lng: NONE,
@@ -194,7 +197,8 @@ export default function UploadSitesModal({
       setParsedRows(result.rows);
       setParsedColumns(result.columns);
       setMapping({
-        name: result.columns.find((c) => /name|site/i.test(c)) ?? result.columns[0] ?? NONE,
+        siteCode: result.columns.find((c) => /site.?id/i.test(c)) ?? NONE,
+        name: result.columns.find((c) => /name/i.test(c)) ?? result.columns[0] ?? NONE,
         lat: result.columns.find((c) => /^lat/i.test(c)) ?? NONE,
         lng: result.columns.find((c) => /^(lng|lon)/i.test(c)) ?? NONE,
         address: result.columns.find((c) => /address/i.test(c)) ?? NONE,
@@ -236,6 +240,7 @@ export default function UploadSitesModal({
         }
 
         return {
+          siteCode: mapping.siteCode ? String(row[mapping.siteCode] ?? "").trim() || null : null,
           name: String(row[mapping.name] ?? "").trim() || "Untitled site",
           lat: Number.isFinite(lat) ? lat : null,
           lng: Number.isFinite(lng) ? lng : null,
@@ -330,6 +335,7 @@ export default function UploadSitesModal({
               <div className="flex flex-wrap gap-3">
                 {(
                   [
+                    ["siteCode", "Site ID column (optional)"],
                     ["name", "Name column"],
                     ["lat", "Latitude column"],
                     ["lng", "Longitude column"],

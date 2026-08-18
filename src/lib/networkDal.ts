@@ -133,7 +133,7 @@ export async function bulkCreateVendors(rows: VendorImportRow[]): Promise<{ inse
 // ---------- Sites ----------
 
 const SITE_COLUMNS =
-  "id, company_id, opportunity_id, contract_id, vendor_id, sub_vendor_id, name, address, city, state, zip, lat, lng, trades, contract_value, sub_price, sub_vendor_price, measurements, notes, created_at, updated_at, crm_companies(name), crm_opportunities(name), crm_contracts(name), vendor:vendors!sites_vendor_id_fkey(name), sub_vendor:vendors!sites_sub_vendor_id_fkey(name)";
+  "id, company_id, opportunity_id, contract_id, vendor_id, sub_vendor_id, site_code, name, address, city, state, zip, lat, lng, trades, contract_value, sub_price, sub_vendor_price, measurements, notes, created_at, updated_at, crm_companies(name), crm_opportunities(name), crm_contracts(name), vendor:vendors!sites_vendor_id_fkey(name), sub_vendor:vendors!sites_sub_vendor_id_fkey(name)";
 
 function mapSite(s: Record<string, unknown>): Site {
   const company = s.crm_companies as unknown as { name: string } | null;
@@ -153,6 +153,7 @@ function mapSite(s: Record<string, unknown>): Site {
     vendorName: vendor?.name ?? null,
     subVendorId: s.sub_vendor_id as string | null,
     subVendorName: subVendor?.name ?? null,
+    siteCode: s.site_code as string | null,
     name: s.name as string,
     address: s.address as string | null,
     city: s.city as string | null,
@@ -297,6 +298,7 @@ function siteRow(input: SiteInput) {
     contract_id: input.contractId,
     vendor_id: input.vendorId,
     sub_vendor_id: input.subVendorId,
+    site_code: input.siteCode,
     name: input.name,
     address: input.address,
     city: input.city,
@@ -387,6 +389,7 @@ export async function bulkCreateSites(links: SiteBulkLinks, rows: SiteImportRow[
     contract_id: links.contractId,
     vendor_id: links.vendorId,
     sub_vendor_id: links.subVendorId,
+    site_code: row.siteCode,
     name: row.name,
     address: row.address,
     city: row.city,
@@ -470,24 +473,31 @@ export async function bulkAssignTrades(siteIds: string[], trades: string[]): Pro
 
 /**
  * Updates existing sites in place from an uploaded sheet -- never creates new rows. Each row is matched by
- * `matchId` (a Site ID column, if the sheet has one) or else by `matchName` (case-insensitive, optionally
- * scoped to `companyId` to disambiguate sites that share a name across different clients). Only the fields
- * present on the row are written; anything the row doesn't include is left exactly as it was.
+ * `matchCode` (the custom Site ID, if the sheet has one) first, else `matchId` (the database's own record id),
+ * else `matchName` (case-insensitive, optionally scoped to `companyId` to disambiguate sites that share a name
+ * across different clients). Only the fields present on the row are written; anything the row doesn't include
+ * is left exactly as it was.
  */
 export async function bulkUpdateSites(rows: SiteUpdateRow[], companyId: string | null): Promise<SiteUpdateResult> {
   const supabase = createAdminClient();
-  let query = supabase.from("sites").select("id, name").eq("user_id", OWNER_USER_ID);
+  let query = supabase.from("sites").select("id, name, site_code").eq("user_id", OWNER_USER_ID);
   if (companyId) query = query.eq("company_id", companyId);
   const { data: existing, error: fetchError } = await query;
   if (fetchError) throw new Error(fetchError.message);
 
   const byId = new Map<string, string>();
   const byName = new Map<string, string[]>();
+  const byCode = new Map<string, string[]>();
   for (const s of existing ?? []) {
     const id = s.id as string;
     byId.set(id, id);
-    const key = (s.name as string).trim().toLowerCase();
-    byName.set(key, [...(byName.get(key) ?? []), id]);
+    const nameKey = (s.name as string).trim().toLowerCase();
+    byName.set(nameKey, [...(byName.get(nameKey) ?? []), id]);
+    const code = s.site_code as string | null;
+    if (code && code.trim()) {
+      const codeKey = code.trim().toLowerCase();
+      byCode.set(codeKey, [...(byCode.get(codeKey) ?? []), id]);
+    }
   }
 
   const notFound: string[] = [];
@@ -496,7 +506,13 @@ export async function bulkUpdateSites(rows: SiteUpdateRow[], companyId: string |
 
   for (const row of rows) {
     let siteId: string | null = null;
-    if (row.matchId) {
+    if (row.matchCode) {
+      const key = row.matchCode.trim().toLowerCase();
+      const matches = byCode.get(key) ?? [];
+      if (matches.length === 1) siteId = matches[0];
+      else if (matches.length === 0) notFound.push(row.matchCode);
+      else ambiguous.push(row.matchCode);
+    } else if (row.matchId) {
       siteId = byId.get(row.matchId) ?? null;
       if (!siteId) notFound.push(row.matchId);
     } else if (row.matchName) {
@@ -509,6 +525,7 @@ export async function bulkUpdateSites(rows: SiteUpdateRow[], companyId: string |
     if (!siteId) continue;
 
     const payload: Record<string, unknown> = {};
+    if ("siteCode" in row) payload.site_code = row.siteCode;
     if ("address" in row) payload.address = row.address;
     if ("city" in row) payload.city = row.city;
     if ("state" in row) payload.state = row.state;

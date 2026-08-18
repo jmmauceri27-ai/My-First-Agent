@@ -113,6 +113,7 @@ export default function SitesCard({
           contractValue: Number.isFinite(contractValue) ? contractValue : null,
           subPrice: Number.isFinite(subPrice) ? subPrice : null,
           subVendorPrice: null,
+          siteCode: null,
         };
       });
       const result = await bulkCreateSitesForOpportunityAction(opportunityId, companyId, rows);

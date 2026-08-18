@@ -15,6 +15,7 @@ type ParsedRow = Record<string, string | number | boolean | null>;
 const NONE = "";
 
 const OPTIONAL_FIELDS = [
+  ["siteCode", "Site ID column"],
   ["address", "Address column"],
   ["city", "City column"],
   ["state", "State column"],
@@ -37,8 +38,10 @@ export default function UpdateSitesModal({ companies, onClose }: { companies: Co
   const [parsedRows, setParsedRows] = useState<ParsedRow[] | null>(null);
   const [parsedColumns, setParsedColumns] = useState<string[]>([]);
   const [mapping, setMapping] = useState({
+    matchCode: NONE,
     matchId: NONE,
     matchName: NONE,
+    siteCode: NONE,
     address: NONE,
     city: NONE,
     state: NONE,
@@ -76,8 +79,10 @@ export default function UpdateSitesModal({ companies, onClose }: { companies: Co
       setParsedRows(parsed.rows);
       setParsedColumns(parsed.columns);
       setMapping({
-        matchId: parsed.columns.find((c) => /^site ?id$/i.test(c) || /^id$/i.test(c)) ?? NONE,
-        matchName: parsed.columns.find((c) => /name|site/i.test(c)) ?? NONE,
+        matchCode: parsed.columns.find((c) => /site.?id/i.test(c)) ?? NONE,
+        matchId: parsed.columns.find((c) => /^record ?id$/i.test(c) || /^id$/i.test(c)) ?? NONE,
+        matchName: parsed.columns.find((c) => /name/i.test(c)) ?? NONE,
+        siteCode: parsed.columns.find((c) => /site.?id/i.test(c)) ?? NONE,
         address: parsed.columns.find((c) => /address/i.test(c)) ?? NONE,
         city: parsed.columns.find((c) => /^city/i.test(c)) ?? NONE,
         state: parsed.columns.find((c) => /^state|^st$/i.test(c)) ?? NONE,
@@ -98,15 +103,17 @@ export default function UpdateSitesModal({ companies, onClose }: { companies: Co
   }
 
   async function handleUpdate() {
-    if (!parsedRows || (!mapping.matchId && !mapping.matchName)) return;
+    if (!parsedRows || (!mapping.matchCode && !mapping.matchId && !mapping.matchName)) return;
     setUpdateError(null);
     setUpdating(true);
     try {
       const rows: SiteUpdateRow[] = parsedRows.map((row) => {
         const update: SiteUpdateRow = {
+          matchCode: mapping.matchCode ? String(row[mapping.matchCode] ?? "").trim() || null : null,
           matchId: mapping.matchId ? String(row[mapping.matchId] ?? "").trim() || null : null,
           matchName: mapping.matchName ? String(row[mapping.matchName] ?? "").trim() || null : null,
         };
+        if (mapping.siteCode) update.siteCode = String(row[mapping.siteCode] ?? "").trim() || null;
         if (mapping.address) update.address = String(row[mapping.address] ?? "").trim() || null;
         if (mapping.city) update.city = String(row[mapping.city] ?? "").trim() || null;
         if (mapping.state) update.state = String(row[mapping.state] ?? "").trim() || null;
@@ -184,8 +191,8 @@ export default function UpdateSitesModal({ companies, onClose }: { companies: Co
         <h2 className="text-lg font-bold text-slate-50">Update existing sites</h2>
         <p className="mt-1 text-xs text-slate-400">
           Upload an .xlsx or .csv sheet to update sites already in Network → Sites — this never creates new sites.
-          Each row is matched by Site ID (best) or Site Name, and only the columns you map below get changed;
-          anything you don&rsquo;t map is left as-is.
+          Each row is matched by Site ID (best), Record ID, or Site Name, and only the columns you map below get
+          changed; anything you don&rsquo;t map is left as-is.
         </p>
 
         <div className="mt-4 flex flex-col gap-2">
@@ -210,6 +217,21 @@ export default function UpdateSitesModal({ companies, onClose }: { companies: Co
               <div className="flex flex-wrap gap-3">
                 <label className="flex flex-col gap-1 text-sm">
                   <span className="font-medium text-slate-300">Site ID column (recommended)</span>
+                  <select
+                    value={mapping.matchCode}
+                    onChange={(e) => setMapping((prev) => ({ ...prev, matchCode: e.target.value }))}
+                    className={inputClass}
+                  >
+                    <option value={NONE}>None</option>
+                    {parsedColumns.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="font-medium text-slate-300">Record ID column</span>
                   <select
                     value={mapping.matchId}
                     onChange={(e) => setMapping((prev) => ({ ...prev, matchId: e.target.value }))}
@@ -239,7 +261,7 @@ export default function UpdateSitesModal({ companies, onClose }: { companies: Co
                   </select>
                 </label>
               </div>
-              {!mapping.matchId && (
+              {!mapping.matchCode && !mapping.matchId && (
                 <label className="flex flex-col gap-1 text-sm">
                   <span className="font-medium text-slate-300">Client (optional, disambiguates name matches)</span>
                   <select value={companyId} onChange={(e) => setCompanyId(e.target.value)} className={inputClass}>
@@ -280,7 +302,7 @@ export default function UpdateSitesModal({ companies, onClose }: { companies: Co
             <Button
               type="button"
               onClick={handleUpdate}
-              disabled={updating || (!mapping.matchId && !mapping.matchName)}
+              disabled={updating || (!mapping.matchCode && !mapping.matchId && !mapping.matchName)}
               className="mt-4 w-fit"
             >
               {updating ? "Updating…" : `Update ${parsedRows.length} site${parsedRows.length === 1 ? "" : "s"}`}

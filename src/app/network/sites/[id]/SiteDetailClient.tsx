@@ -33,6 +33,7 @@ export default function SiteDetailClient({
   contracts: Contract[];
 }) {
   const router = useRouter();
+  const [siteCode, setSiteCode] = useState(site.siteCode ?? "");
   const [name, setName] = useState(site.name);
   const [companyId, setCompanyId] = useState(site.companyId ?? "");
   const [opportunityId, setOpportunityId] = useState(site.opportunityId ?? "");
@@ -101,6 +102,7 @@ export default function SiteDetailClient({
         contractId: contractId || null,
         vendorId: vendorId || null,
         subVendorId: subVendorId || null,
+        siteCode: siteCode.trim() || null,
         name: name.trim(),
         address: address.trim() || null,
         city: city.trim() || null,
@@ -147,6 +149,7 @@ export default function SiteDetailClient({
           ← Back to Sites
         </Link>
         <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-50">{site.name}</h1>
+        {site.siteCode && <p className="text-sm text-slate-400">Site ID: {site.siteCode}</p>}
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -154,10 +157,21 @@ export default function SiteDetailClient({
           <h2 className="text-lg font-bold text-slate-50">Details</h2>
 
           <div className="mt-4 flex flex-col gap-4">
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Site name</span>
-              <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
-            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium text-slate-300">Site name</span>
+                <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium text-slate-300">Site ID</span>
+                <input
+                  value={siteCode}
+                  onChange={(e) => setSiteCode(e.target.value)}
+                  placeholder="Your own code, e.g. TDC0234"
+                  className={inputClass}
+                />
+              </label>
+            </div>
 
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium text-slate-300">Client</span>

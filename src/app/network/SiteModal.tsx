@@ -39,6 +39,7 @@ export default function SiteModal({
   onSaved?: (id: string) => void;
 }) {
   const router = useRouter();
+  const [siteCode, setSiteCode] = useState(site?.siteCode ?? "");
   const [name, setName] = useState(site?.name ?? "");
   const [companyId, setCompanyId] = useState(site?.companyId ?? defaultCompanyId ?? "");
   const [opportunityId, setOpportunityId] = useState(site?.opportunityId ?? defaultOpportunityId ?? "");
@@ -159,6 +160,7 @@ export default function SiteModal({
         contractId: contractId || null,
         vendorId: vendorId || null,
         subVendorId: subVendorId || null,
+        siteCode: siteCode.trim() || null,
         name: name.trim(),
         address: address.trim() || null,
         city: city.trim() || null,
@@ -208,10 +210,21 @@ export default function SiteModal({
         <h2 className="text-lg font-bold text-slate-50">{site ? "Edit site" : "New site"}</h2>
 
         <div className="mt-4 flex flex-col gap-4">
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Site name</span>
-            <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} autoFocus />
-          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium text-slate-300">Site name</span>
+              <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} autoFocus />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium text-slate-300">Site ID</span>
+              <input
+                value={siteCode}
+                onChange={(e) => setSiteCode(e.target.value)}
+                placeholder="Your own code, e.g. TDC0234"
+                className={inputClass}
+              />
+            </label>
+          </div>
 
           <div className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-slate-300">Client</span>
