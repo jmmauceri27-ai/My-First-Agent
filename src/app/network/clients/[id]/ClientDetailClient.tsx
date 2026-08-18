@@ -135,7 +135,11 @@ export default function ClientDetailClient({
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-slate-50">{s.name}</p>
-                    <p className="text-xs text-slate-400">{s.vendorName ?? "No vendor assigned"}</p>
+                    <p className="text-xs text-slate-400">
+                      {Array.from(
+                        new Set(s.tradeAssignments.map((a) => a.vendorName).filter((v): v is string => !!v)),
+                      ).join(", ") || "No vendor assigned"}
+                    </p>
                   </div>
                 </Link>
               ))

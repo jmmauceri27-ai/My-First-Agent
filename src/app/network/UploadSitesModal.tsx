@@ -10,7 +10,7 @@ import { matchTrade } from "@/lib/trades";
 import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
 import { buildTemplateXlsxAction } from "@/lib/sheetActions";
 import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
-import type { SiteImportRow, Vendor } from "@/lib/networkTypes";
+import type { SiteImportRow } from "@/lib/networkTypes";
 import { saveCompanyAction, saveContractAction } from "@/app/crm/actions";
 import { bulkCreateSitesAction, parseSiteSheetAction } from "./actions";
 
@@ -18,18 +18,7 @@ type ParsedRow = Record<string, string | number | boolean | null>;
 
 const NONE = "";
 
-const SITE_TEMPLATE_COLUMNS = [
-  "Site ID",
-  "Site Name",
-  "Latitude",
-  "Longitude",
-  "Address",
-  "City",
-  "State",
-  "Zip",
-  "Contract Value",
-  "Sub Price",
-];
+const SITE_TEMPLATE_COLUMNS = ["Site ID", "Site Name", "Latitude", "Longitude", "Address", "City", "State", "Zip"];
 
 const SITE_TEMPLATE_EXAMPLE = {
   "Site ID": "TDC0234",
@@ -40,8 +29,6 @@ const SITE_TEMPLATE_EXAMPLE = {
   City: "Denver",
   State: "CO",
   Zip: "80202",
-  "Contract Value": 12000,
-  "Sub Price": 9000,
 };
 
 async function handleDownloadSiteTemplate() {
@@ -51,13 +38,11 @@ async function handleDownloadSiteTemplate() {
 
 export default function UploadSitesModal({
   companies,
-  vendors,
   opportunities,
   contracts,
   onClose,
 }: {
   companies: Company[];
-  vendors: Vendor[];
   opportunities: Opportunity[];
   contracts: Contract[];
   onClose: () => void;
@@ -78,8 +63,6 @@ export default function UploadSitesModal({
     city: NONE,
     state: NONE,
     zip: NONE,
-    contractValue: NONE,
-    subPrice: NONE,
     clientName: NONE,
   });
 
@@ -94,8 +77,6 @@ export default function UploadSitesModal({
   const [newContractName, setNewContractName] = useState("");
 
   const [opportunityId, setOpportunityId] = useState("");
-  const [vendorId, setVendorId] = useState("");
-  const [subVendorId, setSubVendorId] = useState("");
   const [trades, setTrades] = useState<string[]>([]);
 
   const [importing, setImporting] = useState(false);
@@ -205,8 +186,6 @@ export default function UploadSitesModal({
         city: result.columns.find((c) => /^city/i.test(c)) ?? NONE,
         state: result.columns.find((c) => /^state|^st$/i.test(c)) ?? NONE,
         zip: result.columns.find((c) => /zip|postal/i.test(c)) ?? NONE,
-        contractValue: result.columns.find((c) => /contract/i.test(c)) ?? NONE,
-        subPrice: result.columns.find((c) => /sub.?price/i.test(c)) ?? NONE,
         clientName: result.columns.find((c) => /client|company/i.test(c)) ?? NONE,
       });
     } catch (e) {
@@ -226,8 +205,6 @@ export default function UploadSitesModal({
       const rows: SiteImportRow[] = parsedRows.map((row) => {
         const lat = Number(row[mapping.lat]);
         const lng = Number(row[mapping.lng]);
-        const contractValue = mapping.contractValue ? Number(row[mapping.contractValue]) : NaN;
-        const subPrice = mapping.subPrice ? Number(row[mapping.subPrice]) : NaN;
 
         let rowCompanyId: string | null | undefined;
         if (mapping.clientName) {
@@ -248,9 +225,6 @@ export default function UploadSitesModal({
           city: mapping.city ? String(row[mapping.city] ?? "").trim() || null : null,
           state: mapping.state ? String(row[mapping.state] ?? "").trim() || null : null,
           zip: mapping.zip ? String(row[mapping.zip] ?? "").trim() || null : null,
-          contractValue: Number.isFinite(contractValue) ? contractValue : null,
-          subPrice: Number.isFinite(subPrice) ? subPrice : null,
-          subVendorPrice: null,
           companyId: rowCompanyId,
         };
       });
@@ -259,8 +233,6 @@ export default function UploadSitesModal({
           companyId: companyId || null,
           contractId: contractId || null,
           opportunityId: opportunityId || null,
-          vendorId: vendorId || null,
-          subVendorId: subVendorId || null,
           trades,
         },
         rows,
@@ -306,8 +278,8 @@ export default function UploadSitesModal({
       <Card className="max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-lg font-bold text-slate-50">Upload sites</h2>
         <p className="mt-1 text-xs text-slate-400">
-          Upload an .xlsx or .csv sheet of sites — every row shares the Client/Contract/Vendor/Opportunity links you
-          pick below.{" "}
+          Upload an .xlsx or .csv sheet of sites — every row shares the Client/Contract/Opportunity links you pick
+          below.{" "}
           <button type="button" onClick={handleDownloadSiteTemplate} className="text-brand-400 hover:underline">
             Download example template
           </button>
@@ -343,8 +315,6 @@ export default function UploadSitesModal({
                     ["city", "City column (optional)"],
                     ["state", "State column (optional)"],
                     ["zip", "Zip column (optional)"],
-                    ["contractValue", "Contract value column (optional)"],
-                    ["subPrice", "Sub price column (optional)"],
                     ["clientName", "Client Name column (optional, matched per-row)"],
                   ] as const
                 ).map(([key, label]) => (
@@ -482,32 +452,10 @@ export default function UploadSitesModal({
                 <span className="font-medium text-slate-300">Trade (optional)</span>
                 <TradeSelect value={trades} onChange={setTrades} placeholder="(none)" />
               </label>
-
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Vendor (optional)</span>
-                <select value={vendorId} onChange={(e) => setVendorId(e.target.value)} className={inputClass}>
-                  <option value="">(none)</option>
-                  {vendors.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Sub-Vendor (optional)</span>
-                <select value={subVendorId} onChange={(e) => setSubVendorId(e.target.value)} className={inputClass}>
-                  <option value="">(none)</option>
-                  {vendors
-                    .filter((v) => v.id !== vendorId)
-                    .map((v) => (
-                      <option key={v.id} value={v.id}>
-                        {v.name}
-                      </option>
-                    ))}
-                </select>
-              </label>
+              <p className="text-xs text-slate-500">
+                Vendor assignments and pricing are per-trade -- add those from each site&rsquo;s detail page after
+                importing.
+              </p>
             </div>
 
             <Button

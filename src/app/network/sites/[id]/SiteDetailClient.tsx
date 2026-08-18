@@ -7,17 +7,16 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import TradeSelect from "@/components/TradeSelect";
-import {
-  computeSiteMargin,
-  formatCurrency,
-  formatSquareFeet,
-  parseCurrencyInput,
-  parseMeasurementInput,
-} from "@/lib/siteMapColor";
+import SiteTradeAssignmentsEditor, {
+  assignmentsToDrafts,
+  draftsToAssignmentInputs,
+  type AssignmentDraft,
+} from "@/components/SiteTradeAssignmentsEditor";
+import { formatSquareFeet, parseMeasurementInput } from "@/lib/siteMapColor";
 import { matchTrade } from "@/lib/trades";
 import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
 import type { Site, SiteInput, SiteMeasurements, Vendor } from "@/lib/networkTypes";
-import { deleteSiteAction, saveSiteAction } from "../../actions";
+import { deleteSiteAction, saveSiteAction, saveSiteTradeAssignmentsAction } from "../../actions";
 
 export default function SiteDetailClient({
   site,
@@ -38,8 +37,6 @@ export default function SiteDetailClient({
   const [companyId, setCompanyId] = useState(site.companyId ?? "");
   const [opportunityId, setOpportunityId] = useState(site.opportunityId ?? "");
   const [contractId, setContractId] = useState(site.contractId ?? "");
-  const [vendorId, setVendorId] = useState(site.vendorId ?? "");
-  const [subVendorId, setSubVendorId] = useState(site.subVendorId ?? "");
   const [address, setAddress] = useState(site.address ?? "");
   const [city, setCity] = useState(site.city ?? "");
   const [state, setState] = useState(site.state ?? "");
@@ -47,10 +44,8 @@ export default function SiteDetailClient({
   const [lat, setLat] = useState(site.lat != null ? String(site.lat) : "");
   const [lng, setLng] = useState(site.lng != null ? String(site.lng) : "");
   const [trades, setTrades] = useState<string[]>(site.trades ?? []);
-  const [contractValue, setContractValue] = useState(site.contractValue != null ? formatCurrency(site.contractValue) : "");
-  const [subPrice, setSubPrice] = useState(site.subPrice != null ? formatCurrency(site.subPrice) : "");
-  const [subVendorPrice, setSubVendorPrice] = useState(
-    site.subVendorPrice != null ? formatCurrency(site.subVendorPrice) : "",
+  const [assignmentDrafts, setAssignmentDrafts] = useState<Record<string, AssignmentDraft>>(
+    assignmentsToDrafts(site.tradeAssignments),
   );
   const [notes, setNotes] = useState(site.notes ?? "");
   const [measurements, setMeasurements] = useState<SiteMeasurements>(site.measurements);
@@ -100,8 +95,6 @@ export default function SiteDetailClient({
         companyId: companyId || null,
         opportunityId: opportunityId || null,
         contractId: contractId || null,
-        vendorId: vendorId || null,
-        subVendorId: subVendorId || null,
         siteCode: siteCode.trim() || null,
         name: name.trim(),
         address: address.trim() || null,
@@ -111,15 +104,20 @@ export default function SiteDetailClient({
         lat: lat.trim() ? Number(lat) : null,
         lng: lng.trim() ? Number(lng) : null,
         trades,
-        contractValue: contractValue.trim() ? Number(parseCurrencyInput(contractValue)) : null,
-        subPrice: subPrice.trim() ? Number(parseCurrencyInput(subPrice)) : null,
-        subVendorPrice: subVendorPrice.trim() ? Number(parseCurrencyInput(subVendorPrice)) : null,
         measurements,
         notes: notes.trim() || null,
       };
       const result = await saveSiteAction(site.id, input);
       if (result.error) {
         setError(result.error);
+        return;
+      }
+      const assignmentsResult = await saveSiteTradeAssignmentsAction(
+        site.id,
+        draftsToAssignmentInputs(trades, assignmentDrafts),
+      );
+      if (assignmentsResult.error) {
+        setError(assignmentsResult.error);
         return;
       }
       router.refresh();
@@ -242,35 +240,18 @@ export default function SiteDetailClient({
               <TradeSelect value={trades} onChange={setTrades} />
             </label>
 
-            <div className="grid grid-cols-2 gap-3">
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Vendor</span>
-                <select value={vendorId} onChange={(e) => setVendorId(e.target.value)} className={inputClass}>
-                  <option value="">(none)</option>
-                  {vendors.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Sub-Vendor</span>
-                <select value={subVendorId} onChange={(e) => setSubVendorId(e.target.value)} className={inputClass}>
-                  <option value="">(none)</option>
-                  {vendors
-                    .filter((v) => v.id !== vendorId)
-                    .map((v) => (
-                      <option key={v.id} value={v.id}>
-                        {v.name}
-                      </option>
-                    ))}
-                </select>
-              </label>
+            <div className="flex flex-col gap-1 text-sm">
+              <span className="font-medium text-slate-300">Vendor assignments</span>
+              <p className="-mt-0.5 text-xs text-slate-500">
+                A site often uses a different vendor per trade -- e.g. one for Land, another for Snow Removal.
+              </p>
+              <SiteTradeAssignmentsEditor
+                trades={trades}
+                vendors={vendors}
+                value={assignmentDrafts}
+                onChange={setAssignmentDrafts}
+              />
             </div>
-            <p className="-mt-2 text-xs text-slate-500">
-              Vendor is who we contract to directly; Sub-Vendor is who the Vendor further subcontracts the work to.
-            </p>
 
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium text-slate-300">Address</span>
@@ -302,71 +283,6 @@ export default function SiteDetailClient({
                 <input type="number" value={lng} onChange={(e) => setLng(e.target.value)} className={inputClass} />
               </label>
             </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Contract value</span>
-                <input
-                  value={contractValue}
-                  onChange={(e) => setContractValue(e.target.value)}
-                  onBlur={() => {
-                    const num = Number(parseCurrencyInput(contractValue));
-                    if (contractValue.trim() && Number.isFinite(num)) setContractValue(formatCurrency(num));
-                  }}
-                  className={inputClass}
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Sub price (to Vendor)</span>
-                <input
-                  value={subPrice}
-                  onChange={(e) => setSubPrice(e.target.value)}
-                  onBlur={() => {
-                    const num = Number(parseCurrencyInput(subPrice));
-                    if (subPrice.trim() && Number.isFinite(num)) setSubPrice(formatCurrency(num));
-                  }}
-                  className={inputClass}
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Sub-Vendor price</span>
-                <input
-                  value={subVendorPrice}
-                  onChange={(e) => setSubVendorPrice(e.target.value)}
-                  onBlur={() => {
-                    const num = Number(parseCurrencyInput(subVendorPrice));
-                    if (subVendorPrice.trim() && Number.isFinite(num)) setSubVendorPrice(formatCurrency(num));
-                  }}
-                  className={inputClass}
-                />
-              </label>
-            </div>
-
-            {(() => {
-              const ourMargin = computeSiteMargin(
-                contractValue.trim() ? Number(parseCurrencyInput(contractValue)) : null,
-                subPrice.trim() ? Number(parseCurrencyInput(subPrice)) : null,
-              );
-              const vendorMargin = computeSiteMargin(
-                subPrice.trim() ? Number(parseCurrencyInput(subPrice)) : null,
-                subVendorPrice.trim() ? Number(parseCurrencyInput(subVendorPrice)) : null,
-              );
-              if (ourMargin === null && vendorMargin === null) return null;
-              return (
-                <div className="flex flex-wrap gap-4 text-xs text-slate-400">
-                  {ourMargin !== null && (
-                    <span>
-                      Our margin: <span className="font-semibold text-slate-50">{formatCurrency(ourMargin)}</span>
-                    </span>
-                  )}
-                  {vendorMargin !== null && (
-                    <span>
-                      Vendor margin: <span className="font-semibold text-slate-50">{formatCurrency(vendorMargin)}</span>
-                    </span>
-                  )}
-                </div>
-              );
-            })()}
 
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium text-slate-300">Notes</span>
@@ -441,26 +357,6 @@ export default function SiteDetailClient({
               )}
             </div>
             <div>
-              <p className="text-xs text-slate-400">Vendor</p>
-              {site.vendorId ? (
-                <Link href={`/network/vendors/${site.vendorId}`} className="font-medium text-brand-400 hover:underline">
-                  {site.vendorName}
-                </Link>
-              ) : (
-                <p className="text-slate-500">Not linked</p>
-              )}
-            </div>
-            <div>
-              <p className="text-xs text-slate-400">Sub-Vendor</p>
-              {site.subVendorId ? (
-                <Link href={`/network/vendors/${site.subVendorId}`} className="font-medium text-brand-400 hover:underline">
-                  {site.subVendorName}
-                </Link>
-              ) : (
-                <p className="text-slate-500">Not linked</p>
-              )}
-            </div>
-            <div>
               <p className="text-xs text-slate-400">Opportunity</p>
               {site.opportunityId ? (
                 <Link
@@ -483,6 +379,36 @@ export default function SiteDetailClient({
                 <p className="text-slate-500">Not linked</p>
               )}
             </div>
+          </div>
+
+          <div className="mt-2 border-t border-purple-400/10 pt-3">
+            <p className="text-xs font-medium text-slate-400">Vendors by trade</p>
+            {site.tradeAssignments.length === 0 ? (
+              <p className="mt-1 text-xs text-slate-500">No vendor assignments yet.</p>
+            ) : (
+              <div className="mt-2 flex flex-col gap-2">
+                {site.tradeAssignments.map((a) => (
+                  <div key={a.id} className="text-sm">
+                    <p className="text-slate-300">{a.trade}</p>
+                    {a.vendorId ? (
+                      <Link href={`/network/vendors/${a.vendorId}`} className="font-medium text-brand-400 hover:underline">
+                        {a.vendorName}
+                      </Link>
+                    ) : (
+                      <p className="text-slate-500">Not assigned</p>
+                    )}
+                    {a.subVendorId && (
+                      <p className="text-xs text-slate-400">
+                        Sub-Vendor:{" "}
+                        <Link href={`/network/vendors/${a.subVendorId}`} className="font-medium text-brand-400 hover:underline">
+                          {a.subVendorName}
+                        </Link>
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </Card>
       </div>

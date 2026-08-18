@@ -7,17 +7,17 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import { computeSiteMargin, formatCurrency } from "@/lib/siteMapColor";
-import type { Site, Vendor, VendorInput } from "@/lib/networkTypes";
+import type { Vendor, VendorInput, VendorTradeAssignment } from "@/lib/networkTypes";
 import { deleteVendorAction, saveVendorAction } from "../../actions";
 
 export default function VendorDetailClient({
   vendor,
-  sitesAsVendor,
-  sitesAsSubVendor,
+  assignmentsAsVendor,
+  assignmentsAsSubVendor,
 }: {
   vendor: Vendor;
-  sitesAsVendor: Site[];
-  sitesAsSubVendor: Site[];
+  assignmentsAsVendor: VendorTradeAssignment[];
+  assignmentsAsSubVendor: VendorTradeAssignment[];
 }) {
   const router = useRouter();
   const [name, setName] = useState(vendor.name);
@@ -176,29 +176,31 @@ export default function VendorDetailClient({
 
         <Card className="flex flex-col p-5">
           <h2 className="text-lg font-bold text-slate-50">Sites serviced directly</h2>
-          <p className="mt-1 text-xs text-slate-400">Sites where this vendor is contracted to directly.</p>
+          <p className="mt-1 text-xs text-slate-400">
+            (Site, Trade) pairs where this vendor is contracted to directly.
+          </p>
 
           <div className="mt-4 flex flex-col divide-y divide-purple-400/10">
-            {sitesAsVendor.length === 0 ? (
+            {assignmentsAsVendor.length === 0 ? (
               <p className="py-2 text-xs text-slate-400">No sites assigned yet.</p>
             ) : (
-              sitesAsVendor.map((s) => {
-                const vendorMargin = computeSiteMargin(s.subPrice, s.subVendorPrice);
+              assignmentsAsVendor.map((a) => {
+                const vendorMargin = computeSiteMargin(a.subPrice, a.subVendorPrice);
                 return (
                   <Link
-                    key={s.id}
-                    href={`/network/sites/${s.id}`}
+                    key={a.id}
+                    href={`/network/sites/${a.siteId}`}
                     className="flex items-center justify-between gap-2 py-2 hover:text-brand-400"
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-slate-50">{s.name}</p>
+                      <p className="truncate text-sm font-medium text-slate-50">{a.siteName}</p>
                       <p className="text-xs text-slate-400">
-                        {s.companyName ?? "No client"}
-                        {s.subVendorName ? ` · Sub-Vendor: ${s.subVendorName}` : ""}
+                        {a.trade} · {a.companyName ?? "No client"}
+                        {a.subVendorName ? ` · Sub-Vendor: ${a.subVendorName}` : ""}
                       </p>
                     </div>
                     <div className="shrink-0 text-right text-xs tabular-nums text-slate-400">
-                      {s.subPrice != null && <p>{formatCurrency(s.subPrice)}</p>}
+                      {a.subPrice != null && <p>{formatCurrency(a.subPrice)}</p>}
                       {vendorMargin != null && <p className="text-slate-50">Margin {formatCurrency(vendorMargin)}</p>}
                     </div>
                   </Link>
@@ -210,25 +212,29 @@ export default function VendorDetailClient({
 
         <Card className="flex flex-col p-5 lg:col-start-3">
           <h2 className="text-lg font-bold text-slate-50">Sites serviced as Sub-Vendor</h2>
-          <p className="mt-1 text-xs text-slate-400">Sites where another vendor subcontracts work to this vendor.</p>
+          <p className="mt-1 text-xs text-slate-400">
+            (Site, Trade) pairs where another vendor subcontracts work to this vendor.
+          </p>
 
           <div className="mt-4 flex flex-col divide-y divide-purple-400/10">
-            {sitesAsSubVendor.length === 0 ? (
+            {assignmentsAsSubVendor.length === 0 ? (
               <p className="py-2 text-xs text-slate-400">Not used as a sub-vendor yet.</p>
             ) : (
-              sitesAsSubVendor.map((s) => (
+              assignmentsAsSubVendor.map((a) => (
                 <Link
-                  key={s.id}
-                  href={`/network/sites/${s.id}`}
+                  key={a.id}
+                  href={`/network/sites/${a.siteId}`}
                   className="flex items-center justify-between gap-2 py-2 hover:text-brand-400"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-slate-50">{s.name}</p>
-                    <p className="text-xs text-slate-400">Via {s.vendorName ?? "unknown vendor"}</p>
+                    <p className="truncate text-sm font-medium text-slate-50">{a.siteName}</p>
+                    <p className="text-xs text-slate-400">
+                      {a.trade} · Via {a.vendorName ?? "unknown vendor"}
+                    </p>
                   </div>
-                  {s.subVendorPrice != null && (
+                  {a.subVendorPrice != null && (
                     <span className="shrink-0 text-xs tabular-nums text-slate-400">
-                      {formatCurrency(s.subVendorPrice)}
+                      {formatCurrency(a.subVendorPrice)}
                     </span>
                   )}
                 </Link>

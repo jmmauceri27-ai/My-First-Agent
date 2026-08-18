@@ -66,14 +66,22 @@ const SITE_EXPORT_COLUMNS = [
   "Notes",
 ];
 
+function sumOrNull(values: (number | null)[]): number | null {
+  const present = values.filter((v): v is number => v !== null);
+  return present.length ? present.reduce((a, b) => a + b, 0) : null;
+}
+
 function siteToExportRow(s: Site): DatasetRecord {
   return {
     "Site ID": s.siteCode ?? "",
     "Record ID": s.id,
     "Site Name": s.name,
     Client: s.companyName ?? "",
-    Vendor: s.vendorName ?? "",
-    "Sub-Vendor": s.subVendorName ?? "",
+    Vendor: s.tradeAssignments.map((a) => `${a.trade}: ${a.vendorName ?? "(none)"}`).join("; "),
+    "Sub-Vendor": s.tradeAssignments
+      .filter((a) => a.subVendorName)
+      .map((a) => `${a.trade}: ${a.subVendorName}`)
+      .join("; "),
     Opportunity: s.opportunityName ?? "",
     Contract: s.contractName ?? "",
     Trade: s.trades.join(", "),
@@ -83,9 +91,9 @@ function siteToExportRow(s: Site): DatasetRecord {
     Zip: s.zip ?? "",
     Latitude: s.lat,
     Longitude: s.lng,
-    "Contract Value": s.contractValue,
-    "Sub Price": s.subPrice,
-    "Sub-Vendor Price": s.subVendorPrice,
+    "Contract Value": sumOrNull(s.tradeAssignments.map((a) => a.contractValue)),
+    "Sub Price": sumOrNull(s.tradeAssignments.map((a) => a.subPrice)),
+    "Sub-Vendor Price": sumOrNull(s.tradeAssignments.map((a) => a.subVendorPrice)),
     Measurements: Object.entries(s.measurements)
       .map(([label, value]) => `${label}: ${formatSquareFeet(value)}`)
       .join("; "),
@@ -178,8 +186,8 @@ export default function SitesClient({
     const infoSet = new Set(infoValues.map((v) => v.trim().toLowerCase()));
     return sites.filter((s) => {
       if (companyFilters.length > 0 && !companyFilters.includes(s.companyId ?? "")) return false;
-      if (vendorFilter && s.vendorId !== vendorFilter) return false;
-      if (subVendorFilter && s.subVendorId !== subVendorFilter) return false;
+      if (vendorFilter && !s.tradeAssignments.some((a) => a.vendorId === vendorFilter)) return false;
+      if (subVendorFilter && !s.tradeAssignments.some((a) => a.subVendorId === subVendorFilter)) return false;
       if (contractFilter && s.contractId !== contractFilter) return false;
       if (tradeFilter.length > 0 && !s.trades.some((t) => tradeFilter.includes(t))) return false;
       if (addressSet.size > 0) {
@@ -349,11 +357,16 @@ export default function SitesClient({
     const plottable = filteredSites.filter((s) => s.lat != null && s.lng != null);
 
     if (colorMode === "margin") {
-      const margins = plottable.map((s) => computeSiteMargin(s.contractValue, s.subPrice)).filter((m): m is number => m !== null);
+      const siteMargin = (s: Site) =>
+        computeSiteMargin(
+          sumOrNull(s.tradeAssignments.map((a) => a.contractValue)),
+          sumOrNull(s.tradeAssignments.map((a) => a.subPrice)),
+        );
+      const margins = plottable.map(siteMargin).filter((m): m is number => m !== null);
       const min = margins.length ? Math.min(...margins) : 0;
       const max = margins.length ? Math.max(...margins) : 0;
       const pins: MapPin[] = plottable.map((s) => {
-        const margin = computeSiteMargin(s.contractValue, s.subPrice);
+        const margin = siteMargin(s);
         const ratio = margin === null || max === min ? null : (margin - min) / (max - min);
         return {
           id: s.id,
@@ -371,18 +384,29 @@ export default function SitesClient({
     }
 
     if (colorMode === "vendor") {
-      const palette = buildCategoricalPalette(plottable.map((s) => s.vendorName ?? "Unassigned"));
-      const pins: MapPin[] = plottable.map((s) => ({
-        id: s.id,
-        lat: s.lat as number,
-        lng: s.lng as number,
-        label: s.name,
-        color: palette.get(s.vendorName ?? "Unassigned"),
-        fields: s.vendorName ? [{ key: "Vendor", value: s.vendorName }] : [],
-      }));
+      // A site can use a different vendor per trade, so pins show one wedge per distinct vendor
+      // across the site's trade assignments (like "Color: by trade" does for trades).
+      const vendorNamesOf = (s: Site) => {
+        const names = Array.from(new Set(s.tradeAssignments.map((a) => a.vendorName ?? "Unassigned")));
+        return names.length ? names : ["Unassigned"];
+      };
+      const allVendorNames = plottable.flatMap(vendorNamesOf);
+      const palette = buildCategoricalPalette(allVendorNames);
+      const pins: MapPin[] = plottable.map((s) => {
+        const names = vendorNamesOf(s);
+        return {
+          id: s.id,
+          lat: s.lat as number,
+          lng: s.lng as number,
+          label: s.name,
+          colors: names.map((n) => palette.get(n) ?? NEUTRAL_PIN_COLOR),
+          fields: s.tradeAssignments.map((a) => ({ key: a.trade, value: a.vendorName ?? "Unassigned" })),
+        };
+      });
+      const presentNames = Array.from(new Set(allVendorNames));
       const legend: MapLegendProps = {
         mode: "categorical",
-        entries: Array.from(palette.entries()).map(([label, color]) => ({ label, color })),
+        entries: presentNames.map((n) => ({ label: n, color: palette.get(n) ?? NEUTRAL_PIN_COLOR })),
       };
       return { pins, legend };
     }
@@ -696,8 +720,13 @@ export default function SitesClient({
                       {s.siteCode ? <span className="font-normal text-slate-400"> · {s.siteCode}</span> : null}
                     </span>
                     <span className="truncate text-xs text-slate-400">
-                      {[s.companyName, s.vendorName, s.subVendorName, ...s.trades].filter(Boolean).join(" · ") ||
-                        "No details"}
+                      {[
+                        s.companyName,
+                        ...Array.from(new Set(s.tradeAssignments.map((a) => a.vendorName).filter((v): v is string => !!v))),
+                        ...s.trades,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ") || "No details"}
                     </span>
                   </button>
                 </div>
@@ -722,7 +751,6 @@ export default function SitesClient({
       {uploading && (
         <UploadSitesModal
           companies={companies}
-          vendors={vendors}
           opportunities={opportunities}
           contracts={contracts}
           onClose={() => setUploading(false)}

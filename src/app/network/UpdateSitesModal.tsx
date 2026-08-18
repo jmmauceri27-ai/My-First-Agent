@@ -23,9 +23,6 @@ const OPTIONAL_FIELDS = [
   ["lat", "Latitude column"],
   ["lng", "Longitude column"],
   ["trades", "Trade column"],
-  ["contractValue", "Contract value column"],
-  ["subPrice", "Sub price column"],
-  ["subVendorPrice", "Sub-Vendor price column"],
   ["notes", "Notes column"],
 ] as const;
 
@@ -49,9 +46,6 @@ export default function UpdateSitesModal({ companies, onClose }: { companies: Co
     lat: NONE,
     lng: NONE,
     trades: NONE,
-    contractValue: NONE,
-    subPrice: NONE,
-    subVendorPrice: NONE,
     notes: NONE,
   });
   const [companyId, setCompanyId] = useState("");
@@ -90,9 +84,6 @@ export default function UpdateSitesModal({ companies, onClose }: { companies: Co
         lat: parsed.columns.find((c) => /^lat/i.test(c)) ?? NONE,
         lng: parsed.columns.find((c) => /^(lng|lon)/i.test(c)) ?? NONE,
         trades: parsed.columns.find((c) => /trade/i.test(c)) ?? NONE,
-        contractValue: parsed.columns.find((c) => /contract/i.test(c)) ?? NONE,
-        subPrice: parsed.columns.find((c) => /^sub.?price/i.test(c)) ?? NONE,
-        subVendorPrice: parsed.columns.find((c) => /sub.?vendor.?price/i.test(c)) ?? NONE,
         notes: parsed.columns.find((c) => /notes?/i.test(c)) ?? NONE,
       });
     } catch (e) {
@@ -127,18 +118,6 @@ export default function UpdateSitesModal({ companies, onClose }: { companies: Co
           update.lng = Number.isFinite(lng) ? lng : null;
         }
         if (mapping.trades) update.trades = matchTrades(String(row[mapping.trades] ?? ""));
-        if (mapping.contractValue) {
-          const v = Number(row[mapping.contractValue]);
-          update.contractValue = Number.isFinite(v) ? v : null;
-        }
-        if (mapping.subPrice) {
-          const v = Number(row[mapping.subPrice]);
-          update.subPrice = Number.isFinite(v) ? v : null;
-        }
-        if (mapping.subVendorPrice) {
-          const v = Number(row[mapping.subVendorPrice]);
-          update.subVendorPrice = Number.isFinite(v) ? v : null;
-        }
         if (mapping.notes) update.notes = String(row[mapping.notes] ?? "").trim() || null;
         return update;
       });

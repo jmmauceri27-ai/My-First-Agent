@@ -41,8 +41,6 @@ export default function SitesCard({
     city: NONE,
     state: NONE,
     zip: NONE,
-    contractValue: NONE,
-    subPrice: NONE,
   });
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
@@ -75,8 +73,6 @@ export default function SitesCard({
         city: result.columns.find((c) => /^city/i.test(c)) ?? NONE,
         state: result.columns.find((c) => /^state|^st$/i.test(c)) ?? NONE,
         zip: result.columns.find((c) => /zip|postal/i.test(c)) ?? NONE,
-        contractValue: result.columns.find((c) => /contract/i.test(c)) ?? NONE,
-        subPrice: result.columns.find((c) => /sub.?price/i.test(c)) ?? NONE,
       });
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (e) {
@@ -100,8 +96,6 @@ export default function SitesCard({
       const rows: SiteImportRow[] = parsedRows.map((row) => {
         const lat = Number(row[mapping.lat]);
         const lng = Number(row[mapping.lng]);
-        const contractValue = mapping.contractValue ? Number(row[mapping.contractValue]) : NaN;
-        const subPrice = mapping.subPrice ? Number(row[mapping.subPrice]) : NaN;
         return {
           name: String(row[mapping.name] ?? "").trim() || "Untitled site",
           lat: Number.isFinite(lat) ? lat : null,
@@ -110,9 +104,6 @@ export default function SitesCard({
           city: mapping.city ? String(row[mapping.city] ?? "").trim() || null : null,
           state: mapping.state ? String(row[mapping.state] ?? "").trim() || null : null,
           zip: mapping.zip ? String(row[mapping.zip] ?? "").trim() || null : null,
-          contractValue: Number.isFinite(contractValue) ? contractValue : null,
-          subPrice: Number.isFinite(subPrice) ? subPrice : null,
-          subVendorPrice: null,
           siteCode: null,
         };
       });
@@ -181,8 +172,6 @@ export default function SitesCard({
                 ["city", "City column (optional)", false],
                 ["state", "State column (optional)", false],
                 ["zip", "Zip column (optional)", false],
-                ["contractValue", "Contract value column (optional)", false],
-                ["subPrice", "Sub price column (optional)", false],
               ] as const
             ).map(([key, label]) => (
               <label key={key} className="flex flex-col gap-1 text-sm">

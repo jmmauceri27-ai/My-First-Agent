@@ -7,11 +7,14 @@ import type {
   SiteFilters,
   SiteImportRow,
   SiteInput,
+  SiteTradeAssignment,
+  SiteTradeAssignmentInput,
   SiteUpdateResult,
   SiteUpdateRow,
   Vendor,
   VendorImportRow,
   VendorInput,
+  VendorTradeAssignment,
 } from "./networkTypes";
 import { matchTrade } from "./trades";
 
@@ -132,15 +135,33 @@ export async function bulkCreateVendors(rows: VendorImportRow[]): Promise<{ inse
 
 // ---------- Sites ----------
 
-const SITE_COLUMNS =
-  "id, company_id, opportunity_id, contract_id, vendor_id, sub_vendor_id, site_code, name, address, city, state, zip, lat, lng, trades, contract_value, sub_price, sub_vendor_price, measurements, notes, created_at, updated_at, crm_companies(name), crm_opportunities(name), crm_contracts(name), vendor:vendors!sites_vendor_id_fkey(name), sub_vendor:vendors!sites_sub_vendor_id_fkey(name)";
+const ASSIGNMENT_COLUMNS =
+  "id, site_id, trade, vendor_id, sub_vendor_id, contract_value, sub_price, sub_vendor_price, vendor:vendors!site_trade_assignments_vendor_id_fkey(name), sub_vendor:vendors!site_trade_assignments_sub_vendor_id_fkey(name)";
+
+function mapAssignment(a: Record<string, unknown>): SiteTradeAssignment {
+  const vendor = a.vendor as unknown as { name: string } | null;
+  const subVendor = a.sub_vendor as unknown as { name: string } | null;
+  return {
+    id: a.id as string,
+    siteId: a.site_id as string,
+    trade: a.trade as string,
+    vendorId: a.vendor_id as string | null,
+    vendorName: vendor?.name ?? null,
+    subVendorId: a.sub_vendor_id as string | null,
+    subVendorName: subVendor?.name ?? null,
+    contractValue: a.contract_value as number | null,
+    subPrice: a.sub_price as number | null,
+    subVendorPrice: a.sub_vendor_price as number | null,
+  };
+}
+
+const SITE_COLUMNS = `id, company_id, opportunity_id, contract_id, site_code, name, address, city, state, zip, lat, lng, trades, measurements, notes, created_at, updated_at, crm_companies(name), crm_opportunities(name), crm_contracts(name), site_trade_assignments(${ASSIGNMENT_COLUMNS})`;
 
 function mapSite(s: Record<string, unknown>): Site {
   const company = s.crm_companies as unknown as { name: string } | null;
   const opportunity = s.crm_opportunities as unknown as { name: string } | null;
   const contract = s.crm_contracts as unknown as { name: string } | null;
-  const vendor = s.vendor as unknown as { name: string } | null;
-  const subVendor = s.sub_vendor as unknown as { name: string } | null;
+  const assignments = (s.site_trade_assignments as Record<string, unknown>[] | null) ?? [];
   return {
     id: s.id as string,
     companyId: s.company_id as string | null,
@@ -149,10 +170,6 @@ function mapSite(s: Record<string, unknown>): Site {
     opportunityName: opportunity?.name ?? null,
     contractId: s.contract_id as string | null,
     contractName: contract?.name ?? null,
-    vendorId: s.vendor_id as string | null,
-    vendorName: vendor?.name ?? null,
-    subVendorId: s.sub_vendor_id as string | null,
-    subVendorName: subVendor?.name ?? null,
     siteCode: s.site_code as string | null,
     name: s.name as string,
     address: s.address as string | null,
@@ -162,9 +179,7 @@ function mapSite(s: Record<string, unknown>): Site {
     lat: s.lat as number | null,
     lng: s.lng as number | null,
     trades: (s.trades as string[] | null) ?? [],
-    contractValue: s.contract_value as number | null,
-    subPrice: s.sub_price as number | null,
-    subVendorPrice: s.sub_vendor_price as number | null,
+    tradeAssignments: assignments.map(mapAssignment),
     measurements: (s.measurements as Site["measurements"] | null) ?? {},
     notes: s.notes as string | null,
     createdAt: s.created_at as string,
@@ -208,29 +223,76 @@ export async function listSitesForCompany(companyId: string): Promise<Site[]> {
   return (data ?? []).map(mapSite);
 }
 
-export async function listSitesForVendor(vendorId: string): Promise<Site[]> {
-  const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("sites")
-    .select(SITE_COLUMNS)
-    .eq("vendor_id", vendorId)
-    .eq("user_id", OWNER_USER_ID)
-    .order("name", { ascending: true });
-  if (error) throw new Error(error.message);
-  return (data ?? []).map(mapSite);
+const VENDOR_ASSIGNMENT_COLUMNS = `${ASSIGNMENT_COLUMNS}, sites(name, crm_companies(name))`;
+
+function mapVendorAssignment(a: Record<string, unknown>): VendorTradeAssignment {
+  const site = a.sites as unknown as { name: string; crm_companies: { name: string } | null } | null;
+  return {
+    ...mapAssignment(a),
+    siteName: site?.name ?? "",
+    companyName: site?.crm_companies?.name ?? null,
+  };
 }
 
-/** Sites where this vendor is used as the *Sub-Vendor* -- i.e. subcontracted by another Vendor, rather than contracted to directly. */
-export async function listSitesForSubVendor(vendorId: string): Promise<Site[]> {
+/** Every (site, trade) this vendor is contracted to directly. */
+export async function listAssignmentsForVendor(vendorId: string): Promise<VendorTradeAssignment[]> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
-    .from("sites")
-    .select(SITE_COLUMNS)
+    .from("site_trade_assignments")
+    .select(VENDOR_ASSIGNMENT_COLUMNS)
+    .eq("vendor_id", vendorId)
+    .eq("user_id", OWNER_USER_ID)
+    .order("trade", { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(mapVendorAssignment);
+}
+
+/** Every (site, trade) where this vendor is used as the *Sub-Vendor* -- i.e. subcontracted by another Vendor, rather than contracted to directly. */
+export async function listAssignmentsForSubVendor(vendorId: string): Promise<VendorTradeAssignment[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("site_trade_assignments")
+    .select(VENDOR_ASSIGNMENT_COLUMNS)
     .eq("sub_vendor_id", vendorId)
     .eq("user_id", OWNER_USER_ID)
-    .order("name", { ascending: true });
+    .order("trade", { ascending: true });
   if (error) throw new Error(error.message);
-  return (data ?? []).map(mapSite);
+  return (data ?? []).map(mapVendorAssignment);
+}
+
+/** Replaces a site's full set of Trade assignments with the given list -- upserts each by (site_id, trade) and removes any existing assignment for a trade no longer included. */
+export async function saveSiteTradeAssignments(siteId: string, assignments: SiteTradeAssignmentInput[]): Promise<void> {
+  const supabase = createAdminClient();
+
+  const { data: existing, error: fetchError } = await supabase
+    .from("site_trade_assignments")
+    .select("id, trade")
+    .eq("site_id", siteId)
+    .eq("user_id", OWNER_USER_ID);
+  if (fetchError) throw new Error(fetchError.message);
+
+  const keepTrades = new Set(assignments.map((a) => a.trade));
+  const staleIds = (existing ?? []).filter((e) => !keepTrades.has(e.trade as string)).map((e) => e.id as string);
+  if (staleIds.length > 0) {
+    const { error } = await supabase.from("site_trade_assignments").delete().in("id", staleIds);
+    if (error) throw new Error(error.message);
+  }
+
+  if (assignments.length === 0) return;
+
+  const rows = assignments.map((a) => ({
+    user_id: OWNER_USER_ID,
+    site_id: siteId,
+    trade: a.trade,
+    vendor_id: a.vendorId,
+    sub_vendor_id: a.subVendorId,
+    contract_value: a.contractValue,
+    sub_price: a.subPrice,
+    sub_vendor_price: a.subVendorPrice,
+  }));
+
+  const { error } = await supabase.from("site_trade_assignments").upsert(rows, { onConflict: "site_id,trade" });
+  if (error) throw new Error(error.message);
 }
 
 export async function listSitesForOpportunity(opportunityId: string): Promise<Site[]> {
@@ -296,8 +358,6 @@ function siteRow(input: SiteInput) {
     company_id: input.companyId,
     opportunity_id: input.opportunityId,
     contract_id: input.contractId,
-    vendor_id: input.vendorId,
-    sub_vendor_id: input.subVendorId,
     site_code: input.siteCode,
     name: input.name,
     address: input.address,
@@ -307,9 +367,6 @@ function siteRow(input: SiteInput) {
     lat: input.lat,
     lng: input.lng,
     trades: input.trades,
-    contract_value: input.contractValue,
-    sub_price: input.subPrice,
-    sub_vendor_price: input.subVendorPrice,
     measurements: input.measurements,
     notes: input.notes,
   };
@@ -379,7 +436,7 @@ export async function deleteSite(id: string): Promise<void> {
   if (contractId) await syncContractSiteCount(contractId);
 }
 
-/** Bulk-imports uploaded sheet rows as new sites, all sharing the same Client/Opportunity/Contract/Vendor links. Appends -- does not replace existing sites. */
+/** Bulk-imports uploaded sheet rows as new sites, all sharing the same Client/Opportunity/Contract/Trades links. Vendor assignments are per-trade and set afterward from each site's detail page. Appends -- does not replace existing sites. */
 export async function bulkCreateSites(links: SiteBulkLinks, rows: SiteImportRow[]): Promise<{ inserted: number }> {
   const supabase = createAdminClient();
   const batch = rows.map((row) => ({
@@ -387,8 +444,6 @@ export async function bulkCreateSites(links: SiteBulkLinks, rows: SiteImportRow[
     company_id: row.companyId !== undefined ? row.companyId : links.companyId,
     opportunity_id: links.opportunityId,
     contract_id: links.contractId,
-    vendor_id: links.vendorId,
-    sub_vendor_id: links.subVendorId,
     site_code: row.siteCode,
     name: row.name,
     address: row.address,
@@ -398,9 +453,6 @@ export async function bulkCreateSites(links: SiteBulkLinks, rows: SiteImportRow[
     lat: row.lat,
     lng: row.lng,
     trades: links.trades,
-    contract_value: row.contractValue,
-    sub_price: row.subPrice,
-    sub_vendor_price: row.subVendorPrice,
     measurements: {},
     notes: null,
   }));
@@ -432,10 +484,7 @@ export async function bulkCreateSitesForOpportunity(
   if (error) throw new Error(error.message);
 
   const matched = matchTrade(opportunity?.work_type as string | null);
-  return bulkCreateSites(
-    { companyId, opportunityId, contractId: null, vendorId: null, subVendorId: null, trades: matched ? [matched] : [] },
-    rows,
-  );
+  return bulkCreateSites({ companyId, opportunityId, contractId: null, trades: matched ? [matched] : [] }, rows);
 }
 
 /** Adds the given trades to every listed site's existing Trade selection (union, not replace). */
@@ -547,9 +596,6 @@ export async function bulkUpdateSites(rows: SiteUpdateRow[], companyId: string |
     if ("lat" in row) payload.lat = row.lat;
     if ("lng" in row) payload.lng = row.lng;
     if ("trades" in row) payload.trades = row.trades;
-    if ("contractValue" in row) payload.contract_value = row.contractValue;
-    if ("subPrice" in row) payload.sub_price = row.subPrice;
-    if ("subVendorPrice" in row) payload.sub_vendor_price = row.subVendorPrice;
     if ("notes" in row) payload.notes = row.notes;
     if (Object.keys(payload).length === 0) continue;
 

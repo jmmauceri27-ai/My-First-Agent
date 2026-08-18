@@ -57,11 +57,6 @@ export interface Site {
   /** The signed contract (crm_contracts) this site belongs to, if any -- separate from an Opportunity/RFP. */
   contractId: string | null;
   contractName: string | null;
-  vendorId: string | null;
-  vendorName: string | null;
-  /** The vendor's own subcontractor for this site -- e.g. a vendor we treat as a self-perform team who further subs the work out. */
-  subVendorId: string | null;
-  subVendorName: string | null;
   /** A user-entered identifier/code (e.g. from your own facility system) -- separate from `id`, the database's own record id. */
   siteCode: string | null;
   name: string;
@@ -73,10 +68,8 @@ export interface Site {
   lng: number | null;
   /** Trades performed at this site, chosen from the fixed TRADE_OPTIONS list -- a site can have more than one. */
   trades: string[];
-  contractValue: number | null;
-  subPrice: number | null;
-  /** What the Vendor pays the Sub-Vendor -- Vendor's margin on this site is subPrice - subVendorPrice. */
-  subVendorPrice: number | null;
+  /** Per-trade Vendor/Sub-Vendor + pricing -- a site commonly has a different vendor for each trade (e.g. one for Land, another for Snow Removal). */
+  tradeAssignments: SiteTradeAssignment[];
   measurements: SiteMeasurements;
   notes: string | null;
   createdAt: string;
@@ -87,8 +80,6 @@ export interface SiteInput {
   companyId: string | null;
   opportunityId: string | null;
   contractId: string | null;
-  vendorId: string | null;
-  subVendorId: string | null;
   siteCode: string | null;
   name: string;
   address: string | null;
@@ -98,11 +89,41 @@ export interface SiteInput {
   lat: number | null;
   lng: number | null;
   trades: string[];
+  measurements: SiteMeasurements;
+  notes: string | null;
+}
+
+/** One Trade's Vendor/Sub-Vendor assignment and pricing chain for a Site -- a site has at most one of these per trade. */
+export interface SiteTradeAssignment {
+  id: string;
+  siteId: string;
+  trade: string;
+  vendorId: string | null;
+  vendorName: string | null;
+  /** The vendor's own subcontractor for this trade -- e.g. a vendor we treat as our own self-perform team who further subs the work out. */
+  subVendorId: string | null;
+  subVendorName: string | null;
+  /** What the client pays for this trade at this site. */
+  contractValue: number | null;
+  /** What we pay the Vendor for this trade -- our margin is contractValue - subPrice. */
+  subPrice: number | null;
+  /** What the Vendor pays the Sub-Vendor for this trade -- Vendor's margin is subPrice - subVendorPrice. */
+  subVendorPrice: number | null;
+}
+
+export interface SiteTradeAssignmentInput {
+  trade: string;
+  vendorId: string | null;
+  subVendorId: string | null;
   contractValue: number | null;
   subPrice: number | null;
   subVendorPrice: number | null;
-  measurements: SiteMeasurements;
-  notes: string | null;
+}
+
+/** A SiteTradeAssignment enriched with the site/client it belongs to -- used on the Vendor detail page, where a vendor's assignments span many sites. */
+export interface VendorTradeAssignment extends SiteTradeAssignment {
+  siteName: string;
+  companyName: string | null;
 }
 
 /** A single row parsed from an uploaded sheet, mapped onto Site's fixed fields, for bulk import. */
@@ -114,21 +135,16 @@ export interface SiteImportRow {
   city: string | null;
   state: string | null;
   zip: string | null;
-  contractValue: number | null;
-  subPrice: number | null;
-  subVendorPrice: number | null;
   siteCode: string | null;
   /** Per-row Client override (e.g. matched from a "Client Name" column) -- takes precedence over the batch's SiteBulkLinks.companyId. */
   companyId?: string | null;
 }
 
-/** Shared Client/Opportunity/Contract/Vendor/Sub-Vendor/Trades links applied to every row in a bulk site import. */
+/** Shared Client/Opportunity/Contract/Trades links applied to every row in a bulk site import. Vendor assignments are per-trade and set afterward from each site's detail page. */
 export interface SiteBulkLinks {
   companyId: string | null;
   opportunityId: string | null;
   contractId: string | null;
-  vendorId: string | null;
-  subVendorId: string | null;
   trades: string[];
 }
 
@@ -150,9 +166,6 @@ export interface SiteUpdateRow {
   lat?: number | null;
   lng?: number | null;
   trades?: string[];
-  contractValue?: number | null;
-  subPrice?: number | null;
-  subVendorPrice?: number | null;
   notes?: string | null;
 }
 

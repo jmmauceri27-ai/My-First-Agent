@@ -18,13 +18,14 @@ import {
   deleteVendor,
   getSite,
   getVendor,
+  listAssignmentsForSubVendor,
+  listAssignmentsForVendor,
   listSiteFilterTemplates,
   listSites,
   listSitesForCompany,
   listSitesForOpportunity,
-  listSitesForSubVendor,
-  listSitesForVendor,
   listVendors,
+  saveSiteTradeAssignments,
   updateSite,
   updateSiteFilterTemplate,
   updateVendor,
@@ -36,11 +37,13 @@ import type {
   SiteFilters,
   SiteImportRow,
   SiteInput,
+  SiteTradeAssignmentInput,
   SiteUpdateResult,
   SiteUpdateRow,
   Vendor,
   VendorImportRow,
   VendorInput,
+  VendorTradeAssignment,
 } from "@/lib/networkTypes";
 
 // ---------- Vendors ----------
@@ -104,12 +107,27 @@ export async function listSitesForCompanyAction(companyId: string): Promise<Site
   return listSitesForCompany(companyId);
 }
 
-export async function listSitesForVendorAction(vendorId: string): Promise<Site[]> {
-  return listSitesForVendor(vendorId);
+export async function listAssignmentsForVendorAction(vendorId: string): Promise<VendorTradeAssignment[]> {
+  return listAssignmentsForVendor(vendorId);
 }
 
-export async function listSitesForSubVendorAction(vendorId: string): Promise<Site[]> {
-  return listSitesForSubVendor(vendorId);
+export async function listAssignmentsForSubVendorAction(vendorId: string): Promise<VendorTradeAssignment[]> {
+  return listAssignmentsForSubVendor(vendorId);
+}
+
+/** Replaces a site's full set of Trade assignments (Vendor/Sub-Vendor + pricing, one per trade). */
+export async function saveSiteTradeAssignmentsAction(
+  siteId: string,
+  assignments: SiteTradeAssignmentInput[],
+): Promise<{ error?: string }> {
+  try {
+    await saveSiteTradeAssignments(siteId, assignments);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to save trade assignments." };
+  }
+  revalidatePath("/network/sites");
+  revalidatePath(`/network/sites/${siteId}`);
+  return {};
 }
 
 export async function listSitesForOpportunityAction(opportunityId: string): Promise<Site[]> {
