@@ -473,10 +473,13 @@ export async function bulkAssignTrades(siteIds: string[], trades: string[]): Pro
 
 /**
  * Updates existing sites in place from an uploaded sheet -- never creates new rows. Each row is matched by
- * `matchCode` (the custom Site ID, if the sheet has one) first, else `matchId` (the database's own record id),
- * else `matchName` (case-insensitive, optionally scoped to `companyId` to disambiguate sites that share a name
- * across different clients). Only the fields present on the row are written; anything the row doesn't include
- * is left exactly as it was.
+ * trying `matchCode` (the custom Site ID, if the sheet has one) first, then falling back to `matchId` (the
+ * database's own record id), then `matchName` (case-insensitive, optionally scoped to `companyId` to
+ * disambiguate sites that share a name across different clients) -- e.g. when populating Site IDs for the
+ * first time, no site has a matching code yet, so matching falls back to name. A method only stops the
+ * cascade by finding a unique match or an ambiguous one (multiple sites sharing the same key); "not found"
+ * always falls through to the next configured method. Only the fields present on the row are written;
+ * anything the row doesn't include is left exactly as it was.
  */
 export async function bulkUpdateSites(rows: SiteUpdateRow[], companyId: string | null): Promise<SiteUpdateResult> {
   const supabase = createAdminClient();
@@ -506,23 +509,34 @@ export async function bulkUpdateSites(rows: SiteUpdateRow[], companyId: string |
 
   for (const row of rows) {
     let siteId: string | null = null;
-    if (row.matchCode) {
+    let notFoundKey: string | null = null;
+    let ambiguousKey: string | null = null;
+
+    if (!siteId && !ambiguousKey && row.matchCode) {
       const key = row.matchCode.trim().toLowerCase();
       const matches = byCode.get(key) ?? [];
       if (matches.length === 1) siteId = matches[0];
-      else if (matches.length === 0) notFound.push(row.matchCode);
-      else ambiguous.push(row.matchCode);
-    } else if (row.matchId) {
-      siteId = byId.get(row.matchId) ?? null;
-      if (!siteId) notFound.push(row.matchId);
-    } else if (row.matchName) {
+      else if (matches.length > 1) ambiguousKey = row.matchCode;
+      else notFoundKey = row.matchCode;
+    }
+    if (!siteId && !ambiguousKey && row.matchId) {
+      const match = byId.get(row.matchId);
+      if (match) siteId = match;
+      else notFoundKey = row.matchId;
+    }
+    if (!siteId && !ambiguousKey && row.matchName) {
       const key = row.matchName.trim().toLowerCase();
       const matches = byName.get(key) ?? [];
       if (matches.length === 1) siteId = matches[0];
-      else if (matches.length === 0) notFound.push(row.matchName);
-      else ambiguous.push(row.matchName);
+      else if (matches.length > 1) ambiguousKey = row.matchName;
+      else notFoundKey = row.matchName;
     }
-    if (!siteId) continue;
+
+    if (!siteId) {
+      if (ambiguousKey) ambiguous.push(ambiguousKey);
+      else if (notFoundKey) notFound.push(notFoundKey);
+      continue;
+    }
 
     const payload: Record<string, unknown> = {};
     if ("siteCode" in row) payload.site_code = row.siteCode;
