@@ -7,7 +7,13 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import TradeSelect from "@/components/TradeSelect";
-import { formatCurrency, formatSquareFeet, parseCurrencyInput, parseMeasurementInput } from "@/lib/siteMapColor";
+import {
+  computeSiteMargin,
+  formatCurrency,
+  formatSquareFeet,
+  parseCurrencyInput,
+  parseMeasurementInput,
+} from "@/lib/siteMapColor";
 import { matchTrade } from "@/lib/trades";
 import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
 import type { Site, SiteInput, SiteMeasurements, Vendor } from "@/lib/networkTypes";
@@ -32,6 +38,7 @@ export default function SiteDetailClient({
   const [opportunityId, setOpportunityId] = useState(site.opportunityId ?? "");
   const [contractId, setContractId] = useState(site.contractId ?? "");
   const [vendorId, setVendorId] = useState(site.vendorId ?? "");
+  const [subVendorId, setSubVendorId] = useState(site.subVendorId ?? "");
   const [address, setAddress] = useState(site.address ?? "");
   const [city, setCity] = useState(site.city ?? "");
   const [state, setState] = useState(site.state ?? "");
@@ -41,6 +48,9 @@ export default function SiteDetailClient({
   const [trades, setTrades] = useState<string[]>(site.trades ?? []);
   const [contractValue, setContractValue] = useState(site.contractValue != null ? formatCurrency(site.contractValue) : "");
   const [subPrice, setSubPrice] = useState(site.subPrice != null ? formatCurrency(site.subPrice) : "");
+  const [subVendorPrice, setSubVendorPrice] = useState(
+    site.subVendorPrice != null ? formatCurrency(site.subVendorPrice) : "",
+  );
   const [notes, setNotes] = useState(site.notes ?? "");
   const [measurements, setMeasurements] = useState<SiteMeasurements>(site.measurements);
   const [newMeasurementLabel, setNewMeasurementLabel] = useState("");
@@ -90,6 +100,7 @@ export default function SiteDetailClient({
         opportunityId: opportunityId || null,
         contractId: contractId || null,
         vendorId: vendorId || null,
+        subVendorId: subVendorId || null,
         name: name.trim(),
         address: address.trim() || null,
         city: city.trim() || null,
@@ -100,6 +111,7 @@ export default function SiteDetailClient({
         trades,
         contractValue: contractValue.trim() ? Number(parseCurrencyInput(contractValue)) : null,
         subPrice: subPrice.trim() ? Number(parseCurrencyInput(subPrice)) : null,
+        subVendorPrice: subVendorPrice.trim() ? Number(parseCurrencyInput(subVendorPrice)) : null,
         measurements,
         notes: notes.trim() || null,
       };
@@ -216,17 +228,35 @@ export default function SiteDetailClient({
               <TradeSelect value={trades} onChange={setTrades} />
             </label>
 
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Vendor</span>
-              <select value={vendorId} onChange={(e) => setVendorId(e.target.value)} className={inputClass}>
-                <option value="">(none)</option>
-                {vendors.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium text-slate-300">Vendor</span>
+                <select value={vendorId} onChange={(e) => setVendorId(e.target.value)} className={inputClass}>
+                  <option value="">(none)</option>
+                  {vendors.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium text-slate-300">Sub-Vendor</span>
+                <select value={subVendorId} onChange={(e) => setSubVendorId(e.target.value)} className={inputClass}>
+                  <option value="">(none)</option>
+                  {vendors
+                    .filter((v) => v.id !== vendorId)
+                    .map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name}
+                      </option>
+                    ))}
+                </select>
+              </label>
+            </div>
+            <p className="-mt-2 text-xs text-slate-500">
+              Vendor is who we contract to directly; Sub-Vendor is who the Vendor further subcontracts the work to.
+            </p>
 
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium text-slate-300">Address</span>
@@ -259,7 +289,7 @@ export default function SiteDetailClient({
               </label>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <label className="flex flex-col gap-1 text-sm">
                 <span className="font-medium text-slate-300">Contract value</span>
                 <input
@@ -273,7 +303,7 @@ export default function SiteDetailClient({
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Sub price</span>
+                <span className="font-medium text-slate-300">Sub price (to Vendor)</span>
                 <input
                   value={subPrice}
                   onChange={(e) => setSubPrice(e.target.value)}
@@ -284,7 +314,45 @@ export default function SiteDetailClient({
                   className={inputClass}
                 />
               </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium text-slate-300">Sub-Vendor price</span>
+                <input
+                  value={subVendorPrice}
+                  onChange={(e) => setSubVendorPrice(e.target.value)}
+                  onBlur={() => {
+                    const num = Number(parseCurrencyInput(subVendorPrice));
+                    if (subVendorPrice.trim() && Number.isFinite(num)) setSubVendorPrice(formatCurrency(num));
+                  }}
+                  className={inputClass}
+                />
+              </label>
             </div>
+
+            {(() => {
+              const ourMargin = computeSiteMargin(
+                contractValue.trim() ? Number(parseCurrencyInput(contractValue)) : null,
+                subPrice.trim() ? Number(parseCurrencyInput(subPrice)) : null,
+              );
+              const vendorMargin = computeSiteMargin(
+                subPrice.trim() ? Number(parseCurrencyInput(subPrice)) : null,
+                subVendorPrice.trim() ? Number(parseCurrencyInput(subVendorPrice)) : null,
+              );
+              if (ourMargin === null && vendorMargin === null) return null;
+              return (
+                <div className="flex flex-wrap gap-4 text-xs text-slate-400">
+                  {ourMargin !== null && (
+                    <span>
+                      Our margin: <span className="font-semibold text-slate-50">{formatCurrency(ourMargin)}</span>
+                    </span>
+                  )}
+                  {vendorMargin !== null && (
+                    <span>
+                      Vendor margin: <span className="font-semibold text-slate-50">{formatCurrency(vendorMargin)}</span>
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
 
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium text-slate-300">Notes</span>
@@ -363,6 +431,16 @@ export default function SiteDetailClient({
               {site.vendorId ? (
                 <Link href={`/network/vendors/${site.vendorId}`} className="font-medium text-brand-400 hover:underline">
                   {site.vendorName}
+                </Link>
+              ) : (
+                <p className="text-slate-500">Not linked</p>
+              )}
+            </div>
+            <div>
+              <p className="text-xs text-slate-400">Sub-Vendor</p>
+              {site.subVendorId ? (
+                <Link href={`/network/vendors/${site.subVendorId}`} className="font-medium text-brand-400 hover:underline">
+                  {site.subVendorName}
                 </Link>
               ) : (
                 <p className="text-slate-500">Not linked</p>

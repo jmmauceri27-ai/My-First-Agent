@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { notFound } from "next/navigation";
-import { getVendor, listSitesForVendor } from "@/lib/networkDal";
+import { getVendor, listSitesForSubVendor, listSitesForVendor } from "@/lib/networkDal";
 import VendorDetailClient from "./VendorDetailClient";
 
 export default async function VendorDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -9,7 +9,7 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
   const vendor = await getVendor(id);
   if (!vendor) notFound();
 
-  const sites = await listSitesForVendor(id);
+  const [sitesAsVendor, sitesAsSubVendor] = await Promise.all([listSitesForVendor(id), listSitesForSubVendor(id)]);
 
-  return <VendorDetailClient vendor={vendor} sites={sites} />;
+  return <VendorDetailClient vendor={vendor} sitesAsVendor={sitesAsVendor} sitesAsSubVendor={sitesAsSubVendor} />;
 }

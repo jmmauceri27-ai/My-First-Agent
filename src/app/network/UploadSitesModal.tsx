@@ -92,6 +92,7 @@ export default function UploadSitesModal({
 
   const [opportunityId, setOpportunityId] = useState("");
   const [vendorId, setVendorId] = useState("");
+  const [subVendorId, setSubVendorId] = useState("");
   const [trades, setTrades] = useState<string[]>([]);
 
   const [importing, setImporting] = useState(false);
@@ -244,6 +245,7 @@ export default function UploadSitesModal({
           zip: mapping.zip ? String(row[mapping.zip] ?? "").trim() || null : null,
           contractValue: Number.isFinite(contractValue) ? contractValue : null,
           subPrice: Number.isFinite(subPrice) ? subPrice : null,
+          subVendorPrice: null,
           companyId: rowCompanyId,
         };
       });
@@ -253,6 +255,7 @@ export default function UploadSitesModal({
           contractId: contractId || null,
           opportunityId: opportunityId || null,
           vendorId: vendorId || null,
+          subVendorId: subVendorId || null,
           trades,
         },
         rows,
@@ -483,6 +486,20 @@ export default function UploadSitesModal({
                       {v.name}
                     </option>
                   ))}
+                </select>
+              </label>
+
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium text-slate-300">Sub-Vendor (optional)</span>
+                <select value={subVendorId} onChange={(e) => setSubVendorId(e.target.value)} className={inputClass}>
+                  <option value="">(none)</option>
+                  {vendors
+                    .filter((v) => v.id !== vendorId)
+                    .map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name}
+                      </option>
+                    ))}
                 </select>
               </label>
             </div>

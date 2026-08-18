@@ -112,6 +112,7 @@ export default function SitesCard({
           zip: mapping.zip ? String(row[mapping.zip] ?? "").trim() || null : null,
           contractValue: Number.isFinite(contractValue) ? contractValue : null,
           subPrice: Number.isFinite(subPrice) ? subPrice : null,
+          subVendorPrice: null,
         };
       });
       const result = await bulkCreateSitesForOpportunityAction(opportunityId, companyId, rows);

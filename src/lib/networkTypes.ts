@@ -59,6 +59,9 @@ export interface Site {
   contractName: string | null;
   vendorId: string | null;
   vendorName: string | null;
+  /** The vendor's own subcontractor for this site -- e.g. a vendor we treat as a self-perform team who further subs the work out. */
+  subVendorId: string | null;
+  subVendorName: string | null;
   name: string;
   address: string | null;
   city: string | null;
@@ -70,6 +73,8 @@ export interface Site {
   trades: string[];
   contractValue: number | null;
   subPrice: number | null;
+  /** What the Vendor pays the Sub-Vendor -- Vendor's margin on this site is subPrice - subVendorPrice. */
+  subVendorPrice: number | null;
   measurements: SiteMeasurements;
   notes: string | null;
   createdAt: string;
@@ -81,6 +86,7 @@ export interface SiteInput {
   opportunityId: string | null;
   contractId: string | null;
   vendorId: string | null;
+  subVendorId: string | null;
   name: string;
   address: string | null;
   city: string | null;
@@ -91,6 +97,7 @@ export interface SiteInput {
   trades: string[];
   contractValue: number | null;
   subPrice: number | null;
+  subVendorPrice: number | null;
   measurements: SiteMeasurements;
   notes: string | null;
 }
@@ -106,16 +113,18 @@ export interface SiteImportRow {
   zip: string | null;
   contractValue: number | null;
   subPrice: number | null;
+  subVendorPrice: number | null;
   /** Per-row Client override (e.g. matched from a "Client Name" column) -- takes precedence over the batch's SiteBulkLinks.companyId. */
   companyId?: string | null;
 }
 
-/** Shared Client/Opportunity/Contract/Vendor/Trades links applied to every row in a bulk site import. */
+/** Shared Client/Opportunity/Contract/Vendor/Sub-Vendor/Trades links applied to every row in a bulk site import. */
 export interface SiteBulkLinks {
   companyId: string | null;
   opportunityId: string | null;
   contractId: string | null;
   vendorId: string | null;
+  subVendorId: string | null;
   trades: string[];
 }
 
@@ -136,6 +145,7 @@ export interface SiteUpdateRow {
   trades?: string[];
   contractValue?: number | null;
   subPrice?: number | null;
+  subVendorPrice?: number | null;
   notes?: string | null;
 }
 

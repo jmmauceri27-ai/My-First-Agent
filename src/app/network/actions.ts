@@ -19,6 +19,7 @@ import {
   listSites,
   listSitesForCompany,
   listSitesForOpportunity,
+  listSitesForSubVendor,
   listSitesForVendor,
   listVendors,
   updateSite,
@@ -99,6 +100,10 @@ export async function listSitesForCompanyAction(companyId: string): Promise<Site
 
 export async function listSitesForVendorAction(vendorId: string): Promise<Site[]> {
   return listSitesForVendor(vendorId);
+}
+
+export async function listSitesForSubVendorAction(vendorId: string): Promise<Site[]> {
+  return listSitesForSubVendor(vendorId);
 }
 
 export async function listSitesForOpportunityAction(opportunityId: string): Promise<Site[]> {

@@ -43,6 +43,7 @@ const SITE_EXPORT_COLUMNS = [
   "Site Name",
   "Client",
   "Vendor",
+  "Sub-Vendor",
   "Opportunity",
   "Contract",
   "Trade",
@@ -54,6 +55,7 @@ const SITE_EXPORT_COLUMNS = [
   "Longitude",
   "Contract Value",
   "Sub Price",
+  "Sub-Vendor Price",
   "Measurements",
   "Notes",
 ];
@@ -64,6 +66,7 @@ function siteToExportRow(s: Site): DatasetRecord {
     "Site Name": s.name,
     Client: s.companyName ?? "",
     Vendor: s.vendorName ?? "",
+    "Sub-Vendor": s.subVendorName ?? "",
     Opportunity: s.opportunityName ?? "",
     Contract: s.contractName ?? "",
     Trade: s.trades.join(", "),
@@ -75,6 +78,7 @@ function siteToExportRow(s: Site): DatasetRecord {
     Longitude: s.lng,
     "Contract Value": s.contractValue,
     "Sub Price": s.subPrice,
+    "Sub-Vendor Price": s.subVendorPrice,
     Measurements: Object.entries(s.measurements)
       .map(([label, value]) => `${label}: ${formatSquareFeet(value)}`)
       .join("; "),
@@ -109,6 +113,7 @@ export default function SitesClient({
   const [infoValues, setInfoValues] = useState<string[]>([]);
   const [companyFilters, setCompanyFilters] = useState<string[]>([]);
   const [vendorFilter, setVendorFilter] = useState("");
+  const [subVendorFilter, setSubVendorFilter] = useState("");
   const [contractFilter, setContractFilter] = useState("");
   const [tradeFilter, setTradeFilter] = useState<string[]>([]);
   const [colorMode, setColorMode] = useState<ColorMode>("none");
@@ -154,6 +159,7 @@ export default function SitesClient({
     return sites.filter((s) => {
       if (companyFilters.length > 0 && !companyFilters.includes(s.companyId ?? "")) return false;
       if (vendorFilter && s.vendorId !== vendorFilter) return false;
+      if (subVendorFilter && s.subVendorId !== subVendorFilter) return false;
       if (contractFilter && s.contractId !== contractFilter) return false;
       if (tradeFilter.length > 0 && !s.trades.some((t) => tradeFilter.includes(t))) return false;
       if (addressSet.size > 0) {
@@ -173,7 +179,18 @@ export default function SitesClient({
       }
       return true;
     });
-  }, [sites, companyFilters, vendorFilter, contractFilter, tradeFilter, addressField, addressValues, infoField, infoValues]);
+  }, [
+    sites,
+    companyFilters,
+    vendorFilter,
+    subVendorFilter,
+    contractFilter,
+    tradeFilter,
+    addressField,
+    addressValues,
+    infoField,
+    infoValues,
+  ]);
 
   const allFilteredSelected = filteredSites.length > 0 && filteredSites.every((s) => selectedIds.has(s.id));
 
@@ -422,6 +439,18 @@ export default function SitesClient({
           ))}
         </select>
         <select
+          value={subVendorFilter}
+          onChange={(e) => setSubVendorFilter(e.target.value)}
+          className={`${inputClass} w-auto`}
+        >
+          <option value="">All sub-vendors</option>
+          {vendors.map((v) => (
+            <option key={v.id} value={v.id}>
+              {v.name}
+            </option>
+          ))}
+        </select>
+        <select
           value={contractFilter}
           onChange={(e) => setContractFilter(e.target.value)}
           className={`${inputClass} w-auto`}
@@ -511,7 +540,8 @@ export default function SitesClient({
                   >
                     <span className="truncate text-sm font-semibold text-slate-50">{s.name}</span>
                     <span className="truncate text-xs text-slate-400">
-                      {[s.companyName, s.vendorName, ...s.trades].filter(Boolean).join(" · ") || "No details"}
+                      {[s.companyName, s.vendorName, s.subVendorName, ...s.trades].filter(Boolean).join(" · ") ||
+                        "No details"}
                     </span>
                   </button>
                 </div>

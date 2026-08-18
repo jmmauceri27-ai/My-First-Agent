@@ -6,11 +6,19 @@ import { useState } from "react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
-import { formatCurrency } from "@/lib/siteMapColor";
+import { computeSiteMargin, formatCurrency } from "@/lib/siteMapColor";
 import type { Site, Vendor, VendorInput } from "@/lib/networkTypes";
 import { deleteVendorAction, saveVendorAction } from "../../actions";
 
-export default function VendorDetailClient({ vendor, sites }: { vendor: Vendor; sites: Site[] }) {
+export default function VendorDetailClient({
+  vendor,
+  sitesAsVendor,
+  sitesAsSubVendor,
+}: {
+  vendor: Vendor;
+  sitesAsVendor: Site[];
+  sitesAsSubVendor: Site[];
+}) {
   const router = useRouter();
   const [name, setName] = useState(vendor.name);
   const [services, setServices] = useState(vendor.services ?? "");
@@ -167,14 +175,48 @@ export default function VendorDetailClient({ vendor, sites }: { vendor: Vendor; 
         </Card>
 
         <Card className="flex flex-col p-5">
-          <h2 className="text-lg font-bold text-slate-50">Sites</h2>
-          <p className="mt-1 text-xs text-slate-400">Properties this vendor services.</p>
+          <h2 className="text-lg font-bold text-slate-50">Sites serviced directly</h2>
+          <p className="mt-1 text-xs text-slate-400">Sites where this vendor is contracted to directly.</p>
 
           <div className="mt-4 flex flex-col divide-y divide-purple-400/10">
-            {sites.length === 0 ? (
+            {sitesAsVendor.length === 0 ? (
               <p className="py-2 text-xs text-slate-400">No sites assigned yet.</p>
             ) : (
-              sites.map((s) => (
+              sitesAsVendor.map((s) => {
+                const vendorMargin = computeSiteMargin(s.subPrice, s.subVendorPrice);
+                return (
+                  <Link
+                    key={s.id}
+                    href={`/network/sites/${s.id}`}
+                    className="flex items-center justify-between gap-2 py-2 hover:text-brand-400"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-slate-50">{s.name}</p>
+                      <p className="text-xs text-slate-400">
+                        {s.companyName ?? "No client"}
+                        {s.subVendorName ? ` · Sub-Vendor: ${s.subVendorName}` : ""}
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-right text-xs tabular-nums text-slate-400">
+                      {s.subPrice != null && <p>{formatCurrency(s.subPrice)}</p>}
+                      {vendorMargin != null && <p className="text-slate-50">Margin {formatCurrency(vendorMargin)}</p>}
+                    </div>
+                  </Link>
+                );
+              })
+            )}
+          </div>
+        </Card>
+
+        <Card className="flex flex-col p-5 lg:col-start-3">
+          <h2 className="text-lg font-bold text-slate-50">Sites serviced as Sub-Vendor</h2>
+          <p className="mt-1 text-xs text-slate-400">Sites where another vendor subcontracts work to this vendor.</p>
+
+          <div className="mt-4 flex flex-col divide-y divide-purple-400/10">
+            {sitesAsSubVendor.length === 0 ? (
+              <p className="py-2 text-xs text-slate-400">Not used as a sub-vendor yet.</p>
+            ) : (
+              sitesAsSubVendor.map((s) => (
                 <Link
                   key={s.id}
                   href={`/network/sites/${s.id}`}
@@ -182,11 +224,11 @@ export default function VendorDetailClient({ vendor, sites }: { vendor: Vendor; 
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-slate-50">{s.name}</p>
-                    <p className="text-xs text-slate-400">{s.companyName ?? "No client"}</p>
+                    <p className="text-xs text-slate-400">Via {s.vendorName ?? "unknown vendor"}</p>
                   </div>
-                  {s.contractValue != null && (
+                  {s.subVendorPrice != null && (
                     <span className="shrink-0 text-xs tabular-nums text-slate-400">
-                      {formatCurrency(s.contractValue)}
+                      {formatCurrency(s.subVendorPrice)}
                     </span>
                   )}
                 </Link>

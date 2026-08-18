@@ -131,13 +131,14 @@ export async function bulkCreateVendors(rows: VendorImportRow[]): Promise<{ inse
 // ---------- Sites ----------
 
 const SITE_COLUMNS =
-  "id, company_id, opportunity_id, contract_id, vendor_id, name, address, city, state, zip, lat, lng, trades, contract_value, sub_price, measurements, notes, created_at, updated_at, crm_companies(name), crm_opportunities(name), crm_contracts(name), vendors(name)";
+  "id, company_id, opportunity_id, contract_id, vendor_id, sub_vendor_id, name, address, city, state, zip, lat, lng, trades, contract_value, sub_price, sub_vendor_price, measurements, notes, created_at, updated_at, crm_companies(name), crm_opportunities(name), crm_contracts(name), vendor:vendors!sites_vendor_id_fkey(name), sub_vendor:vendors!sites_sub_vendor_id_fkey(name)";
 
 function mapSite(s: Record<string, unknown>): Site {
   const company = s.crm_companies as unknown as { name: string } | null;
   const opportunity = s.crm_opportunities as unknown as { name: string } | null;
   const contract = s.crm_contracts as unknown as { name: string } | null;
-  const vendor = s.vendors as unknown as { name: string } | null;
+  const vendor = s.vendor as unknown as { name: string } | null;
+  const subVendor = s.sub_vendor as unknown as { name: string } | null;
   return {
     id: s.id as string,
     companyId: s.company_id as string | null,
@@ -148,6 +149,8 @@ function mapSite(s: Record<string, unknown>): Site {
     contractName: contract?.name ?? null,
     vendorId: s.vendor_id as string | null,
     vendorName: vendor?.name ?? null,
+    subVendorId: s.sub_vendor_id as string | null,
+    subVendorName: subVendor?.name ?? null,
     name: s.name as string,
     address: s.address as string | null,
     city: s.city as string | null,
@@ -158,6 +161,7 @@ function mapSite(s: Record<string, unknown>): Site {
     trades: (s.trades as string[] | null) ?? [],
     contractValue: s.contract_value as number | null,
     subPrice: s.sub_price as number | null,
+    subVendorPrice: s.sub_vendor_price as number | null,
     measurements: (s.measurements as Site["measurements"] | null) ?? {},
     notes: s.notes as string | null,
     createdAt: s.created_at as string,
@@ -207,6 +211,19 @@ export async function listSitesForVendor(vendorId: string): Promise<Site[]> {
     .from("sites")
     .select(SITE_COLUMNS)
     .eq("vendor_id", vendorId)
+    .eq("user_id", OWNER_USER_ID)
+    .order("name", { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(mapSite);
+}
+
+/** Sites where this vendor is used as the *Sub-Vendor* -- i.e. subcontracted by another Vendor, rather than contracted to directly. */
+export async function listSitesForSubVendor(vendorId: string): Promise<Site[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("sites")
+    .select(SITE_COLUMNS)
+    .eq("sub_vendor_id", vendorId)
     .eq("user_id", OWNER_USER_ID)
     .order("name", { ascending: true });
   if (error) throw new Error(error.message);
@@ -277,6 +294,7 @@ function siteRow(input: SiteInput) {
     opportunity_id: input.opportunityId,
     contract_id: input.contractId,
     vendor_id: input.vendorId,
+    sub_vendor_id: input.subVendorId,
     name: input.name,
     address: input.address,
     city: input.city,
@@ -287,6 +305,7 @@ function siteRow(input: SiteInput) {
     trades: input.trades,
     contract_value: input.contractValue,
     sub_price: input.subPrice,
+    sub_vendor_price: input.subVendorPrice,
     measurements: input.measurements,
     notes: input.notes,
   };
@@ -365,6 +384,7 @@ export async function bulkCreateSites(links: SiteBulkLinks, rows: SiteImportRow[
     opportunity_id: links.opportunityId,
     contract_id: links.contractId,
     vendor_id: links.vendorId,
+    sub_vendor_id: links.subVendorId,
     name: row.name,
     address: row.address,
     city: row.city,
@@ -375,6 +395,7 @@ export async function bulkCreateSites(links: SiteBulkLinks, rows: SiteImportRow[
     trades: links.trades,
     contract_value: row.contractValue,
     sub_price: row.subPrice,
+    sub_vendor_price: row.subVendorPrice,
     measurements: {},
     notes: null,
   }));
@@ -407,7 +428,7 @@ export async function bulkCreateSitesForOpportunity(
 
   const matched = matchTrade(opportunity?.work_type as string | null);
   return bulkCreateSites(
-    { companyId, opportunityId, contractId: null, vendorId: null, trades: matched ? [matched] : [] },
+    { companyId, opportunityId, contractId: null, vendorId: null, subVendorId: null, trades: matched ? [matched] : [] },
     rows,
   );
 }
@@ -495,6 +516,7 @@ export async function bulkUpdateSites(rows: SiteUpdateRow[], companyId: string |
     if ("trades" in row) payload.trades = row.trades;
     if ("contractValue" in row) payload.contract_value = row.contractValue;
     if ("subPrice" in row) payload.sub_price = row.subPrice;
+    if ("subVendorPrice" in row) payload.sub_vendor_price = row.subVendorPrice;
     if ("notes" in row) payload.notes = row.notes;
     if (Object.keys(payload).length === 0) continue;
 
