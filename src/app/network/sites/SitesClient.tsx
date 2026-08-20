@@ -15,7 +15,9 @@ import {
   NEUTRAL_PIN_COLOR,
   buildCategoricalPalette,
   computeSiteMargin,
+  computeSiteMarginPercent,
   formatCurrency,
+  formatPercent,
   formatSquareFeet,
   gradientColorForRatio,
 } from "@/lib/siteMapColor";
@@ -553,29 +555,39 @@ export default function SitesClient({
     const plottable = filteredSites.filter((s) => s.lat != null && s.lng != null);
 
     if (colorMode === "margin") {
-      const siteMargin = (s: Site) =>
+      // Colored (and legend-ranked) by margin as a % of Contract Value, not raw dollar margin -- a $500
+      // spread on a $1,000 contract is a very different story than the same $500 spread on a $50,000
+      // contract, and percentage is what makes those comparable across differently-sized sites.
+      const siteMarginPercent = (s: Site) =>
+        computeSiteMarginPercent(
+          sumOrNull(s.tradeAssignments.map((a) => a.contractValue)),
+          sumOrNull(s.tradeAssignments.map((a) => a.subPrice)),
+        );
+      const siteMarginDollar = (s: Site) =>
         computeSiteMargin(
           sumOrNull(s.tradeAssignments.map((a) => a.contractValue)),
           sumOrNull(s.tradeAssignments.map((a) => a.subPrice)),
         );
-      const margins = plottable.map(siteMargin).filter((m): m is number => m !== null);
-      const min = margins.length ? Math.min(...margins) : 0;
-      const max = margins.length ? Math.max(...margins) : 0;
+      const percents = plottable.map(siteMarginPercent).filter((m): m is number => m !== null);
+      const min = percents.length ? Math.min(...percents) : 0;
+      const max = percents.length ? Math.max(...percents) : 0;
       const pins: MapPin[] = plottable.map((s) => {
-        const margin = siteMargin(s);
-        const ratio = margin === null || max === min ? null : (margin - min) / (max - min);
+        const percent = siteMarginPercent(s);
+        const dollar = siteMarginDollar(s);
+        const ratio = percent === null || max === min ? null : (percent - min) / (max - min);
+        const fields: { key: string; value: string }[] = [];
+        if (percent !== null) fields.push({ key: "Margin %", value: formatPercent(percent) });
+        if (dollar !== null) fields.push({ key: "Margin $", value: formatCurrency(dollar) });
         return {
           id: s.id,
           lat: s.lat as number,
           lng: s.lng as number,
           label: s.name,
           color: ratio === null ? DEFAULT_PIN_COLOR : gradientColorForRatio(ratio),
-          fields: margin === null ? [] : [{ key: "Margin", value: formatCurrency(margin) }],
+          fields,
         };
       });
-      const legend: MapLegendProps | null = margins.length
-        ? { mode: "gradient", min, max, isCurrency: true }
-        : null;
+      const legend: MapLegendProps | null = percents.length ? { mode: "gradient", min, max, format: "percent" } : null;
       return { pins, legend };
     }
 
@@ -961,7 +973,7 @@ export default function SitesClient({
                 className={`${inputClass} w-full`}
               >
                 <option value="none">None</option>
-                <option value="margin">By margin</option>
+                <option value="margin">By margin %</option>
                 <option value="vendor">By vendor</option>
                 <option value="trade">By trade</option>
               </select>

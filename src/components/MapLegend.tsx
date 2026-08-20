@@ -1,17 +1,20 @@
 import { STATUS_COLORS } from "@/lib/chartPalette";
 
 export type MapLegendProps =
-  | { mode: "gradient"; min: number; max: number; isCurrency: boolean }
+  | { mode: "gradient"; min: number; max: number; format: "currency" | "percent" | "number" }
   | { mode: "categorical"; entries: { label: string; color: string }[] };
 
-function formatValue(value: number, isCurrency: boolean): string {
-  if (isCurrency) {
+function formatValue(value: number, format: "currency" | "percent" | "number"): string {
+  if (format === "currency") {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(value);
+  }
+  if (format === "percent") {
+    return `${(value * 100).toFixed(1)}%`;
   }
   return value.toLocaleString();
 }
@@ -20,14 +23,14 @@ export default function MapLegend(props: MapLegendProps) {
   if (props.mode === "gradient") {
     return (
       <div className="flex items-center gap-2 text-xs text-slate-400">
-        <span>{formatValue(props.min, props.isCurrency)}</span>
+        <span>{formatValue(props.min, props.format)}</span>
         <div
           className="h-2 w-32 rounded-full"
           style={{
             background: `linear-gradient(to right, ${STATUS_COLORS.critical}, ${STATUS_COLORS.warning}, ${STATUS_COLORS.good})`,
           }}
         />
-        <span>{formatValue(props.max, props.isCurrency)}</span>
+        <span>{formatValue(props.max, props.format)}</span>
       </div>
     );
   }

@@ -44,8 +44,27 @@ export function computeSiteMargin(contractValue: number | null, subPrice: number
   return contractValue - subPrice;
 }
 
+/**
+ * Computes margin as a fraction of Contract Value -- (Contract Value - Sub Price) / Contract Value -- or null
+ * if either value is missing/non-numeric or Contract Value is zero (percentage would be undefined). Used to
+ * rank/color sites by profitability rate rather than raw dollar margin, so a small contract with a thin
+ * dollar spread doesn't get lumped in with a large contract that has the same dollar spread but a far
+ * healthier margin.
+ */
+export function computeSiteMarginPercent(contractValue: number | null, subPrice: number | null): number | null {
+  if (contractValue === null || subPrice === null) return null;
+  if (!Number.isFinite(contractValue) || !Number.isFinite(subPrice)) return null;
+  if (contractValue === 0) return null;
+  return (contractValue - subPrice) / contractValue;
+}
+
 export function formatCurrency(value: number): string {
   return CURRENCY_FORMATTER.format(value);
+}
+
+/** Formats a 0..1 fraction (from computeSiteMarginPercent) as e.g. "23.4%". */
+export function formatPercent(value: number): string {
+  return `${(value * 100).toFixed(1)}%`;
 }
 
 export function formatSquareFeet(value: number): string {
