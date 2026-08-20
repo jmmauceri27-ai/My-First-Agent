@@ -222,6 +222,12 @@ export interface SiteFilters {
   addressValues: string[];
   infoField: string;
   infoValues: string[];
+  /** Trade that assignmentVendorStatus/assignmentSubVendorStatus are scoped to, e.g. "assigned for Land". */
+  assignmentTrade: string;
+  /** "" (any), "assigned", or "unassigned" -- whether the site has a Vendor set for assignmentTrade. */
+  assignmentVendorStatus: string;
+  /** "" (any), "assigned", or "unassigned" -- whether the site has a Sub-Vendor set for assignmentTrade. */
+  assignmentSubVendorStatus: string;
 }
 
 export interface SiteFilterTemplate {

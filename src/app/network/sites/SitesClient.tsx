@@ -158,6 +158,9 @@ export default function SitesClient({
   const [subVendorFilter, setSubVendorFilter] = useState("");
   const [contractFilter, setContractFilter] = useState("");
   const [tradeFilter, setTradeFilter] = useState<string[]>([]);
+  const [assignmentTrade, setAssignmentTrade] = useState("");
+  const [assignmentVendorStatus, setAssignmentVendorStatus] = useState("");
+  const [assignmentSubVendorStatus, setAssignmentSubVendorStatus] = useState("");
   const [colorMode, setColorMode] = useState<ColorMode>("none");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkTrades, setBulkTrades] = useState<string[]>([]);
@@ -216,6 +219,16 @@ export default function SitesClient({
       if (subVendorFilter && !s.tradeAssignments.some((a) => a.subVendorId === subVendorFilter)) return false;
       if (contractFilter && s.contractId !== contractFilter) return false;
       if (tradeFilter.length > 0 && !s.trades.some((t) => tradeFilter.includes(t))) return false;
+      if (assignmentTrade && assignmentVendorStatus) {
+        const hasVendor = s.tradeAssignments.some((a) => a.trade === assignmentTrade && a.vendorId);
+        if (assignmentVendorStatus === "assigned" && !hasVendor) return false;
+        if (assignmentVendorStatus === "unassigned" && hasVendor) return false;
+      }
+      if (assignmentTrade && assignmentSubVendorStatus) {
+        const hasSubVendor = s.tradeAssignments.some((a) => a.trade === assignmentTrade && a.subVendorId);
+        if (assignmentSubVendorStatus === "assigned" && !hasSubVendor) return false;
+        if (assignmentSubVendorStatus === "unassigned" && hasSubVendor) return false;
+      }
       if (addressSet.size > 0) {
         const value =
           addressField === "address"
@@ -240,6 +253,9 @@ export default function SitesClient({
     subVendorFilter,
     contractFilter,
     tradeFilter,
+    assignmentTrade,
+    assignmentVendorStatus,
+    assignmentSubVendorStatus,
     addressField,
     addressValues,
     infoField,
@@ -320,6 +336,9 @@ export default function SitesClient({
       subVendorFilter,
       contractFilter,
       tradeFilter,
+      assignmentTrade,
+      assignmentVendorStatus,
+      assignmentSubVendorStatus,
       colorMode,
       addressField,
       addressValues,
@@ -338,6 +357,9 @@ export default function SitesClient({
     setSubVendorFilter(f.subVendorFilter);
     setContractFilter(f.contractFilter);
     setTradeFilter(f.tradeFilter);
+    setAssignmentTrade(f.assignmentTrade);
+    setAssignmentVendorStatus(f.assignmentVendorStatus);
+    setAssignmentSubVendorStatus(f.assignmentSubVendorStatus);
     setColorMode((["none", "margin", "vendor", "trade"].includes(f.colorMode) ? f.colorMode : "none") as ColorMode);
     setAddressField((["address", "city", "state", "zip"].includes(f.addressField) ? f.addressField : "address") as AddressField);
     setAddressValues(f.addressValues);
@@ -673,6 +695,38 @@ export default function SitesClient({
           ))}
         </select>
         <TradeSelect value={tradeFilter} onChange={setTradeFilter} className="w-44" placeholder="All trades" />
+        <select
+          value={assignmentTrade}
+          onChange={(e) => setAssignmentTrade(e.target.value)}
+          className={`${inputClass} w-auto`}
+        >
+          <option value="">Assignment: any trade</option>
+          {TRADE_OPTIONS.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+        </select>
+        <select
+          value={assignmentVendorStatus}
+          onChange={(e) => setAssignmentVendorStatus(e.target.value)}
+          disabled={!assignmentTrade}
+          className={`${inputClass} w-auto disabled:opacity-50`}
+        >
+          <option value="">Vendor: any</option>
+          <option value="assigned">Vendor: assigned</option>
+          <option value="unassigned">Vendor: unassigned</option>
+        </select>
+        <select
+          value={assignmentSubVendorStatus}
+          onChange={(e) => setAssignmentSubVendorStatus(e.target.value)}
+          disabled={!assignmentTrade}
+          className={`${inputClass} w-auto disabled:opacity-50`}
+        >
+          <option value="">Sub-Vendor: any</option>
+          <option value="assigned">Sub-Vendor: assigned</option>
+          <option value="unassigned">Sub-Vendor: unassigned</option>
+        </select>
         <select
           value={colorMode}
           onChange={(e) => setColorMode(e.target.value as ColorMode)}

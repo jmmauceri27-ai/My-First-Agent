@@ -824,6 +824,9 @@ const EMPTY_SITE_FILTERS: SiteFilters = {
   addressValues: [],
   infoField: "name",
   infoValues: [],
+  assignmentTrade: "",
+  assignmentVendorStatus: "",
+  assignmentSubVendorStatus: "",
 };
 
 function mapSiteFilterTemplate(t: Record<string, unknown>): SiteFilterTemplate {
