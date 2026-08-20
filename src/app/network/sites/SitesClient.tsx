@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Button from "@/components/ui/Button";
 import { inputClass } from "@/components/ui/formClasses";
 import TradeSelect from "@/components/TradeSelect";
@@ -114,6 +114,26 @@ function distinctValues(sites: Site[], pick: (s: Site) => string | null): string
 
 function infoValueOf(s: Site, field: InfoField): string {
   return field === "name" ? s.name : field === "code" ? (s.siteCode ?? "") : s.id;
+}
+
+/** A compact, labeled section of the vertical filter sidebar. */
+function FilterGroup({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-2 border-b border-purple-400/10 pb-3 last:border-b-0 last:pb-0">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{title}</p>
+      <div className="flex flex-col gap-2">{children}</div>
+    </div>
+  );
+}
+
+/** A small labeled wrapper around one filter control, for consistent spacing in the sidebar. */
+function FilterField({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1 text-xs">
+      <span className="font-medium text-slate-400">{label}</span>
+      {children}
+    </div>
+  );
 }
 
 const FILTERS_STORAGE_KEY = "network-sites-filters";
@@ -441,6 +461,35 @@ export default function SitesClient({
     setInfoValues(f.infoValues);
   }
 
+  const hasActiveFilters =
+    addressValues.length > 0 ||
+    infoValues.length > 0 ||
+    companyFilters.length > 0 ||
+    vendorFilter !== "" ||
+    subVendorFilter !== "" ||
+    contractFilter !== "" ||
+    tradeFilter.length > 0 ||
+    assignmentTrade !== "" ||
+    assignmentVendorStatus !== "" ||
+    assignmentSubVendorStatus !== "";
+
+  function clearAllFilters() {
+    setAddressField("address");
+    setAddressValues([]);
+    setInfoField("name");
+    setInfoValues([]);
+    setCompanyFilters([]);
+    setVendorFilter("");
+    setSubVendorFilter("");
+    setContractFilter("");
+    setTradeFilter([]);
+    setAssignmentTrade("");
+    setAssignmentVendorStatus("");
+    setAssignmentSubVendorStatus("");
+    setSelectedTemplateId("");
+    setTemplateError(null);
+  }
+
   async function handleSaveTemplate() {
     if (!newTemplateName.trim()) return;
     setTemplateError(null);
@@ -655,223 +704,6 @@ export default function SitesClient({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 border-b border-purple-400/10 bg-[#150f26] px-4 py-2">
-        <div className="flex items-start gap-1.5">
-          <span className="pt-2 text-xs font-medium text-slate-400">Site Address</span>
-          <select
-            value={addressField}
-            onChange={(e) => {
-              setAddressField(e.target.value as AddressField);
-              setAddressValues([]);
-            }}
-            className={`${inputClass} w-auto`}
-          >
-            <option value="address">Address</option>
-            <option value="city">City</option>
-            <option value="state">State</option>
-            <option value="zip">Zip</option>
-          </select>
-          <TagInput
-            values={addressValues}
-            onChange={setAddressValues}
-            suggestions={addressSuggestions}
-            placeholder="Type to see matches…"
-            className="w-56"
-            footer={
-              addressUnmatched.length > 0 ? (
-                <p className="border-t border-purple-400/10 px-2 py-1.5 text-xs text-critical">
-                  {addressUnmatched.length} didn&rsquo;t match any site: {addressUnmatched.slice(0, 5).join(", ")}
-                  {addressUnmatched.length > 5 ? `, +${addressUnmatched.length - 5} more` : ""}
-                </p>
-              ) : null
-            }
-          />
-        </div>
-        <div className="flex items-start gap-1.5">
-          <span className="pt-2 text-xs font-medium text-slate-400">Site Info</span>
-          <select
-            value={infoField}
-            onChange={(e) => {
-              setInfoField(e.target.value as InfoField);
-              setInfoValues([]);
-            }}
-            className={`${inputClass} w-auto`}
-          >
-            <option value="name">Site Name</option>
-            <option value="code">Site ID</option>
-            <option value="id">Record ID</option>
-          </select>
-          <TagInput
-            values={infoValues}
-            onChange={setInfoValues}
-            suggestions={infoSuggestions}
-            placeholder="Type to see matches…"
-            className="w-64"
-            footer={
-              infoUnmatched.length > 0 ? (
-                <p className="border-t border-purple-400/10 px-2 py-1.5 text-xs text-critical">
-                  {infoUnmatched.length} didn&rsquo;t match any site: {infoUnmatched.slice(0, 5).join(", ")}
-                  {infoUnmatched.length > 5 ? `, +${infoUnmatched.length - 5} more` : ""}
-                </p>
-              ) : null
-            }
-          />
-        </div>
-        {(addressValues.length > 0 || infoValues.length > 0) && (
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setAddressValues([]);
-              setInfoValues([]);
-            }}
-          >
-            Clear searches
-          </Button>
-        )}
-        <MultiSelectDropdown
-          options={companies.map((c) => ({ value: c.id, label: c.name }))}
-          values={companyFilters}
-          onChange={setCompanyFilters}
-          className="w-44"
-          placeholder="All clients"
-          noun="clients selected"
-        />
-        <select value={vendorFilter} onChange={(e) => setVendorFilter(e.target.value)} className={`${inputClass} w-auto`}>
-          <option value="">All vendors</option>
-          {vendors.map((v) => (
-            <option key={v.id} value={v.id}>
-              {v.name}
-            </option>
-          ))}
-        </select>
-        <select
-          value={subVendorFilter}
-          onChange={(e) => setSubVendorFilter(e.target.value)}
-          className={`${inputClass} w-auto`}
-        >
-          <option value="">All sub-vendors</option>
-          {vendors.map((v) => (
-            <option key={v.id} value={v.id}>
-              {v.name}
-            </option>
-          ))}
-        </select>
-        <select
-          value={contractFilter}
-          onChange={(e) => setContractFilter(e.target.value)}
-          className={`${inputClass} w-auto`}
-        >
-          <option value="">All contracts</option>
-          {contracts.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-        <TradeSelect value={tradeFilter} onChange={setTradeFilter} className="w-44" placeholder="All trades" />
-        <select
-          value={assignmentTrade}
-          onChange={(e) => setAssignmentTrade(e.target.value)}
-          className={`${inputClass} w-auto`}
-        >
-          <option value="">Assignment: any trade</option>
-          {TRADE_OPTIONS.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
-        <select
-          value={assignmentVendorStatus}
-          onChange={(e) => setAssignmentVendorStatus(e.target.value)}
-          disabled={!assignmentTrade}
-          className={`${inputClass} w-auto disabled:opacity-50`}
-        >
-          <option value="">Vendor: any</option>
-          <option value="assigned">Vendor: assigned</option>
-          <option value="unassigned">Vendor: unassigned</option>
-        </select>
-        <select
-          value={assignmentSubVendorStatus}
-          onChange={(e) => setAssignmentSubVendorStatus(e.target.value)}
-          disabled={!assignmentTrade}
-          className={`${inputClass} w-auto disabled:opacity-50`}
-        >
-          <option value="">Sub-Vendor: any</option>
-          <option value="assigned">Sub-Vendor: assigned</option>
-          <option value="unassigned">Sub-Vendor: unassigned</option>
-        </select>
-        <select
-          value={colorMode}
-          onChange={(e) => setColorMode(e.target.value as ColorMode)}
-          className={`${inputClass} w-auto`}
-        >
-          <option value="none">Color: none</option>
-          <option value="margin">Color: by margin</option>
-          <option value="vendor">Color: by vendor</option>
-          <option value="trade">Color: by trade</option>
-        </select>
-
-        <div className="flex items-center gap-1.5">
-          <select
-            value={selectedTemplateId}
-            onChange={(e) => {
-              setTemplateError(null);
-              if (e.target.value) applyTemplate(e.target.value);
-              else setSelectedTemplateId("");
-            }}
-            className={`${inputClass} w-auto`}
-          >
-            <option value="">Load filter template…</option>
-            {localFilterTemplates.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-          {selectedTemplateId && (
-            <Button variant="ghost" onClick={handleDeleteTemplate} disabled={deletingTemplate}>
-              {deletingTemplate ? "Deleting…" : "Delete"}
-            </Button>
-          )}
-          {!savingTemplate && (
-            <Button variant="secondary" onClick={() => setSavingTemplate(true)}>
-              Save filters…
-            </Button>
-          )}
-        </div>
-        {savingTemplate && (
-          <div className="flex items-center gap-2">
-            <input
-              value={newTemplateName}
-              onChange={(e) => setNewTemplateName(e.target.value)}
-              placeholder="Template name"
-              className={`${inputClass} w-48`}
-              autoFocus
-            />
-            <Button type="button" onClick={handleSaveTemplate} disabled={!newTemplateName.trim()}>
-              Save
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => {
-                setSavingTemplate(false);
-                setNewTemplateName("");
-              }}
-            >
-              Cancel
-            </Button>
-          </div>
-        )}
-        {templateError && <span className="text-xs text-critical">{templateError}</span>}
-        {legend && (
-          <div className="ml-auto">
-            <MapLegend {...legend} />
-          </div>
-        )}
-      </div>
-
       {selectedIds.size > 0 && (
         <div className="flex flex-col gap-2 border-b border-purple-400/10 bg-[#1a1330] px-4 py-2">
           <div className="flex flex-wrap items-center gap-3">
@@ -948,6 +780,256 @@ export default function SitesClient({
       )}
 
       <div className="flex min-h-0 flex-1">
+        <div className="flex w-64 shrink-0 flex-col gap-4 overflow-y-auto border-r border-purple-400/10 bg-[#150f26] p-3">
+          <div className="flex flex-col gap-2">
+            <h2 className="text-sm font-bold text-slate-50">Filters</h2>
+            <Button variant="secondary" onClick={clearAllFilters} disabled={!hasActiveFilters} className="w-full">
+              Clear all filters
+            </Button>
+          </div>
+
+          <FilterGroup title="Search">
+            <FilterField label="Site Address">
+              <div className="flex flex-col gap-1.5">
+                <select
+                  value={addressField}
+                  onChange={(e) => {
+                    setAddressField(e.target.value as AddressField);
+                    setAddressValues([]);
+                  }}
+                  className={`${inputClass} w-full`}
+                >
+                  <option value="address">Address</option>
+                  <option value="city">City</option>
+                  <option value="state">State</option>
+                  <option value="zip">Zip</option>
+                </select>
+                <TagInput
+                  values={addressValues}
+                  onChange={setAddressValues}
+                  suggestions={addressSuggestions}
+                  placeholder="Type to see matches…"
+                  className="w-full"
+                  footer={
+                    addressUnmatched.length > 0 ? (
+                      <p className="border-t border-purple-400/10 px-2 py-1.5 text-xs text-critical">
+                        {addressUnmatched.length} didn&rsquo;t match any site: {addressUnmatched.slice(0, 5).join(", ")}
+                        {addressUnmatched.length > 5 ? `, +${addressUnmatched.length - 5} more` : ""}
+                      </p>
+                    ) : null
+                  }
+                />
+              </div>
+            </FilterField>
+            <FilterField label="Site Info">
+              <div className="flex flex-col gap-1.5">
+                <select
+                  value={infoField}
+                  onChange={(e) => {
+                    setInfoField(e.target.value as InfoField);
+                    setInfoValues([]);
+                  }}
+                  className={`${inputClass} w-full`}
+                >
+                  <option value="name">Site Name</option>
+                  <option value="code">Site ID</option>
+                  <option value="id">Record ID</option>
+                </select>
+                <TagInput
+                  values={infoValues}
+                  onChange={setInfoValues}
+                  suggestions={infoSuggestions}
+                  placeholder="Type to see matches…"
+                  className="w-full"
+                  footer={
+                    infoUnmatched.length > 0 ? (
+                      <p className="border-t border-purple-400/10 px-2 py-1.5 text-xs text-critical">
+                        {infoUnmatched.length} didn&rsquo;t match any site: {infoUnmatched.slice(0, 5).join(", ")}
+                        {infoUnmatched.length > 5 ? `, +${infoUnmatched.length - 5} more` : ""}
+                      </p>
+                    ) : null
+                  }
+                />
+              </div>
+            </FilterField>
+          </FilterGroup>
+
+          <FilterGroup title="Client & Vendor">
+            <FilterField label="Clients">
+              <MultiSelectDropdown
+                options={companies.map((c) => ({ value: c.id, label: c.name }))}
+                values={companyFilters}
+                onChange={setCompanyFilters}
+                className="w-full"
+                placeholder="All clients"
+                noun="clients selected"
+              />
+            </FilterField>
+            <FilterField label="Vendor">
+              <select
+                value={vendorFilter}
+                onChange={(e) => setVendorFilter(e.target.value)}
+                className={`${inputClass} w-full`}
+              >
+                <option value="">All vendors</option>
+                {vendors.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name}
+                  </option>
+                ))}
+              </select>
+            </FilterField>
+            <FilterField label="Sub-Vendor">
+              <select
+                value={subVendorFilter}
+                onChange={(e) => setSubVendorFilter(e.target.value)}
+                className={`${inputClass} w-full`}
+              >
+                <option value="">All sub-vendors</option>
+                {vendors.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name}
+                  </option>
+                ))}
+              </select>
+            </FilterField>
+          </FilterGroup>
+
+          <FilterGroup title="Trade & Assignment">
+            <FilterField label="Contract">
+              <select
+                value={contractFilter}
+                onChange={(e) => setContractFilter(e.target.value)}
+                className={`${inputClass} w-full`}
+              >
+                <option value="">All contracts</option>
+                {contracts.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </FilterField>
+            <FilterField label="Trade">
+              <TradeSelect value={tradeFilter} onChange={setTradeFilter} className="w-full" placeholder="All trades" />
+            </FilterField>
+            <FilterField label="Assignment trade">
+              <select
+                value={assignmentTrade}
+                onChange={(e) => setAssignmentTrade(e.target.value)}
+                className={`${inputClass} w-full`}
+              >
+                <option value="">Any trade</option>
+                {TRADE_OPTIONS.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </FilterField>
+            <FilterField label="Vendor status">
+              <select
+                value={assignmentVendorStatus}
+                onChange={(e) => setAssignmentVendorStatus(e.target.value)}
+                disabled={!assignmentTrade}
+                className={`${inputClass} w-full disabled:opacity-50`}
+              >
+                <option value="">Any</option>
+                <option value="assigned">Assigned</option>
+                <option value="unassigned">Unassigned</option>
+              </select>
+            </FilterField>
+            <FilterField label="Sub-Vendor status">
+              <select
+                value={assignmentSubVendorStatus}
+                onChange={(e) => setAssignmentSubVendorStatus(e.target.value)}
+                disabled={!assignmentTrade}
+                className={`${inputClass} w-full disabled:opacity-50`}
+              >
+                <option value="">Any</option>
+                <option value="assigned">Assigned</option>
+                <option value="unassigned">Unassigned</option>
+              </select>
+            </FilterField>
+          </FilterGroup>
+
+          <FilterGroup title="Display">
+            <FilterField label="Pin color">
+              <select
+                value={colorMode}
+                onChange={(e) => setColorMode(e.target.value as ColorMode)}
+                className={`${inputClass} w-full`}
+              >
+                <option value="none">None</option>
+                <option value="margin">By margin</option>
+                <option value="vendor">By vendor</option>
+                <option value="trade">By trade</option>
+              </select>
+            </FilterField>
+            {legend && <MapLegend {...legend} />}
+          </FilterGroup>
+
+          <FilterGroup title="Saved Filters">
+            <FilterField label="Load template">
+              <select
+                value={selectedTemplateId}
+                onChange={(e) => {
+                  setTemplateError(null);
+                  if (e.target.value) applyTemplate(e.target.value);
+                  else setSelectedTemplateId("");
+                }}
+                className={`${inputClass} w-full`}
+              >
+                <option value="">None</option>
+                {localFilterTemplates.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </FilterField>
+            <div className="flex flex-wrap items-center gap-2">
+              {selectedTemplateId && (
+                <Button variant="ghost" onClick={handleDeleteTemplate} disabled={deletingTemplate}>
+                  {deletingTemplate ? "Deleting…" : "Delete"}
+                </Button>
+              )}
+              {!savingTemplate && (
+                <Button variant="secondary" onClick={() => setSavingTemplate(true)}>
+                  Save filters…
+                </Button>
+              )}
+            </div>
+            {savingTemplate && (
+              <div className="flex flex-col gap-2">
+                <input
+                  value={newTemplateName}
+                  onChange={(e) => setNewTemplateName(e.target.value)}
+                  placeholder="Template name"
+                  className={`${inputClass} w-full`}
+                  autoFocus
+                />
+                <div className="flex gap-2">
+                  <Button type="button" onClick={handleSaveTemplate} disabled={!newTemplateName.trim()}>
+                    Save
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      setSavingTemplate(false);
+                      setNewTemplateName("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+            {templateError && <span className="text-xs text-critical">{templateError}</span>}
+          </FilterGroup>
+        </div>
+
         <div className="min-h-0 flex-1">
           {pins.length > 0 ? (
             <SiteMap pins={pins} onPinClick={(id) => router.push(`/network/sites/${id}`)} />
