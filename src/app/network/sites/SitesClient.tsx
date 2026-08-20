@@ -33,6 +33,7 @@ import UpdateSiteTradeAssignmentsModal from "../UpdateSiteTradeAssignmentsModal"
 import UpdateSiteMeasurementsModal from "../UpdateSiteMeasurementsModal";
 import {
   bulkAssignTradesAction,
+  bulkAssignVendorForTradeAction,
   deleteSiteFilterTemplateAction,
   exportSitesToExcelAction,
   saveSiteFilterTemplateAction,
@@ -162,6 +163,11 @@ export default function SitesClient({
   const [bulkTrades, setBulkTrades] = useState<string[]>([]);
   const [assigning, setAssigning] = useState(false);
   const [bulkError, setBulkError] = useState<string | null>(null);
+  const [bulkVendorTrade, setBulkVendorTrade] = useState("");
+  const [bulkVendorId, setBulkVendorId] = useState("");
+  const [bulkSubVendorId, setBulkSubVendorId] = useState("");
+  const [assigningVendor, setAssigningVendor] = useState(false);
+  const [bulkVendorError, setBulkVendorError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [localFilterTemplates, setLocalFilterTemplates] = useState(filterTemplates);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
@@ -279,6 +285,31 @@ export default function SitesClient({
       router.refresh();
     } finally {
       setAssigning(false);
+    }
+  }
+
+  async function handleBulkAssignVendor() {
+    if (selectedIds.size === 0 || !bulkVendorTrade || !bulkVendorId) return;
+    setBulkVendorError(null);
+    setAssigningVendor(true);
+    try {
+      const result = await bulkAssignVendorForTradeAction(
+        Array.from(selectedIds),
+        bulkVendorTrade,
+        bulkVendorId,
+        bulkSubVendorId || null,
+      );
+      if (result.error) {
+        setBulkVendorError(result.error);
+        return;
+      }
+      setSelectedIds(new Set());
+      setBulkVendorTrade("");
+      setBulkVendorId("");
+      setBulkSubVendorId("");
+      router.refresh();
+    } finally {
+      setAssigningVendor(false);
     }
   }
 
@@ -714,23 +745,77 @@ export default function SitesClient({
       </div>
 
       {selectedIds.size > 0 && (
-        <div className="flex flex-wrap items-center gap-3 border-b border-purple-400/10 bg-[#1a1330] px-4 py-2">
-          <span className="text-sm text-slate-300">{selectedIds.size} selected</span>
-          <TradeSelect value={bulkTrades} onChange={setBulkTrades} className="w-56" placeholder="Add trade(s)…" />
-          <Button variant="secondary" onClick={handleBulkAssign} disabled={bulkTrades.length === 0 || assigning}>
-            {assigning ? "Assigning…" : "Assign to selected"}
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setSelectedIds(new Set());
-              setBulkTrades([]);
-              setBulkError(null);
-            }}
-          >
-            Clear selection
-          </Button>
-          {bulkError && <span className="text-xs text-critical">{bulkError}</span>}
+        <div className="flex flex-col gap-2 border-b border-purple-400/10 bg-[#1a1330] px-4 py-2">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-sm text-slate-300">{selectedIds.size} selected</span>
+            <TradeSelect value={bulkTrades} onChange={setBulkTrades} className="w-56" placeholder="Add trade(s)…" />
+            <Button variant="secondary" onClick={handleBulkAssign} disabled={bulkTrades.length === 0 || assigning}>
+              {assigning ? "Assigning…" : "Assign to selected"}
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setSelectedIds(new Set());
+                setBulkTrades([]);
+                setBulkError(null);
+                setBulkVendorTrade("");
+                setBulkVendorId("");
+                setBulkSubVendorId("");
+                setBulkVendorError(null);
+              }}
+            >
+              Clear selection
+            </Button>
+            {bulkError && <span className="text-xs text-critical">{bulkError}</span>}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-xs text-slate-400">Assign vendor for one trade:</span>
+            <select
+              value={bulkVendorTrade}
+              onChange={(e) => setBulkVendorTrade(e.target.value)}
+              className={`${inputClass} w-48`}
+            >
+              <option value="">Trade…</option>
+              {TRADE_OPTIONS.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+            <select
+              value={bulkVendorId}
+              onChange={(e) => setBulkVendorId(e.target.value)}
+              className={`${inputClass} w-48`}
+            >
+              <option value="">Vendor…</option>
+              {vendors.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                </option>
+              ))}
+            </select>
+            <select
+              value={bulkSubVendorId}
+              onChange={(e) => setBulkSubVendorId(e.target.value)}
+              className={`${inputClass} w-48`}
+            >
+              <option value="">Sub-Vendor (optional)…</option>
+              {vendors.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                </option>
+              ))}
+            </select>
+            <Button
+              variant="secondary"
+              onClick={handleBulkAssignVendor}
+              disabled={!bulkVendorTrade || !bulkVendorId || assigningVendor}
+            >
+              {assigningVendor ? "Assigning…" : "Assign vendor to selected"}
+            </Button>
+            {bulkVendorError && <span className="text-xs text-critical">{bulkVendorError}</span>}
+          </div>
         </div>
       )}
 

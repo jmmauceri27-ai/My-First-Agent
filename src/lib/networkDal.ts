@@ -526,6 +526,50 @@ export async function bulkAssignTrades(siteIds: string[], trades: string[]): Pro
 }
 
 /**
+ * Assigns a Vendor (and optionally Sub-Vendor) for one trade across many sites at once -- e.g. "these 27
+ * sites use Vendor X for Snow Removal only." Adds the trade to each site's Trade selection first (so the
+ * assignment has somewhere to show up), then creates or updates that site's assignment row for exactly that
+ * trade, leaving its other trades' assignments and this trade's pricing fields untouched.
+ */
+export async function bulkAssignVendorForTrade(
+  siteIds: string[],
+  trade: string,
+  vendorId: string | null,
+  subVendorId: string | null,
+): Promise<void> {
+  if (siteIds.length === 0) return;
+  const supabase = createAdminClient();
+
+  await bulkAssignTrades(siteIds, [trade]);
+
+  const concurrency = 20;
+  for (let i = 0; i < siteIds.length; i += concurrency) {
+    const batch = siteIds.slice(i, i + concurrency);
+    const results = await Promise.all(
+      batch.map(async (siteId) => {
+        const { data, error } = await supabase
+          .from("site_trade_assignments")
+          .update({ vendor_id: vendorId, sub_vendor_id: subVendorId, updated_at: new Date().toISOString() })
+          .eq("site_id", siteId)
+          .eq("trade", trade)
+          .eq("user_id", OWNER_USER_ID)
+          .select("id");
+        if (error) return { error };
+        if (!data || data.length === 0) {
+          const { error: insertError } = await supabase
+            .from("site_trade_assignments")
+            .insert({ user_id: OWNER_USER_ID, site_id: siteId, trade, vendor_id: vendorId, sub_vendor_id: subVendorId });
+          if (insertError) return { error: insertError };
+        }
+        return { error: null };
+      }),
+    );
+    const failed = results.find((r) => r.error);
+    if (failed?.error) throw new Error(failed.error.message);
+  }
+}
+
+/**
  * Updates existing sites in place from an uploaded sheet -- never creates new rows. Each row is matched by
  * trying `matchCode` (the custom Site ID, if the sheet has one) first, then falling back to `matchId` (the
  * database's own record id), then `matchName` (case-insensitive, optionally scoped to `companyId` to

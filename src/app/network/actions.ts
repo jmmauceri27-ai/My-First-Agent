@@ -6,6 +6,7 @@ import { parseBuffer } from "@/lib/parse";
 import type { DatasetRecord } from "@/lib/types";
 import {
   bulkAssignTrades,
+  bulkAssignVendorForTrade,
   bulkCreateSites,
   bulkCreateSitesForOpportunity,
   bulkCreateVendors,
@@ -221,6 +222,22 @@ export async function bulkAssignTradesAction(siteIds: string[], trades: string[]
     await bulkAssignTrades(siteIds, trades);
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to assign trades." };
+  }
+  revalidatePath("/network/sites");
+  return {};
+}
+
+/** Assigns a Vendor (and optionally Sub-Vendor) for one trade across every listed site -- e.g. "these 27 sites use Vendor X for Snow Removal only." Adds the trade to each site's Trade selection and never touches any other trade's assignment. */
+export async function bulkAssignVendorForTradeAction(
+  siteIds: string[],
+  trade: string,
+  vendorId: string | null,
+  subVendorId: string | null,
+): Promise<{ error?: string }> {
+  try {
+    await bulkAssignVendorForTrade(siteIds, trade, vendorId, subVendorId);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to assign vendor." };
   }
   revalidatePath("/network/sites");
   return {};
