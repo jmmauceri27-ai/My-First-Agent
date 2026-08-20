@@ -116,6 +116,46 @@ function infoValueOf(s: Site, field: InfoField): string {
   return field === "name" ? s.name : field === "code" ? (s.siteCode ?? "") : s.id;
 }
 
+const FILTERS_STORAGE_KEY = "network-sites-filters";
+
+const DEFAULT_FILTERS: SiteFilters = {
+  companyFilters: [],
+  vendorFilter: "",
+  subVendorFilter: "",
+  contractFilter: "",
+  tradeFilter: [],
+  assignmentTrade: "",
+  assignmentVendorStatus: "",
+  assignmentSubVendorStatus: "",
+  colorMode: "none",
+  addressField: "address",
+  addressValues: [],
+  infoField: "name",
+  infoValues: [],
+};
+
+/** Restores the filter bar's last state (saved to sessionStorage on every change) so navigating to a site's
+ * detail page and back doesn't reset the Sites screen's filters/search/selected color mode. */
+function loadPersistedFilters(): SiteFilters {
+  if (typeof window === "undefined") return DEFAULT_FILTERS;
+  try {
+    const raw = window.sessionStorage.getItem(FILTERS_STORAGE_KEY);
+    if (!raw) return DEFAULT_FILTERS;
+    const parsed = JSON.parse(raw) as Partial<SiteFilters>;
+    return {
+      ...DEFAULT_FILTERS,
+      ...parsed,
+      colorMode: (["none", "margin", "vendor", "trade"].includes(parsed.colorMode ?? "") ? parsed.colorMode : "none") as string,
+      addressField: (["address", "city", "state", "zip"].includes(parsed.addressField ?? "")
+        ? parsed.addressField
+        : "address") as string,
+      infoField: (["name", "code", "id"].includes(parsed.infoField ?? "") ? parsed.infoField : "name") as string,
+    };
+  } catch {
+    return DEFAULT_FILTERS;
+  }
+}
+
 export default function SitesClient({
   sites,
   companies,
@@ -149,19 +189,20 @@ export default function SitesClient({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-  const [addressField, setAddressField] = useState<AddressField>("address");
-  const [addressValues, setAddressValues] = useState<string[]>([]);
-  const [infoField, setInfoField] = useState<InfoField>("name");
-  const [infoValues, setInfoValues] = useState<string[]>([]);
-  const [companyFilters, setCompanyFilters] = useState<string[]>([]);
-  const [vendorFilter, setVendorFilter] = useState("");
-  const [subVendorFilter, setSubVendorFilter] = useState("");
-  const [contractFilter, setContractFilter] = useState("");
-  const [tradeFilter, setTradeFilter] = useState<string[]>([]);
-  const [assignmentTrade, setAssignmentTrade] = useState("");
-  const [assignmentVendorStatus, setAssignmentVendorStatus] = useState("");
-  const [assignmentSubVendorStatus, setAssignmentSubVendorStatus] = useState("");
-  const [colorMode, setColorMode] = useState<ColorMode>("none");
+  const [initialFilters] = useState<SiteFilters>(loadPersistedFilters);
+  const [addressField, setAddressField] = useState<AddressField>(initialFilters.addressField as AddressField);
+  const [addressValues, setAddressValues] = useState<string[]>(initialFilters.addressValues);
+  const [infoField, setInfoField] = useState<InfoField>(initialFilters.infoField as InfoField);
+  const [infoValues, setInfoValues] = useState<string[]>(initialFilters.infoValues);
+  const [companyFilters, setCompanyFilters] = useState<string[]>(initialFilters.companyFilters);
+  const [vendorFilter, setVendorFilter] = useState(initialFilters.vendorFilter);
+  const [subVendorFilter, setSubVendorFilter] = useState(initialFilters.subVendorFilter);
+  const [contractFilter, setContractFilter] = useState(initialFilters.contractFilter);
+  const [tradeFilter, setTradeFilter] = useState<string[]>(initialFilters.tradeFilter);
+  const [assignmentTrade, setAssignmentTrade] = useState(initialFilters.assignmentTrade);
+  const [assignmentVendorStatus, setAssignmentVendorStatus] = useState(initialFilters.assignmentVendorStatus);
+  const [assignmentSubVendorStatus, setAssignmentSubVendorStatus] = useState(initialFilters.assignmentSubVendorStatus);
+  const [colorMode, setColorMode] = useState<ColorMode>(initialFilters.colorMode as ColorMode);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkTrades, setBulkTrades] = useState<string[]>([]);
   const [assigning, setAssigning] = useState(false);
@@ -256,6 +297,39 @@ export default function SitesClient({
     assignmentTrade,
     assignmentVendorStatus,
     assignmentSubVendorStatus,
+    addressField,
+    addressValues,
+    infoField,
+    infoValues,
+  ]);
+
+  useEffect(() => {
+    const filters: SiteFilters = {
+      companyFilters,
+      vendorFilter,
+      subVendorFilter,
+      contractFilter,
+      tradeFilter,
+      assignmentTrade,
+      assignmentVendorStatus,
+      assignmentSubVendorStatus,
+      colorMode,
+      addressField,
+      addressValues,
+      infoField,
+      infoValues,
+    };
+    window.sessionStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters));
+  }, [
+    companyFilters,
+    vendorFilter,
+    subVendorFilter,
+    contractFilter,
+    tradeFilter,
+    assignmentTrade,
+    assignmentVendorStatus,
+    assignmentSubVendorStatus,
+    colorMode,
     addressField,
     addressValues,
     infoField,
