@@ -1,3 +1,5 @@
+import type { DashboardSourceKey } from "./dashboardSources";
+
 export type DatasetRecord = Record<string, string | number | boolean | null>;
 
 export type FilterOp = "eq" | "neq" | "gt" | "gte" | "lt" | "lte" | "contains";
@@ -24,8 +26,7 @@ export type ChartType = "bar" | "line" | "pie" | "area" | "scatter";
 export interface KpiCard {
   type: "kpi";
   title: string;
-  datasetId: string;
-  datasetName: string;
+  source: DashboardSourceKey;
   agg: KpiAgg;
   column?: string;
   filters?: FilterCondition[];
@@ -34,8 +35,7 @@ export interface KpiCard {
 export interface ChartCard {
   type: "chart";
   title: string;
-  datasetId: string;
-  datasetName: string;
+  source: DashboardSourceKey;
   chartType: ChartType;
   x: string;
   y?: string;
@@ -53,8 +53,7 @@ export interface AgingBucketDef {
 export interface AgingCard {
   type: "aging";
   title: string;
-  datasetId: string;
-  datasetName: string;
+  source: DashboardSourceKey;
   /** Column holding the due/target-completion date to age against today. */
   dateColumn: string;
   buckets: AgingBucketDef[];
@@ -74,8 +73,7 @@ export const SCORECARD_METRIC_LABELS: Record<ScorecardMetric, string> = {
 export interface ScorecardCard {
   type: "scorecard";
   title: string;
-  datasetId: string;
-  datasetName: string;
+  source: DashboardSourceKey;
   /** Column to group rows by, e.g. vendor name. */
   groupColumn: string;
   /** Which metrics to show as columns. */
@@ -108,51 +106,3 @@ export interface DashboardConfig {
   /** Columns exposed as live filter dropdowns on the Dashboards viewer. */
   filterColumns?: string[];
 }
-
-export interface DatasetSummary {
-  id: string;
-  displayName: string;
-  category: string;
-  sourceFilename: string | null;
-  rowCount: number;
-  columns: string[];
-  uploadedAt: string;
-}
-
-export interface TemplateRole {
-  key: string;
-  label: string;
-}
-
-export interface TemplateChartCard {
-  type: "chart";
-  title: string;
-  chartType: ChartType;
-  /** Role key resolved to a real column name once bound to a dataset. */
-  xRole: string;
-  agg: ChartAgg;
-}
-
-export type TemplateCard = TemplateChartCard;
-
-export interface DashboardTemplate {
-  key: string;
-  name: string;
-  /** Which Dashboards sidebar area this template appears under, independent of any dataset's category. */
-  area: string;
-  roles: TemplateRole[];
-  cards: TemplateCard[];
-  /** Role keys exposed as live filter dropdowns once resolved against a dataset. */
-  filterRoles?: string[];
-}
-
-export const DATASET_CATEGORIES = [
-  "Work Orders",
-  "Invoices",
-  "Proposals",
-  "Vendors",
-  "Clients",
-  "Sites",
-  "Materials",
-  "Other",
-] as const;
