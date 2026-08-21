@@ -1,13 +1,12 @@
 import Link from "next/link";
 import Card from "@/components/ui/Card";
-
-const AREAS = ["CRM", "Network"] as const;
+import { DASHBOARD_CATEGORIES } from "@/lib/dashboardDefinitions";
 
 export default function AreaSidebar({ selectedArea }: { selectedArea: string }) {
   return (
-    <Card className="flex shrink-0 flex-col gap-1 p-2 lg:w-52">
+    <Card className="flex shrink-0 flex-col gap-1 p-2 lg:w-64">
       <nav className="flex flex-col gap-1">
-        {AREAS.map((area) => {
+        {DASHBOARD_CATEGORIES.map((area) => {
           const active = area === selectedArea;
           return (
             <Link

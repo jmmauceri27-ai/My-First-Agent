@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import { DASHBOARD_DEFINITIONS } from "@/lib/dashboardDefinitions";
+import { DASHBOARD_CATEGORIES, DASHBOARD_DEFINITIONS } from "@/lib/dashboardDefinitions";
 import AreaSidebar from "./AreaSidebar";
 import DashboardPicker from "./DashboardPicker";
 import DashboardViewClient from "./DashboardViewClient";
@@ -13,7 +13,7 @@ export default async function DashboardsPage({
   const { area, id } = await searchParams;
 
   const byId = new Map(DASHBOARD_DEFINITIONS.map((d) => [d.id, d]));
-  const selectedArea = area ?? (id && byId.get(id)?.area) ?? DASHBOARD_DEFINITIONS[0]?.area ?? "CRM";
+  const selectedArea = area ?? (id && byId.get(id)?.area) ?? DASHBOARD_DEFINITIONS[0]?.area ?? DASHBOARD_CATEGORIES[0];
 
   const areaDashboards = DASHBOARD_DEFINITIONS.filter((d) => d.area === selectedArea);
   const selected =
