@@ -5,27 +5,23 @@ import DashboardCardsView from "@/components/DashboardCardsView";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import { getDistinctValues } from "@/lib/kpi";
-import type { DashboardCard, DashboardConfig, DatasetRecord, DatasetSummary } from "@/lib/types";
-import { fetchDatasetRowsAction } from "./actions";
+import { getDashboardSource } from "@/lib/dashboardSources";
+import type { DashboardSourceKey } from "@/lib/dashboardSources";
+import type { DashboardCard, DashboardConfig, DatasetRecord } from "@/lib/types";
+import { fetchSourceRowsAction } from "./actions";
 
-export default function DashboardViewClient({
-  config,
-  datasets,
-}: {
-  config: DashboardConfig;
-  datasets: DatasetSummary[];
-}) {
-  const [rowsByDataset, setRowsByDataset] = useState<Record<string, DatasetRecord[]>>({});
+export default function DashboardViewClient({ config }: { config: DashboardConfig }) {
+  const [rowsBySource, setRowsBySource] = useState<Partial<Record<DashboardSourceKey, DatasetRecord[]>>>({});
   const [loaded, setLoaded] = useState(false);
   const [globalFilters, setGlobalFilters] = useState<Record<string, string>>({});
 
   useEffect(() => {
     let cancelled = false;
-    const uniqueIds = Array.from(new Set(config.cards.map((c) => c.datasetId)));
-    Promise.all(uniqueIds.map(async (id) => [id, await fetchDatasetRowsAction(id)] as const)).then(
+    const uniqueSources = Array.from(new Set(config.cards.map((c) => c.source)));
+    Promise.all(uniqueSources.map(async (source) => [source, await fetchSourceRowsAction(source)] as const)).then(
       (entries) => {
         if (cancelled) return;
-        setRowsByDataset(Object.fromEntries(entries));
+        setRowsBySource(Object.fromEntries(entries));
         setLoaded(true);
       },
     );
@@ -36,22 +32,22 @@ export default function DashboardViewClient({
 
   const filterColumns = config.filterColumns ?? [];
 
-  function datasetHasColumn(datasetId: string, column: string): boolean {
-    return datasets.find((d) => d.id === datasetId)?.columns.includes(column) ?? false;
+  function sourceHasColumn(source: DashboardSourceKey, column: string): boolean {
+    return getDashboardSource(source).columns.some((c) => c.key === column);
   }
 
   function optionsFor(column: string): string[] {
     const values = new Set<string>();
-    for (const datasetId of Object.keys(rowsByDataset)) {
-      if (!datasetHasColumn(datasetId, column)) continue;
-      for (const v of getDistinctValues(rowsByDataset[datasetId], column)) values.add(v);
+    for (const source of Object.keys(rowsBySource) as DashboardSourceKey[]) {
+      if (!sourceHasColumn(source, column)) continue;
+      for (const v of getDistinctValues(rowsBySource[source] ?? [], column)) values.add(v);
     }
     return Array.from(values).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   }
 
   const effectiveCards: DashboardCard[] = config.cards.map((card) => {
     const extraFilters = Object.entries(globalFilters)
-      .filter(([column, value]) => value && datasetHasColumn(card.datasetId, column))
+      .filter(([column, value]) => value && sourceHasColumn(card.source, column))
       .map(([column, value]) => ({ column, op: "eq" as const, value }));
     if (extraFilters.length === 0) return card;
     return { ...card, filters: [...(card.filters ?? []), ...extraFilters] };
@@ -84,7 +80,7 @@ export default function DashboardViewClient({
           ))}
         </Card>
       )}
-      <DashboardCardsView cards={effectiveCards} rowsByDataset={rowsByDataset} />
+      <DashboardCardsView cards={effectiveCards} rowsBySource={rowsBySource} />
     </div>
   );
 }

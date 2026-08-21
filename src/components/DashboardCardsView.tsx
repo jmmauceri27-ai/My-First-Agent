@@ -1,5 +1,6 @@
 import { computeAging, computeChartData, computeKpi, computeScorecard } from "@/lib/kpi";
 import type { AgingCard, ChartCard, DashboardCard, DatasetRecord, KpiCard, ScorecardCard } from "@/lib/types";
+import type { DashboardSourceKey } from "@/lib/dashboardSources";
 import { CHART_COLORS_LIGHT } from "@/lib/chartPalette";
 import AgingDonutChart from "./AgingDonutChart";
 import ChartRenderer from "./ChartRenderer";
@@ -7,10 +8,10 @@ import Card from "./ui/Card";
 
 export default function DashboardCardsView({
   cards,
-  rowsByDataset,
+  rowsBySource,
 }: {
   cards: DashboardCard[];
-  rowsByDataset: Record<string, DatasetRecord[]>;
+  rowsBySource: Partial<Record<DashboardSourceKey, DatasetRecord[]>>;
 }) {
   const kpiCards = cards.filter((c): c is KpiCard => c.type === "kpi");
   const chartCards = cards.filter((c): c is ChartCard => c.type === "chart");
@@ -22,7 +23,7 @@ export default function DashboardCardsView({
       {kpiCards.length > 0 && (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {kpiCards.map((card, i) => {
-            const rows = rowsByDataset[card.datasetId] ?? [];
+            const rows = rowsBySource[card.source] ?? [];
             let value: number | string;
             try {
               const raw = computeKpi(rows, card.agg, card.column, card.filters);
@@ -52,7 +53,7 @@ export default function DashboardCardsView({
       {agingCards.length > 0 && (
         <div className="flex flex-col gap-6">
           {agingCards.map((card, i) => {
-            const rows = rowsByDataset[card.datasetId] ?? [];
+            const rows = rowsBySource[card.source] ?? [];
             const buckets = computeAging(rows, card.dateColumn, card.buckets, card.filters);
             return (
               <Card key={i} className="p-4">
@@ -73,7 +74,7 @@ export default function DashboardCardsView({
       {scorecardCards.length > 0 && (
         <div className="flex flex-col gap-6">
           {scorecardCards.map((card, i) => {
-            const rows = rowsByDataset[card.datasetId] ?? [];
+            const rows = rowsBySource[card.source] ?? [];
             const data = computeScorecard(rows, {
               groupColumn: card.groupColumn,
               statusColumn: card.statusColumn,
@@ -142,7 +143,7 @@ export default function DashboardCardsView({
       {chartCards.length > 0 && (
         <div className="flex flex-col gap-6">
           {chartCards.map((card, i) => {
-            const rows = rowsByDataset[card.datasetId] ?? [];
+            const rows = rowsBySource[card.source] ?? [];
             const data = computeChartData(rows, card.x, card.y, card.agg, card.filters);
             return (
               <Card key={i} className="p-4">

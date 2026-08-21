@@ -1,8 +1,7 @@
 import Link from "next/link";
 import Card from "@/components/ui/Card";
-import { DATASET_CATEGORIES } from "@/lib/types";
 
-const AREAS = ["CRM", ...DATASET_CATEGORIES] as const;
+const AREAS = ["CRM", "Network"] as const;
 
 export default function AreaSidebar({ selectedArea }: { selectedArea: string }) {
   return (
