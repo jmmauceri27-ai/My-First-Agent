@@ -166,6 +166,76 @@ export function computeChartData(
   return points.sort((a, b) => b.value - a.value);
 }
 
+export interface GroupedChartPoint {
+  key: string;
+  [seriesValue: string]: string | number;
+}
+
+export interface GroupedChartData {
+  data: GroupedChartPoint[];
+  seriesKeys: string[];
+}
+
+function aggregateValues(values: number[], agg: ChartAgg): number {
+  switch (agg) {
+    case "sum":
+      return values.reduce((a, b) => a + b, 0);
+    case "avg":
+      return values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+    case "min":
+      return values.length ? Math.min(...values) : 0;
+    case "max":
+      return values.length ? Math.max(...values) : 0;
+    case "count":
+    default:
+      return values.length;
+  }
+}
+
+/** Like computeChartData, but further breaks each x-group into one series per distinct `series` column value -- for grouped/side-by-side bars (e.g. Sourced vs. Unsourced per state). */
+export function computeGroupedChartData(
+  rows: DatasetRecord[],
+  x: string,
+  series: string,
+  y: string | undefined,
+  agg: ChartAgg,
+  filters?: FilterCondition[],
+): GroupedChartData {
+  const working = applyFilters(rows, filters);
+  const groups = new Map<string, Map<string, number[]>>();
+  const seriesKeysSet = new Set<string>();
+
+  for (const row of working) {
+    const xKey = String(row[x] ?? "(blank)");
+    const seriesKey = String(row[series] ?? "(blank)");
+    const num = y ? Number(row[y]) : 1;
+    if (y && Number.isNaN(num)) continue;
+    seriesKeysSet.add(seriesKey);
+    if (!groups.has(xKey)) groups.set(xKey, new Map());
+    const seriesMap = groups.get(xKey)!;
+    if (!seriesMap.has(seriesKey)) seriesMap.set(seriesKey, []);
+    seriesMap.get(seriesKey)!.push(num);
+  }
+
+  const seriesKeys = Array.from(seriesKeysSet).sort();
+  const points: GroupedChartPoint[] = [];
+  for (const [xKey, seriesMap] of groups) {
+    const point: GroupedChartPoint = { key: xKey };
+    for (const seriesKey of seriesKeys) {
+      point[seriesKey] = round2(aggregateValues(seriesMap.get(seriesKey) ?? [], agg));
+    }
+    points.push(point);
+  }
+
+  points.sort((a, b) => {
+    const totalA = seriesKeys.reduce((sum, k) => sum + Number(a[k] ?? 0), 0);
+    const totalB = seriesKeys.reduce((sum, k) => sum + Number(b[k] ?? 0), 0);
+    return totalB - totalA;
+  });
+
+  return { data: points, seriesKeys };
+}
+
 export interface AgingResult {
   label: string;
   count: number;

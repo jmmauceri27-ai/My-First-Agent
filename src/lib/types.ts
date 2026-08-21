@@ -38,6 +38,8 @@ export interface ChartCard {
   source: DashboardSourceKey;
   chartType: ChartType;
   x: string;
+  /** Optional column that further breaks each x-group into side-by-side series (e.g. "sourcingStatus" -> Sourced/Unsourced bars per state). */
+  series?: string;
   y?: string;
   agg: ChartAgg;
   filters?: FilterCondition[];
