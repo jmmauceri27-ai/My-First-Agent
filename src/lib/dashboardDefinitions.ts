@@ -9,31 +9,7 @@ export interface DashboardDefinition {
   config: DashboardConfig;
 }
 
-export const DASHBOARD_DEFINITIONS: DashboardDefinition[] = [
-  {
-    id: "sub-vendor-assignment",
-    area: "Network",
-    config: {
-      name: "Sub-Vendor Assignment",
-      cards: [
-        {
-          type: "kpi",
-          title: "Sites Assigned to Sub-Vendor",
-          source: "sites",
-          agg: "count_rows",
-          filters: [{ column: "subVendorStatus", op: "eq", value: "Assigned" }],
-        },
-        {
-          type: "kpi",
-          title: "Sites Unassigned to Sub-Vendor",
-          source: "sites",
-          agg: "count_rows",
-          filters: [{ column: "subVendorStatus", op: "eq", value: "Unassigned" }],
-        },
-      ],
-    },
-  },
-];
+export const DASHBOARD_DEFINITIONS: DashboardDefinition[] = [];
 
 export function getDashboardDefinition(id: string): DashboardDefinition | undefined {
   return DASHBOARD_DEFINITIONS.find((d) => d.id === id);
