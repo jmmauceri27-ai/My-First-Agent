@@ -90,6 +90,7 @@ export const DASHBOARD_SOURCES: DashboardSourceDef[] = [
       { key: "city", label: "City", type: "string" },
       { key: "state", label: "State", type: "string" },
       { key: "tradeCount", label: "Trade count", type: "number" },
+      { key: "subVendorStatus", label: "Sub-Vendor status", type: "string" },
       { key: "createdAt", label: "Created", type: "date" },
     ],
   },

@@ -69,6 +69,7 @@ export async function getSourceRows(source: DashboardSourceKey): Promise<Dataset
         city: s.city,
         state: s.state,
         tradeCount: s.trades.length,
+        subVendorStatus: s.tradeAssignments.some((a) => a.subVendorId) ? "Assigned" : "Unassigned",
         createdAt: s.createdAt,
       }));
     }
