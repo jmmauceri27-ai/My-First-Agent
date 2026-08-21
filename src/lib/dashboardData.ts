@@ -91,9 +91,12 @@ export async function getSourceRows(source: DashboardSourceKey): Promise<Dataset
         s.tradeAssignments.map((a) => ({
           siteName: s.name,
           companyName: s.companyName,
+          city: s.city,
+          state: s.state,
           trade: a.trade,
           vendorName: a.vendorName,
           subVendorName: a.subVendorName,
+          sourcingStatus: a.subVendorId ? "Sourced" : "Unsourced",
           contractValue: a.contractValue,
           subPrice: a.subPrice,
           subVendorPrice: a.subVendorPrice,

@@ -113,9 +113,12 @@ export const DASHBOARD_SOURCES: DashboardSourceDef[] = [
     columns: [
       { key: "siteName", label: "Site", type: "string" },
       { key: "companyName", label: "Client", type: "string" },
+      { key: "city", label: "City", type: "string" },
+      { key: "state", label: "State", type: "string" },
       { key: "trade", label: "Trade", type: "string" },
       { key: "vendorName", label: "Vendor", type: "string" },
       { key: "subVendorName", label: "Sub-Vendor", type: "string" },
+      { key: "sourcingStatus", label: "Sourcing status", type: "string" },
       { key: "contractValue", label: "Contract value", type: "number" },
       { key: "subPrice", label: "Sub price", type: "number" },
       { key: "subVendorPrice", label: "Sub-Vendor price", type: "number" },

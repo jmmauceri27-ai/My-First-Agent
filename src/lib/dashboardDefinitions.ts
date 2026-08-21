@@ -21,7 +21,52 @@ export interface DashboardDefinition {
   config: DashboardConfig;
 }
 
-export const DASHBOARD_DEFINITIONS: DashboardDefinition[] = [];
+export const DASHBOARD_DEFINITIONS: DashboardDefinition[] = [
+  {
+    id: "sourcing-status-by-state",
+    area: "Sourcing & Coverage",
+    config: {
+      name: "Sourcing Status by State",
+      // Live "Trade" dropdown scopes every card below to one trade at a time (e.g. Snow Removal);
+      // left on "All" it covers every trade's site+trade assignments together.
+      filterColumns: ["trade"],
+      cards: [
+        {
+          type: "kpi",
+          title: "Sourced (Sub-Vendor Assigned)",
+          source: "siteTradeAssignments",
+          agg: "count_rows",
+          filters: [{ column: "sourcingStatus", op: "eq", value: "Sourced" }],
+        },
+        {
+          type: "kpi",
+          title: "Unsourced (No Sub-Vendor)",
+          source: "siteTradeAssignments",
+          agg: "count_rows",
+          filters: [{ column: "sourcingStatus", op: "eq", value: "Unsourced" }],
+        },
+        {
+          type: "chart",
+          title: "Sourced by State",
+          source: "siteTradeAssignments",
+          chartType: "bar",
+          x: "state",
+          agg: "count",
+          filters: [{ column: "sourcingStatus", op: "eq", value: "Sourced" }],
+        },
+        {
+          type: "chart",
+          title: "Unsourced by State",
+          source: "siteTradeAssignments",
+          chartType: "bar",
+          x: "state",
+          agg: "count",
+          filters: [{ column: "sourcingStatus", op: "eq", value: "Unsourced" }],
+        },
+      ],
+    },
+  },
+];
 
 export function getDashboardDefinition(id: string): DashboardDefinition | undefined {
   return DASHBOARD_DEFINITIONS.find((d) => d.id === id);
