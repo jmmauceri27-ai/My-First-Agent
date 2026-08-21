@@ -9,8 +9,6 @@ const LINKS = [
   { href: "/network", label: "Network" },
   { href: "/dashboards", label: "Dashboards" },
   { href: "/builder", label: "Dashboard Builder" },
-  { href: "/explorer", label: "Data Explorer" },
-  { href: "/upload", label: "Upload Data" },
 ];
 
 export default function NavBar() {

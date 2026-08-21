@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { listDashboards, listDatasets } from "@/lib/dal";
+import { listDashboards } from "@/lib/dal";
 import { listOpportunities } from "@/lib/crmDal";
 import { OPPORTUNITY_STAGES } from "@/lib/crmTypes";
 import Card from "@/components/ui/Card";
@@ -17,11 +17,7 @@ function formatCurrency(value: number): string {
 }
 
 export default async function HomePage() {
-  const [opportunities, datasets, dashboards] = await Promise.all([
-    listOpportunities(),
-    listDatasets(),
-    listDashboards(),
-  ]);
+  const [opportunities, dashboards] = await Promise.all([listOpportunities(), listDashboards()]);
 
   const stageCounts = new Map<string, number>(OPPORTUNITY_STAGES.map((s) => [s, 0]));
   for (const o of opportunities) stageCounts.set(o.stage, (stageCounts.get(o.stage) ?? 0) + 1);
@@ -117,50 +113,18 @@ export default async function HomePage() {
       </section>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-bold text-slate-300">Data tools</h2>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-2">
-          <Card className="p-5">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Datasets uploaded</p>
-            <p className="mt-1.5 text-2xl font-extrabold tabular-nums text-slate-50">{datasets.length}</p>
-          </Card>
-          <Card className="p-5">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Saved dashboards</p>
-            <p className="mt-1.5 text-2xl font-extrabold tabular-nums text-slate-50">{dashboards.length}</p>
-          </Card>
-        </div>
-
-        {datasets.length === 0 ? (
-          <p className="text-sm text-slate-400">
-            No data yet. Head to{" "}
-            <Link href="/upload" className="font-medium text-brand-400 hover:underline">
-              Upload Data
-            </Link>{" "}
-            to add your first Excel or CSV file.
-          </p>
-        ) : (
-          <Card className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-purple-400/10 text-sm">
-              <thead className="bg-purple-500/5">
-                <tr>
-                  <th className="px-4 py-2 text-left font-semibold text-slate-400">Name</th>
-                  <th className="px-4 py-2 text-left font-semibold text-slate-400">Category</th>
-                  <th className="px-4 py-2 text-left font-semibold text-slate-400">Rows</th>
-                  <th className="px-4 py-2 text-left font-semibold text-slate-400">Uploaded</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-purple-400/10">
-                {datasets.map((d) => (
-                  <tr key={d.id} className="hover:bg-purple-500/5">
-                    <td className="px-4 py-2 font-medium text-slate-50">{d.displayName}</td>
-                    <td className="px-4 py-2 text-slate-400">{d.category}</td>
-                    <td className="px-4 py-2 tabular-nums text-slate-400">{d.rowCount}</td>
-                    <td className="px-4 py-2 text-slate-400">{new Date(d.uploadedAt).toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </Card>
-        )}
+        <h2 className="text-lg font-bold text-slate-300">Dashboards</h2>
+        <Card className="p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Saved dashboards</p>
+              <p className="mt-1.5 text-2xl font-extrabold tabular-nums text-slate-50">{dashboards.length}</p>
+            </div>
+            <Link href="/dashboards" className="text-sm font-medium text-brand-400 hover:underline">
+              {dashboards.length === 0 ? "Build your first dashboard →" : "View dashboards →"}
+            </Link>
+          </div>
+        </Card>
       </section>
     </div>
   );
