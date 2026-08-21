@@ -74,6 +74,8 @@ export interface Site {
   measurements: SiteMeasurements;
   /** Plain counts -- Palm Trees, Deciduous Tree, Shrubs, etc. -- kept separate from `measurements` so each displays with the right unit. */
   counts: SiteMeasurements;
+  /** Total snowfall (inches) recorded for this site over the most recent winter season. */
+  lastSeasonSnowfall: number | null;
   notes: string | null;
   createdAt: string;
   updatedAt: string;
@@ -94,6 +96,7 @@ export interface SiteInput {
   trades: string[];
   measurements: SiteMeasurements;
   counts: SiteMeasurements;
+  lastSeasonSnowfall: number | null;
   notes: string | null;
 }
 
@@ -170,6 +173,7 @@ export interface SiteUpdateRow {
   lat?: number | null;
   lng?: number | null;
   trades?: string[];
+  lastSeasonSnowfall?: number | null;
   notes?: string | null;
 }
 

@@ -70,6 +70,7 @@ const SITE_EXPORT_COLUMNS = [
   "Sub-Vendor Price",
   "Measurements",
   "Counts",
+  "Last Season Snowfall",
   "Notes",
 ];
 
@@ -107,6 +108,7 @@ function siteToExportRow(s: Site): DatasetRecord {
     Counts: Object.entries(s.counts)
       .map(([label, value]) => `${label}: ${value}`)
       .join("; "),
+    "Last Season Snowfall": s.lastSeasonSnowfall,
     Notes: s.notes ?? "",
   };
 }

@@ -23,6 +23,7 @@ const OPTIONAL_FIELDS = [
   ["lat", "Latitude column"],
   ["lng", "Longitude column"],
   ["trades", "Trade column"],
+  ["lastSeasonSnowfall", "Last Season Snowfall column"],
   ["notes", "Notes column"],
 ] as const;
 
@@ -46,6 +47,7 @@ export default function UpdateSitesModal({ companies, onClose }: { companies: Co
     lat: NONE,
     lng: NONE,
     trades: NONE,
+    lastSeasonSnowfall: NONE,
     notes: NONE,
   });
   const [companyId, setCompanyId] = useState("");
@@ -84,6 +86,7 @@ export default function UpdateSitesModal({ companies, onClose }: { companies: Co
         lat: parsed.columns.find((c) => /^lat/i.test(c)) ?? NONE,
         lng: parsed.columns.find((c) => /^(lng|lon)/i.test(c)) ?? NONE,
         trades: parsed.columns.find((c) => /trade/i.test(c)) ?? NONE,
+        lastSeasonSnowfall: parsed.columns.find((c) => /snowfall/i.test(c)) ?? NONE,
         notes: parsed.columns.find((c) => /notes?/i.test(c)) ?? NONE,
       });
     } catch (e) {
@@ -118,6 +121,10 @@ export default function UpdateSitesModal({ companies, onClose }: { companies: Co
           update.lng = Number.isFinite(lng) ? lng : null;
         }
         if (mapping.trades) update.trades = matchTrades(String(row[mapping.trades] ?? ""));
+        if (mapping.lastSeasonSnowfall) {
+          const snowfall = Number(row[mapping.lastSeasonSnowfall]);
+          update.lastSeasonSnowfall = Number.isFinite(snowfall) ? snowfall : null;
+        }
         if (mapping.notes) update.notes = String(row[mapping.notes] ?? "").trim() || null;
         return update;
       });

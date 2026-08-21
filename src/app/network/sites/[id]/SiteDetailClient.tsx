@@ -50,6 +50,9 @@ export default function SiteDetailClient({
   const [notes, setNotes] = useState(site.notes ?? "");
   const [measurements, setMeasurements] = useState<SiteMeasurements>(site.measurements);
   const [counts, setCounts] = useState<SiteMeasurements>(site.counts);
+  const [lastSeasonSnowfall, setLastSeasonSnowfall] = useState(
+    site.lastSeasonSnowfall != null ? String(site.lastSeasonSnowfall) : "",
+  );
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,6 +90,7 @@ export default function SiteDetailClient({
         trades,
         measurements,
         counts,
+        lastSeasonSnowfall: lastSeasonSnowfall.trim() ? Number(lastSeasonSnowfall) : null,
         notes: notes.trim() || null,
       };
       const result = await saveSiteAction(site.id, input);
@@ -293,6 +297,19 @@ export default function SiteDetailClient({
               counts={counts}
               onChangeCounts={setCounts}
             />
+          </Card>
+
+          <Card className="p-5">
+            <h2 className="text-lg font-bold text-slate-50">Last Season Snowfall</h2>
+            <label className="mt-3 flex flex-col gap-1 text-sm">
+              <span className="font-medium text-slate-300">Total snowfall (in.)</span>
+              <input
+                type="number"
+                value={lastSeasonSnowfall}
+                onChange={(e) => setLastSeasonSnowfall(e.target.value)}
+                className={`${inputClass} max-w-[10rem]`}
+              />
+            </label>
           </Card>
 
           <Card className="flex flex-col gap-3 p-5">

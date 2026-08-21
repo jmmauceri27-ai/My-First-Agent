@@ -157,7 +157,7 @@ function mapAssignment(a: Record<string, unknown>): SiteTradeAssignment {
   };
 }
 
-const SITE_COLUMNS = `id, company_id, opportunity_id, contract_id, site_code, name, address, city, state, zip, lat, lng, trades, measurements, counts, notes, created_at, updated_at, crm_companies(name), crm_opportunities(name), crm_contracts(name), site_trade_assignments(${ASSIGNMENT_COLUMNS})`;
+const SITE_COLUMNS = `id, company_id, opportunity_id, contract_id, site_code, name, address, city, state, zip, lat, lng, trades, measurements, counts, last_season_snowfall, notes, created_at, updated_at, crm_companies(name), crm_opportunities(name), crm_contracts(name), site_trade_assignments(${ASSIGNMENT_COLUMNS})`;
 
 function mapSite(s: Record<string, unknown>): Site {
   const company = s.crm_companies as unknown as { name: string } | null;
@@ -184,6 +184,7 @@ function mapSite(s: Record<string, unknown>): Site {
     tradeAssignments: assignments.map(mapAssignment),
     measurements: (s.measurements as Site["measurements"] | null) ?? {},
     counts: (s.counts as Site["counts"] | null) ?? {},
+    lastSeasonSnowfall: s.last_season_snowfall as number | null,
     notes: s.notes as string | null,
     createdAt: s.created_at as string,
     updatedAt: s.updated_at as string,
@@ -372,6 +373,7 @@ function siteRow(input: SiteInput) {
     trades: input.trades,
     measurements: input.measurements,
     counts: input.counts,
+    last_season_snowfall: input.lastSeasonSnowfall,
     notes: input.notes,
   };
 }
@@ -703,6 +705,7 @@ export async function bulkUpdateSites(rows: SiteUpdateRow[], companyId: string |
     if ("lat" in row) payload.lat = row.lat;
     if ("lng" in row) payload.lng = row.lng;
     if ("trades" in row) payload.trades = row.trades;
+    if ("lastSeasonSnowfall" in row) payload.last_season_snowfall = row.lastSeasonSnowfall;
     if ("notes" in row) payload.notes = row.notes;
     if (Object.keys(payload).length === 0) return;
 
