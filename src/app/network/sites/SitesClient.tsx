@@ -36,6 +36,7 @@ import UpdateSiteMeasurementsModal from "../UpdateSiteMeasurementsModal";
 import {
   bulkAssignTradesAction,
   bulkAssignVendorForTradeAction,
+  bulkDeleteSitesAction,
   deleteSiteFilterTemplateAction,
   exportSitesToExcelAction,
   saveSiteFilterTemplateAction,
@@ -234,6 +235,8 @@ export default function SitesClient({
   const [bulkSubVendorId, setBulkSubVendorId] = useState("");
   const [assigningVendor, setAssigningVendor] = useState(false);
   const [bulkVendorError, setBulkVendorError] = useState<string | null>(null);
+  const [deletingSites, setDeletingSites] = useState(false);
+  const [bulkDeleteError, setBulkDeleteError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [localFilterTemplates, setLocalFilterTemplates] = useState(filterTemplates);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
@@ -422,6 +425,25 @@ export default function SitesClient({
       router.refresh();
     } finally {
       setAssigningVendor(false);
+    }
+  }
+
+  async function handleBulkDelete() {
+    if (selectedIds.size === 0) return;
+    const count = selectedIds.size;
+    if (!window.confirm(`Delete ${count} site${count === 1 ? "" : "s"}? This can't be undone.`)) return;
+    setBulkDeleteError(null);
+    setDeletingSites(true);
+    try {
+      const result = await bulkDeleteSitesAction(Array.from(selectedIds));
+      if (result.error) {
+        setBulkDeleteError(result.error);
+        return;
+      }
+      setSelectedIds(new Set());
+      router.refresh();
+    } finally {
+      setDeletingSites(false);
     }
   }
 
@@ -724,6 +746,9 @@ export default function SitesClient({
             <Button variant="secondary" onClick={handleBulkAssign} disabled={bulkTrades.length === 0 || assigning}>
               {assigning ? "Assigning…" : "Assign to selected"}
             </Button>
+            <Button variant="danger" onClick={handleBulkDelete} disabled={deletingSites}>
+              {deletingSites ? "Deleting…" : "Delete selected"}
+            </Button>
             <Button
               variant="ghost"
               onClick={() => {
@@ -734,11 +759,13 @@ export default function SitesClient({
                 setBulkVendorId("");
                 setBulkSubVendorId("");
                 setBulkVendorError(null);
+                setBulkDeleteError(null);
               }}
             >
               Clear selection
             </Button>
             {bulkError && <span className="text-xs text-critical">{bulkError}</span>}
+            {bulkDeleteError && <span className="text-xs text-critical">{bulkDeleteError}</span>}
           </div>
 
           <div className="flex flex-wrap items-center gap-3">

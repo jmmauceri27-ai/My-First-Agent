@@ -440,6 +440,33 @@ export async function deleteSite(id: string): Promise<void> {
   if (contractId) await syncContractSiteCount(contractId);
 }
 
+/** Deletes many sites at once (e.g. a checked selection on the Sites screen), re-syncing every affected Opportunity/Contract's site_count afterward. */
+export async function bulkDeleteSites(siteIds: string[]): Promise<void> {
+  if (siteIds.length === 0) return;
+  const supabase = createAdminClient();
+
+  const { data: existing, error: fetchError } = await supabase
+    .from("sites")
+    .select("opportunity_id, contract_id")
+    .in("id", siteIds)
+    .eq("user_id", OWNER_USER_ID);
+  if (fetchError) throw new Error(fetchError.message);
+
+  const { error } = await supabase.from("sites").delete().in("id", siteIds).eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
+
+  const opportunityIds = new Set(
+    (existing ?? []).map((s) => s.opportunity_id as string | null).filter((id): id is string => !!id),
+  );
+  const contractIds = new Set(
+    (existing ?? []).map((s) => s.contract_id as string | null).filter((id): id is string => !!id),
+  );
+  await Promise.all([
+    ...Array.from(opportunityIds).map((id) => syncOpportunitySiteCount(id)),
+    ...Array.from(contractIds).map((id) => syncContractSiteCount(id)),
+  ]);
+}
+
 /** Bulk-imports uploaded sheet rows as new sites, all sharing the same Client/Opportunity/Contract/Trades links. Vendor assignments are per-trade and set afterward from each site's detail page. Appends -- does not replace existing sites. */
 export async function bulkCreateSites(links: SiteBulkLinks, rows: SiteImportRow[]): Promise<{ inserted: number }> {
   const supabase = createAdminClient();

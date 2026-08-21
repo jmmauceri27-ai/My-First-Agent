@@ -10,6 +10,7 @@ import {
   bulkCreateSites,
   bulkCreateSitesForOpportunity,
   bulkCreateVendors,
+  bulkDeleteSites,
   bulkUpdateSiteMeasurements,
   bulkUpdateSites,
   bulkUpdateSiteTradeAssignments,
@@ -160,6 +161,16 @@ export async function deleteSiteAction(id: string): Promise<{ error?: string }> 
     await deleteSite(id);
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to delete site." };
+  }
+  revalidatePath("/network/sites");
+  return {};
+}
+
+export async function bulkDeleteSitesAction(siteIds: string[]): Promise<{ error?: string }> {
+  try {
+    await bulkDeleteSites(siteIds);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to delete sites." };
   }
   revalidatePath("/network/sites");
   return {};
