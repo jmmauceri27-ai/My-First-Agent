@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { listDashboards } from "@/lib/dal";
+import { DASHBOARD_DEFINITIONS } from "@/lib/dashboardDefinitions";
 import { listOpportunities } from "@/lib/crmDal";
 import { OPPORTUNITY_STAGES } from "@/lib/crmTypes";
 import Card from "@/components/ui/Card";
@@ -17,7 +17,7 @@ function formatCurrency(value: number): string {
 }
 
 export default async function HomePage() {
-  const [opportunities, dashboards] = await Promise.all([listOpportunities(), listDashboards()]);
+  const opportunities = await listOpportunities();
 
   const stageCounts = new Map<string, number>(OPPORTUNITY_STAGES.map((s) => [s, 0]));
   for (const o of opportunities) stageCounts.set(o.stage, (stageCounts.get(o.stage) ?? 0) + 1);
@@ -118,10 +118,12 @@ export default async function HomePage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Saved dashboards</p>
-              <p className="mt-1.5 text-2xl font-extrabold tabular-nums text-slate-50">{dashboards.length}</p>
+              <p className="mt-1.5 text-2xl font-extrabold tabular-nums text-slate-50">
+                {DASHBOARD_DEFINITIONS.length}
+              </p>
             </div>
             <Link href="/dashboards" className="text-sm font-medium text-brand-400 hover:underline">
-              {dashboards.length === 0 ? "Build your first dashboard →" : "View dashboards →"}
+              View dashboards →
             </Link>
           </div>
         </Card>
