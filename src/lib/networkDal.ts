@@ -614,9 +614,12 @@ interface SiteMatchKeys {
 
 /**
  * Resolves each row's `matchCode` (custom Site ID) / `matchId` (record id) / `matchName` (case-insensitive,
- * optionally scoped to `companyId`) to a site id, trying each in order and falling through on "not found"
- * (but not on ambiguous, which is reported immediately). Shared by every bulk-update flow that matches rows
- * to existing sites, so Site-field updates and per-trade assignment updates use identical matching rules.
+ * optionally scoped to `companyId`) to a site id, trying each key in order and falling through to the next
+ * one on both "not found" and "ambiguous" -- e.g. two different sites sharing the same Site ID (a real
+ * possibility when a site gets re-imported under a second Opportunity) doesn't block a row from still
+ * resolving uniquely via its Record ID. A row is only reported as ambiguous/not found once every key it
+ * supplied has failed to resolve. Shared by every bulk-update flow that matches rows to existing sites, so
+ * Site-field updates and per-trade assignment updates use identical matching rules.
  */
 async function matchSiteIds<T extends SiteMatchKeys>(
   rows: T[],
@@ -652,24 +655,24 @@ async function matchSiteIds<T extends SiteMatchKeys>(
     let notFoundKey: string | null = null;
     let ambiguousKey: string | null = null;
 
-    if (!siteId && !ambiguousKey && row.matchCode) {
+    if (!siteId && row.matchCode) {
       const key = row.matchCode.trim().toLowerCase();
       const matches = byCode.get(key) ?? [];
       if (matches.length === 1) siteId = matches[0];
       else if (matches.length > 1) ambiguousKey = row.matchCode;
-      else notFoundKey = row.matchCode;
+      else notFoundKey = notFoundKey ?? row.matchCode;
     }
-    if (!siteId && !ambiguousKey && row.matchId) {
+    if (!siteId && row.matchId) {
       const match = byId.get(row.matchId);
       if (match) siteId = match;
-      else notFoundKey = row.matchId;
+      else notFoundKey = notFoundKey ?? row.matchId;
     }
-    if (!siteId && !ambiguousKey && row.matchName) {
+    if (!siteId && row.matchName) {
       const key = row.matchName.trim().toLowerCase();
       const matches = byName.get(key) ?? [];
       if (matches.length === 1) siteId = matches[0];
-      else if (matches.length > 1) ambiguousKey = row.matchName;
-      else notFoundKey = row.matchName;
+      else if (matches.length > 1) ambiguousKey = ambiguousKey ?? row.matchName;
+      else notFoundKey = notFoundKey ?? row.matchName;
     }
 
     if (!siteId) {
