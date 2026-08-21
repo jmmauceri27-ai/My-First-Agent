@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { CHART_AGG_LABELS, CHART_TYPES, FILTER_OPS } from "@/lib/kpi";
-import type { ChartAgg, ChartCard, ChartType, DatasetSummary, FilterOp } from "@/lib/types";
+import type { DashboardSourceDef } from "@/lib/dashboardSources";
+import type { ChartAgg, ChartCard, ChartType, FilterOp } from "@/lib/types";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { LabeledInput, LabeledSelect } from "./FormControls";
@@ -10,14 +11,14 @@ import { LabeledInput, LabeledSelect } from "./FormControls";
 const COUNT_ROWS = "__count_rows__";
 
 export default function AddChartCardForm({
-  datasets,
+  sources,
   onAdd,
 }: {
-  datasets: DatasetSummary[];
+  sources: DashboardSourceDef[];
   onAdd: (card: ChartCard) => void;
 }) {
   const [title, setTitle] = useState("");
-  const [datasetId, setDatasetId] = useState(datasets[0]?.id ?? "");
+  const [sourceKey, setSourceKey] = useState<string>(sources[0]?.key ?? "");
   const [chartType, setChartType] = useState<ChartType>("bar");
   const [x, setX] = useState("");
   const [y, setY] = useState(COUNT_ROWS);
@@ -26,16 +27,15 @@ export default function AddChartCardForm({
   const [filterOp, setFilterOp] = useState<FilterOp>("eq");
   const [filterValue, setFilterValue] = useState("");
 
-  const dataset = datasets.find((d) => d.id === datasetId);
+  const source = sources.find((s) => s.key === sourceKey);
 
   function handleAdd() {
-    if (!title.trim() || !dataset || !x) return;
+    if (!title.trim() || !source || !x) return;
 
     const card: ChartCard = {
       type: "chart",
       title: title.trim(),
-      datasetId: dataset.id,
-      datasetName: dataset.displayName,
+      source: source.key,
       chartType,
       x,
       y: y === COUNT_ROWS ? undefined : y,
@@ -51,7 +51,7 @@ export default function AddChartCardForm({
     setFilterValue("");
   }
 
-  if (datasets.length === 0) return null;
+  if (sources.length === 0) return null;
 
   return (
     <Card className="border-dashed p-4 shadow-none">
@@ -59,10 +59,10 @@ export default function AddChartCardForm({
       <div className="flex flex-wrap gap-3">
         <LabeledInput label="Title" value={title} onChange={setTitle} />
         <LabeledSelect
-          label="Dataset"
-          value={datasetId}
-          onChange={setDatasetId}
-          options={datasets.map((d) => ({ value: d.id, label: d.displayName }))}
+          label="Source"
+          value={sourceKey}
+          onChange={setSourceKey}
+          options={sources.map((s) => ({ value: s.key, label: s.label }))}
         />
         <LabeledSelect
           label="Chart type"
@@ -70,22 +70,22 @@ export default function AddChartCardForm({
           onChange={(v) => setChartType(v as ChartType)}
           options={CHART_TYPES.map((c) => ({ value: c, label: c }))}
         />
-        {dataset && (
+        {source && (
           <LabeledSelect
             label="X-axis / category"
             value={x}
             onChange={setX}
-            options={dataset.columns.map((c) => ({ value: c, label: c }))}
+            options={source.columns.map((c) => ({ value: c.key, label: c.label }))}
           />
         )}
-        {dataset && (
+        {source && (
           <LabeledSelect
             label="Y-axis / value"
             value={y}
             onChange={setY}
             options={[
               { value: COUNT_ROWS, label: "(count of rows)" },
-              ...dataset.columns.map((c) => ({ value: c, label: c })),
+              ...source.columns.map((c) => ({ value: c.key, label: c.label })),
             ]}
           />
         )}
@@ -101,14 +101,14 @@ export default function AddChartCardForm({
         )}
       </div>
 
-      {dataset && (
+      {source && (
         <div className="mt-3 flex flex-wrap items-end gap-3">
           <span className="text-sm text-slate-500 dark:text-slate-400">Optional filter:</span>
           <LabeledSelect
             label="Column"
             value={filterColumn}
             onChange={setFilterColumn}
-            options={[{ value: "", label: "(none)" }, ...dataset.columns.map((c) => ({ value: c, label: c }))]}
+            options={[{ value: "", label: "(none)" }, ...source.columns.map((c) => ({ value: c.key, label: c.label }))]}
           />
           <LabeledSelect
             label="Operator"

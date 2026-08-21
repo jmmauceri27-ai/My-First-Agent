@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { deleteDashboard, getDatasetRows, loadDashboard, saveDashboard } from "@/lib/dal";
+import { deleteDashboard, loadDashboard, saveDashboard } from "@/lib/dal";
+import { getSourceRows } from "@/lib/dashboardData";
+import type { DashboardSourceKey } from "@/lib/dashboardSources";
 import type { DashboardConfig, DatasetRecord } from "@/lib/types";
 
 export async function saveDashboardAction(config: DashboardConfig): Promise<{ id: string }> {
@@ -23,6 +25,6 @@ export async function loadDashboardAction(id: string): Promise<DashboardConfig |
   return loadDashboard(id);
 }
 
-export async function fetchDatasetRowsAction(datasetId: string): Promise<DatasetRecord[]> {
-  return getDatasetRows(datasetId);
+export async function fetchSourceRowsAction(source: DashboardSourceKey): Promise<DatasetRecord[]> {
+  return getSourceRows(source);
 }

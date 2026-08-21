@@ -3,24 +3,25 @@
 import { useEffect, useState } from "react";
 import { getDistinctValues } from "@/lib/kpi";
 import { SCORECARD_METRIC_LABELS } from "@/lib/types";
-import type { DatasetSummary, ScorecardCard, ScorecardMetric } from "@/lib/types";
+import type { ScorecardCard, ScorecardMetric } from "@/lib/types";
+import type { DashboardSourceDef } from "@/lib/dashboardSources";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
-import { fetchDatasetRowsAction } from "./actions";
+import { fetchSourceRowsAction } from "./actions";
 import { LabeledInput, LabeledSelect } from "./FormControls";
 
 const ALL_METRICS: ScorecardMetric[] = ["count", "completion_rate", "on_time_rate", "avg_duration"];
 const NONE = "";
 
 export default function AddScorecardCardForm({
-  datasets,
+  sources,
   onAdd,
 }: {
-  datasets: DatasetSummary[];
+  sources: DashboardSourceDef[];
   onAdd: (card: ScorecardCard) => void;
 }) {
   const [title, setTitle] = useState("");
-  const [datasetId, setDatasetId] = useState(datasets[0]?.id ?? "");
+  const [sourceKey, setSourceKey] = useState<string>(sources[0]?.key ?? "");
   const [groupColumn, setGroupColumn] = useState("");
   const [metrics, setMetrics] = useState<ScorecardMetric[]>([...ALL_METRICS]);
   const [statusColumn, setStatusColumn] = useState(NONE);
@@ -31,14 +32,14 @@ export default function AddScorecardCardForm({
   const [statusValues, setStatusValues] = useState<string[]>([]);
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
 
-  const dataset = datasets.find((d) => d.id === datasetId);
-  const statusKey = dataset && statusColumn ? `${dataset.id}:${statusColumn}` : null;
+  const source = sources.find((s) => s.key === sourceKey);
+  const statusKey = source && statusColumn ? `${source.key}:${statusColumn}` : null;
   const loadingValues = statusKey !== null && loadedKey !== statusKey;
 
   useEffect(() => {
-    if (!dataset || !statusColumn || !statusKey) return;
+    if (!source || !statusColumn || !statusKey) return;
     let cancelled = false;
-    fetchDatasetRowsAction(dataset.id).then((rows) => {
+    fetchSourceRowsAction(source.key).then((rows) => {
       if (cancelled) return;
       setStatusValues(getDistinctValues(rows, statusColumn));
       setLoadedKey(statusKey);
@@ -46,7 +47,7 @@ export default function AddScorecardCardForm({
     return () => {
       cancelled = true;
     };
-  }, [dataset, statusColumn, statusKey]);
+  }, [source, statusColumn, statusKey]);
 
   function handleStatusColumnChange(v: string) {
     setStatusColumn(v);
@@ -62,13 +63,12 @@ export default function AddScorecardCardForm({
   }
 
   function handleAdd() {
-    if (!title.trim() || !dataset || !groupColumn || metrics.length === 0) return;
+    if (!title.trim() || !source || !groupColumn || metrics.length === 0) return;
 
     const card: ScorecardCard = {
       type: "scorecard",
       title: title.trim(),
-      datasetId: dataset.id,
-      datasetName: dataset.displayName,
+      source: source.key,
       groupColumn,
       metrics,
       statusColumn: statusColumn || undefined,
@@ -81,10 +81,10 @@ export default function AddScorecardCardForm({
     setTitle("");
   }
 
-  if (datasets.length === 0) return null;
+  if (sources.length === 0) return null;
 
-  const columnOptions = dataset
-    ? [{ value: NONE, label: "(none)" }, ...dataset.columns.map((c) => ({ value: c, label: c }))]
+  const columnOptions = source
+    ? [{ value: NONE, label: "(none)" }, ...source.columns.map((c) => ({ value: c.key, label: c.label }))]
     : [];
 
   return (
@@ -96,10 +96,10 @@ export default function AddScorecardCardForm({
       <div className="flex flex-wrap gap-3">
         <LabeledInput label="Title" value={title} onChange={setTitle} />
         <LabeledSelect
-          label="Dataset"
-          value={datasetId}
+          label="Source"
+          value={sourceKey}
           onChange={(v) => {
-            setDatasetId(v);
+            setSourceKey(v);
             setGroupColumn("");
             setStatusColumn(NONE);
             setStatusValues([]);
@@ -108,14 +108,14 @@ export default function AddScorecardCardForm({
             setCompletionDateColumn(NONE);
             setDueDateColumn(NONE);
           }}
-          options={datasets.map((d) => ({ value: d.id, label: d.displayName }))}
+          options={sources.map((s) => ({ value: s.key, label: s.label }))}
         />
-        {dataset && (
+        {source && (
           <LabeledSelect
             label="Group by (e.g. vendor)"
             value={groupColumn}
             onChange={setGroupColumn}
-            options={dataset.columns.map((c) => ({ value: c, label: c }))}
+            options={source.columns.map((c) => ({ value: c.key, label: c.label }))}
           />
         )}
       </div>
@@ -137,7 +137,7 @@ export default function AddScorecardCardForm({
         </div>
       </div>
 
-      {dataset && (
+      {source && (
         <div className="mt-4 flex flex-wrap gap-3">
           <LabeledSelect
             label="Status column (for completion/on-time rate)"

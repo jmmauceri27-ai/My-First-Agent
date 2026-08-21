@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { FILTER_OPS } from "@/lib/kpi";
 import { DEFAULT_AGING_BUCKETS } from "@/lib/types";
-import type { AgingBucketDef, AgingCard, DatasetSummary, FilterCondition, FilterOp } from "@/lib/types";
+import type { AgingBucketDef, AgingCard, FilterCondition, FilterOp } from "@/lib/types";
+import type { DashboardSourceDef } from "@/lib/dashboardSources";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { LabeledInput, LabeledSelect } from "./FormControls";
@@ -13,19 +14,19 @@ function cloneDefaultBuckets(): AgingBucketDef[] {
 }
 
 export default function AddAgingCardForm({
-  datasets,
+  sources,
   onAdd,
 }: {
-  datasets: DatasetSummary[];
+  sources: DashboardSourceDef[];
   onAdd: (card: AgingCard) => void;
 }) {
   const [title, setTitle] = useState("");
-  const [datasetId, setDatasetId] = useState(datasets[0]?.id ?? "");
+  const [sourceKey, setSourceKey] = useState<string>(sources[0]?.key ?? "");
   const [dateColumn, setDateColumn] = useState("");
   const [buckets, setBuckets] = useState<AgingBucketDef[]>(cloneDefaultBuckets());
   const [filters, setFilters] = useState<FilterCondition[]>([]);
 
-  const dataset = datasets.find((d) => d.id === datasetId);
+  const source = sources.find((s) => s.key === sourceKey);
 
   function updateBucket(index: number, patch: Partial<AgingBucketDef>) {
     setBuckets((prev) => prev.map((b, i) => (i === index ? { ...b, ...patch } : b)));
@@ -40,8 +41,8 @@ export default function AddAgingCardForm({
   }
 
   function addFilterRow() {
-    if (!dataset) return;
-    setFilters((prev) => [...prev, { column: dataset.columns[0] ?? "", op: "neq", value: "" }]);
+    if (!source) return;
+    setFilters((prev) => [...prev, { column: source.columns[0]?.key ?? "", op: "neq", value: "" }]);
   }
 
   function updateFilter(index: number, patch: Partial<FilterCondition>) {
@@ -53,24 +54,23 @@ export default function AddAgingCardForm({
   }
 
   function handleAdd() {
-    if (!title.trim() || !dataset || !dateColumn) return;
+    if (!title.trim() || !source || !dateColumn) return;
     const cleanBuckets = buckets.filter((b) => b.label.trim());
     if (cleanBuckets.length === 0) return;
 
     const card: AgingCard = {
       type: "aging",
       title: title.trim(),
-      datasetId: dataset.id,
-      datasetName: dataset.displayName,
+      source: source.key,
       dateColumn,
       buckets: cleanBuckets,
-      filters: filters.filter((f) => f.column && f.value) ,
+      filters: filters.filter((f) => f.column && f.value),
     };
     onAdd(card);
     setTitle("");
   }
 
-  if (datasets.length === 0) return null;
+  if (sources.length === 0) return null;
 
   return (
     <Card className="border-dashed p-4 shadow-none">
@@ -79,20 +79,20 @@ export default function AddAgingCardForm({
       <div className="flex flex-wrap gap-3">
         <LabeledInput label="Title" value={title} onChange={setTitle} />
         <LabeledSelect
-          label="Dataset"
-          value={datasetId}
+          label="Source"
+          value={sourceKey}
           onChange={(v) => {
-            setDatasetId(v);
+            setSourceKey(v);
             setDateColumn("");
           }}
-          options={datasets.map((d) => ({ value: d.id, label: d.displayName }))}
+          options={sources.map((s) => ({ value: s.key, label: s.label }))}
         />
-        {dataset && (
+        {source && (
           <LabeledSelect
             label="Due-date column (ETC)"
             value={dateColumn}
             onChange={setDateColumn}
-            options={dataset.columns.map((c) => ({ value: c, label: c }))}
+            options={source.columns.map((c) => ({ value: c.key, label: c.label }))}
           />
         )}
       </div>
@@ -131,7 +131,7 @@ export default function AddAgingCardForm({
         </Button>
       </div>
 
-      {dataset && (
+      {source && (
         <div className="mt-4">
           <p className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">
             Exclude rows where (typically closed/complete statuses, so aging reflects only open work)
@@ -143,7 +143,7 @@ export default function AddAgingCardForm({
                   label="Column"
                   value={f.column}
                   onChange={(v) => updateFilter(i, { column: v })}
-                  options={dataset.columns.map((c) => ({ value: c, label: c }))}
+                  options={source.columns.map((c) => ({ value: c.key, label: c.label }))}
                 />
                 <LabeledSelect
                   label="Operator"

@@ -3,7 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { KPI_AGG_LABELS } from "@/lib/kpi";
-import type { DashboardCard, DatasetRecord, DatasetSummary } from "@/lib/types";
+import { getDashboardSource } from "@/lib/dashboardSources";
+import type { DashboardSourceDef, DashboardSourceKey } from "@/lib/dashboardSources";
+import type { DashboardCard, DatasetRecord } from "@/lib/types";
 import DashboardCardsView from "@/components/DashboardCardsView";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
@@ -15,7 +17,7 @@ import AddScorecardCardForm from "./AddScorecardCardForm";
 import ImportConfigForm from "./ImportConfigForm";
 import {
   deleteDashboardAction,
-  fetchDatasetRowsAction,
+  fetchSourceRowsAction,
   loadDashboardAction,
   saveDashboardAction,
 } from "./actions";
@@ -23,10 +25,10 @@ import {
 const NEW_DASHBOARD = "__new__";
 
 export default function BuilderClient({
-  datasets,
+  sources,
   dashboards,
 }: {
-  datasets: DatasetSummary[];
+  sources: DashboardSourceDef[];
   dashboards: { id: string; name: string }[];
 }) {
   const router = useRouter();
@@ -35,16 +37,14 @@ export default function BuilderClient({
   const [cards, setCards] = useState<DashboardCard[]>([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [previewRows, setPreviewRows] = useState<Record<string, DatasetRecord[]>>({});
+  const [previewRows, setPreviewRows] = useState<Partial<Record<DashboardSourceKey, DatasetRecord[]>>>({});
   const [previewCards, setPreviewCards] = useState<DashboardCard[] | null>(null);
   const [previewing, setPreviewing] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [filterColumns, setFilterColumns] = useState<string[]>([]);
 
   const availableFilterColumns = Array.from(
-    new Set(
-      cards.flatMap((card) => datasets.find((d) => d.id === card.datasetId)?.columns ?? []),
-    ),
+    new Set(cards.flatMap((card) => getDashboardSource(card.source).columns.map((c) => c.key))),
   ).sort((a, b) => a.localeCompare(b));
 
   function toggleFilterColumn(column: string) {
@@ -89,9 +89,9 @@ export default function BuilderClient({
     }
     setPreviewing(true);
     try {
-      const uniqueIds = Array.from(new Set(cards.map((c) => c.datasetId)));
+      const uniqueSources = Array.from(new Set(cards.map((c) => c.source)));
       const entries = await Promise.all(
-        uniqueIds.map(async (id) => [id, await fetchDatasetRowsAction(id)] as const),
+        uniqueSources.map(async (source) => [source, await fetchSourceRowsAction(source)] as const),
       );
       setPreviewRows(Object.fromEntries(entries));
       setPreviewCards(cards);
@@ -172,12 +172,12 @@ export default function BuilderClient({
               >
                 <span className="text-sm text-slate-800 dark:text-slate-200">
                   {card.type === "kpi"
-                    ? `KPI — ${card.title} (${card.datasetName}, ${KPI_AGG_LABELS[card.agg]})`
+                    ? `KPI — ${card.title} (${getDashboardSource(card.source).label}, ${KPI_AGG_LABELS[card.agg]})`
                     : card.type === "aging"
-                      ? `Aging — ${card.title} (${card.datasetName}, by ${card.dateColumn})`
+                      ? `Aging — ${card.title} (${getDashboardSource(card.source).label}, by ${card.dateColumn})`
                       : card.type === "scorecard"
-                        ? `Scorecard — ${card.title} (${card.datasetName}, by ${card.groupColumn})`
-                        : `Chart — ${card.title} (${card.chartType} on ${card.datasetName})`}
+                        ? `Scorecard — ${card.title} (${getDashboardSource(card.source).label}, by ${card.groupColumn})`
+                        : `Chart — ${card.title} (${card.chartType} on ${getDashboardSource(card.source).label})`}
                 </span>
                 <button
                   onClick={() => removeCard(i)}
@@ -215,7 +215,7 @@ export default function BuilderClient({
       )}
 
       <ImportConfigForm
-        datasets={datasets}
+        sources={sources}
         onImport={(importedCards, importedName, importedFilterColumns) => {
           setCards(importedCards);
           setPreviewCards(null);
@@ -225,10 +225,10 @@ export default function BuilderClient({
         }}
       />
 
-      <AddKpiCardForm datasets={datasets} onAdd={addCard} />
-      <AddChartCardForm datasets={datasets} onAdd={addCard} />
-      <AddAgingCardForm datasets={datasets} onAdd={addCard} />
-      <AddScorecardCardForm datasets={datasets} onAdd={addCard} />
+      <AddKpiCardForm sources={sources} onAdd={addCard} />
+      <AddChartCardForm sources={sources} onAdd={addCard} />
+      <AddAgingCardForm sources={sources} onAdd={addCard} />
+      <AddScorecardCardForm sources={sources} onAdd={addCard} />
 
       {message && <p className="text-sm text-slate-700 dark:text-slate-300">{message}</p>}
 
@@ -261,7 +261,7 @@ export default function BuilderClient({
               Hide
             </button>
           </div>
-          <DashboardCardsView cards={previewCards} rowsByDataset={previewRows} />
+          <DashboardCardsView cards={previewCards} rowsBySource={previewRows} />
         </Card>
       )}
     </div>

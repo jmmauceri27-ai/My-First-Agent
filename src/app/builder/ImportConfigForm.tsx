@@ -8,21 +8,21 @@ import type {
   ChartCard,
   ChartType,
   DashboardCard,
-  DatasetSummary,
   FilterCondition,
   KpiAgg,
   KpiCard,
   ScorecardCard,
   ScorecardMetric,
 } from "@/lib/types";
+import type { DashboardSourceDef } from "@/lib/dashboardSources";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 
 export default function ImportConfigForm({
-  datasets,
+  sources,
   onImport,
 }: {
-  datasets: DatasetSummary[];
+  sources: DashboardSourceDef[];
   onImport: (cards: DashboardCard[], name?: string, filterColumns?: string[]) => void;
 }) {
   const [text, setText] = useState("");
@@ -60,14 +60,14 @@ export default function ImportConfigForm({
         return;
       }
       const card = raw as Record<string, unknown>;
-      const datasetName = String(card.datasetName ?? "");
-      const dataset = datasets.find(
-        (d) => d.displayName.toLowerCase() === datasetName.toLowerCase(),
+      const sourceRef = String(card.source ?? card.datasetName ?? "");
+      const source = sources.find(
+        (s) => s.key === sourceRef || s.label.toLowerCase() === sourceRef.toLowerCase(),
       );
-      if (!dataset) {
+      if (!source) {
         setError(
-          `Card ${i + 1} references dataset "${datasetName}", which doesn't match any uploaded dataset. ` +
-            `Available: ${datasets.map((d) => d.displayName).join(", ")}`,
+          `Card ${i + 1} references source "${sourceRef}", which doesn't match any data source. ` +
+            `Available: ${sources.map((s) => s.label).join(", ")}`,
         );
         return;
       }
@@ -76,8 +76,7 @@ export default function ImportConfigForm({
         const kpiCard: KpiCard = {
           type: "kpi",
           title: String(card.title ?? "Untitled"),
-          datasetId: dataset.id,
-          datasetName: dataset.displayName,
+          source: source.key,
           agg: card.agg as KpiAgg,
           column: card.column as string | undefined,
           filters: card.filters as FilterCondition[] | undefined,
@@ -87,8 +86,7 @@ export default function ImportConfigForm({
         const chartCard: ChartCard = {
           type: "chart",
           title: String(card.title ?? "Untitled"),
-          datasetId: dataset.id,
-          datasetName: dataset.displayName,
+          source: source.key,
           chartType: card.chartType as ChartType,
           x: String(card.x ?? ""),
           y: card.y as string | undefined,
@@ -105,8 +103,7 @@ export default function ImportConfigForm({
         const agingCard: AgingCard = {
           type: "aging",
           title: String(card.title ?? "Untitled"),
-          datasetId: dataset.id,
-          datasetName: dataset.displayName,
+          source: source.key,
           dateColumn: String(card.dateColumn ?? ""),
           buckets: rawBuckets as AgingBucketDef[],
           filters: card.filters as FilterCondition[] | undefined,
@@ -125,8 +122,7 @@ export default function ImportConfigForm({
         const scorecardCard: ScorecardCard = {
           type: "scorecard",
           title: String(card.title ?? "Untitled"),
-          datasetId: dataset.id,
-          datasetName: dataset.displayName,
+          source: source.key,
           groupColumn: card.groupColumn,
           metrics: rawMetrics as ScorecardMetric[],
           statusColumn: card.statusColumn as string | undefined,
@@ -169,15 +165,16 @@ export default function ImportConfigForm({
         <div className="mt-3 flex flex-col gap-2">
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Paste a JSON config — describe the dashboard you want in chat and Claude can generate this
-            for you, referencing your dataset(s) by their exact name. Loading this replaces the current
-            card list below (review it, then click Save dashboard).
+            for you, referencing a source by its exact key or label (e.g. &ldquo;opportunities&rdquo; or
+            &ldquo;Opportunities&rdquo;). Loading this replaces the current card list below (review it,
+            then click Save dashboard).
           </p>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={8}
             className="rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs outline-none transition-shadow focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-900"
-            placeholder='{"name": "Operations Overview", "cards": [...], "filterColumns": ["Status"]}'
+            placeholder='{"name": "Operations Overview", "cards": [...], "filterColumns": ["stage"]}'
           />
           {error && <p className="text-sm text-critical">{error}</p>}
           <Button onClick={handleLoad} variant="secondary" className="w-fit">
