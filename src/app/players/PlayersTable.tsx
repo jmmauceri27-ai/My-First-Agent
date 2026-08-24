@@ -13,7 +13,7 @@ import { deletePlayer, toggleWatchlist, reorderPlayers } from "./actions";
 
 type SortKey =
   | "overallRank"
-  | "positionRank"
+  | "byeWeek"
   | "espnAdp"
   | "sleeperAdp"
   | "tier"
@@ -21,8 +21,12 @@ type SortKey =
   | "projectedPoints"
   | "vorp";
 
-// Higher is better for these — everything else (ranks, ADP, tier) is lower-is-better.
-const DESCENDING_SORT_KEYS = new Set<SortKey>(["projectedPoints", "vorp"]);
+type SortDir = "asc" | "desc";
+
+// Higher is better for these — everything else (ranks, ADP, tier, bye) is
+// lower-is-better — so clicking a new header for the first time should
+// start in whichever direction shows the "best" players first.
+const DESCENDING_DEFAULT_KEYS = new Set<SortKey>(["projectedPoints", "vorp"]);
 
 type PlayerWithVorp = Player & { vorp: number | null };
 
@@ -38,17 +42,45 @@ export default function PlayersTable({
   const [search, setSearch] = useState("");
   const [positionFilter, setPositionFilter] = useState<string>("ALL");
   const [sortKey, setSortKey] = useState<SortKey>("overallRank");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [hideDrafted, setHideDrafted] = useState(false);
   const [watchlistOnly, setWatchlistOnly] = useState(false);
   const [dragOrderIds, setDragOrderIds] = useState<string[] | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
 
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir(DESCENDING_DEFAULT_KEYS.has(key) ? "desc" : "asc");
+    }
+  }
+
+  function sortHeader(label: string, sortKeyName: SortKey) {
+    const active = sortKey === sortKeyName;
+    return (
+      <button
+        type="button"
+        onClick={() => toggleSort(sortKeyName)}
+        className={`flex items-center gap-1 hover:underline ${active ? "font-semibold" : ""}`}
+      >
+        {label}
+        <span className="text-[10px] text-zinc-400">{active ? (sortDir === "asc" ? "▲" : "▼") : ""}</span>
+      </button>
+    );
+  }
+
   // Dragging reassigns overallRank for the whole board, so it only makes
-  // sense against the full, unfiltered list sorted by rank — otherwise
-  // "drop it here" would be ambiguous about where it lands among players
-  // that aren't currently visible.
+  // sense against the full, unfiltered list in natural rank order —
+  // otherwise "drop it here" would be ambiguous (or backwards).
   const canReorder =
-    sortKey === "overallRank" && positionFilter === "ALL" && !hideDrafted && !watchlistOnly && search.trim() === "";
+    sortKey === "overallRank" &&
+    sortDir === "asc" &&
+    positionFilter === "ALL" &&
+    !hideDrafted &&
+    !watchlistOnly &&
+    search.trim() === "";
 
   // A fresh players prop (after a server reorder round-trips through
   // revalidation) always wins over any stale local drag state.
@@ -75,18 +107,18 @@ export default function PlayersTable({
           p.tags.some((t) => t.toLowerCase().includes(q))
       );
     }
+    const direction = sortDir === "asc" ? 1 : -1;
     list.sort((a, b) => {
-      if (sortKey === "name") return a.name.localeCompare(b.name);
+      if (sortKey === "name") return a.name.localeCompare(b.name) * direction;
       const av = a[sortKey];
       const bv = b[sortKey];
       if (av === null && bv === null) return 0;
       if (av === null) return 1;
       if (bv === null) return -1;
-      const direction = DESCENDING_SORT_KEYS.has(sortKey) ? -1 : 1;
       return ((av as number) - (bv as number)) * direction;
     });
     return list;
-  }, [playersWithVorp, search, positionFilter, sortKey, hideDrafted, watchlistOnly]);
+  }, [playersWithVorp, search, positionFilter, sortKey, sortDir, hideDrafted, watchlistOnly]);
 
   // While actively dragging, show the locally-reordered list instead of
   // re-deriving from `players` — the server write happens on drop.
@@ -141,20 +173,6 @@ export default function PlayersTable({
             </option>
           ))}
         </select>
-        <select
-          value={sortKey}
-          onChange={(e) => setSortKey(e.target.value as SortKey)}
-          className="rounded-md border border-zinc-300 px-2 py-2 text-sm dark:border-zinc-700 dark:bg-ink-800"
-        >
-          <option value="overallRank">Sort: Overall Rank</option>
-          <option value="positionRank">Sort: Position Rank</option>
-          <option value="espnAdp">Sort: ESPN ADP</option>
-          <option value="sleeperAdp">Sort: Sleeper ADP</option>
-          <option value="tier">Sort: Tier</option>
-          <option value="name">Sort: Name</option>
-          <option value="projectedPoints">Sort: Projected Points</option>
-          <option value="vorp">Sort: VORP</option>
-        </select>
         <label className="flex items-center gap-1 text-sm">
           <input type="checkbox" checked={hideDrafted} onChange={(e) => setHideDrafted(e.target.checked)} />
           Hide drafted
@@ -167,10 +185,8 @@ export default function PlayersTable({
       </div>
 
       <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-        Showing {filtered.length} of {players.length} players
-        {canReorder
-          ? " — drag ⠿ to reorder rankings"
-          : " — sort by Overall Rank with no filters/search active to drag-reorder rankings"}
+        Showing {filtered.length} of {players.length} players — click a column header to sort
+        {canReorder ? ", or drag ⠿ to reorder rankings" : ""}
       </p>
 
       <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white/90 backdrop-blur-md dark:border-ink-800 dark:bg-ink-900/70">
@@ -179,16 +195,16 @@ export default function PlayersTable({
             <tr>
               {canReorder && <th className="w-10 px-2 py-2"></th>}
               <th className="px-3 py-2">★</th>
-              <th className="px-3 py-2">Rank</th>
-              <th className="px-3 py-2">Name</th>
+              <th className="px-3 py-2">{sortHeader("Rank", "overallRank")}</th>
+              <th className="px-3 py-2">{sortHeader("Name", "name")}</th>
               <th className="px-3 py-2">Pos</th>
               <th className="px-3 py-2">Team</th>
-              <th className="px-3 py-2">Bye</th>
-              <th className="px-3 py-2">Tier</th>
-              <th className="px-3 py-2">ESPN ADP</th>
-              <th className="px-3 py-2">Sleeper ADP</th>
-              <th className="px-3 py-2">Proj Pts</th>
-              <th className="px-3 py-2">VORP</th>
+              <th className="px-3 py-2">{sortHeader("Bye", "byeWeek")}</th>
+              <th className="px-3 py-2">{sortHeader("Tier", "tier")}</th>
+              <th className="px-3 py-2">{sortHeader("ESPN ADP", "espnAdp")}</th>
+              <th className="px-3 py-2">{sortHeader("Sleeper ADP", "sleeperAdp")}</th>
+              <th className="px-3 py-2">{sortHeader("Proj Pts", "projectedPoints")}</th>
+              <th className="px-3 py-2">{sortHeader("VORP", "vorp")}</th>
               <th className="px-3 py-2">Tags</th>
               <th className="px-3 py-2">Status</th>
               <th className="px-3 py-2"></th>
