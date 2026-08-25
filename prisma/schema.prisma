@@ -145,6 +145,23 @@ model LeagueSettings {
   updatedAt   DateTime @updatedAt
 }
 
+// A single traded pick, for leagues where individual picks change hands —
+// "the pick that would normally belong to slot fromSlot in this round now
+// belongs to slot toSlot instead." Both ends resolve to a manager name
+// dynamically via LeagueSettings.managerNames, so renaming a manager (or
+// editing your draft order) never leaves a trade record stale. Only used
+// by the live Draft Day Tracker's "on the clock" prediction — Mock Draft
+// ignores this and always drafts the untraded snake order.
+model DraftPickTrade {
+  id        String   @id @default(cuid())
+  round     Int
+  fromSlot  Int // 1-indexed base snake slot whose pick moved
+  toSlot    Int // 1-indexed slot that now holds it
+  createdAt DateTime @default(now())
+
+  @@unique([round, fromSlot])
+}
+
 // One mock draft run. Snapshots the league settings at the time it was
 // started, so editing your saved settings later doesn't retroactively
 // change an in-progress or completed mock draft.

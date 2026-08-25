@@ -2,26 +2,22 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import type { LeagueSettings, Player } from "@prisma/client";
+import type { DraftPickTrade, LeagueSettings, Player } from "@prisma/client";
 import { POSITIONS, tierColor } from "@/lib/constants";
 import TeamBadge from "@/components/TeamBadge";
 import { teamSlotForPick } from "@/lib/mockDraftEngine";
+import { managerName, managerLabel, resolvePickOwnerSlot } from "@/lib/managerLabels";
 import { markDrafted, undoDraft, resetDraft } from "./actions";
 
-// Plain name, suitable as the actual "drafted by" value stored on the player.
-function managerName(teamSlot: number, settings: LeagueSettings): string {
-  const name = settings.managerNames[teamSlot - 1]?.trim();
-  if (teamSlot === settings.myDraftSlot) return name || "Me";
-  return name || `Team ${teamSlot}`;
-}
-
-// Same, but with a "(Me)" marker for on-screen display only.
-function managerLabel(teamSlot: number, settings: LeagueSettings): string {
-  const name = managerName(teamSlot, settings);
-  return teamSlot === settings.myDraftSlot && name !== "Me" ? `${name} (Me)` : name;
-}
-
-export default function DraftBoard({ players, leagueSettings }: { players: Player[]; leagueSettings: LeagueSettings }) {
+export default function DraftBoard({
+  players,
+  leagueSettings,
+  trades,
+}: {
+  players: Player[];
+  leagueSettings: LeagueSettings;
+  trades: DraftPickTrade[];
+}) {
   const [positionFilter, setPositionFilter] = useState("ALL");
   const [draftingId, setDraftingId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -46,8 +42,14 @@ export default function DraftBoard({ players, leagueSettings }: { players: Playe
   // not just your own picks.
   const totalDrafted = useMemo(() => players.filter((p) => p.draftedBy).length, [players]);
   const nextOverallPick = totalDrafted + 1;
-  const onTheClock = teamSlotForPick(nextOverallPick, leagueSettings.numTeams);
+  const baseOnTheClock = teamSlotForPick(nextOverallPick, leagueSettings.numTeams);
   const onTheClockPickInRound = ((nextOverallPick - 1) % leagueSettings.numTeams) + 1;
+  // The pick's position in the round doesn't change when it's traded —
+  // only who's actually making the pick does.
+  const onTheClock = {
+    round: baseOnTheClock.round,
+    teamSlot: resolvePickOwnerSlot(baseOnTheClock.round, baseOnTheClock.teamSlot, trades),
+  };
 
   function handleDraft(formData: FormData) {
     startTransition(async () => {

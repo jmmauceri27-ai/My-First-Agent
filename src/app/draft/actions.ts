@@ -41,3 +41,23 @@ export async function resetDraft(): Promise<void> {
   revalidatePath("/board");
   revalidatePath("/");
 }
+
+export async function addPickTrade(formData: FormData): Promise<void> {
+  const round = parseInt(String(formData.get("round")), 10);
+  const fromSlot = parseInt(String(formData.get("fromSlot")), 10);
+  const toSlot = parseInt(String(formData.get("toSlot")), 10);
+  if (Number.isNaN(round) || Number.isNaN(fromSlot) || Number.isNaN(toSlot) || fromSlot === toSlot) return;
+
+  await prisma.draftPickTrade.upsert({
+    where: { round_fromSlot: { round, fromSlot } },
+    create: { round, fromSlot, toSlot },
+    update: { toSlot },
+  });
+  revalidatePath("/draft");
+}
+
+export async function deletePickTrade(formData: FormData): Promise<void> {
+  const id = String(formData.get("id"));
+  await prisma.draftPickTrade.delete({ where: { id } });
+  revalidatePath("/draft");
+}
