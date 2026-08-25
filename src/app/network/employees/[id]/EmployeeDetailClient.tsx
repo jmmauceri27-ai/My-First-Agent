@@ -44,7 +44,7 @@ export default function EmployeeDetailClient({
         department: department || null,
       };
       await updateEmployeeAction(employee.id, input);
-      router.refresh();
+      router.push("/network/employees");
     } finally {
       setSaving(false);
     }

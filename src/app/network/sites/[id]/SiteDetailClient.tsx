@@ -106,7 +106,7 @@ export default function SiteDetailClient({
         setError(assignmentsResult.error);
         return;
       }
-      router.refresh();
+      router.push("/network/sites");
     } finally {
       setSaving(false);
     }

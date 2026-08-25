@@ -63,7 +63,7 @@ export default function VendorDetailClient({
         setError(result.error);
         return;
       }
-      router.refresh();
+      router.push("/network");
     } finally {
       setSaving(false);
     }
