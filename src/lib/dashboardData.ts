@@ -93,6 +93,7 @@ export async function getSourceRows(source: DashboardSourceKey): Promise<Dataset
           companyName: s.companyName,
           city: s.city,
           state: s.state,
+          zip3: s.zip ? s.zip.trim().slice(0, 3) || null : null,
           trade: a.trade,
           vendorName: a.vendorName,
           subVendorName: a.subVendorName,

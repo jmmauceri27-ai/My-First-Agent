@@ -40,6 +40,8 @@ export interface ChartCard {
   x: string;
   /** Optional column that further breaks each x-group into side-by-side series (e.g. "sourcingStatus" -> Sourced/Unsourced bars per state). */
   series?: string;
+  /** When set, renders a dropdown that swaps which column groups the x-axis (e.g. State vs. Metro vs. Zip Cluster) -- the first option is the default, overriding `x`. */
+  regionOptions?: { label: string; column: string }[];
   y?: string;
   agg: ChartAgg;
   filters?: FilterCondition[];

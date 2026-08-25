@@ -57,6 +57,39 @@ export const DASHBOARD_DEFINITIONS: DashboardDefinition[] = [
       ],
     },
   },
+  {
+    id: "contract-value-by-region",
+    area: "Contract Value & Financials",
+    config: {
+      name: "Total Contract Value by Region",
+      // Live "Trade" dropdown scopes both cards below to one trade at a time (e.g. Snow Removal);
+      // left on "All" it covers every trade's site+trade assignments together.
+      filterColumns: ["trade"],
+      cards: [
+        {
+          type: "kpi",
+          title: "Total Contract Value",
+          source: "siteTradeAssignments",
+          agg: "sum",
+          column: "contractValue",
+        },
+        {
+          type: "chart",
+          title: "Total Contract Value by Region",
+          source: "siteTradeAssignments",
+          chartType: "bar",
+          x: "state",
+          y: "contractValue",
+          agg: "sum",
+          regionOptions: [
+            { label: "State", column: "state" },
+            { label: "Metro (City)", column: "city" },
+            { label: "Zip Cluster", column: "zip3" },
+          ],
+        },
+      ],
+    },
+  },
 ];
 
 export function getDashboardDefinition(id: string): DashboardDefinition | undefined {

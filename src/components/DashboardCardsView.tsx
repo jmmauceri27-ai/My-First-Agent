@@ -1,7 +1,11 @@
+"use client";
+
+import { useState } from "react";
 import { computeAging, computeChartData, computeGroupedChartData, computeKpi, computeScorecard } from "@/lib/kpi";
 import type { AgingCard, ChartCard, DashboardCard, DatasetRecord, KpiCard, ScorecardCard } from "@/lib/types";
 import type { DashboardSourceKey } from "@/lib/dashboardSources";
 import { CHART_COLORS_LIGHT } from "@/lib/chartPalette";
+import { inputClass } from "./ui/formClasses";
 import AgingDonutChart from "./AgingDonutChart";
 import ChartRenderer from "./ChartRenderer";
 import Card from "./ui/Card";
@@ -17,6 +21,9 @@ export default function DashboardCardsView({
   const chartCards = cards.filter((c): c is ChartCard => c.type === "chart");
   const agingCards = cards.filter((c): c is AgingCard => c.type === "aging");
   const scorecardCards = cards.filter((c): c is ScorecardCard => c.type === "scorecard");
+
+  /** Selected grouping column per chart card index, for chart cards that offer a regionOptions dropdown. */
+  const [regionSelections, setRegionSelections] = useState<Record<number, string>>({});
 
   return (
     <div className="flex flex-col gap-6">
@@ -144,19 +151,37 @@ export default function DashboardCardsView({
         <div className="flex flex-col gap-6">
           {chartCards.map((card, i) => {
             const rows = rowsBySource[card.source] ?? [];
+            const x = card.regionOptions?.length
+              ? (regionSelections[i] ?? card.regionOptions[0].column)
+              : card.x;
             const grouped = card.series
-              ? computeGroupedChartData(rows, card.x, card.series, card.y, card.agg, card.filters)
+              ? computeGroupedChartData(rows, x, card.series, card.y, card.agg, card.filters)
               : null;
-            const data = grouped ? grouped.data : computeChartData(rows, card.x, card.y, card.agg, card.filters);
+            const data = grouped ? grouped.data : computeChartData(rows, x, card.y, card.agg, card.filters);
             return (
               <Card key={i} className="p-4">
-                <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-slate-50">
-                  <span
-                    className="inline-block h-2.5 w-2.5 rounded-full"
-                    style={{ backgroundColor: CHART_COLORS_LIGHT[0] }}
-                  />
-                  {card.title}
-                </h2>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                  <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-slate-50">
+                    <span
+                      className="inline-block h-2.5 w-2.5 rounded-full"
+                      style={{ backgroundColor: CHART_COLORS_LIGHT[0] }}
+                    />
+                    {card.title}
+                  </h2>
+                  {card.regionOptions && card.regionOptions.length > 0 && (
+                    <select
+                      value={x}
+                      onChange={(e) => setRegionSelections((prev) => ({ ...prev, [i]: e.target.value }))}
+                      className={`${inputClass} w-auto`}
+                    >
+                      {card.regionOptions.map((opt) => (
+                        <option key={opt.column} value={opt.column}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
                 <ChartRenderer chartType={card.chartType} data={data} seriesKeys={grouped?.seriesKeys} />
               </Card>
             );
