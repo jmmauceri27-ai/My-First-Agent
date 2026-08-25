@@ -15,7 +15,6 @@ export default function DraftBoard({
   draftOrder: DraftOrderPick[];
 }) {
   const [positionFilter, setPositionFilter] = useState("ALL");
-  const [draftingId, setDraftingId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -43,7 +42,6 @@ export default function DraftBoard({
   function handleDraft(formData: FormData) {
     startTransition(async () => {
       await markDrafted(formData);
-      setDraftingId(null);
       router.refresh();
     });
   }
@@ -120,54 +118,20 @@ export default function DraftBoard({
                     <TeamBadge team={p.team} />
                   </span>
                 </div>
-                {draftingId === p.id ? null : (
-                  <button
-                    onClick={() => setDraftingId(p.id)}
-                    className="rounded-md bg-gridiron-500 px-2 py-1 text-xs font-semibold text-white hover:bg-gridiron-600"
-                  >
-                    Draft
-                  </button>
-                )}
-              </div>
-              {draftingId === p.id && (
-                <form action={handleDraft} className="mt-2 flex flex-wrap items-center gap-1">
+                <form action={handleDraft}>
                   <input type="hidden" name="id" value={p.id} />
-                  <input
-                    name="draftedBy"
-                    defaultValue={onTheClock?.managerName ?? ""}
-                    placeholder="Drafted by (default: Me)"
-                    className="w-36 rounded-md border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-ink-800"
-                  />
-                  <input
-                    name="draftRound"
-                    type="number"
-                    defaultValue={onTheClock?.round}
-                    placeholder="Rnd"
-                    className="w-16 rounded-md border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-ink-800"
-                  />
-                  <input
-                    name="draftPick"
-                    type="number"
-                    defaultValue={onTheClock?.pickInRound}
-                    placeholder="Pick"
-                    className="w-16 rounded-md border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-ink-800"
-                  />
+                  <input type="hidden" name="draftedBy" value={onTheClock?.managerName ?? ""} />
+                  <input type="hidden" name="draftRound" value={onTheClock?.round ?? ""} />
+                  <input type="hidden" name="draftPick" value={onTheClock?.pickInRound ?? ""} />
                   <button
                     type="submit"
                     disabled={pending}
                     className="rounded-md bg-gridiron-500 px-2 py-1 text-xs font-semibold text-white hover:bg-gridiron-600 disabled:opacity-60"
                   >
-                    Confirm
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDraftingId(null)}
-                    className="rounded-md px-2 py-1 text-xs text-zinc-500 hover:bg-zinc-100 dark:hover:bg-ink-800"
-                  >
-                    Cancel
+                    Draft
                   </button>
                 </form>
-              )}
+              </div>
             </div>
           ))}
           {available.length === 0 && <p className="text-sm text-zinc-500">No available players match this filter.</p>}
