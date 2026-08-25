@@ -145,21 +145,18 @@ model LeagueSettings {
   updatedAt   DateTime @updatedAt
 }
 
-// A single traded pick, for leagues where individual picks change hands —
-// "the pick that would normally belong to slot fromSlot in this round now
-// belongs to slot toSlot instead." Both ends resolve to a manager name
-// dynamically via LeagueSettings.managerNames, so renaming a manager (or
-// editing your draft order) never leaves a trade record stale. Only used
-// by the live Draft Day Tracker's "on the clock" prediction — Mock Draft
-// ignores this and always drafts the untraded snake order.
-model DraftPickTrade {
-  id        String   @id @default(cuid())
-  round     Int
-  fromSlot  Int // 1-indexed base snake slot whose pick moved
-  toSlot    Int // 1-indexed slot that now holds it
-  createdAt DateTime @default(now())
-
-  @@unique([round, fromSlot])
+// One physical pick in your real league's draft, uploaded directly as a
+// full list (e.g. all 192 picks for a 12-team/16-round league) rather
+// than computed from a snake order — since pick trading can scramble
+// ownership in ways a formula can't reconstruct, the sheet you upload is
+// just the ground truth. Only used by the live Draft Day Tracker; Mock
+// Draft is unrelated and still simulates its own plain snake order.
+model DraftOrderPick {
+  id          String @id @default(cuid())
+  overallPick Int    @unique
+  round       Int
+  pickInRound Int
+  managerName String
 }
 
 // One mock draft run. Snapshots the league settings at the time it was

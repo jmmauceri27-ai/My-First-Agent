@@ -2,21 +2,17 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import type { DraftPickTrade, LeagueSettings, Player } from "@prisma/client";
+import type { DraftOrderPick, Player } from "@prisma/client";
 import { POSITIONS, tierColor } from "@/lib/constants";
 import TeamBadge from "@/components/TeamBadge";
-import { teamSlotForPick } from "@/lib/mockDraftEngine";
-import { managerName, managerLabel, resolvePickOwnerSlot } from "@/lib/managerLabels";
 import { markDrafted, undoDraft, resetDraft } from "./actions";
 
 export default function DraftBoard({
   players,
-  leagueSettings,
-  trades,
+  draftOrder,
 }: {
   players: Player[];
-  leagueSettings: LeagueSettings;
-  trades: DraftPickTrade[];
+  draftOrder: DraftOrderPick[];
 }) {
   const [positionFilter, setPositionFilter] = useState("ALL");
   const [draftingId, setDraftingId] = useState<string | null>(null);
@@ -38,18 +34,11 @@ export default function DraftBoard({
   );
 
   // Every logged pick (by anyone) counts toward the running overall-pick
-  // number, so "on the clock" reflects the whole league's snake order —
+  // number, so "on the clock" reflects the whole league's draft order —
   // not just your own picks.
   const totalDrafted = useMemo(() => players.filter((p) => p.draftedBy).length, [players]);
   const nextOverallPick = totalDrafted + 1;
-  const baseOnTheClock = teamSlotForPick(nextOverallPick, leagueSettings.numTeams);
-  const onTheClockPickInRound = ((nextOverallPick - 1) % leagueSettings.numTeams) + 1;
-  // The pick's position in the round doesn't change when it's traded —
-  // only who's actually making the pick does.
-  const onTheClock = {
-    round: baseOnTheClock.round,
-    teamSlot: resolvePickOwnerSlot(baseOnTheClock.round, baseOnTheClock.teamSlot, trades),
-  };
+  const onTheClock = draftOrder.find((p) => p.overallPick === nextOverallPick);
 
   function handleDraft(formData: FormData) {
     startTransition(async () => {
@@ -77,10 +66,18 @@ export default function DraftBoard({
   return (
     <div>
       <div className="mb-4 rounded-lg border border-zinc-200 bg-white/90 p-3 text-sm backdrop-blur-md dark:border-ink-800 dark:bg-ink-900/70">
-        Round {onTheClock.round}, Pick {onTheClockPickInRound} (#{nextOverallPick} overall) — on the clock:{" "}
-        <span className="font-semibold text-gridiron-600 dark:text-gridiron-300">
-          {managerLabel(onTheClock.teamSlot, leagueSettings)}
-        </span>
+        {onTheClock ? (
+          <>
+            Round {onTheClock.round}, Pick {onTheClock.pickInRound} (#{nextOverallPick} overall) — on the clock:{" "}
+            <span className="font-semibold text-gridiron-600 dark:text-gridiron-300">
+              {onTheClock.managerName}
+            </span>
+          </>
+        ) : (
+          <span className="text-zinc-500">
+            Pick #{nextOverallPick} overall — upload your draft order above to see who's on the clock.
+          </span>
+        )}
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
       <div>
@@ -137,21 +134,21 @@ export default function DraftBoard({
                   <input type="hidden" name="id" value={p.id} />
                   <input
                     name="draftedBy"
-                    defaultValue={managerName(onTheClock.teamSlot, leagueSettings)}
+                    defaultValue={onTheClock?.managerName ?? ""}
                     placeholder="Drafted by (default: Me)"
                     className="w-36 rounded-md border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-ink-800"
                   />
                   <input
                     name="draftRound"
                     type="number"
-                    defaultValue={onTheClock.round}
+                    defaultValue={onTheClock?.round}
                     placeholder="Rnd"
                     className="w-16 rounded-md border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-ink-800"
                   />
                   <input
                     name="draftPick"
                     type="number"
-                    defaultValue={onTheClockPickInRound}
+                    defaultValue={onTheClock?.pickInRound}
                     placeholder="Pick"
                     className="w-16 rounded-md border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-ink-800"
                   />

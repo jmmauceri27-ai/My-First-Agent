@@ -2,6 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { importDraftOrderFromCsv, type DraftOrderImportResult } from "@/lib/importDraftOrder";
+
+export type { DraftOrderImportResult };
 
 export async function markDrafted(formData: FormData): Promise<void> {
   const id = String(formData.get("id"));
@@ -42,22 +45,15 @@ export async function resetDraft(): Promise<void> {
   revalidatePath("/");
 }
 
-export async function addPickTrade(formData: FormData): Promise<void> {
-  const round = parseInt(String(formData.get("round")), 10);
-  const fromSlot = parseInt(String(formData.get("fromSlot")), 10);
-  const toSlot = parseInt(String(formData.get("toSlot")), 10);
-  if (Number.isNaN(round) || Number.isNaN(fromSlot) || Number.isNaN(toSlot) || fromSlot === toSlot) return;
-
-  await prisma.draftPickTrade.upsert({
-    where: { round_fromSlot: { round, fromSlot } },
-    create: { round, fromSlot, toSlot },
-    update: { toSlot },
-  });
+export async function importDraftOrder(formData: FormData): Promise<DraftOrderImportResult> {
+  const file = formData.get("file");
+  const raw = file instanceof File && file.size > 0 ? await file.text() : String(formData.get("csv") ?? "");
+  const result = await importDraftOrderFromCsv(raw);
   revalidatePath("/draft");
+  return result;
 }
 
-export async function deletePickTrade(formData: FormData): Promise<void> {
-  const id = String(formData.get("id"));
-  await prisma.draftPickTrade.delete({ where: { id } });
+export async function clearDraftOrder(): Promise<void> {
+  await prisma.draftOrderPick.deleteMany();
   revalidatePath("/draft");
 }

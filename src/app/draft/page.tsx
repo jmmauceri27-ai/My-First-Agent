@@ -1,15 +1,13 @@
 import { prisma } from "@/lib/prisma";
-import { getOrCreateLeagueSettings } from "@/lib/leagueSettings";
 import DraftBoard from "./DraftBoard";
-import PickTrades from "./PickTrades";
+import DraftOrderImportForm from "./DraftOrderImportForm";
 
 export const dynamic = "force-dynamic";
 
 export default async function DraftPage() {
-  const [players, leagueSettings, trades] = await Promise.all([
+  const [players, draftOrder] = await Promise.all([
     prisma.player.findMany(),
-    getOrCreateLeagueSettings(),
-    prisma.draftPickTrade.findMany(),
+    prisma.draftOrderPick.findMany({ orderBy: { overallPick: "asc" } }),
   ]);
 
   return (
@@ -18,8 +16,8 @@ export default async function DraftPage() {
       <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
         Mark players as they come off the board — by you or an opponent — and watch your remaining board update live.
       </p>
-      <PickTrades trades={trades} leagueSettings={leagueSettings} />
-      <DraftBoard players={players} leagueSettings={leagueSettings} trades={trades} />
+      <DraftOrderImportForm picks={draftOrder} />
+      <DraftBoard players={players} draftOrder={draftOrder} />
     </div>
   );
 }
