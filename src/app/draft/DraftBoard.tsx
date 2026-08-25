@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { DraftOrderPick, Player } from "@prisma/client";
 import { POSITIONS, tierColor } from "@/lib/constants";
 import TeamBadge from "@/components/TeamBadge";
@@ -109,10 +110,10 @@ export default function DraftBoard({
             <div key={p.id} className={`rounded-lg border-l-4 bg-white p-2 shadow-sm backdrop-blur-md dark:bg-ink-900/70 ${tierColor(p.tier)}`}>
               <div className="flex items-center justify-between gap-2">
                 <div>
-                  <span className="font-medium">
+                  <Link href={`/players/${p.id}`} className="font-medium hover:underline">
                     {p.overallRank ? `${p.overallRank}. ` : ""}
                     {p.name}
-                  </span>
+                  </Link>
                   <span className="ml-2 inline-flex items-center gap-1 text-xs text-zinc-500">
                     {p.position}
                     <TeamBadge team={p.team} />
@@ -152,7 +153,9 @@ export default function DraftBoard({
           {drafted.map((p) => (
             <div key={p.id} className="flex items-center justify-between rounded-lg border border-zinc-200 p-2 text-sm dark:border-ink-800">
               <div>
-                <span className="font-medium">{p.name}</span>
+                <Link href={`/players/${p.id}`} className="font-medium hover:underline">
+                  {p.name}
+                </Link>
                 <span className="ml-2 inline-flex items-center gap-1 text-xs text-zinc-500">
                   {p.position}
                   <TeamBadge team={p.team} />
