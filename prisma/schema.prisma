@@ -130,10 +130,11 @@ model DraftHistoryPick {
 // starting-roster construction. Single-user app, so this is a singleton
 // row (there's only ever one, fetched with findFirst).
 model LeagueSettings {
-  id          String   @id @default(cuid())
-  numTeams    Int      @default(12)
-  myDraftSlot Int      @default(1) // 1-indexed pick position in round 1
-  qbSlots     Int      @default(1)
+  id           String   @id @default(cuid())
+  numTeams     Int      @default(12)
+  myDraftSlot  Int      @default(1) // 1-indexed pick position in round 1
+  managerNames String[] // draft order — index 0 = 1st overall pick; length should match numTeams
+  qbSlots      Int      @default(1)
   rbSlots     Int      @default(2)
   wrSlots     Int      @default(2)
   teSlots     Int      @default(1)
@@ -148,12 +149,13 @@ model LeagueSettings {
 // started, so editing your saved settings later doesn't retroactively
 // change an in-progress or completed mock draft.
 model MockDraft {
-  id          String          @id @default(cuid())
-  createdAt   DateTime        @default(now())
-  completed   Boolean         @default(false)
-  numTeams    Int
-  myDraftSlot Int
-  qbSlots     Int
+  id           String          @id @default(cuid())
+  createdAt    DateTime        @default(now())
+  completed    Boolean         @default(false)
+  numTeams     Int
+  myDraftSlot  Int
+  managerNames String[]
+  qbSlots      Int
   rbSlots     Int
   wrSlots     Int
   teSlots     Int

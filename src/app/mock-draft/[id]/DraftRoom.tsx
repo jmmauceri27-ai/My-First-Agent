@@ -19,8 +19,10 @@ type Props = {
   isUserTurn: boolean;
 };
 
-function teamLabel(teamSlot: number, myDraftSlot: number): string {
-  return teamSlot === myDraftSlot ? "You" : `Team ${teamSlot}`;
+function teamLabel(teamSlot: number, mockDraft: MockDraft): string {
+  const name = mockDraft.managerNames[teamSlot - 1]?.trim();
+  if (teamSlot === mockDraft.myDraftSlot) return name ? `${name} (You)` : "You";
+  return name || `Team ${teamSlot}`;
 }
 
 // Assigns a manager's picks (in draft order) to starting-slot labels, falling
@@ -106,7 +108,7 @@ export default function DraftRoom({
           <p className="font-semibold">
             Pick {nextOverallPick} of {totalPicks} — Round {onTheClockRound} — On the clock:{" "}
             <span className={isUserTurn ? "text-gridiron-600 dark:text-gridiron-300" : ""}>
-              {onTheClockTeamSlot != null ? teamLabel(onTheClockTeamSlot, mockDraft.myDraftSlot) : "—"}
+              {onTheClockTeamSlot != null ? teamLabel(onTheClockTeamSlot, mockDraft) : "—"}
             </span>
           </p>
         )}
@@ -210,7 +212,7 @@ export default function DraftRoom({
                     <td className="px-3 py-2 text-xs text-zinc-400">
                       R{p.round}.{String(((p.overallPick - 1) % mockDraft.numTeams) + 1).padStart(2, "0")}
                     </td>
-                    <td className="px-3 py-2 font-medium">{teamLabel(p.teamSlot, mockDraft.myDraftSlot)}</td>
+                    <td className="px-3 py-2 font-medium">{teamLabel(p.teamSlot, mockDraft)}</td>
                     <td className="px-3 py-2">{p.playerName}</td>
                     <td className="px-3 py-2">{p.position}</td>
                     <td className="px-3 py-2">

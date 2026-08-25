@@ -50,6 +50,25 @@ export default async function MockDraftPage() {
         </div>
       </div>
 
+      {settings.managerNames.some((n) => n.trim()) && (
+        <div className="mb-6">
+          <h2 className="mb-2 text-lg font-bold">Draft Order</h2>
+          <ol className="grid gap-1 text-sm sm:grid-cols-2 lg:grid-cols-3">
+            {settings.managerNames.map((name, i) => (
+              <li
+                key={i}
+                className={`rounded-md border border-zinc-200 bg-white/90 px-3 py-1.5 backdrop-blur-md dark:border-ink-800 dark:bg-ink-900/70 ${
+                  i + 1 === settings.myDraftSlot ? "font-semibold text-gridiron-600 dark:text-gridiron-300" : ""
+                }`}
+              >
+                {i + 1}. {name.trim() || `Team ${i + 1}`}
+                {i + 1 === settings.myDraftSlot ? " (You)" : ""}
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
       <h2 className="mb-3 text-lg font-bold">Past Mock Drafts</h2>
       {mockDrafts.length === 0 ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">

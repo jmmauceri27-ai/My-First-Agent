@@ -2,12 +2,26 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import type { Player } from "@prisma/client";
+import type { LeagueSettings, Player } from "@prisma/client";
 import { POSITIONS, tierColor } from "@/lib/constants";
 import TeamBadge from "@/components/TeamBadge";
+import { teamSlotForPick } from "@/lib/mockDraftEngine";
 import { markDrafted, undoDraft, resetDraft } from "./actions";
 
-export default function DraftBoard({ players }: { players: Player[] }) {
+// Plain name, suitable as the actual "drafted by" value stored on the player.
+function managerName(teamSlot: number, settings: LeagueSettings): string {
+  const name = settings.managerNames[teamSlot - 1]?.trim();
+  if (teamSlot === settings.myDraftSlot) return name || "Me";
+  return name || `Team ${teamSlot}`;
+}
+
+// Same, but with a "(Me)" marker for on-screen display only.
+function managerLabel(teamSlot: number, settings: LeagueSettings): string {
+  const name = managerName(teamSlot, settings);
+  return teamSlot === settings.myDraftSlot && name !== "Me" ? `${name} (Me)` : name;
+}
+
+export default function DraftBoard({ players, leagueSettings }: { players: Player[]; leagueSettings: LeagueSettings }) {
   const [positionFilter, setPositionFilter] = useState("ALL");
   const [draftingId, setDraftingId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -26,6 +40,14 @@ export default function DraftBoard({ players }: { players: Player[] }) {
         .sort((a, b) => (b.draftedAt?.getTime() ?? 0) - (a.draftedAt?.getTime() ?? 0)),
     [players]
   );
+
+  // Every logged pick (by anyone) counts toward the running overall-pick
+  // number, so "on the clock" reflects the whole league's snake order —
+  // not just your own picks.
+  const totalDrafted = useMemo(() => players.filter((p) => p.draftedBy).length, [players]);
+  const nextOverallPick = totalDrafted + 1;
+  const onTheClock = teamSlotForPick(nextOverallPick, leagueSettings.numTeams);
+  const onTheClockPickInRound = ((nextOverallPick - 1) % leagueSettings.numTeams) + 1;
 
   function handleDraft(formData: FormData) {
     startTransition(async () => {
@@ -51,7 +73,14 @@ export default function DraftBoard({ players }: { players: Player[] }) {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div>
+      <div className="mb-4 rounded-lg border border-zinc-200 bg-white/90 p-3 text-sm backdrop-blur-md dark:border-ink-800 dark:bg-ink-900/70">
+        Round {onTheClock.round}, Pick {onTheClockPickInRound} (#{nextOverallPick} overall) — on the clock:{" "}
+        <span className="font-semibold text-gridiron-600 dark:text-gridiron-300">
+          {managerLabel(onTheClock.teamSlot, leagueSettings)}
+        </span>
+      </div>
+      <div className="grid gap-6 lg:grid-cols-2">
       <div>
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <h2 className="text-lg font-bold">On the Board ({available.length})</h2>
@@ -106,18 +135,21 @@ export default function DraftBoard({ players }: { players: Player[] }) {
                   <input type="hidden" name="id" value={p.id} />
                   <input
                     name="draftedBy"
+                    defaultValue={managerName(onTheClock.teamSlot, leagueSettings)}
                     placeholder="Drafted by (default: Me)"
                     className="w-36 rounded-md border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-ink-800"
                   />
                   <input
                     name="draftRound"
                     type="number"
+                    defaultValue={onTheClock.round}
                     placeholder="Rnd"
                     className="w-16 rounded-md border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-ink-800"
                   />
                   <input
                     name="draftPick"
                     type="number"
+                    defaultValue={onTheClockPickInRound}
                     placeholder="Pick"
                     className="w-16 rounded-md border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-ink-800"
                   />
@@ -177,6 +209,7 @@ export default function DraftBoard({ players }: { players: Player[] }) {
           ))}
           {drafted.length === 0 && <p className="text-sm text-zinc-500">No players drafted yet.</p>}
         </div>
+      </div>
       </div>
     </div>
   );

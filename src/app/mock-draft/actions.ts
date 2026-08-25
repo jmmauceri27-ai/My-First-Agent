@@ -24,9 +24,15 @@ function intField(formData: FormData, name: string, fallback: number): number {
 export async function saveLeagueSettings(formData: FormData): Promise<void> {
   const numTeams = Math.max(2, Math.min(20, intField(formData, "numTeams", 12)));
   const myDraftSlot = Math.max(1, Math.min(numTeams, intField(formData, "myDraftSlot", 1)));
+  const managerNames = formData
+    .getAll("managerNames")
+    .map((v) => String(v).trim())
+    .slice(0, numTeams);
+  while (managerNames.length < numTeams) managerNames.push("");
   const data = {
     numTeams,
     myDraftSlot,
+    managerNames,
     qbSlots: Math.max(0, intField(formData, "qbSlots", 1)),
     rbSlots: Math.max(0, intField(formData, "rbSlots", 2)),
     wrSlots: Math.max(0, intField(formData, "wrSlots", 2)),
@@ -103,6 +109,7 @@ export async function startMockDraft(): Promise<never> {
     data: {
       numTeams: settings.numTeams,
       myDraftSlot: settings.myDraftSlot,
+      managerNames: settings.managerNames,
       qbSlots: settings.qbSlots,
       rbSlots: settings.rbSlots,
       wrSlots: settings.wrSlots,
