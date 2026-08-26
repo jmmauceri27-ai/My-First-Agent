@@ -83,8 +83,7 @@ export const DASHBOARD_DEFINITIONS: DashboardDefinition[] = [
           agg: "sum",
           regionOptions: [
             { label: "State", column: "state" },
-            { label: "Metro (City)", column: "city" },
-            { label: "Zip Cluster", column: "zip3" },
+            { label: "Region", column: "region" },
           ],
         },
       ],

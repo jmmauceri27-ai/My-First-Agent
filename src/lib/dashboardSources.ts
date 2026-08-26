@@ -115,7 +115,7 @@ export const DASHBOARD_SOURCES: DashboardSourceDef[] = [
       { key: "companyName", label: "Client", type: "string" },
       { key: "city", label: "City", type: "string" },
       { key: "state", label: "State", type: "string" },
-      { key: "zip3", label: "Zip cluster", type: "string" },
+      { key: "region", label: "Region", type: "string" },
       { key: "trade", label: "Trade", type: "string" },
       { key: "vendorName", label: "Vendor", type: "string" },
       { key: "subVendorName", label: "Sub-Vendor", type: "string" },

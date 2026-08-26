@@ -4,6 +4,15 @@ import { listSites, listVendors } from "./networkDal";
 import type { DashboardSourceKey } from "./dashboardSources";
 import type { DatasetRecord } from "./types";
 
+/** Buckets a site into a region smaller than its state -- state + the zip's first 2 digits (e.g. "NY 10xx") -- broad
+ * enough that buckets aren't scattered one-site-each, unlike a full 5- or 3-digit zip. Falls back to just the state
+ * when zip is missing. */
+function siteRegion(state: string | null, zip: string | null): string | null {
+  const prefix = zip?.trim().slice(0, 2);
+  if (!prefix || prefix.length < 2) return state;
+  return state ? `${state} ${prefix}xx` : `${prefix}xx`;
+}
+
 /** Flattens each fixed dashboard source's CRM/Network entities into flat rows for kpi.ts's generic aggregations. */
 export async function getSourceRows(source: DashboardSourceKey): Promise<DatasetRecord[]> {
   switch (source) {
@@ -93,7 +102,7 @@ export async function getSourceRows(source: DashboardSourceKey): Promise<Dataset
           companyName: s.companyName,
           city: s.city,
           state: s.state,
-          zip3: s.zip ? s.zip.trim().slice(0, 3) || null : null,
+          region: siteRegion(s.state, s.zip),
           trade: a.trade,
           vendorName: a.vendorName,
           subVendorName: a.subVendorName,
