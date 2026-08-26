@@ -21,6 +21,27 @@ import type {
 
 const ATTACHMENTS_BUCKET = "crm-attachments";
 
+/** Common office/document extensions -> MIME type, used when the browser doesn't report one (e.g. some
+ * Windows/Linux setups leave `File.type` empty for .xlsx uploads). Getting this right at upload time matters --
+ * Supabase Storage serves whatever content-type was stored, and it can't be corrected later on download. */
+const CONTENT_TYPE_BY_EXTENSION: Record<string, string> = {
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  xls: "application/vnd.ms-excel",
+  csv: "text/csv",
+  pdf: "application/pdf",
+  doc: "application/msword",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+};
+
+function resolveContentType(file: File): string | undefined {
+  if (file.type) return file.type;
+  const ext = file.name.split(".").pop()?.toLowerCase();
+  return ext ? CONTENT_TYPE_BY_EXTENSION[ext] : undefined;
+}
+
 // ---------- Companies ----------
 
 export async function listCompanies(): Promise<Company[]> {
@@ -430,7 +451,7 @@ export async function uploadContractFile(contractId: string, file: File): Promis
 
   const { error: uploadError } = await supabase.storage
     .from(ATTACHMENTS_BUCKET)
-    .upload(storagePath, file, { contentType: file.type || undefined });
+    .upload(storagePath, file, { contentType: resolveContentType(file) });
   if (uploadError) throw new Error(uploadError.message);
 
   const { data, error } = await supabase
@@ -440,7 +461,7 @@ export async function uploadContractFile(contractId: string, file: File): Promis
       contract_id: contractId,
       file_name: file.name,
       storage_path: storagePath,
-      content_type: file.type || null,
+      content_type: resolveContentType(file) ?? null,
       size_bytes: file.size,
     })
     .select("id, contract_id, file_name, storage_path, content_type, size_bytes, uploaded_at")
@@ -690,7 +711,7 @@ export async function uploadOpportunityFile(opportunityId: string, file: File): 
 
   const { error: uploadError } = await supabase.storage
     .from(ATTACHMENTS_BUCKET)
-    .upload(storagePath, file, { contentType: file.type || undefined });
+    .upload(storagePath, file, { contentType: resolveContentType(file) });
   if (uploadError) throw new Error(uploadError.message);
 
   const { data, error } = await supabase
@@ -700,7 +721,7 @@ export async function uploadOpportunityFile(opportunityId: string, file: File): 
       opportunity_id: opportunityId,
       file_name: file.name,
       storage_path: storagePath,
-      content_type: file.type || null,
+      content_type: resolveContentType(file) ?? null,
       size_bytes: file.size,
     })
     .select("id, opportunity_id, file_name, storage_path, content_type, size_bytes, uploaded_at")
