@@ -58,10 +58,10 @@ export const DASHBOARD_DEFINITIONS: DashboardDefinition[] = [
     },
   },
   {
-    id: "contract-value-by-region",
+    id: "contract-value-by-state",
     area: "Contract Value & Financials",
     config: {
-      name: "Total Contract Value by Region",
+      name: "Total Contract Value by State",
       // Live "Trade" dropdown scopes both cards below to one trade at a time (e.g. Snow Removal);
       // left on "All" it covers every trade's site+trade assignments together.
       filterColumns: ["trade"],
@@ -75,16 +75,12 @@ export const DASHBOARD_DEFINITIONS: DashboardDefinition[] = [
         },
         {
           type: "chart",
-          title: "Total Contract Value by Region",
+          title: "Total Contract Value by State",
           source: "siteTradeAssignments",
           chartType: "bar",
           x: "state",
           y: "contractValue",
           agg: "sum",
-          regionOptions: [
-            { label: "State", column: "state" },
-            { label: "Region", column: "region" },
-          ],
         },
       ],
     },
