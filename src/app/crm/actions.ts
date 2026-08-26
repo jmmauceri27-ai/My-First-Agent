@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { buildXlsxBase64 } from "@/lib/exportExcel";
+import type { DatasetRecord } from "@/lib/types";
 import {
   bulkCreateCompanies,
   bulkCreateEmployees,
@@ -50,6 +52,10 @@ import type {
   OpportunityInput,
   OpportunityStage,
 } from "@/lib/crmTypes";
+
+export async function exportPipelineToExcelAction(rows: DatasetRecord[], columns: string[]): Promise<string> {
+  return buildXlsxBase64(rows, columns);
+}
 
 export async function saveOpportunityAction(id: string | null, input: OpportunityInput): Promise<void> {
   if (id) {
