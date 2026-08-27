@@ -554,6 +554,36 @@ export async function bulkAssignTrades(siteIds: string[], trades: string[]): Pro
   }
 }
 
+/** Sets the same Contract on many sites at once -- e.g. "these 40 sites just got added to this signed contract." Resyncs site_count for the new contract and for any contract sites are being moved off of. */
+export async function bulkAssignContract(siteIds: string[], contractId: string): Promise<void> {
+  if (siteIds.length === 0) return;
+  const supabase = createAdminClient();
+  const { data: existing, error: fetchError } = await supabase
+    .from("sites")
+    .select("id, contract_id")
+    .in("id", siteIds)
+    .eq("user_id", OWNER_USER_ID);
+  if (fetchError) throw new Error(fetchError.message);
+
+  const previousContractIds = new Set(
+    (existing ?? [])
+      .map((s) => s.contract_id as string | null)
+      .filter((id): id is string => !!id && id !== contractId),
+  );
+
+  const { error } = await supabase
+    .from("sites")
+    .update({ contract_id: contractId, updated_at: new Date().toISOString() })
+    .in("id", siteIds)
+    .eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
+
+  await Promise.all([
+    syncContractSiteCount(contractId),
+    ...Array.from(previousContractIds).map((id) => syncContractSiteCount(id)),
+  ]);
+}
+
 /**
  * Assigns a Vendor (and optionally Sub-Vendor) for one trade across many sites at once -- e.g. "these 27
  * sites use Vendor X for Snow Removal only." Adds the trade to each site's Trade selection first (so the

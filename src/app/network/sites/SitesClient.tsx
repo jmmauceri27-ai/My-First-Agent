@@ -34,6 +34,7 @@ import UpdateSitesModal from "../UpdateSitesModal";
 import UpdateSiteTradeAssignmentsModal from "../UpdateSiteTradeAssignmentsModal";
 import UpdateSiteMeasurementsModal from "../UpdateSiteMeasurementsModal";
 import {
+  bulkAssignContractAction,
   bulkAssignTradesAction,
   bulkAssignVendorForTradeAction,
   bulkDeleteSitesAction,
@@ -237,6 +238,9 @@ export default function SitesClient({
   const [bulkSubVendorId, setBulkSubVendorId] = useState("");
   const [assigningVendor, setAssigningVendor] = useState(false);
   const [bulkVendorError, setBulkVendorError] = useState<string | null>(null);
+  const [bulkContractId, setBulkContractId] = useState("");
+  const [assigningContract, setAssigningContract] = useState(false);
+  const [bulkContractError, setBulkContractError] = useState<string | null>(null);
   const [deletingSites, setDeletingSites] = useState(false);
   const [bulkDeleteError, setBulkDeleteError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -427,6 +431,24 @@ export default function SitesClient({
       router.refresh();
     } finally {
       setAssigningVendor(false);
+    }
+  }
+
+  async function handleBulkAssignContract() {
+    if (selectedIds.size === 0 || !bulkContractId) return;
+    setBulkContractError(null);
+    setAssigningContract(true);
+    try {
+      const result = await bulkAssignContractAction(Array.from(selectedIds), bulkContractId);
+      if (result.error) {
+        setBulkContractError(result.error);
+        return;
+      }
+      setSelectedIds(new Set());
+      setBulkContractId("");
+      router.refresh();
+    } finally {
+      setAssigningContract(false);
     }
   }
 
@@ -761,6 +783,8 @@ export default function SitesClient({
                 setBulkVendorId("");
                 setBulkSubVendorId("");
                 setBulkVendorError(null);
+                setBulkContractId("");
+                setBulkContractError(null);
                 setBulkDeleteError(null);
               }}
             >
@@ -816,6 +840,30 @@ export default function SitesClient({
               {assigningVendor ? "Assigning…" : "Assign vendor to selected"}
             </Button>
             {bulkVendorError && <span className="text-xs text-critical">{bulkVendorError}</span>}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-xs text-slate-400">Assign to contract:</span>
+            <select
+              value={bulkContractId}
+              onChange={(e) => setBulkContractId(e.target.value)}
+              className={`${inputClass} w-48`}
+            >
+              <option value="">Contract…</option>
+              {contracts.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            <Button
+              variant="secondary"
+              onClick={handleBulkAssignContract}
+              disabled={!bulkContractId || assigningContract}
+            >
+              {assigningContract ? "Assigning…" : "Assign to selected"}
+            </Button>
+            {bulkContractError && <span className="text-xs text-critical">{bulkContractError}</span>}
           </div>
         </div>
       )}
