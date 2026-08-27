@@ -28,11 +28,13 @@ import {
   getVendor,
   listAssignmentsForSubVendor,
   listAssignmentsForVendor,
+  listDuplicateSiteGroups,
   listSiteFilterTemplates,
   listSites,
   listSitesForCompany,
   listSitesForOpportunity,
   listVendors,
+  mergeSites,
   saveSiteTradeAssignments,
   updateSite,
   updateSiteFilterTemplate,
@@ -115,6 +117,25 @@ export async function getSiteAction(id: string): Promise<Site | null> {
 
 export async function listSitesForCompanyAction(companyId: string): Promise<Site[]> {
   return listSitesForCompany(companyId);
+}
+
+export async function listDuplicateSiteGroupsAction(): Promise<Site[][]> {
+  return listDuplicateSiteGroups();
+}
+
+export async function mergeSitesAction(
+  keepSiteId: string,
+  deleteSiteIds: string[],
+  input: SiteInput,
+  assignments: SiteTradeAssignmentInput[],
+): Promise<{ error?: string }> {
+  try {
+    await mergeSites(keepSiteId, deleteSiteIds, input, assignments);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to merge sites." };
+  }
+  revalidatePath("/network/sites");
+  return {};
 }
 
 export async function listAssignmentsForVendorAction(vendorId: string): Promise<VendorTradeAssignment[]> {

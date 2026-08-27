@@ -202,6 +202,33 @@ export async function listSites(): Promise<Site[]> {
   return (data ?? []).map(mapSite);
 }
 
+/** Groups every site sharing the same (trimmed, case-insensitive) Site ID -- only groups with more than one record, i.e. likely duplicate entries for the same physical site. */
+export async function listDuplicateSiteGroups(): Promise<Site[][]> {
+  const sites = await listSites();
+  const byCode = new Map<string, Site[]>();
+  for (const s of sites) {
+    const code = s.siteCode?.trim().toLowerCase();
+    if (!code) continue;
+    if (!byCode.has(code)) byCode.set(code, []);
+    byCode.get(code)!.push(s);
+  }
+  return Array.from(byCode.values()).filter((group) => group.length > 1);
+}
+
+/** Merges several duplicate site records into one: overwrites `keepSiteId` with the reconciled fields/trade assignments, then deletes every other record in the group (cascading its own trade assignments), resyncing any affected Opportunity/Contract site_count along the way. */
+export async function mergeSites(
+  keepSiteId: string,
+  deleteSiteIds: string[],
+  input: SiteInput,
+  assignments: SiteTradeAssignmentInput[],
+): Promise<void> {
+  await updateSite(keepSiteId, input);
+  await saveSiteTradeAssignments(keepSiteId, assignments);
+  for (const id of deleteSiteIds) {
+    await deleteSite(id);
+  }
+}
+
 export async function getSite(id: string): Promise<Site | null> {
   const supabase = createAdminClient();
   const { data, error } = await supabase

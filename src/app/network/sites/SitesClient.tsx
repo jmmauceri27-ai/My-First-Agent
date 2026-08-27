@@ -835,6 +835,9 @@ export default function SitesClient({
               </div>
             )}
           </div>
+          <Button variant="secondary" onClick={() => router.push("/network/sites/duplicates")}>
+            Duplicate sites
+          </Button>
           <Button onClick={() => setCreating(true)}>+ New site</Button>
         </div>
       </div>
