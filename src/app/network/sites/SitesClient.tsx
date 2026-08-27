@@ -38,6 +38,9 @@ import {
   bulkAssignTradesAction,
   bulkAssignVendorForTradeAction,
   bulkDeleteSitesAction,
+  bulkUnassignContractAction,
+  bulkUnassignTradesAction,
+  bulkUnassignVendorAction,
   deleteSiteFilterTemplateAction,
   exportSitesToExcelAction,
   saveSiteFilterTemplateAction,
@@ -236,15 +239,20 @@ export default function SitesClient({
   const [bulkTrades, setBulkTrades] = useState<string[]>([]);
   const [assigning, setAssigning] = useState(false);
   const [bulkError, setBulkError] = useState<string | null>(null);
+  const [bulkRemoveTrades, setBulkRemoveTrades] = useState<string[]>([]);
+  const [unassigningTrades, setUnassigningTrades] = useState(false);
+  const [bulkRemoveTradesError, setBulkRemoveTradesError] = useState<string | null>(null);
   const [bulkVendorTrade, setBulkVendorTrade] = useState("");
   const [bulkVendorId, setBulkVendorId] = useState("");
   const [bulkSubVendorId, setBulkSubVendorId] = useState("");
   const [assigningVendor, setAssigningVendor] = useState(false);
   const [bulkVendorError, setBulkVendorError] = useState<string | null>(null);
+  const [unassigningVendor, setUnassigningVendor] = useState(false);
   const [bulkContractTrade, setBulkContractTrade] = useState("");
   const [bulkContractId, setBulkContractId] = useState("");
   const [assigningContract, setAssigningContract] = useState(false);
   const [bulkContractError, setBulkContractError] = useState<string | null>(null);
+  const [unassigningContract, setUnassigningContract] = useState(false);
   const [deletingSites, setDeletingSites] = useState(false);
   const [bulkDeleteError, setBulkDeleteError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -413,6 +421,31 @@ export default function SitesClient({
     }
   }
 
+  async function handleBulkUnassignTrades() {
+    if (selectedIds.size === 0 || bulkRemoveTrades.length === 0) return;
+    if (
+      !window.confirm(
+        `Remove ${bulkRemoveTrades.join(", ")} from ${selectedIds.size} site${selectedIds.size === 1 ? "" : "s"}? This also deletes that trade's Vendor/Sub-Vendor/Contract/pricing on those sites.`,
+      )
+    ) {
+      return;
+    }
+    setBulkRemoveTradesError(null);
+    setUnassigningTrades(true);
+    try {
+      const result = await bulkUnassignTradesAction(Array.from(selectedIds), bulkRemoveTrades);
+      if (result.error) {
+        setBulkRemoveTradesError(result.error);
+        return;
+      }
+      setSelectedIds(new Set());
+      setBulkRemoveTrades([]);
+      router.refresh();
+    } finally {
+      setUnassigningTrades(false);
+    }
+  }
+
   async function handleBulkAssignVendor() {
     if (selectedIds.size === 0 || !bulkVendorTrade || !bulkVendorId) return;
     setBulkVendorError(null);
@@ -438,6 +471,26 @@ export default function SitesClient({
     }
   }
 
+  async function handleBulkUnassignVendor() {
+    if (selectedIds.size === 0 || !bulkVendorTrade) return;
+    setBulkVendorError(null);
+    setUnassigningVendor(true);
+    try {
+      const result = await bulkUnassignVendorAction(Array.from(selectedIds), bulkVendorTrade);
+      if (result.error) {
+        setBulkVendorError(result.error);
+        return;
+      }
+      setSelectedIds(new Set());
+      setBulkVendorTrade("");
+      setBulkVendorId("");
+      setBulkSubVendorId("");
+      router.refresh();
+    } finally {
+      setUnassigningVendor(false);
+    }
+  }
+
   async function handleBulkAssignContract() {
     if (selectedIds.size === 0 || !bulkContractTrade || !bulkContractId) return;
     setBulkContractError(null);
@@ -454,6 +507,25 @@ export default function SitesClient({
       router.refresh();
     } finally {
       setAssigningContract(false);
+    }
+  }
+
+  async function handleBulkUnassignContract() {
+    if (selectedIds.size === 0 || !bulkContractTrade) return;
+    setBulkContractError(null);
+    setUnassigningContract(true);
+    try {
+      const result = await bulkUnassignContractAction(Array.from(selectedIds), bulkContractTrade);
+      if (result.error) {
+        setBulkContractError(result.error);
+        return;
+      }
+      setSelectedIds(new Set());
+      setBulkContractTrade("");
+      setBulkContractId("");
+      router.refresh();
+    } finally {
+      setUnassigningContract(false);
     }
   }
 
@@ -775,6 +847,19 @@ export default function SitesClient({
             <Button variant="secondary" onClick={handleBulkAssign} disabled={bulkTrades.length === 0 || assigning}>
               {assigning ? "Assigning…" : "Assign to selected"}
             </Button>
+            <TradeSelect
+              value={bulkRemoveTrades}
+              onChange={setBulkRemoveTrades}
+              className="w-56"
+              placeholder="Remove trade(s)…"
+            />
+            <Button
+              variant="secondary"
+              onClick={handleBulkUnassignTrades}
+              disabled={bulkRemoveTrades.length === 0 || unassigningTrades}
+            >
+              {unassigningTrades ? "Removing…" : "Remove from selected"}
+            </Button>
             <Button variant="danger" onClick={handleBulkDelete} disabled={deletingSites}>
               {deletingSites ? "Deleting…" : "Delete selected"}
             </Button>
@@ -784,6 +869,8 @@ export default function SitesClient({
                 setSelectedIds(new Set());
                 setBulkTrades([]);
                 setBulkError(null);
+                setBulkRemoveTrades([]);
+                setBulkRemoveTradesError(null);
                 setBulkVendorTrade("");
                 setBulkVendorId("");
                 setBulkSubVendorId("");
@@ -797,11 +884,12 @@ export default function SitesClient({
               Clear selection
             </Button>
             {bulkError && <span className="text-xs text-critical">{bulkError}</span>}
+            {bulkRemoveTradesError && <span className="text-xs text-critical">{bulkRemoveTradesError}</span>}
             {bulkDeleteError && <span className="text-xs text-critical">{bulkDeleteError}</span>}
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-xs text-slate-400">Assign vendor for one trade:</span>
+            <span className="text-xs text-slate-400">Assign/unassign vendor for one trade:</span>
             <select
               value={bulkVendorTrade}
               onChange={(e) => setBulkVendorTrade(e.target.value)}
@@ -845,11 +933,18 @@ export default function SitesClient({
             >
               {assigningVendor ? "Assigning…" : "Assign vendor to selected"}
             </Button>
+            <Button
+              variant="secondary"
+              onClick={handleBulkUnassignVendor}
+              disabled={!bulkVendorTrade || unassigningVendor}
+            >
+              {unassigningVendor ? "Unassigning…" : "Unassign vendor from selected"}
+            </Button>
             {bulkVendorError && <span className="text-xs text-critical">{bulkVendorError}</span>}
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-xs text-slate-400">Assign contract for one trade:</span>
+            <span className="text-xs text-slate-400">Assign/unassign contract for one trade:</span>
             <select
               value={bulkContractTrade}
               onChange={(e) => setBulkContractTrade(e.target.value)}
@@ -880,6 +975,13 @@ export default function SitesClient({
               disabled={!bulkContractTrade || !bulkContractId || assigningContract}
             >
               {assigningContract ? "Assigning…" : "Assign to selected"}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={handleBulkUnassignContract}
+              disabled={!bulkContractTrade || unassigningContract}
+            >
+              {unassigningContract ? "Unassigning…" : "Unassign contract from selected"}
             </Button>
             {bulkContractError && <span className="text-xs text-critical">{bulkContractError}</span>}
           </div>

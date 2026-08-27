@@ -12,6 +12,9 @@ import {
   bulkCreateSitesForOpportunity,
   bulkCreateVendors,
   bulkDeleteSites,
+  bulkUnassignContractForTrade,
+  bulkUnassignTrades,
+  bulkUnassignVendorForTrade,
   bulkUpdateSiteMeasurements,
   bulkUpdateSites,
   bulkUpdateSiteTradeAssignments,
@@ -238,7 +241,18 @@ export async function bulkAssignTradesAction(siteIds: string[], trades: string[]
   return {};
 }
 
-/** Sets the same Contract on every listed site -- e.g. "these 40 sites just got added to this signed contract." */
+/** Removes the given trades from every listed site's Trade selection, deleting each trade's assignment (Vendor/Sub-Vendor/Contract/pricing) along with it. */
+export async function bulkUnassignTradesAction(siteIds: string[], trades: string[]): Promise<{ error?: string }> {
+  try {
+    await bulkUnassignTrades(siteIds, trades);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to remove trade." };
+  }
+  revalidatePath("/network/sites");
+  return {};
+}
+
+/** Sets the Contract for one trade across every listed site -- e.g. "these 40 sites' Snow Removal work just got added to this signed contract." */
 export async function bulkAssignContractAction(
   siteIds: string[],
   trade: string,
@@ -248,6 +262,17 @@ export async function bulkAssignContractAction(
     await bulkAssignContractForTrade(siteIds, trade, contractId);
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to assign contract." };
+  }
+  revalidatePath("/network/sites");
+  return {};
+}
+
+/** Clears the Contract for one trade across every listed site, leaving Vendor/Sub-Vendor/pricing and every other trade's assignment untouched. */
+export async function bulkUnassignContractAction(siteIds: string[], trade: string): Promise<{ error?: string }> {
+  try {
+    await bulkUnassignContractForTrade(siteIds, trade);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to unassign contract." };
   }
   revalidatePath("/network/sites");
   return {};
@@ -264,6 +289,17 @@ export async function bulkAssignVendorForTradeAction(
     await bulkAssignVendorForTrade(siteIds, trade, vendorId, subVendorId);
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to assign vendor." };
+  }
+  revalidatePath("/network/sites");
+  return {};
+}
+
+/** Clears the Vendor and Sub-Vendor for one trade across every listed site, leaving pricing/Contract and every other trade's assignment untouched. */
+export async function bulkUnassignVendorAction(siteIds: string[], trade: string): Promise<{ error?: string }> {
+  try {
+    await bulkUnassignVendorForTrade(siteIds, trade);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to unassign vendor." };
   }
   revalidatePath("/network/sites");
   return {};

@@ -553,6 +553,103 @@ export async function bulkAssignTrades(siteIds: string[], trades: string[]): Pro
   }
 }
 
+/** Removes the given trades from every listed site's Trade selection, and deletes each (site, trade)'s assignment row (Vendor/Sub-Vendor/Contract/pricing) along with it. Resyncs site_count for any Contract those deleted assignments referenced. */
+export async function bulkUnassignTrades(siteIds: string[], trades: string[]): Promise<void> {
+  if (siteIds.length === 0 || trades.length === 0) return;
+  const supabase = createAdminClient();
+
+  const { data: existingSites, error: fetchError } = await supabase
+    .from("sites")
+    .select("id, trades")
+    .in("id", siteIds)
+    .eq("user_id", OWNER_USER_ID);
+  if (fetchError) throw new Error(fetchError.message);
+
+  const removeSet = new Set(trades);
+  const updates = (existingSites ?? []).map((s) => ({
+    id: s.id as string,
+    trades: ((s.trades as string[] | null) ?? []).filter((t) => !removeSet.has(t)),
+  }));
+
+  const { data: assignments, error: assignmentsError } = await supabase
+    .from("site_trade_assignments")
+    .select("contract_id")
+    .in("site_id", siteIds)
+    .in("trade", trades)
+    .eq("user_id", OWNER_USER_ID);
+  if (assignmentsError) throw new Error(assignmentsError.message);
+  const affectedContractIds = new Set(
+    (assignments ?? []).map((a) => a.contract_id as string | null).filter((id): id is string => !!id),
+  );
+
+  const { error: deleteError } = await supabase
+    .from("site_trade_assignments")
+    .delete()
+    .in("site_id", siteIds)
+    .in("trade", trades)
+    .eq("user_id", OWNER_USER_ID);
+  if (deleteError) throw new Error(deleteError.message);
+
+  const concurrency = 20;
+  for (let i = 0; i < updates.length; i += concurrency) {
+    const batch = updates.slice(i, i + concurrency);
+    const results = await Promise.all(
+      batch.map((u) =>
+        supabase
+          .from("sites")
+          .update({ trades: u.trades, updated_at: new Date().toISOString() })
+          .eq("id", u.id)
+          .eq("user_id", OWNER_USER_ID),
+      ),
+    );
+    const failed = results.find((r) => r.error);
+    if (failed?.error) throw new Error(failed.error.message);
+  }
+
+  await Promise.all(Array.from(affectedContractIds).map((id) => syncContractSiteCount(id)));
+}
+
+/** Clears the Vendor and Sub-Vendor for one trade across many sites at once, leaving pricing/Contract and every other trade's assignment untouched. */
+export async function bulkUnassignVendorForTrade(siteIds: string[], trade: string): Promise<void> {
+  if (siteIds.length === 0) return;
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("site_trade_assignments")
+    .update({ vendor_id: null, sub_vendor_id: null, updated_at: new Date().toISOString() })
+    .in("site_id", siteIds)
+    .eq("trade", trade)
+    .eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
+}
+
+/** Clears the Contract for one trade across many sites at once, leaving Vendor/Sub-Vendor/pricing and every other trade's assignment untouched. Resyncs site_count for any contract that was cleared. */
+export async function bulkUnassignContractForTrade(siteIds: string[], trade: string): Promise<void> {
+  if (siteIds.length === 0) return;
+  const supabase = createAdminClient();
+
+  const { data: existing, error: fetchError } = await supabase
+    .from("site_trade_assignments")
+    .select("contract_id")
+    .in("site_id", siteIds)
+    .eq("trade", trade)
+    .eq("user_id", OWNER_USER_ID);
+  if (fetchError) throw new Error(fetchError.message);
+  const affectedContractIds = new Set(
+    (existing ?? []).map((a) => a.contract_id as string | null).filter((id): id is string => !!id),
+  );
+  if (affectedContractIds.size === 0) return;
+
+  const { error } = await supabase
+    .from("site_trade_assignments")
+    .update({ contract_id: null, updated_at: new Date().toISOString() })
+    .in("site_id", siteIds)
+    .eq("trade", trade)
+    .eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
+
+  await Promise.all(Array.from(affectedContractIds).map((id) => syncContractSiteCount(id)));
+}
+
 /**
  * Sets the Contract for one trade across many sites at once -- e.g. "these 40 sites' Snow Removal work just
  * got added to this signed contract." Adds the trade to each site's Trade selection first (so the assignment
