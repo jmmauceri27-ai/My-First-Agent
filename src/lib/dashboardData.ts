@@ -64,7 +64,10 @@ export async function getSourceRows(source: DashboardSourceKey): Promise<Dataset
         name: s.name,
         companyName: s.companyName,
         opportunityName: s.opportunityName,
-        contractName: s.contractName,
+        contractName:
+          Array.from(new Set(s.tradeAssignments.map((a) => a.contractName).filter((n): n is string => !!n))).join(
+            ", ",
+          ) || null,
         siteCode: s.siteCode,
         city: s.city,
         state: s.state,

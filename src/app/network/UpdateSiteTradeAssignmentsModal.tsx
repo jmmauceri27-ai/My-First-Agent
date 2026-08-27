@@ -6,7 +6,7 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import { TRADE_OPTIONS } from "@/lib/trades";
-import type { Company } from "@/lib/crmTypes";
+import type { Company, Contract } from "@/lib/crmTypes";
 import type { SiteTradeAssignmentUpdateRow, Vendor } from "@/lib/networkTypes";
 import { bulkUpdateSiteTradeAssignmentsAction, parseSiteSheetAction } from "./actions";
 
@@ -17,6 +17,7 @@ const NONE = "";
 const OPTIONAL_FIELDS = [
   ["vendorName", "Vendor Name column"],
   ["subVendorName", "Sub-Vendor Name column"],
+  ["contractName", "Contract Name column"],
   ["contractValue", "Contract Value column"],
   ["subPrice", "Sub Price column"],
   ["subVendorPrice", "Sub-Vendor Price column"],
@@ -25,10 +26,12 @@ const OPTIONAL_FIELDS = [
 export default function UpdateSiteTradeAssignmentsModal({
   companies,
   vendors,
+  contracts,
   onClose,
 }: {
   companies: Company[];
   vendors: Vendor[];
+  contracts: Contract[];
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -46,6 +49,7 @@ export default function UpdateSiteTradeAssignmentsModal({
     matchName: NONE,
     vendorName: NONE,
     subVendorName: NONE,
+    contractName: NONE,
     contractValue: NONE,
     subPrice: NONE,
     subVendorPrice: NONE,
@@ -56,6 +60,7 @@ export default function UpdateSiteTradeAssignmentsModal({
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [result, setResult] = useState<{ updated: number; notFound: string[]; ambiguous: string[] } | null>(null);
   const [unmatchedVendorNames, setUnmatchedVendorNames] = useState<string[]>([]);
+  const [unmatchedContractNames, setUnmatchedContractNames] = useState<string[]>([]);
 
   async function handleUpload() {
     const file = fileInputRef.current?.files?.[0];
@@ -78,10 +83,11 @@ export default function UpdateSiteTradeAssignmentsModal({
       setMapping({
         matchCode: parsed.columns.find((c) => /site.?id/i.test(c)) ?? NONE,
         matchId: parsed.columns.find((c) => /^record ?id$/i.test(c) || /^id$/i.test(c)) ?? NONE,
-        matchName: parsed.columns.find((c) => /name/i.test(c) && !/vendor/i.test(c)) ?? NONE,
+        matchName: parsed.columns.find((c) => /name/i.test(c) && !/vendor/i.test(c) && !/contract/i.test(c)) ?? NONE,
         vendorName: parsed.columns.find((c) => /^vendor/i.test(c)) ?? NONE,
         subVendorName: parsed.columns.find((c) => /sub.?vendor/i.test(c) && /name/i.test(c)) ?? NONE,
-        contractValue: parsed.columns.find((c) => /contract/i.test(c)) ?? NONE,
+        contractName: parsed.columns.find((c) => /contract/i.test(c) && /name/i.test(c)) ?? NONE,
+        contractValue: parsed.columns.find((c) => /contract/i.test(c) && !/name/i.test(c)) ?? NONE,
         subPrice: parsed.columns.find((c) => /^sub.?price/i.test(c)) ?? NONE,
         subVendorPrice: parsed.columns.find((c) => /sub.?vendor.?price/i.test(c)) ?? NONE,
       });
@@ -98,7 +104,9 @@ export default function UpdateSiteTradeAssignmentsModal({
     setUpdating(true);
     try {
       const vendorByName = new Map(vendors.map((v) => [v.name.trim().toLowerCase(), v.id]));
+      const contractByName = new Map(contracts.map((c) => [c.name.trim().toLowerCase(), c.id]));
       const unmatched: string[] = [];
+      const unmatchedContracts: string[] = [];
 
       const rows: SiteTradeAssignmentUpdateRow[] = parsedRows.map((row) => {
         const update: SiteTradeAssignmentUpdateRow = {
@@ -124,6 +132,15 @@ export default function UpdateSiteTradeAssignmentsModal({
             else unmatched.push(raw);
           }
         }
+        if (mapping.contractName) {
+          const raw = String(row[mapping.contractName] ?? "").trim();
+          if (!raw) update.contractId = null;
+          else {
+            const id = contractByName.get(raw.toLowerCase());
+            if (id) update.contractId = id;
+            else unmatchedContracts.push(raw);
+          }
+        }
         if (mapping.contractValue) {
           const v = Number(row[mapping.contractValue]);
           update.contractValue = Number.isFinite(v) ? v : null;
@@ -145,6 +162,7 @@ export default function UpdateSiteTradeAssignmentsModal({
         return;
       }
       setUnmatchedVendorNames(Array.from(new Set(unmatched)));
+      setUnmatchedContractNames(Array.from(new Set(unmatchedContracts)));
       setResult(outcome);
       router.refresh();
     } finally {
@@ -181,6 +199,14 @@ export default function UpdateSiteTradeAssignmentsModal({
               match any existing vendor (that field was left as-is on those rows):{" "}
               {unmatchedVendorNames.slice(0, 10).join(", ")}
               {unmatchedVendorNames.length > 10 ? `, +${unmatchedVendorNames.length - 10} more` : ""}
+            </p>
+          )}
+          {unmatchedContractNames.length > 0 && (
+            <p className="mt-2 text-xs text-critical">
+              {unmatchedContractNames.length} contract name{unmatchedContractNames.length === 1 ? "" : "s"} didn&rsquo;t
+              match any existing contract (that field was left as-is on those rows):{" "}
+              {unmatchedContractNames.slice(0, 10).join(", ")}
+              {unmatchedContractNames.length > 10 ? `, +${unmatchedContractNames.length - 10} more` : ""}
             </p>
           )}
           <div className="mt-6">
@@ -319,9 +345,9 @@ export default function UpdateSiteTradeAssignmentsModal({
                 ))}
               </div>
               <p className="text-xs text-slate-500">
-                Vendor/Sub-Vendor Name columns are matched by exact vendor name (case-insensitive). A row whose name
-                doesn&rsquo;t match an existing vendor leaves that site&rsquo;s current value alone and is reported
-                after import.
+                Vendor/Sub-Vendor/Contract Name columns are matched by exact name (case-insensitive). A row whose
+                name doesn&rsquo;t match an existing vendor or contract leaves that site&rsquo;s current value alone
+                and is reported after import.
               </p>
             </div>
 

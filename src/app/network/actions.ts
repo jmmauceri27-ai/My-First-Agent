@@ -5,7 +5,7 @@ import { buildXlsxBase64 } from "@/lib/exportExcel";
 import { parseBuffer } from "@/lib/parse";
 import type { DatasetRecord } from "@/lib/types";
 import {
-  bulkAssignContract,
+  bulkAssignContractForTrade,
   bulkAssignTrades,
   bulkAssignVendorForTrade,
   bulkCreateSites,
@@ -221,7 +221,6 @@ export async function bulkCreateSitesAction(
     const result = await bulkCreateSites(links, rows);
     revalidatePath("/network/sites");
     if (links.opportunityId) revalidatePath(`/crm/opportunities/${links.opportunityId}`);
-    if (links.contractId) revalidatePath("/crm/contracts");
     return result;
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to import sites." };
@@ -240,9 +239,13 @@ export async function bulkAssignTradesAction(siteIds: string[], trades: string[]
 }
 
 /** Sets the same Contract on every listed site -- e.g. "these 40 sites just got added to this signed contract." */
-export async function bulkAssignContractAction(siteIds: string[], contractId: string): Promise<{ error?: string }> {
+export async function bulkAssignContractAction(
+  siteIds: string[],
+  trade: string,
+  contractId: string,
+): Promise<{ error?: string }> {
   try {
-    await bulkAssignContract(siteIds, contractId);
+    await bulkAssignContractForTrade(siteIds, trade, contractId);
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to assign contract." };
   }

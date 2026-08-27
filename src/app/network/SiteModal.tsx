@@ -15,7 +15,7 @@ import SiteMeasurementsEditor from "@/components/SiteMeasurementsEditor";
 import { matchTrade } from "@/lib/trades";
 import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
 import type { Site, SiteInput, SiteMeasurements, Vendor } from "@/lib/networkTypes";
-import { saveCompanyAction, saveContractAction } from "@/app/crm/actions";
+import { saveCompanyAction } from "@/app/crm/actions";
 import { deleteSiteAction, saveSiteAction, saveSiteTradeAssignmentsAction } from "./actions";
 
 export default function SiteModal({
@@ -26,7 +26,6 @@ export default function SiteModal({
   contracts,
   defaultCompanyId = null,
   defaultOpportunityId = null,
-  defaultContractId = null,
   onClose,
   onSaved,
 }: {
@@ -37,7 +36,6 @@ export default function SiteModal({
   contracts: Contract[];
   defaultCompanyId?: string | null;
   defaultOpportunityId?: string | null;
-  defaultContractId?: string | null;
   onClose: () => void;
   onSaved?: (id: string) => void;
 }) {
@@ -46,7 +44,6 @@ export default function SiteModal({
   const [name, setName] = useState(site?.name ?? "");
   const [companyId, setCompanyId] = useState(site?.companyId ?? defaultCompanyId ?? "");
   const [opportunityId, setOpportunityId] = useState(site?.opportunityId ?? defaultOpportunityId ?? "");
-  const [contractId, setContractId] = useState(site?.contractId ?? defaultContractId ?? "");
   const [address, setAddress] = useState(site?.address ?? "");
   const [city, setCity] = useState(site?.city ?? "");
   const [state, setState] = useState(site?.state ?? "");
@@ -71,18 +68,14 @@ export default function SiteModal({
   const [addingCompany, setAddingCompany] = useState(false);
   const [newCompanyName, setNewCompanyName] = useState("");
 
-  const [localContracts, setLocalContracts] = useState(contracts);
-  const [addingContract, setAddingContract] = useState(false);
-  const [newContractName, setNewContractName] = useState("");
-
   const opportunitiesForCompany = useMemo(
     () => (companyId ? opportunities.filter((o) => o.companyId === companyId) : opportunities),
     [opportunities, companyId],
   );
 
   const contractsForCompany = useMemo(
-    () => (companyId ? localContracts.filter((c) => c.companyId === companyId) : localContracts),
-    [localContracts, companyId],
+    () => (companyId ? contracts.filter((c) => c.companyId === companyId) : contracts),
+    [contracts, companyId],
   );
 
   async function handleAddCompany() {
@@ -113,43 +106,6 @@ export default function SiteModal({
     setAddingCompany(false);
   }
 
-  async function handleAddContract() {
-    if (!newContractName.trim()) return;
-    const id = await saveContractAction(null, {
-      companyId: companyId || null,
-      name: newContractName.trim(),
-      workType: null,
-      siteCount: null,
-      rateAmount: null,
-      rateFrequency: null,
-      startDate: null,
-      endDate: null,
-      notes: null,
-    });
-    const company = localCompanies.find((c) => c.id === companyId);
-    setLocalContracts((prev) => [
-      ...prev,
-      {
-        id,
-        companyId: companyId || null,
-        companyName: company?.name ?? null,
-        name: newContractName.trim(),
-        workType: null,
-        siteCount: null,
-        rateAmount: null,
-        rateFrequency: null,
-        startDate: null,
-        endDate: null,
-        notes: null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-    ]);
-    setContractId(id);
-    setNewContractName("");
-    setAddingContract(false);
-  }
-
   async function handleSave() {
     setError(null);
     if (!name.trim()) {
@@ -161,7 +117,6 @@ export default function SiteModal({
       const input: SiteInput = {
         companyId: companyId || null,
         opportunityId: opportunityId || null,
-        contractId: contractId || null,
         siteCode: siteCode.trim() || null,
         name: name.trim(),
         address: address.trim() || null,
@@ -256,7 +211,6 @@ export default function SiteModal({
                   onChange={(e) => {
                     setCompanyId(e.target.value);
                     setOpportunityId("");
-                    setContractId("");
                   }}
                   className={inputClass}
                 >
@@ -268,47 +222,6 @@ export default function SiteModal({
                   ))}
                 </select>
                 <Button type="button" variant="secondary" onClick={() => setAddingCompany(true)}>
-                  + New
-                </Button>
-              </div>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Contract (optional)</span>
-            {addingContract ? (
-              <div className="flex gap-2">
-                <input
-                  value={newContractName}
-                  onChange={(e) => setNewContractName(e.target.value)}
-                  placeholder="New contract name"
-                  className={inputClass}
-                />
-                <Button type="button" variant="secondary" onClick={handleAddContract}>
-                  Add
-                </Button>
-              </div>
-            ) : (
-              <div className="flex gap-2">
-                <select
-                  value={contractId}
-                  onChange={(e) => {
-                    const nextId = e.target.value;
-                    setContractId(nextId);
-                    const contract = localContracts.find((c) => c.id === nextId);
-                    const matched = matchTrade(contract?.workType);
-                    if (matched && trades.length === 0) setTrades([matched]);
-                  }}
-                  className={inputClass}
-                >
-                  <option value="">(none)</option>
-                  {contractsForCompany.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-                <Button type="button" variant="secondary" onClick={() => setAddingContract(true)}>
                   + New
                 </Button>
               </div>
@@ -343,13 +256,15 @@ export default function SiteModal({
           </label>
 
           <div className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Vendor assignments</span>
+            <span className="font-medium text-slate-300">Vendor & Contract assignments</span>
             <p className="-mt-0.5 text-xs text-slate-500">
-              A site often uses a different vendor per trade -- e.g. one for Land, another for Snow Removal.
+              A site often uses a different vendor -- and can be covered under a different signed contract -- per
+              trade, e.g. one for Land, another for Snow Removal.
             </p>
             <SiteTradeAssignmentsEditor
               trades={trades}
               vendors={vendors}
+              contracts={contractsForCompany}
               value={assignmentDrafts}
               onChange={setAssignmentDrafts}
             />

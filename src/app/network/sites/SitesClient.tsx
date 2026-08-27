@@ -92,7 +92,10 @@ function siteToExportRow(s: Site): DatasetRecord {
       .map((a) => `${a.trade}: ${a.subVendorName}`)
       .join("; "),
     Opportunity: s.opportunityName ?? "",
-    Contract: s.contractName ?? "",
+    Contract: s.tradeAssignments
+      .filter((a) => a.contractName)
+      .map((a) => `${a.trade}: ${a.contractName}`)
+      .join("; "),
     Trade: s.trades.join(", "),
     Address: s.address ?? "",
     City: s.city ?? "",
@@ -238,6 +241,7 @@ export default function SitesClient({
   const [bulkSubVendorId, setBulkSubVendorId] = useState("");
   const [assigningVendor, setAssigningVendor] = useState(false);
   const [bulkVendorError, setBulkVendorError] = useState<string | null>(null);
+  const [bulkContractTrade, setBulkContractTrade] = useState("");
   const [bulkContractId, setBulkContractId] = useState("");
   const [assigningContract, setAssigningContract] = useState(false);
   const [bulkContractError, setBulkContractError] = useState<string | null>(null);
@@ -289,7 +293,7 @@ export default function SitesClient({
       if (companyFilters.length > 0 && !companyFilters.includes(s.companyId ?? "")) return false;
       if (vendorFilter && !s.tradeAssignments.some((a) => a.vendorId === vendorFilter)) return false;
       if (subVendorFilter && !s.tradeAssignments.some((a) => a.subVendorId === subVendorFilter)) return false;
-      if (contractFilter && s.contractId !== contractFilter) return false;
+      if (contractFilter && !s.tradeAssignments.some((a) => a.contractId === contractFilter)) return false;
       if (tradeFilter.length > 0 && !s.trades.some((t) => tradeFilter.includes(t))) return false;
       if (assignmentTrade && assignmentVendorStatus) {
         const hasVendor = s.tradeAssignments.some((a) => a.trade === assignmentTrade && a.vendorId);
@@ -435,16 +439,17 @@ export default function SitesClient({
   }
 
   async function handleBulkAssignContract() {
-    if (selectedIds.size === 0 || !bulkContractId) return;
+    if (selectedIds.size === 0 || !bulkContractTrade || !bulkContractId) return;
     setBulkContractError(null);
     setAssigningContract(true);
     try {
-      const result = await bulkAssignContractAction(Array.from(selectedIds), bulkContractId);
+      const result = await bulkAssignContractAction(Array.from(selectedIds), bulkContractTrade, bulkContractId);
       if (result.error) {
         setBulkContractError(result.error);
         return;
       }
       setSelectedIds(new Set());
+      setBulkContractTrade("");
       setBulkContractId("");
       router.refresh();
     } finally {
@@ -783,6 +788,7 @@ export default function SitesClient({
                 setBulkVendorId("");
                 setBulkSubVendorId("");
                 setBulkVendorError(null);
+                setBulkContractTrade("");
                 setBulkContractId("");
                 setBulkContractError(null);
                 setBulkDeleteError(null);
@@ -843,7 +849,19 @@ export default function SitesClient({
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-xs text-slate-400">Assign to contract:</span>
+            <span className="text-xs text-slate-400">Assign contract for one trade:</span>
+            <select
+              value={bulkContractTrade}
+              onChange={(e) => setBulkContractTrade(e.target.value)}
+              className={`${inputClass} w-48`}
+            >
+              <option value="">Trade…</option>
+              {TRADE_OPTIONS.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
             <select
               value={bulkContractId}
               onChange={(e) => setBulkContractId(e.target.value)}
@@ -859,7 +877,7 @@ export default function SitesClient({
             <Button
               variant="secondary"
               onClick={handleBulkAssignContract}
-              disabled={!bulkContractId || assigningContract}
+              disabled={!bulkContractTrade || !bulkContractId || assigningContract}
             >
               {assigningContract ? "Assigning…" : "Assign to selected"}
             </Button>
@@ -1189,12 +1207,7 @@ export default function SitesClient({
       )}
 
       {uploading && (
-        <UploadSitesModal
-          companies={companies}
-          opportunities={opportunities}
-          contracts={contracts}
-          onClose={() => setUploading(false)}
-        />
+        <UploadSitesModal companies={companies} opportunities={opportunities} onClose={() => setUploading(false)} />
       )}
 
       {updatingSheet && <UpdateSitesModal companies={companies} onClose={() => setUpdatingSheet(false)} />}
@@ -1203,6 +1216,7 @@ export default function SitesClient({
         <UpdateSiteTradeAssignmentsModal
           companies={companies}
           vendors={vendors}
+          contracts={contracts}
           onClose={() => setUpdatingAssignments(false)}
         />
       )}

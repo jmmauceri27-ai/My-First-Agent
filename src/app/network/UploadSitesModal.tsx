@@ -9,9 +9,9 @@ import TradeSelect from "@/components/TradeSelect";
 import { matchTrade } from "@/lib/trades";
 import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
 import { buildTemplateXlsxAction } from "@/lib/sheetActions";
-import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
+import type { Company, Opportunity } from "@/lib/crmTypes";
 import type { SiteImportRow } from "@/lib/networkTypes";
-import { saveCompanyAction, saveContractAction } from "@/app/crm/actions";
+import { saveCompanyAction } from "@/app/crm/actions";
 import { bulkCreateSitesAction, parseSiteSheetAction } from "./actions";
 
 type ParsedRow = Record<string, string | number | boolean | null>;
@@ -39,12 +39,10 @@ async function handleDownloadSiteTemplate() {
 export default function UploadSitesModal({
   companies,
   opportunities,
-  contracts,
   onClose,
 }: {
   companies: Company[];
   opportunities: Opportunity[];
-  contracts: Contract[];
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -71,11 +69,6 @@ export default function UploadSitesModal({
   const [addingCompany, setAddingCompany] = useState(false);
   const [newCompanyName, setNewCompanyName] = useState("");
 
-  const [localContracts, setLocalContracts] = useState(contracts);
-  const [contractId, setContractId] = useState("");
-  const [addingContract, setAddingContract] = useState(false);
-  const [newContractName, setNewContractName] = useState("");
-
   const [opportunityId, setOpportunityId] = useState("");
   const [trades, setTrades] = useState<string[]>([]);
 
@@ -87,11 +80,6 @@ export default function UploadSitesModal({
   const opportunitiesForCompany = useMemo(
     () => (companyId ? opportunities.filter((o) => o.companyId === companyId) : opportunities),
     [opportunities, companyId],
-  );
-
-  const contractsForCompany = useMemo(
-    () => (companyId ? localContracts.filter((c) => c.companyId === companyId) : localContracts),
-    [localContracts, companyId],
   );
 
   async function handleAddCompany() {
@@ -120,43 +108,6 @@ export default function UploadSitesModal({
     setCompanyId(id);
     setNewCompanyName("");
     setAddingCompany(false);
-  }
-
-  async function handleAddContract() {
-    if (!newContractName.trim()) return;
-    const id = await saveContractAction(null, {
-      companyId: companyId || null,
-      name: newContractName.trim(),
-      workType: null,
-      siteCount: null,
-      rateAmount: null,
-      rateFrequency: null,
-      startDate: null,
-      endDate: null,
-      notes: null,
-    });
-    const company = localCompanies.find((c) => c.id === companyId);
-    setLocalContracts((prev) => [
-      ...prev,
-      {
-        id,
-        companyId: companyId || null,
-        companyName: company?.name ?? null,
-        name: newContractName.trim(),
-        workType: null,
-        siteCount: null,
-        rateAmount: null,
-        rateFrequency: null,
-        startDate: null,
-        endDate: null,
-        notes: null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-    ]);
-    setContractId(id);
-    setNewContractName("");
-    setAddingContract(false);
   }
 
   async function handleUpload() {
@@ -231,7 +182,6 @@ export default function UploadSitesModal({
       const result = await bulkCreateSitesAction(
         {
           companyId: companyId || null,
-          contractId: contractId || null,
           opportunityId: opportunityId || null,
           trades,
         },
@@ -278,8 +228,7 @@ export default function UploadSitesModal({
       <Card className="max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-lg font-bold text-slate-50">Upload sites</h2>
         <p className="mt-1 text-xs text-slate-400">
-          Upload an .xlsx or .csv sheet of sites — every row shares the Client/Contract/Opportunity links you pick
-          below.{" "}
+          Upload an .xlsx or .csv sheet of sites — every row shares the Client/Opportunity links you pick below.{" "}
           <button type="button" onClick={handleDownloadSiteTemplate} className="text-brand-400 hover:underline">
             Download example template
           </button>
@@ -367,7 +316,6 @@ export default function UploadSitesModal({
                       onChange={(e) => {
                         setCompanyId(e.target.value);
                         setOpportunityId("");
-                        setContractId("");
                       }}
                       className={inputClass}
                     >
@@ -379,47 +327,6 @@ export default function UploadSitesModal({
                       ))}
                     </select>
                     <Button type="button" variant="secondary" onClick={() => setAddingCompany(true)}>
-                      + New
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Contract (optional)</span>
-                {addingContract ? (
-                  <div className="flex gap-2">
-                    <input
-                      value={newContractName}
-                      onChange={(e) => setNewContractName(e.target.value)}
-                      placeholder="New contract name"
-                      className={inputClass}
-                    />
-                    <Button type="button" variant="secondary" onClick={handleAddContract}>
-                      Add
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <select
-                      value={contractId}
-                      onChange={(e) => {
-                        const nextId = e.target.value;
-                        setContractId(nextId);
-                        const contract = contractsForCompany.find((c) => c.id === nextId);
-                        const matched = matchTrade(contract?.workType);
-                        if (matched && trades.length === 0) setTrades([matched]);
-                      }}
-                      className={inputClass}
-                    >
-                      <option value="">(none)</option>
-                      {contractsForCompany.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                    <Button type="button" variant="secondary" onClick={() => setAddingContract(true)}>
                       + New
                     </Button>
                   </div>
@@ -453,8 +360,8 @@ export default function UploadSitesModal({
                 <TradeSelect value={trades} onChange={setTrades} placeholder="(none)" />
               </label>
               <p className="text-xs text-slate-500">
-                Vendor assignments and pricing are per-trade -- add those from each site&rsquo;s detail page after
-                importing.
+                Vendor and Contract assignments (and pricing) are per-trade -- add those from each site&rsquo;s detail
+                page after importing.
               </p>
             </div>
 

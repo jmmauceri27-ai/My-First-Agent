@@ -54,9 +54,6 @@ export interface Site {
   companyName: string | null;
   opportunityId: string | null;
   opportunityName: string | null;
-  /** The signed contract (crm_contracts) this site belongs to, if any -- separate from an Opportunity/RFP. */
-  contractId: string | null;
-  contractName: string | null;
   /** A user-entered identifier/code (e.g. from your own facility system) -- separate from `id`, the database's own record id. */
   siteCode: string | null;
   name: string;
@@ -84,7 +81,6 @@ export interface Site {
 export interface SiteInput {
   companyId: string | null;
   opportunityId: string | null;
-  contractId: string | null;
   siteCode: string | null;
   name: string;
   address: string | null;
@@ -110,6 +106,9 @@ export interface SiteTradeAssignment {
   /** The vendor's own subcontractor for this trade -- e.g. a vendor we treat as our own self-perform team who further subs the work out. */
   subVendorId: string | null;
   subVendorName: string | null;
+  /** The signed contract (crm_contracts) this trade is covered under, if any -- separate from an Opportunity/RFP. A site can have a different contract per trade. */
+  contractId: string | null;
+  contractName: string | null;
   /** What the client pays for this trade at this site. */
   contractValue: number | null;
   /** What we pay the Vendor for this trade -- our margin is contractValue - subPrice. */
@@ -122,6 +121,7 @@ export interface SiteTradeAssignmentInput {
   trade: string;
   vendorId: string | null;
   subVendorId: string | null;
+  contractId: string | null;
   contractValue: number | null;
   subPrice: number | null;
   subVendorPrice: number | null;
@@ -147,11 +147,10 @@ export interface SiteImportRow {
   companyId?: string | null;
 }
 
-/** Shared Client/Opportunity/Contract/Trades links applied to every row in a bulk site import. Vendor assignments are per-trade and set afterward from each site's detail page. */
+/** Shared Client/Opportunity/Trades links applied to every row in a bulk site import. Vendor and Contract assignments are per-trade and set afterward from each site's detail page. */
 export interface SiteBulkLinks {
   companyId: string | null;
   opportunityId: string | null;
-  contractId: string | null;
   trades: string[];
 }
 
@@ -188,6 +187,7 @@ export interface SiteTradeAssignmentUpdateRow {
   matchName: string | null;
   vendorId?: string | null;
   subVendorId?: string | null;
+  contractId?: string | null;
   contractValue?: number | null;
   subPrice?: number | null;
   subVendorPrice?: number | null;

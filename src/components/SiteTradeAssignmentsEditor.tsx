@@ -2,19 +2,21 @@
 
 import { inputClass } from "@/components/ui/formClasses";
 import { computeSiteMargin, formatCurrency, parseCurrencyInput } from "@/lib/siteMapColor";
+import type { Contract } from "@/lib/crmTypes";
 import type { SiteTradeAssignment, SiteTradeAssignmentInput, Vendor } from "@/lib/networkTypes";
 
 /** One trade's in-progress form values -- currency fields are kept as display strings, like the rest of this app's price inputs. */
 export interface AssignmentDraft {
   vendorId: string;
   subVendorId: string;
+  contractId: string;
   contractValue: string;
   subPrice: string;
   subVendorPrice: string;
 }
 
 function emptyDraft(): AssignmentDraft {
-  return { vendorId: "", subVendorId: "", contractValue: "", subPrice: "", subVendorPrice: "" };
+  return { vendorId: "", subVendorId: "", contractId: "", contractValue: "", subPrice: "", subVendorPrice: "" };
 }
 
 export function assignmentsToDrafts(assignments: SiteTradeAssignment[]): Record<string, AssignmentDraft> {
@@ -23,6 +25,7 @@ export function assignmentsToDrafts(assignments: SiteTradeAssignment[]): Record<
     map[a.trade] = {
       vendorId: a.vendorId ?? "",
       subVendorId: a.subVendorId ?? "",
+      contractId: a.contractId ?? "",
       contractValue: a.contractValue != null ? formatCurrency(a.contractValue) : "",
       subPrice: a.subPrice != null ? formatCurrency(a.subPrice) : "",
       subVendorPrice: a.subVendorPrice != null ? formatCurrency(a.subVendorPrice) : "",
@@ -41,6 +44,7 @@ export function draftsToAssignmentInputs(
       trade,
       vendorId: d.vendorId || null,
       subVendorId: d.subVendorId || null,
+      contractId: d.contractId || null,
       contractValue: d.contractValue.trim() ? Number(parseCurrencyInput(d.contractValue)) : null,
       subPrice: d.subPrice.trim() ? Number(parseCurrencyInput(d.subPrice)) : null,
       subVendorPrice: d.subVendorPrice.trim() ? Number(parseCurrencyInput(d.subVendorPrice)) : null,
@@ -48,15 +52,17 @@ export function draftsToAssignmentInputs(
   });
 }
 
-/** Editable Vendor/Sub-Vendor + pricing for each of a site's trades -- a site commonly uses a different vendor per trade (e.g. Land vs. Snow Removal). */
+/** Editable Vendor/Sub-Vendor/Contract + pricing for each of a site's trades -- a site commonly uses a different vendor (and can be under a different signed contract) per trade, e.g. Land vs. Snow Removal. */
 export default function SiteTradeAssignmentsEditor({
   trades,
   vendors,
+  contracts,
   value,
   onChange,
 }: {
   trades: string[];
   vendors: Vendor[];
+  contracts: Contract[];
   value: Record<string, AssignmentDraft>;
   onChange: (next: Record<string, AssignmentDraft>) => void;
 }) {
@@ -84,7 +90,7 @@ export default function SiteTradeAssignmentsEditor({
         return (
           <div key={trade} className="rounded-lg border border-purple-400/20 p-3">
             <p className="text-sm font-semibold text-slate-50">{trade}</p>
-            <div className="mt-2 grid grid-cols-2 gap-3">
+            <div className="mt-2 grid grid-cols-3 gap-3">
               <label className="flex flex-col gap-1 text-sm">
                 <span className="font-medium text-slate-300">Vendor</span>
                 <select
@@ -115,6 +121,21 @@ export default function SiteTradeAssignmentsEditor({
                         {v.name}
                       </option>
                     ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium text-slate-300">Contract</span>
+                <select
+                  value={draft.contractId}
+                  onChange={(e) => updateTrade(trade, { contractId: e.target.value })}
+                  className={inputClass}
+                >
+                  <option value="">(none)</option>
+                  {contracts.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
                 </select>
               </label>
             </div>

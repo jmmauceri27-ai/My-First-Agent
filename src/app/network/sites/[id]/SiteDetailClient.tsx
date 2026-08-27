@@ -36,7 +36,6 @@ export default function SiteDetailClient({
   const [name, setName] = useState(site.name);
   const [companyId, setCompanyId] = useState(site.companyId ?? "");
   const [opportunityId, setOpportunityId] = useState(site.opportunityId ?? "");
-  const [contractId, setContractId] = useState(site.contractId ?? "");
   const [address, setAddress] = useState(site.address ?? "");
   const [city, setCity] = useState(site.city ?? "");
   const [state, setState] = useState(site.state ?? "");
@@ -78,7 +77,6 @@ export default function SiteDetailClient({
       const input: SiteInput = {
         companyId: companyId || null,
         opportunityId: opportunityId || null,
-        contractId: contractId || null,
         siteCode: siteCode.trim() || null,
         name: name.trim(),
         address: address.trim() || null,
@@ -157,7 +155,7 @@ export default function SiteDetailClient({
               </label>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <label className="flex flex-col gap-1 text-sm">
                 <span className="font-medium text-slate-300">Client</span>
                 <select
@@ -165,7 +163,6 @@ export default function SiteDetailClient({
                   onChange={(e) => {
                     setCompanyId(e.target.value);
                     setOpportunityId("");
-                    setContractId("");
                   }}
                   className={inputClass}
                 >
@@ -178,30 +175,6 @@ export default function SiteDetailClient({
                 </select>
               </label>
 
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Contract</span>
-                <select
-                  value={contractId}
-                  onChange={(e) => {
-                    const nextId = e.target.value;
-                    setContractId(nextId);
-                    const contract = contracts.find((c) => c.id === nextId);
-                    const matched = matchTrade(contract?.workType);
-                    if (matched && trades.length === 0) setTrades([matched]);
-                  }}
-                  className={inputClass}
-                >
-                  <option value="">(none)</option>
-                  {contractsForCompany.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
               <label className="flex flex-col gap-1 text-sm">
                 <span className="font-medium text-slate-300">Opportunity</span>
                 <select
@@ -231,13 +204,15 @@ export default function SiteDetailClient({
             </div>
 
             <div className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Vendor assignments</span>
+              <span className="font-medium text-slate-300">Vendor & Contract assignments</span>
               <p className="-mt-0.5 text-xs text-slate-500">
-                A site often uses a different vendor per trade -- e.g. one for Land, another for Snow Removal.
+                A site often uses a different vendor -- and can be covered under a different signed contract -- per
+                trade, e.g. one for Land, another for Snow Removal.
               </p>
               <SiteTradeAssignmentsEditor
                 trades={trades}
                 vendors={vendors}
+                contracts={contractsForCompany}
                 value={assignmentDrafts}
                 onChange={setAssignmentDrafts}
               />
@@ -338,20 +313,10 @@ export default function SiteDetailClient({
                   <p className="text-slate-500">Not linked</p>
                 )}
               </div>
-              <div>
-                <p className="text-xs text-slate-400">Contract</p>
-                {site.contractId ? (
-                  <Link href="/crm/contracts" className="font-medium text-brand-400 hover:underline">
-                    {site.contractName}
-                  </Link>
-                ) : (
-                  <p className="text-slate-500">Not linked</p>
-                )}
-              </div>
             </div>
 
             <div className="mt-2 border-t border-purple-400/10 pt-3">
-              <p className="text-xs font-medium text-slate-400">Vendors by trade</p>
+              <p className="text-xs font-medium text-slate-400">Vendors & Contracts by trade</p>
               {site.tradeAssignments.length === 0 ? (
                 <p className="mt-1 text-xs text-slate-500">No vendor assignments yet.</p>
               ) : (
@@ -374,6 +339,14 @@ export default function SiteDetailClient({
                             className="font-medium text-brand-400 hover:underline"
                           >
                             {a.subVendorName}
+                          </Link>
+                        </p>
+                      )}
+                      {a.contractId && (
+                        <p className="text-xs text-slate-400">
+                          Contract:{" "}
+                          <Link href="/crm/contracts" className="font-medium text-brand-400 hover:underline">
+                            {a.contractName}
                           </Link>
                         </p>
                       )}
