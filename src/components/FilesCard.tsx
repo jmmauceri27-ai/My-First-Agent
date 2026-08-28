@@ -172,7 +172,7 @@ export default function FilesCard({
                     if (e.key === "Enter") handleRename();
                     if (e.key === "Escape") setEditingId(null);
                   }}
-                  className={`${inputClass} py-1`}
+                  className={`${inputClass} min-w-0 flex-1 py-1`}
                   autoFocus
                 />
                 <div className="flex shrink-0 gap-1">
@@ -193,17 +193,19 @@ export default function FilesCard({
                 </div>
               </div>
             ) : (
-              <div key={f.id} className="flex items-center justify-between gap-2 py-2">
-                <div className="flex min-w-0 items-start gap-2">
+              <div key={f.id} className="flex flex-col gap-1.5 py-2">
+                <div className="flex items-start gap-2">
                   <span className="text-lg leading-none">{fileIcon(f.fileName)}</span>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-slate-50">{f.fileName}</p>
+                    <p className="break-all text-sm font-medium text-slate-50" title={f.fileName}>
+                      {f.fileName}
+                    </p>
                     <p className="text-xs text-slate-400">
                       {formatSize(f.sizeBytes)} · {new Date(f.uploadedAt).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
-                <div className="flex shrink-0 gap-1">
+                <div className="flex gap-1 pl-7">
                   {onRename && (
                     <button
                       onClick={() => startRename(f)}
