@@ -42,6 +42,19 @@ function resolveContentType(file: File): string | undefined {
   return ext ? CONTENT_TYPE_BY_EXTENSION[ext] : undefined;
 }
 
+const EXTENSION_BY_CONTENT_TYPE: Record<string, string> = Object.fromEntries(
+  Object.entries(CONTENT_TYPE_BY_EXTENSION).map(([ext, type]) => [type, ext]),
+);
+
+/** Appends the extension implied by `contentType` when `fileName` doesn't already end in one -- a safety net for
+ * whatever occasionally strips the extension off `File.name` before it reaches here, so a saved attachment
+ * always downloads with a name the OS/Office can recognize and open. */
+function ensureFileNameExtension(fileName: string, contentType: string | undefined): string {
+  if (/\.[a-z0-9]{2,5}$/i.test(fileName)) return fileName;
+  const ext = contentType ? EXTENSION_BY_CONTENT_TYPE[contentType] : undefined;
+  return ext ? `${fileName}.${ext}` : fileName;
+}
+
 // ---------- Companies ----------
 
 export async function listCompanies(): Promise<Company[]> {
@@ -447,11 +460,11 @@ export async function listContractFiles(contractId: string): Promise<ContractFil
 
 export async function uploadContractFile(contractId: string, file: File): Promise<ContractFile> {
   const supabase = createAdminClient();
-  const storagePath = `${OWNER_USER_ID}/contracts/${contractId}/${randomUUID()}-${file.name}`;
+  const contentType = resolveContentType(file);
+  const fileName = ensureFileNameExtension(file.name, contentType);
+  const storagePath = `${OWNER_USER_ID}/contracts/${contractId}/${randomUUID()}-${fileName}`;
 
-  const { error: uploadError } = await supabase.storage
-    .from(ATTACHMENTS_BUCKET)
-    .upload(storagePath, file, { contentType: resolveContentType(file) });
+  const { error: uploadError } = await supabase.storage.from(ATTACHMENTS_BUCKET).upload(storagePath, file, { contentType });
   if (uploadError) throw new Error(uploadError.message);
 
   const { data, error } = await supabase
@@ -459,9 +472,9 @@ export async function uploadContractFile(contractId: string, file: File): Promis
     .insert({
       user_id: OWNER_USER_ID,
       contract_id: contractId,
-      file_name: file.name,
+      file_name: fileName,
       storage_path: storagePath,
-      content_type: resolveContentType(file) ?? null,
+      content_type: contentType ?? null,
       size_bytes: file.size,
     })
     .select("id, contract_id, file_name, storage_path, content_type, size_bytes, uploaded_at")
@@ -707,11 +720,11 @@ export async function listOpportunityFiles(opportunityId: string): Promise<Oppor
 
 export async function uploadOpportunityFile(opportunityId: string, file: File): Promise<OpportunityFile> {
   const supabase = createAdminClient();
-  const storagePath = `${OWNER_USER_ID}/${opportunityId}/${randomUUID()}-${file.name}`;
+  const contentType = resolveContentType(file);
+  const fileName = ensureFileNameExtension(file.name, contentType);
+  const storagePath = `${OWNER_USER_ID}/${opportunityId}/${randomUUID()}-${fileName}`;
 
-  const { error: uploadError } = await supabase.storage
-    .from(ATTACHMENTS_BUCKET)
-    .upload(storagePath, file, { contentType: resolveContentType(file) });
+  const { error: uploadError } = await supabase.storage.from(ATTACHMENTS_BUCKET).upload(storagePath, file, { contentType });
   if (uploadError) throw new Error(uploadError.message);
 
   const { data, error } = await supabase
@@ -719,9 +732,9 @@ export async function uploadOpportunityFile(opportunityId: string, file: File): 
     .insert({
       user_id: OWNER_USER_ID,
       opportunity_id: opportunityId,
-      file_name: file.name,
+      file_name: fileName,
       storage_path: storagePath,
-      content_type: resolveContentType(file) ?? null,
+      content_type: contentType ?? null,
       size_bytes: file.size,
     })
     .select("id, opportunity_id, file_name, storage_path, content_type, size_bytes, uploaded_at")
