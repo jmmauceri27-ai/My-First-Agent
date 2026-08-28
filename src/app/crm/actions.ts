@@ -19,6 +19,7 @@ import {
   deleteEmployee,
   deleteOpportunity,
   deleteOpportunityFile,
+  fixMissingFileExtensions,
   getCompany,
   getContractFileDownloadUrl,
   getEmployee,
@@ -55,6 +56,21 @@ import type {
 
 export async function exportPipelineToExcelAction(rows: DatasetRecord[], columns: string[]): Promise<string> {
   return buildXlsxBase64(rows, columns);
+}
+
+/** Renames every Opportunity/Contract file attachment whose name is missing an extension (from before uploads
+ * started guaranteeing one), inferring the right extension from content_type or, failing that, the file's own bytes. */
+export async function fixMissingFileExtensionsAction(): Promise<
+  Awaited<ReturnType<typeof fixMissingFileExtensions>> & { error?: string }
+> {
+  try {
+    const result = await fixMissingFileExtensions();
+    revalidatePath("/crm");
+    revalidatePath("/crm/contracts");
+    return result;
+  } catch (e) {
+    return { fixed: [], skipped: [], error: e instanceof Error ? e.message : "Failed to fix file names." };
+  }
 }
 
 export async function saveOpportunityAction(id: string | null, input: OpportunityInput): Promise<void> {

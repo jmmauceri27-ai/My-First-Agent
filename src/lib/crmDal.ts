@@ -55,6 +55,84 @@ function ensureFileNameExtension(fileName: string, contentType: string | undefin
   return ext ? `${fileName}.${ext}` : fileName;
 }
 
+/** Identifies a file's real type from its own bytes (magic numbers), for attachments whose stored content_type is
+ * missing or unhelpful and whose name has no extension to fall back on. */
+function sniffExtensionFromBytes(buf: Buffer): string | undefined {
+  if (buf.length >= 4 && buf.subarray(0, 4).toString("latin1") === "%PDF") return "pdf";
+  if (buf.length >= 8 && buf[0] === 0x89 && buf.subarray(1, 4).toString("latin1") === "PNG") return "png";
+  if (buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "jpg";
+  if (buf.length >= 4 && buf[0] === 0xd0 && buf[1] === 0xcf && buf[2] === 0x11 && buf[3] === 0xe0) return "xls"; // legacy OLE (.xls/.doc)
+  if (buf.length >= 2 && buf[0] === 0x50 && buf[1] === 0x4b) {
+    // A zip-based Office document -- peek at its internal file listing to tell xlsx/docx/pptx apart.
+    const text = buf.toString("latin1");
+    if (text.includes("word/")) return "docx";
+    if (text.includes("ppt/")) return "pptx";
+    return "xlsx";
+  }
+  return undefined;
+}
+
+export interface FileExtensionFix {
+  fileName: string;
+  newFileName: string;
+}
+
+export interface FileExtensionFixResult {
+  fixed: FileExtensionFix[];
+  skipped: { fileName: string; reason: string }[];
+}
+
+/** Scans every Opportunity/Contract file attachment for one whose name is missing an extension (see
+ * ensureFileNameExtension -- affects attachments uploaded before that safety net existed) and renames it in
+ * place, inferring the right extension from content_type first and, failing that, the file's own bytes. */
+export async function fixMissingFileExtensions(): Promise<FileExtensionFixResult> {
+  const supabase = createAdminClient();
+  const fixed: FileExtensionFix[] = [];
+  const skipped: { fileName: string; reason: string }[] = [];
+
+  for (const table of ["crm_contract_files", "crm_opportunity_files"] as const) {
+    const { data, error } = await supabase
+      .from(table)
+      .select("id, file_name, storage_path, content_type")
+      .eq("user_id", OWNER_USER_ID);
+    if (error) throw new Error(error.message);
+
+    for (const row of data ?? []) {
+      const fileName = row.file_name as string;
+      if (/\.[a-z0-9]{2,5}$/i.test(fileName)) continue;
+
+      const contentType = row.content_type as string | null;
+      let ext = contentType ? EXTENSION_BY_CONTENT_TYPE[contentType] : undefined;
+
+      if (!ext) {
+        const { data: blob, error: downloadError } = await supabase.storage
+          .from(ATTACHMENTS_BUCKET)
+          .download(row.storage_path as string);
+        if (downloadError || !blob) {
+          skipped.push({ fileName, reason: downloadError?.message ?? "Could not read the file to identify its type." });
+          continue;
+        }
+        ext = sniffExtensionFromBytes(Buffer.from(await blob.arrayBuffer()));
+      }
+
+      if (!ext) {
+        skipped.push({ fileName, reason: "Could not determine the file's type." });
+        continue;
+      }
+
+      const newFileName = `${fileName}.${ext}`;
+      const { error: updateError } = await supabase.from(table).update({ file_name: newFileName }).eq("id", row.id);
+      if (updateError) {
+        skipped.push({ fileName, reason: updateError.message });
+        continue;
+      }
+      fixed.push({ fileName, newFileName });
+    }
+  }
+
+  return { fixed, skipped };
+}
+
 // ---------- Companies ----------
 
 export async function listCompanies(): Promise<Company[]> {
