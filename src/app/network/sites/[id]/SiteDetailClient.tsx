@@ -13,6 +13,7 @@ import SiteTradeAssignmentsEditor, {
   type AssignmentDraft,
 } from "@/components/SiteTradeAssignmentsEditor";
 import SiteMeasurementsEditor from "@/components/SiteMeasurementsEditor";
+import { formatCurrency } from "@/lib/siteMapColor";
 import { matchTrade } from "@/lib/trades";
 import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
 import type { Site, SiteInput, SiteMeasurements, Vendor } from "@/lib/networkTypes";
@@ -285,6 +286,27 @@ export default function SiteDetailClient({
                 className={`${inputClass} max-w-[10rem]`}
               />
             </label>
+          </Card>
+
+          <Card className="p-5">
+            <h2 className="text-lg font-bold text-slate-50">Rates</h2>
+            {site.tradeAssignments.length === 0 ? (
+              <p className="mt-2 text-xs text-slate-500">No trades assigned yet.</p>
+            ) : (
+              <div className="mt-3 flex flex-col gap-2">
+                {site.tradeAssignments.map((a) => (
+                  <div key={a.id} className="flex items-center justify-between text-sm">
+                    <div>
+                      <p className="text-slate-300">{a.trade}</p>
+                      <p className="text-xs text-slate-500">{a.billingType ?? "No billing type (set on the Contract)"}</p>
+                    </div>
+                    <p className="font-semibold text-slate-50">
+                      {a.contractValue != null ? formatCurrency(a.contractValue) : "—"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </Card>
 
           <Card className="flex flex-col gap-3 p-5">
