@@ -16,6 +16,7 @@ import {
   bulkUnassignTrades,
   bulkUnassignVendorForTrade,
   bulkUpdateSiteMeasurements,
+  bulkUpdateSiteRateSchedule,
   bulkUpdateSites,
   bulkUpdateSiteTradeAssignments,
   createSite,
@@ -48,6 +49,7 @@ import type {
   SiteImportRow,
   SiteInput,
   SiteMeasurementsUpdateRow,
+  SiteRateScheduleUpdateRow,
   SiteTradeAssignmentInput,
   SiteTradeAssignmentUpdateRow,
   SiteUpdateResult,
@@ -380,6 +382,27 @@ export async function bulkUpdateSiteMeasurementsAction(
       notFound: [],
       ambiguous: [],
       error: e instanceof Error ? e.message : "Failed to update measurements.",
+    };
+  }
+}
+
+/** Merges each matched row's Rate Schedule months into one Trade's existing schedule, without touching any other trade or any month not present on the row. See bulkUpdateSiteRateSchedule for matching rules. */
+export async function bulkUpdateSiteRateScheduleAction(
+  trade: string,
+  rows: SiteRateScheduleUpdateRow[],
+  companyId: string | null,
+): Promise<SiteUpdateResult & { error?: string }> {
+  try {
+    const result = await bulkUpdateSiteRateSchedule(trade, rows, companyId);
+    revalidatePath("/network/sites");
+    revalidatePath("/dashboards");
+    return result;
+  } catch (e) {
+    return {
+      updated: 0,
+      notFound: [],
+      ambiguous: [],
+      error: e instanceof Error ? e.message : "Failed to update rate schedule.",
     };
   }
 }

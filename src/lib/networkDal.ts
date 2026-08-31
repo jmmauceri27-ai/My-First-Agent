@@ -9,6 +9,7 @@ import type {
   SiteImportRow,
   SiteInput,
   SiteMeasurementsUpdateRow,
+  SiteRateScheduleUpdateRow,
   SiteTradeAssignment,
   SiteTradeAssignmentInput,
   SiteTradeAssignmentUpdateRow,
@@ -998,6 +999,74 @@ export async function bulkUpdateSiteTradeAssignments(
     );
     const affected = new Set([...previousContractIds, ...nextContractIds]);
     await Promise.all(Array.from(affected).map((id) => syncContractSiteCount(id)));
+  }
+
+  return { updated: updates.length, notFound, ambiguous };
+}
+
+/**
+ * Merges each matched row's `rateSchedule` months into the single named Trade's existing rate schedule (added
+ * or overwritten by month) for each matched site -- months not present on a row are left untouched, and
+ * months already set on a site's other trades are unaffected. Creates the trade's assignment row if the site
+ * doesn't have one yet. Matching rules are identical to bulkUpdateSites.
+ */
+export async function bulkUpdateSiteRateSchedule(
+  trade: string,
+  rows: SiteRateScheduleUpdateRow[],
+  companyId: string | null,
+): Promise<SiteUpdateResult> {
+  const supabase = createAdminClient();
+  const { siteIds, notFound, ambiguous } = await matchSiteIds(rows, companyId);
+
+  const matchedSiteIds = Array.from(new Set(siteIds.filter((id): id is string => !!id)));
+  const { data: existingAssignments, error: fetchError } =
+    matchedSiteIds.length > 0
+      ? await supabase
+          .from("site_trade_assignments")
+          .select("site_id, rate_schedule")
+          .in("site_id", matchedSiteIds)
+          .eq("trade", trade)
+          .eq("user_id", OWNER_USER_ID)
+      : { data: [] as { site_id: string; rate_schedule: unknown }[], error: null };
+  if (fetchError) throw new Error(fetchError.message);
+  const existingBySiteId = new Map(
+    (existingAssignments ?? []).map((a) => [a.site_id as string, (a.rate_schedule as RateSchedule | null) ?? {}]),
+  );
+
+  const updates: { siteId: string; rateSchedule: RateSchedule }[] = [];
+  rows.forEach((row, i) => {
+    const siteId = siteIds[i];
+    if (!siteId) return;
+    if (Object.keys(row.rateSchedule).length === 0) return;
+
+    const rateSchedule = { ...(existingBySiteId.get(siteId) ?? {}), ...row.rateSchedule };
+    updates.push({ siteId, rateSchedule });
+  });
+
+  const concurrency = 20;
+  for (let i = 0; i < updates.length; i += concurrency) {
+    const batch = updates.slice(i, i + concurrency);
+    const results = await Promise.all(
+      batch.map(async (u) => {
+        const { data, error } = await supabase
+          .from("site_trade_assignments")
+          .update({ rate_schedule: u.rateSchedule, updated_at: new Date().toISOString() })
+          .eq("site_id", u.siteId)
+          .eq("trade", trade)
+          .eq("user_id", OWNER_USER_ID)
+          .select("id");
+        if (error) return { error };
+        if (!data || data.length === 0) {
+          const { error: insertError } = await supabase
+            .from("site_trade_assignments")
+            .insert({ user_id: OWNER_USER_ID, site_id: u.siteId, trade, rate_schedule: u.rateSchedule });
+          if (insertError) return { error: insertError };
+        }
+        return { error: null };
+      }),
+    );
+    const failed = results.find((r) => r.error);
+    if (failed?.error) throw new Error(failed.error.message);
   }
 
   return { updated: updates.length, notFound, ambiguous };

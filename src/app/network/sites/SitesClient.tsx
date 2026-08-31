@@ -34,6 +34,7 @@ import UploadSitesModal from "../UploadSitesModal";
 import UpdateSitesModal from "../UpdateSitesModal";
 import UpdateSiteTradeAssignmentsModal from "../UpdateSiteTradeAssignmentsModal";
 import UpdateSiteMeasurementsModal from "../UpdateSiteMeasurementsModal";
+import UpdateSiteRateScheduleModal from "../UpdateSiteRateScheduleModal";
 import {
   bulkAssignContractAction,
   bulkAssignTradesAction,
@@ -227,6 +228,7 @@ export default function SitesClient({
   const [updatingSheet, setUpdatingSheet] = useState(false);
   const [updatingAssignments, setUpdatingAssignments] = useState(false);
   const [updatingMeasurements, setUpdatingMeasurements] = useState(false);
+  const [updatingRateSchedule, setUpdatingRateSchedule] = useState(false);
   const [showUpdateMenu, setShowUpdateMenu] = useState(false);
   const updateMenuRef = useRef<HTMLDivElement>(null);
 
@@ -851,6 +853,16 @@ export default function SitesClient({
                 >
                   Measurements
                 </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUpdatingRateSchedule(true);
+                    setShowUpdateMenu(false);
+                  }}
+                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-100 hover:bg-purple-500/10"
+                >
+                  Rate schedule
+                </button>
               </div>
             )}
           </div>
@@ -1347,6 +1359,10 @@ export default function SitesClient({
 
       {updatingMeasurements && (
         <UpdateSiteMeasurementsModal companies={companies} onClose={() => setUpdatingMeasurements(false)} />
+      )}
+
+      {updatingRateSchedule && (
+        <UpdateSiteRateScheduleModal companies={companies} onClose={() => setUpdatingRateSchedule(false)} />
       )}
     </div>
   );

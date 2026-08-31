@@ -213,6 +213,19 @@ export interface SiteMeasurementsUpdateRow {
   counts: Record<string, number>;
 }
 
+/**
+ * A single row parsed from an uploaded sheet meant to bulk-set one Trade's Rate Schedule (which months are
+ * paid, and how much) on existing sites -- scoped to exactly one trade per call, same as
+ * SiteTradeAssignmentUpdateRow. Months present in `rateSchedule` are merged into the trade's existing schedule
+ * (added or overwritten) -- months not included are left untouched.
+ */
+export interface SiteRateScheduleUpdateRow {
+  matchCode: string | null;
+  matchId: string | null;
+  matchName: string | null;
+  rateSchedule: RateSchedule;
+}
+
 export interface SiteUpdateResult {
   updated: number;
   /** Match keys (ID or name) from the sheet that didn't correspond to any existing site. */
