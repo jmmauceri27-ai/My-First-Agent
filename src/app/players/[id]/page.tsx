@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -9,6 +8,7 @@ import TeamBadge from "@/components/TeamBadge";
 import PlayerFormModal from "../PlayerFormModal";
 import NoteForm from "./NoteForm";
 import GameLogTable from "./GameLogTable";
+import BackLink from "./BackLink";
 import { deleteNote } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -35,9 +35,7 @@ export default async function PlayerDetailPage({ params }: { params: { id: strin
 
   return (
     <div>
-      <Link href="/players" className="mb-3 inline-block text-sm text-zinc-500 hover:underline">
-        ← Back to Players
-      </Link>
+      <BackLink />
 
       <div className={`mb-6 rounded-lg border-l-4 bg-white p-5 shadow-sm backdrop-blur-md dark:bg-ink-900/70 ${tierColor(player.tier)}`}>
         <div className="flex flex-wrap items-start justify-between gap-3">
