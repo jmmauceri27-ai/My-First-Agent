@@ -9,7 +9,7 @@ import type { Company, Contract } from "@/lib/crmTypes";
 import ContractModal from "./ContractModal";
 import ContractsTimeline from "./ContractsTimeline";
 
-type View = "list" | "trade" | "timeline";
+type View = "list" | "timeline";
 
 const UNSPECIFIED_TRADE = "Unspecified";
 
@@ -80,15 +80,6 @@ export default function ContractsClient({ contracts, companies }: { contracts: C
           </button>
           <button
             type="button"
-            onClick={() => setView("trade")}
-            className={`rounded-md px-3 py-1.5 text-sm font-semibold transition-all ${
-              view === "trade" ? "bg-brand-600 text-white" : "text-slate-400 hover:text-slate-50"
-            }`}
-          >
-            By Trade
-          </button>
-          <button
-            type="button"
             onClick={() => setView("timeline")}
             className={`rounded-md px-3 py-1.5 text-sm font-semibold transition-all ${
               view === "timeline" ? "bg-brand-600 text-white" : "text-slate-400 hover:text-slate-50"
@@ -106,12 +97,6 @@ export default function ContractsClient({ contracts, companies }: { contracts: C
           and type of work.
         </p>
       ) : view === "list" ? (
-        <Card className="flex flex-col divide-y divide-purple-400/10 overflow-hidden">
-          {contracts.map((c) => (
-            <ContractRow key={c.id} contract={c} onSelect={setEditingContract} />
-          ))}
-        </Card>
-      ) : view === "trade" ? (
         <div className="flex flex-col gap-6">
           {byTrade.map(([trade, list]) => (
             <div key={trade} className="flex flex-col gap-2">
