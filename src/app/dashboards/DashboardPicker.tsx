@@ -1,12 +1,11 @@
 import Link from "next/link";
-import type { DashboardDefinition } from "@/lib/dashboardDefinitions";
 
 export default function DashboardPicker({
   dashboards,
   selectedId,
   area,
 }: {
-  dashboards: DashboardDefinition[];
+  dashboards: { id: string; name: string }[];
   selectedId: string | undefined;
   area: string;
 }) {
@@ -24,7 +23,7 @@ export default function DashboardPicker({
                 : "text-slate-400 hover:bg-purple-500/10 hover:text-slate-50"
             }`}
           >
-            {d.config.name}
+            {d.name}
           </Link>
         );
       })}

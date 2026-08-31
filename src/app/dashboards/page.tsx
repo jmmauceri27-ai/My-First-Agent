@@ -1,9 +1,16 @@
 export const dynamic = "force-dynamic";
 
 import { DASHBOARD_CATEGORIES, DASHBOARD_DEFINITIONS } from "@/lib/dashboardDefinitions";
+import { listSites } from "@/lib/networkDal";
 import AreaSidebar from "./AreaSidebar";
 import DashboardPicker from "./DashboardPicker";
 import DashboardViewClient from "./DashboardViewClient";
+import RatesClient from "./RatesClient";
+
+/** The Rate Schedule view is a hand-built page (chart + per-site/trade breakdown table), not a config-driven
+ * dashboard -- it's pinned into this area as an extra picker tab rather than modeled as a DashboardDefinition. */
+const RATE_SCHEDULE_AREA = "Contract Value & Financials";
+const RATE_SCHEDULE_ID = "rate-schedule";
 
 export default async function DashboardsPage({
   searchParams,
@@ -16,8 +23,20 @@ export default async function DashboardsPage({
   const selectedArea = area ?? (id && byId.get(id)?.area) ?? DASHBOARD_DEFINITIONS[0]?.area ?? DASHBOARD_CATEGORIES[0];
 
   const areaDashboards = DASHBOARD_DEFINITIONS.filter((d) => d.area === selectedArea);
+  const showRateSchedule = selectedArea === RATE_SCHEDULE_AREA && id === RATE_SCHEDULE_ID;
   const selected =
-    id && areaDashboards.some((d) => d.id === id) ? byId.get(id) : areaDashboards[0];
+    !showRateSchedule && id && areaDashboards.some((d) => d.id === id)
+      ? byId.get(id)
+      : !showRateSchedule
+        ? areaDashboards[0]
+        : undefined;
+
+  const pickerItems = [
+    ...areaDashboards.map((d) => ({ id: d.id, name: d.config.name })),
+    ...(selectedArea === RATE_SCHEDULE_AREA ? [{ id: RATE_SCHEDULE_ID, name: "Rate Schedule" }] : []),
+  ];
+
+  const sites = showRateSchedule ? await listSites() : null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -27,14 +46,20 @@ export default async function DashboardsPage({
         <AreaSidebar selectedArea={selectedArea} />
 
         <div className="flex min-w-0 flex-1 flex-col gap-6">
-          {areaDashboards.length === 0 && (
+          {pickerItems.length === 0 && (
             <p className="text-sm text-slate-400">No dashboards yet for {selectedArea}.</p>
           )}
 
-          {areaDashboards.length > 0 && (
+          {pickerItems.length > 0 && (
             <>
-              <DashboardPicker dashboards={areaDashboards} selectedId={selected?.id} area={selectedArea} />
-              {!selected || selected.config.cards.length === 0 ? (
+              <DashboardPicker
+                dashboards={pickerItems}
+                selectedId={showRateSchedule ? RATE_SCHEDULE_ID : selected?.id}
+                area={selectedArea}
+              />
+              {showRateSchedule ? (
+                <RatesClient sites={sites ?? []} />
+              ) : !selected || selected.config.cards.length === 0 ? (
                 <p className="text-sm text-slate-400">This dashboard has no cards yet.</p>
               ) : (
                 <DashboardViewClient key={selected.id} config={selected.config} />
