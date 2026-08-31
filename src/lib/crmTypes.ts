@@ -155,6 +155,8 @@ export interface Contract {
   siteCount: number | null;
   rateAmount: number | null;
   rateFrequency: string | null;
+  /** How every trade under this contract is billed to the client -- Time and Materials, Fixed Monthly, Per Service, or Per Event. Applies to every site/trade linked to this contract. */
+  billingType: string | null;
   startDate: string | null;
   endDate: string | null;
   notes: string | null;
@@ -169,6 +171,7 @@ export interface ContractInput {
   siteCount: number | null;
   rateAmount: number | null;
   rateFrequency: string | null;
+  billingType: string | null;
   startDate: string | null;
   endDate: string | null;
   notes: string | null;

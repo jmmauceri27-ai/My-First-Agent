@@ -109,7 +109,7 @@ export interface SiteTradeAssignment {
   /** The signed contract (crm_contracts) this trade is covered under, if any -- separate from an Opportunity/RFP. A site can have a different contract per trade. */
   contractId: string | null;
   contractName: string | null;
-  /** How this trade is billed to the client -- Time and Materials, Fixed Monthly, Per Service, or Per Event. */
+  /** How this trade is billed to the client -- derived from the linked Contract's own Billing Type, so every site/trade under the same contract always shows the same value. Not independently settable here. */
   billingType: string | null;
   /** What the client pays for this trade at this site. */
   contractValue: number | null;
@@ -124,7 +124,6 @@ export interface SiteTradeAssignmentInput {
   vendorId: string | null;
   subVendorId: string | null;
   contractId: string | null;
-  billingType: string | null;
   contractValue: number | null;
   subPrice: number | null;
   subVendorPrice: number | null;
@@ -191,7 +190,6 @@ export interface SiteTradeAssignmentUpdateRow {
   vendorId?: string | null;
   subVendorId?: string | null;
   contractId?: string | null;
-  billingType?: string | null;
   contractValue?: number | null;
   subPrice?: number | null;
   subVendorPrice?: number | null;

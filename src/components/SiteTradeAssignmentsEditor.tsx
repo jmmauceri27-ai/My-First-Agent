@@ -2,7 +2,6 @@
 
 import { inputClass } from "@/components/ui/formClasses";
 import { computeSiteMargin, formatCurrency, parseCurrencyInput } from "@/lib/siteMapColor";
-import { BILLING_TYPE_OPTIONS } from "@/lib/billingTypes";
 import type { Contract } from "@/lib/crmTypes";
 import type { SiteTradeAssignment, SiteTradeAssignmentInput, Vendor } from "@/lib/networkTypes";
 
@@ -11,7 +10,6 @@ export interface AssignmentDraft {
   vendorId: string;
   subVendorId: string;
   contractId: string;
-  billingType: string;
   contractValue: string;
   subPrice: string;
   subVendorPrice: string;
@@ -22,7 +20,6 @@ function emptyDraft(): AssignmentDraft {
     vendorId: "",
     subVendorId: "",
     contractId: "",
-    billingType: "",
     contractValue: "",
     subPrice: "",
     subVendorPrice: "",
@@ -36,7 +33,6 @@ export function assignmentsToDrafts(assignments: SiteTradeAssignment[]): Record<
       vendorId: a.vendorId ?? "",
       subVendorId: a.subVendorId ?? "",
       contractId: a.contractId ?? "",
-      billingType: a.billingType ?? "",
       contractValue: a.contractValue != null ? formatCurrency(a.contractValue) : "",
       subPrice: a.subPrice != null ? formatCurrency(a.subPrice) : "",
       subVendorPrice: a.subVendorPrice != null ? formatCurrency(a.subVendorPrice) : "",
@@ -56,7 +52,6 @@ export function draftsToAssignmentInputs(
       vendorId: d.vendorId || null,
       subVendorId: d.subVendorId || null,
       contractId: d.contractId || null,
-      billingType: d.billingType || null,
       contractValue: d.contractValue.trim() ? Number(parseCurrencyInput(d.contractValue)) : null,
       subPrice: d.subPrice.trim() ? Number(parseCurrencyInput(d.subPrice)) : null,
       subVendorPrice: d.subVendorPrice.trim() ? Number(parseCurrencyInput(d.subVendorPrice)) : null,
@@ -149,25 +144,15 @@ export default function SiteTradeAssignmentsEditor({
                     </option>
                   ))}
                 </select>
+                {draft.contractId && (
+                  <span className="text-xs text-slate-500">
+                    Billing type: {contracts.find((c) => c.id === draft.contractId)?.billingType ?? "—"}
+                  </span>
+                )}
               </label>
             </div>
 
-            <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Billing type</span>
-                <select
-                  value={draft.billingType}
-                  onChange={(e) => updateTrade(trade, { billingType: e.target.value })}
-                  className={inputClass}
-                >
-                  <option value="">(none)</option>
-                  {BILLING_TYPE_OPTIONS.map((b) => (
-                    <option key={b} value={b}>
-                      {b}
-                    </option>
-                  ))}
-                </select>
-              </label>
+            <div className="mt-2 grid grid-cols-3 gap-3">
               <label className="flex flex-col gap-1 text-sm">
                 <span className="font-medium text-slate-300">Contract value</span>
                 <input

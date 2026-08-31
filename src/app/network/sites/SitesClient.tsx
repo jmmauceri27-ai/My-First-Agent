@@ -22,7 +22,6 @@ import {
   gradientColorForRatio,
 } from "@/lib/siteMapColor";
 import { TRADE_COLORS, TRADE_OPTIONS } from "@/lib/trades";
-import { BILLING_TYPE_OPTIONS } from "@/lib/billingTypes";
 import type { Trade } from "@/lib/trades";
 import type { DatasetRecord } from "@/lib/types";
 import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
@@ -35,12 +34,10 @@ import UpdateSitesModal from "../UpdateSitesModal";
 import UpdateSiteTradeAssignmentsModal from "../UpdateSiteTradeAssignmentsModal";
 import UpdateSiteMeasurementsModal from "../UpdateSiteMeasurementsModal";
 import {
-  bulkAssignBillingTypeAction,
   bulkAssignContractAction,
   bulkAssignTradesAction,
   bulkAssignVendorForTradeAction,
   bulkDeleteSitesAction,
-  bulkUnassignBillingTypeAction,
   bulkUnassignContractAction,
   bulkUnassignTradesAction,
   bulkUnassignVendorAction,
@@ -261,11 +258,6 @@ export default function SitesClient({
   const [assigningContract, setAssigningContract] = useState(false);
   const [bulkContractError, setBulkContractError] = useState<string | null>(null);
   const [unassigningContract, setUnassigningContract] = useState(false);
-  const [bulkBillingTypeTrade, setBulkBillingTypeTrade] = useState("");
-  const [bulkBillingType, setBulkBillingType] = useState("");
-  const [assigningBillingType, setAssigningBillingType] = useState(false);
-  const [bulkBillingTypeError, setBulkBillingTypeError] = useState<string | null>(null);
-  const [unassigningBillingType, setUnassigningBillingType] = useState(false);
   const [deletingSites, setDeletingSites] = useState(false);
   const [bulkDeleteError, setBulkDeleteError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -542,43 +534,6 @@ export default function SitesClient({
     }
   }
 
-  async function handleBulkAssignBillingType() {
-    if (selectedIds.size === 0 || !bulkBillingTypeTrade || !bulkBillingType) return;
-    setBulkBillingTypeError(null);
-    setAssigningBillingType(true);
-    try {
-      const result = await bulkAssignBillingTypeAction(Array.from(selectedIds), bulkBillingTypeTrade, bulkBillingType);
-      if (result.error) {
-        setBulkBillingTypeError(result.error);
-        return;
-      }
-      setSelectedIds(new Set());
-      setBulkBillingTypeTrade("");
-      setBulkBillingType("");
-      router.refresh();
-    } finally {
-      setAssigningBillingType(false);
-    }
-  }
-
-  async function handleBulkUnassignBillingType() {
-    if (selectedIds.size === 0 || !bulkBillingTypeTrade) return;
-    setBulkBillingTypeError(null);
-    setUnassigningBillingType(true);
-    try {
-      const result = await bulkUnassignBillingTypeAction(Array.from(selectedIds), bulkBillingTypeTrade);
-      if (result.error) {
-        setBulkBillingTypeError(result.error);
-        return;
-      }
-      setSelectedIds(new Set());
-      setBulkBillingTypeTrade("");
-      setBulkBillingType("");
-      router.refresh();
-    } finally {
-      setUnassigningBillingType(false);
-    }
-  }
 
   async function handleBulkDelete() {
     if (selectedIds.size === 0) return;
@@ -932,9 +887,6 @@ export default function SitesClient({
                 setBulkContractTrade("");
                 setBulkContractId("");
                 setBulkContractError(null);
-                setBulkBillingTypeTrade("");
-                setBulkBillingType("");
-                setBulkBillingTypeError(null);
                 setBulkDeleteError(null);
               }}
             >
@@ -1041,49 +993,6 @@ export default function SitesClient({
               {unassigningContract ? "Unassigning…" : "Unassign contract from selected"}
             </Button>
             {bulkContractError && <span className="text-xs text-critical">{bulkContractError}</span>}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="text-xs text-slate-400">Assign/unassign billing type for one trade:</span>
-            <select
-              value={bulkBillingTypeTrade}
-              onChange={(e) => setBulkBillingTypeTrade(e.target.value)}
-              className={`${inputClass} w-48`}
-            >
-              <option value="">Trade…</option>
-              {TRADE_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-            <select
-              value={bulkBillingType}
-              onChange={(e) => setBulkBillingType(e.target.value)}
-              className={`${inputClass} w-48`}
-            >
-              <option value="">Billing type…</option>
-              {BILLING_TYPE_OPTIONS.map((b) => (
-                <option key={b} value={b}>
-                  {b}
-                </option>
-              ))}
-            </select>
-            <Button
-              variant="secondary"
-              onClick={handleBulkAssignBillingType}
-              disabled={!bulkBillingTypeTrade || !bulkBillingType || assigningBillingType}
-            >
-              {assigningBillingType ? "Assigning…" : "Assign to selected"}
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={handleBulkUnassignBillingType}
-              disabled={!bulkBillingTypeTrade || unassigningBillingType}
-            >
-              {unassigningBillingType ? "Unassigning…" : "Unassign billing type from selected"}
-            </Button>
-            {bulkBillingTypeError && <span className="text-xs text-critical">{bulkBillingTypeError}</span>}
           </div>
         </div>
       )}

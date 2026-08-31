@@ -5,7 +5,6 @@ import { buildXlsxBase64 } from "@/lib/exportExcel";
 import { parseBuffer } from "@/lib/parse";
 import type { DatasetRecord } from "@/lib/types";
 import {
-  bulkAssignBillingTypeForTrade,
   bulkAssignContractForTrade,
   bulkAssignTrades,
   bulkAssignVendorForTrade,
@@ -13,7 +12,6 @@ import {
   bulkCreateSitesForOpportunity,
   bulkCreateVendors,
   bulkDeleteSites,
-  bulkUnassignBillingTypeForTrade,
   bulkUnassignContractForTrade,
   bulkUnassignTrades,
   bulkUnassignVendorForTrade,
@@ -296,32 +294,6 @@ export async function bulkUnassignContractAction(siteIds: string[], trade: strin
     await bulkUnassignContractForTrade(siteIds, trade);
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to unassign contract." };
-  }
-  revalidatePath("/network/sites");
-  return {};
-}
-
-/** Sets the Billing Type for one trade across every listed site -- e.g. "these 40 sites' Snow Removal work is billed Per Event." */
-export async function bulkAssignBillingTypeAction(
-  siteIds: string[],
-  trade: string,
-  billingType: string,
-): Promise<{ error?: string }> {
-  try {
-    await bulkAssignBillingTypeForTrade(siteIds, trade, billingType);
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : "Failed to assign billing type." };
-  }
-  revalidatePath("/network/sites");
-  return {};
-}
-
-/** Clears the Billing Type for one trade across every listed site, leaving Vendor/Sub-Vendor/Contract/pricing and every other trade's assignment untouched. */
-export async function bulkUnassignBillingTypeAction(siteIds: string[], trade: string): Promise<{ error?: string }> {
-  try {
-    await bulkUnassignBillingTypeForTrade(siteIds, trade);
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : "Failed to unassign billing type." };
   }
   revalidatePath("/network/sites");
   return {};

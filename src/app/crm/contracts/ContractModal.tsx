@@ -7,6 +7,7 @@ import Card from "@/components/ui/Card";
 import FilesCard from "@/components/FilesCard";
 import { inputClass } from "@/components/ui/formClasses";
 import { RATE_FREQUENCIES } from "@/lib/crmTypes";
+import { BILLING_TYPE_OPTIONS } from "@/lib/billingTypes";
 import type { Company, Contract, ContractFile, ContractInput } from "@/lib/crmTypes";
 import {
   deleteContractAction,
@@ -34,6 +35,7 @@ export default function ContractModal({
   const [siteCount, setSiteCount] = useState(contract?.siteCount != null ? String(contract.siteCount) : "");
   const [rateAmount, setRateAmount] = useState(contract?.rateAmount != null ? String(contract.rateAmount) : "");
   const [rateFrequency, setRateFrequency] = useState(contract?.rateFrequency ?? "");
+  const [billingType, setBillingType] = useState(contract?.billingType ?? "");
   const [startDate, setStartDate] = useState(contract?.startDate ?? "");
   const [endDate, setEndDate] = useState(contract?.endDate ?? "");
   const [notes, setNotes] = useState(contract?.notes ?? "");
@@ -74,6 +76,7 @@ export default function ContractModal({
         siteCount: siteCount.trim() ? Number(siteCount) : null,
         rateAmount: rateAmount.trim() ? Number(rateAmount) : null,
         rateFrequency: rateFrequency || null,
+        billingType: billingType || null,
         startDate: startDate || null,
         endDate: endDate || null,
         notes: notes.trim() || null,
@@ -170,6 +173,19 @@ export default function ContractModal({
                 </option>
               ))}
             </select>
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-slate-300">Billing type</span>
+            <select value={billingType} onChange={(e) => setBillingType(e.target.value)} className={inputClass}>
+              <option value="">(none)</option>
+              {BILLING_TYPE_OPTIONS.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
+            </select>
+            <span className="text-xs text-slate-500">Applies to every site/trade linked to this contract.</span>
           </label>
 
           <div className="grid grid-cols-2 gap-3">

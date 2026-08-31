@@ -428,7 +428,7 @@ export async function bulkCreateEmployees(rows: EmployeeImportRow[]): Promise<{ 
 // pipeline): a validity window, rate, site count, and type of work.
 
 const CONTRACT_COLUMNS =
-  "id, company_id, name, work_type, site_count, rate_amount, rate_frequency, start_date, end_date, notes, created_at, updated_at, crm_companies(name)";
+  "id, company_id, name, work_type, site_count, rate_amount, rate_frequency, billing_type, start_date, end_date, notes, created_at, updated_at, crm_companies(name)";
 
 function mapContract(c: Record<string, unknown>): Contract {
   const company = c.crm_companies as unknown as { name: string } | null;
@@ -441,6 +441,7 @@ function mapContract(c: Record<string, unknown>): Contract {
     siteCount: c.site_count as number | null,
     rateAmount: c.rate_amount as number | null,
     rateFrequency: c.rate_frequency as string | null,
+    billingType: c.billing_type as string | null,
     startDate: c.start_date as string | null,
     endDate: c.end_date as string | null,
     notes: c.notes as string | null,
@@ -473,6 +474,7 @@ export async function createContract(input: ContractInput): Promise<string> {
       site_count: input.siteCount,
       rate_amount: input.rateAmount,
       rate_frequency: input.rateFrequency,
+      billing_type: input.billingType,
       start_date: input.startDate,
       end_date: input.endDate,
       notes: input.notes,
@@ -494,6 +496,7 @@ export async function updateContract(id: string, input: ContractInput): Promise<
       site_count: input.siteCount,
       rate_amount: input.rateAmount,
       rate_frequency: input.rateFrequency,
+      billing_type: input.billingType,
       start_date: input.startDate,
       end_date: input.endDate,
       notes: input.notes,
