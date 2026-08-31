@@ -14,6 +14,7 @@ import SiteTradeAssignmentsEditor, {
   type AssignmentDraft,
 } from "@/components/SiteTradeAssignmentsEditor";
 import SiteMeasurementsEditor from "@/components/SiteMeasurementsEditor";
+import { formatCurrency, parseCurrencyInput } from "@/lib/siteMapColor";
 import { matchTrade } from "@/lib/trades";
 import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
 import type { Site, SiteInput, SiteMeasurements, Vendor } from "@/lib/networkTypes";
@@ -294,6 +295,9 @@ export default function SiteDetailClient({
 
           <Card className="p-5">
             <h2 className="text-lg font-bold text-slate-50">Rates</h2>
+            <p className="-mt-0.5 text-xs text-slate-500">
+              Tracked separately from Contract Value in Vendor & Contract assignments above.
+            </p>
             {trades.length === 0 ? (
               <p className="mt-2 text-xs text-slate-500">No trades assigned yet.</p>
             ) : (
@@ -308,7 +312,18 @@ export default function SiteDetailClient({
                         <p className="text-xs text-slate-500">{billingType ?? "No billing type (set on the Contract)"}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-slate-50">{draft.contractValue || "—"}</span>
+                        <input
+                          value={draft.rateAmount}
+                          onChange={(e) => updateAssignmentDraft(trade, { rateAmount: e.target.value })}
+                          onBlur={() => {
+                            const num = Number(parseCurrencyInput(draft.rateAmount));
+                            if (draft.rateAmount.trim() && Number.isFinite(num)) {
+                              updateAssignmentDraft(trade, { rateAmount: formatCurrency(num) });
+                            }
+                          }}
+                          placeholder="Rate amount"
+                          className={`${inputClass} w-28`}
+                        />
                         <input
                           value={draft.rateFrequency}
                           onChange={(e) => updateAssignmentDraft(trade, { rateFrequency: e.target.value })}

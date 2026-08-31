@@ -53,6 +53,7 @@ export interface TradeMergeFields {
   subVendorId: FieldResolution<string>;
   contractId: FieldResolution<string>;
   contractValue: FieldResolution<number>;
+  rateAmount: FieldResolution<number>;
   rateFrequency: FieldResolution<string>;
   subPrice: FieldResolution<number>;
   subVendorPrice: FieldResolution<number>;
@@ -101,6 +102,7 @@ export function buildMergePlan(group: Site[]): SiteMergePlan {
       subVendorId: pick((a) => a.subVendorId),
       contractId: pick((a) => a.contractId),
       contractValue: pick((a) => a.contractValue),
+      rateAmount: pick((a) => a.rateAmount),
       rateFrequency: pick((a) => a.rateFrequency),
       subPrice: pick((a) => a.subPrice),
       subVendorPrice: pick((a) => a.subVendorPrice),
@@ -122,6 +124,7 @@ export function conflictFieldKeys(plan: SiteMergePlan): string[] {
       "subVendorId",
       "contractId",
       "contractValue",
+      "rateAmount",
       "rateFrequency",
       "subPrice",
       "subVendorPrice",
@@ -171,6 +174,7 @@ export function applyMergeSelections(
     subVendorId: pick(t.subVendorId, `trade:${t.trade}:subVendorId`, selections),
     contractId: pick(t.contractId, `trade:${t.trade}:contractId`, selections),
     contractValue: pick(t.contractValue, `trade:${t.trade}:contractValue`, selections),
+    rateAmount: pick(t.rateAmount, `trade:${t.trade}:rateAmount`, selections),
     rateFrequency: pick(t.rateFrequency, `trade:${t.trade}:rateFrequency`, selections),
     subPrice: pick(t.subPrice, `trade:${t.trade}:subPrice`, selections),
     subVendorPrice: pick(t.subVendorPrice, `trade:${t.trade}:subVendorPrice`, selections),

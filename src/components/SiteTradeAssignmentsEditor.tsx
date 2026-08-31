@@ -11,6 +11,7 @@ export interface AssignmentDraft {
   subVendorId: string;
   contractId: string;
   contractValue: string;
+  rateAmount: string;
   rateFrequency: string;
   subPrice: string;
   subVendorPrice: string;
@@ -22,6 +23,7 @@ export function emptyDraft(): AssignmentDraft {
     subVendorId: "",
     contractId: "",
     contractValue: "",
+    rateAmount: "",
     rateFrequency: "",
     subPrice: "",
     subVendorPrice: "",
@@ -36,6 +38,7 @@ export function assignmentsToDrafts(assignments: SiteTradeAssignment[]): Record<
       subVendorId: a.subVendorId ?? "",
       contractId: a.contractId ?? "",
       contractValue: a.contractValue != null ? formatCurrency(a.contractValue) : "",
+      rateAmount: a.rateAmount != null ? formatCurrency(a.rateAmount) : "",
       rateFrequency: a.rateFrequency ?? "",
       subPrice: a.subPrice != null ? formatCurrency(a.subPrice) : "",
       subVendorPrice: a.subVendorPrice != null ? formatCurrency(a.subVendorPrice) : "",
@@ -56,6 +59,7 @@ export function draftsToAssignmentInputs(
       subVendorId: d.subVendorId || null,
       contractId: d.contractId || null,
       contractValue: d.contractValue.trim() ? Number(parseCurrencyInput(d.contractValue)) : null,
+      rateAmount: d.rateAmount.trim() ? Number(parseCurrencyInput(d.rateAmount)) : null,
       rateFrequency: d.rateFrequency.trim() || null,
       subPrice: d.subPrice.trim() ? Number(parseCurrencyInput(d.subPrice)) : null,
       subVendorPrice: d.subVendorPrice.trim() ? Number(parseCurrencyInput(d.subVendorPrice)) : null,

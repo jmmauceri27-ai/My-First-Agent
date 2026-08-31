@@ -113,7 +113,9 @@ export interface SiteTradeAssignment {
   billingType: string | null;
   /** What the client pays for this trade at this site. */
   contractValue: number | null;
-  /** How often the rate amount is billed, e.g. "Monthly", "Per visit", "Per push" -- freeform, not a fixed list. */
+  /** The rate shown in the Rates section -- tracked separately from contractValue, since the two don't always match (e.g. a blended contract value vs. this trade's own billed rate). */
+  rateAmount: number | null;
+  /** How often rateAmount is billed, e.g. "Monthly", "Per visit", "Per push" -- freeform, not a fixed list. */
   rateFrequency: string | null;
   /** What we pay the Vendor for this trade -- our margin is contractValue - subPrice. */
   subPrice: number | null;
@@ -127,6 +129,7 @@ export interface SiteTradeAssignmentInput {
   subVendorId: string | null;
   contractId: string | null;
   contractValue: number | null;
+  rateAmount: number | null;
   rateFrequency: string | null;
   subPrice: number | null;
   subVendorPrice: number | null;
@@ -194,6 +197,7 @@ export interface SiteTradeAssignmentUpdateRow {
   subVendorId?: string | null;
   contractId?: string | null;
   contractValue?: number | null;
+  rateAmount?: number | null;
   rateFrequency?: string | null;
   subPrice?: number | null;
   subVendorPrice?: number | null;
