@@ -6,6 +6,7 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import { TRADE_OPTIONS } from "@/lib/trades";
+import { BILLING_TYPE_OPTIONS, matchBillingType } from "@/lib/billingTypes";
 import type { Company, Contract } from "@/lib/crmTypes";
 import type { SiteTradeAssignmentUpdateRow, Vendor } from "@/lib/networkTypes";
 import { bulkUpdateSiteTradeAssignmentsAction, parseSiteSheetAction } from "./actions";
@@ -18,6 +19,7 @@ const OPTIONAL_FIELDS = [
   ["vendorName", "Vendor Name column"],
   ["subVendorName", "Sub-Vendor Name column"],
   ["contractName", "Contract Name column"],
+  ["billingType", "Billing Type column"],
   ["contractValue", "Contract Value column"],
   ["subPrice", "Sub Price column"],
   ["subVendorPrice", "Sub-Vendor Price column"],
@@ -50,6 +52,7 @@ export default function UpdateSiteTradeAssignmentsModal({
     vendorName: NONE,
     subVendorName: NONE,
     contractName: NONE,
+    billingType: NONE,
     contractValue: NONE,
     subPrice: NONE,
     subVendorPrice: NONE,
@@ -61,6 +64,7 @@ export default function UpdateSiteTradeAssignmentsModal({
   const [result, setResult] = useState<{ updated: number; notFound: string[]; ambiguous: string[] } | null>(null);
   const [unmatchedVendorNames, setUnmatchedVendorNames] = useState<string[]>([]);
   const [unmatchedContractNames, setUnmatchedContractNames] = useState<string[]>([]);
+  const [unmatchedBillingTypes, setUnmatchedBillingTypes] = useState<string[]>([]);
 
   async function handleUpload() {
     const file = fileInputRef.current?.files?.[0];
@@ -87,6 +91,7 @@ export default function UpdateSiteTradeAssignmentsModal({
         vendorName: parsed.columns.find((c) => /^vendor/i.test(c)) ?? NONE,
         subVendorName: parsed.columns.find((c) => /sub.?vendor/i.test(c) && /name/i.test(c)) ?? NONE,
         contractName: parsed.columns.find((c) => /contract/i.test(c) && /name/i.test(c)) ?? NONE,
+        billingType: parsed.columns.find((c) => /billing/i.test(c)) ?? NONE,
         contractValue: parsed.columns.find((c) => /contract/i.test(c) && !/name/i.test(c)) ?? NONE,
         subPrice: parsed.columns.find((c) => /^sub.?price/i.test(c)) ?? NONE,
         subVendorPrice: parsed.columns.find((c) => /sub.?vendor.?price/i.test(c)) ?? NONE,
@@ -107,6 +112,7 @@ export default function UpdateSiteTradeAssignmentsModal({
       const contractByName = new Map(contracts.map((c) => [c.name.trim().toLowerCase(), c.id]));
       const unmatched: string[] = [];
       const unmatchedContracts: string[] = [];
+      const unmatchedBilling: string[] = [];
 
       const rows: SiteTradeAssignmentUpdateRow[] = parsedRows.map((row) => {
         const update: SiteTradeAssignmentUpdateRow = {
@@ -141,6 +147,15 @@ export default function UpdateSiteTradeAssignmentsModal({
             else unmatchedContracts.push(raw);
           }
         }
+        if (mapping.billingType) {
+          const raw = String(row[mapping.billingType] ?? "").trim();
+          if (!raw) update.billingType = null;
+          else {
+            const matched = matchBillingType(raw);
+            if (matched) update.billingType = matched;
+            else unmatchedBilling.push(raw);
+          }
+        }
         if (mapping.contractValue) {
           const v = Number(row[mapping.contractValue]);
           update.contractValue = Number.isFinite(v) ? v : null;
@@ -163,6 +178,7 @@ export default function UpdateSiteTradeAssignmentsModal({
       }
       setUnmatchedVendorNames(Array.from(new Set(unmatched)));
       setUnmatchedContractNames(Array.from(new Set(unmatchedContracts)));
+      setUnmatchedBillingTypes(Array.from(new Set(unmatchedBilling)));
       setResult(outcome);
       router.refresh();
     } finally {
@@ -207,6 +223,14 @@ export default function UpdateSiteTradeAssignmentsModal({
               match any existing contract (that field was left as-is on those rows):{" "}
               {unmatchedContractNames.slice(0, 10).join(", ")}
               {unmatchedContractNames.length > 10 ? `, +${unmatchedContractNames.length - 10} more` : ""}
+            </p>
+          )}
+          {unmatchedBillingTypes.length > 0 && (
+            <p className="mt-2 text-xs text-critical">
+              {unmatchedBillingTypes.length} billing type value{unmatchedBillingTypes.length === 1 ? "" : "s"} didn&rsquo;t
+              match {BILLING_TYPE_OPTIONS.join(", ")} (that field was left as-is on those rows):{" "}
+              {unmatchedBillingTypes.slice(0, 10).join(", ")}
+              {unmatchedBillingTypes.length > 10 ? `, +${unmatchedBillingTypes.length - 10} more` : ""}
             </p>
           )}
           <div className="mt-6">
@@ -345,9 +369,9 @@ export default function UpdateSiteTradeAssignmentsModal({
                 ))}
               </div>
               <p className="text-xs text-slate-500">
-                Vendor/Sub-Vendor/Contract Name columns are matched by exact name (case-insensitive). A row whose
-                name doesn&rsquo;t match an existing vendor or contract leaves that site&rsquo;s current value alone
-                and is reported after import.
+                Vendor/Sub-Vendor/Contract Name columns are matched by exact name (case-insensitive); Billing Type is
+                matched against {BILLING_TYPE_OPTIONS.join(", ")}. A row whose value doesn&rsquo;t match leaves that
+                site&rsquo;s current value alone and is reported after import.
               </p>
             </div>
 

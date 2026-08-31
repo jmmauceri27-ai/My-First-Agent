@@ -138,7 +138,7 @@ export async function bulkCreateVendors(rows: VendorImportRow[]): Promise<{ inse
 // ---------- Sites ----------
 
 const ASSIGNMENT_COLUMNS =
-  "id, site_id, trade, vendor_id, sub_vendor_id, contract_id, contract_value, sub_price, sub_vendor_price, vendor:vendors!site_trade_assignments_vendor_id_fkey(name), sub_vendor:vendors!site_trade_assignments_sub_vendor_id_fkey(name), contract:crm_contracts(name)";
+  "id, site_id, trade, vendor_id, sub_vendor_id, contract_id, billing_type, contract_value, sub_price, sub_vendor_price, vendor:vendors!site_trade_assignments_vendor_id_fkey(name), sub_vendor:vendors!site_trade_assignments_sub_vendor_id_fkey(name), contract:crm_contracts(name)";
 
 function mapAssignment(a: Record<string, unknown>): SiteTradeAssignment {
   const vendor = a.vendor as unknown as { name: string } | null;
@@ -154,6 +154,7 @@ function mapAssignment(a: Record<string, unknown>): SiteTradeAssignment {
     subVendorName: subVendor?.name ?? null,
     contractId: a.contract_id as string | null,
     contractName: contract?.name ?? null,
+    billingType: a.billing_type as string | null,
     contractValue: a.contract_value as number | null,
     subPrice: a.sub_price as number | null,
     subVendorPrice: a.sub_vendor_price as number | null,
@@ -317,6 +318,7 @@ export async function saveSiteTradeAssignments(siteId: string, assignments: Site
       vendor_id: a.vendorId,
       sub_vendor_id: a.subVendorId,
       contract_id: a.contractId,
+      billing_type: a.billingType,
       contract_value: a.contractValue,
       sub_price: a.subPrice,
       sub_vendor_price: a.subVendorPrice,
@@ -649,6 +651,58 @@ export async function bulkUnassignVendorForTrade(siteIds: string[], trade: strin
   if (error) throw new Error(error.message);
 }
 
+/** Clears the Billing Type for one trade across many sites at once, leaving Vendor/Sub-Vendor/Contract/pricing and every other trade's assignment untouched. */
+export async function bulkUnassignBillingTypeForTrade(siteIds: string[], trade: string): Promise<void> {
+  if (siteIds.length === 0) return;
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("site_trade_assignments")
+    .update({ billing_type: null, updated_at: new Date().toISOString() })
+    .in("site_id", siteIds)
+    .eq("trade", trade)
+    .eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * Sets the Billing Type for one trade across many sites at once -- e.g. "these 40 sites' Snow Removal work is
+ * billed Per Event." Adds the trade to each site's Trade selection first (so the assignment has somewhere to
+ * show up), then creates or updates that site's assignment row for exactly that trade, leaving its
+ * Vendor/Sub-Vendor/Contract/pricing and any other trade's assignment untouched.
+ */
+export async function bulkAssignBillingTypeForTrade(siteIds: string[], trade: string, billingType: string): Promise<void> {
+  if (siteIds.length === 0) return;
+  const supabase = createAdminClient();
+
+  await bulkAssignTrades(siteIds, [trade]);
+
+  const concurrency = 20;
+  for (let i = 0; i < siteIds.length; i += concurrency) {
+    const batch = siteIds.slice(i, i + concurrency);
+    const results = await Promise.all(
+      batch.map(async (siteId) => {
+        const { data, error } = await supabase
+          .from("site_trade_assignments")
+          .update({ billing_type: billingType, updated_at: new Date().toISOString() })
+          .eq("site_id", siteId)
+          .eq("trade", trade)
+          .eq("user_id", OWNER_USER_ID)
+          .select("id");
+        if (error) return { error };
+        if (!data || data.length === 0) {
+          const { error: insertError } = await supabase
+            .from("site_trade_assignments")
+            .insert({ user_id: OWNER_USER_ID, site_id: siteId, trade, billing_type: billingType });
+          if (insertError) return { error: insertError };
+        }
+        return { error: null };
+      }),
+    );
+    const failed = results.find((r) => r.error);
+    if (failed?.error) throw new Error(failed.error.message);
+  }
+}
+
 /** Clears the Contract for one trade across many sites at once, leaving Vendor/Sub-Vendor/pricing and every other trade's assignment untouched. Resyncs site_count for any contract that was cleared. */
 export async function bulkUnassignContractForTrade(siteIds: string[], trade: string): Promise<void> {
   if (siteIds.length === 0) return;
@@ -954,6 +1008,7 @@ export async function bulkUpdateSiteTradeAssignments(
     if ("vendorId" in row) payload.vendor_id = row.vendorId;
     if ("subVendorId" in row) payload.sub_vendor_id = row.subVendorId;
     if ("contractId" in row) payload.contract_id = row.contractId;
+    if ("billingType" in row) payload.billing_type = row.billingType;
     if ("contractValue" in row) payload.contract_value = row.contractValue;
     if ("subPrice" in row) payload.sub_price = row.subPrice;
     if ("subVendorPrice" in row) payload.sub_vendor_price = row.subVendorPrice;

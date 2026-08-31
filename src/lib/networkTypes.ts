@@ -109,6 +109,8 @@ export interface SiteTradeAssignment {
   /** The signed contract (crm_contracts) this trade is covered under, if any -- separate from an Opportunity/RFP. A site can have a different contract per trade. */
   contractId: string | null;
   contractName: string | null;
+  /** How this trade is billed to the client -- Time and Materials, Fixed Monthly, Per Service, or Per Event. */
+  billingType: string | null;
   /** What the client pays for this trade at this site. */
   contractValue: number | null;
   /** What we pay the Vendor for this trade -- our margin is contractValue - subPrice. */
@@ -122,6 +124,7 @@ export interface SiteTradeAssignmentInput {
   vendorId: string | null;
   subVendorId: string | null;
   contractId: string | null;
+  billingType: string | null;
   contractValue: number | null;
   subPrice: number | null;
   subVendorPrice: number | null;
@@ -188,6 +191,7 @@ export interface SiteTradeAssignmentUpdateRow {
   vendorId?: string | null;
   subVendorId?: string | null;
   contractId?: string | null;
+  billingType?: string | null;
   contractValue?: number | null;
   subPrice?: number | null;
   subVendorPrice?: number | null;

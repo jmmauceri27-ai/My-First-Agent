@@ -52,6 +52,7 @@ export interface TradeMergeFields {
   vendorId: FieldResolution<string>;
   subVendorId: FieldResolution<string>;
   contractId: FieldResolution<string>;
+  billingType: FieldResolution<string>;
   contractValue: FieldResolution<number>;
   subPrice: FieldResolution<number>;
   subVendorPrice: FieldResolution<number>;
@@ -99,6 +100,7 @@ export function buildMergePlan(group: Site[]): SiteMergePlan {
       vendorId: pick((a) => a.vendorId),
       subVendorId: pick((a) => a.subVendorId),
       contractId: pick((a) => a.contractId),
+      billingType: pick((a) => a.billingType),
       contractValue: pick((a) => a.contractValue),
       subPrice: pick((a) => a.subPrice),
       subVendorPrice: pick((a) => a.subVendorPrice),
@@ -115,7 +117,15 @@ export function conflictFieldKeys(plan: SiteMergePlan): string[] {
     if (res.conflict) keys.push(key);
   }
   for (const t of plan.trades) {
-    for (const key of ["vendorId", "subVendorId", "contractId", "contractValue", "subPrice", "subVendorPrice"] as const) {
+    for (const key of [
+      "vendorId",
+      "subVendorId",
+      "contractId",
+      "billingType",
+      "contractValue",
+      "subPrice",
+      "subVendorPrice",
+    ] as const) {
       if (t[key].conflict) keys.push(`trade:${t.trade}:${key}`);
     }
   }
@@ -160,6 +170,7 @@ export function applyMergeSelections(
     vendorId: pick(t.vendorId, `trade:${t.trade}:vendorId`, selections),
     subVendorId: pick(t.subVendorId, `trade:${t.trade}:subVendorId`, selections),
     contractId: pick(t.contractId, `trade:${t.trade}:contractId`, selections),
+    billingType: pick(t.billingType, `trade:${t.trade}:billingType`, selections),
     contractValue: pick(t.contractValue, `trade:${t.trade}:contractValue`, selections),
     subPrice: pick(t.subPrice, `trade:${t.trade}:subPrice`, selections),
     subVendorPrice: pick(t.subVendorPrice, `trade:${t.trade}:subVendorPrice`, selections),

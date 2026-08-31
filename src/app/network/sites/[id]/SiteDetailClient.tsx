@@ -350,6 +350,7 @@ export default function SiteDetailClient({
                           </Link>
                         </p>
                       )}
+                      {a.billingType && <p className="text-xs text-slate-400">Billing: {a.billingType}</p>}
                     </div>
                   ))}
                 </div>
