@@ -4,32 +4,41 @@ import { useState } from "react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { formatCurrency } from "@/lib/siteMapColor";
+import { contractStatus, formatContractDate } from "@/lib/contractStatus";
 import type { Company, Contract } from "@/lib/crmTypes";
 import ContractModal from "./ContractModal";
+import ContractsTimeline from "./ContractsTimeline";
 
-const EXPIRING_SOON_DAYS = 60;
-
-function contractStatus(endDate: string | null): { label: string; className: string } {
-  if (!endDate) return { label: "Ongoing", className: "bg-slate-500/10 text-slate-300" };
-
-  const daysLeft = Math.floor((new Date(endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-  if (daysLeft < 0) return { label: "Expired", className: "bg-critical/10 text-critical" };
-  if (daysLeft <= EXPIRING_SOON_DAYS) return { label: "Expiring soon", className: "bg-amber-500/10 text-amber-400" };
-  return { label: "Active", className: "bg-emerald-500/10 text-emerald-400" };
-}
-
-function formatDate(value: string | null): string {
-  if (!value) return "—";
-  return new Date(value).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-}
+type View = "list" | "timeline";
 
 export default function ContractsClient({ contracts, companies }: { contracts: Contract[]; companies: Company[] }) {
   const [editingContract, setEditingContract] = useState<Contract | null>(null);
   const [creating, setCreating] = useState(false);
+  const [view, setView] = useState<View>("list");
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex gap-1 rounded-lg border border-purple-400/20 p-1">
+          <button
+            type="button"
+            onClick={() => setView("list")}
+            className={`rounded-md px-3 py-1.5 text-sm font-semibold transition-all ${
+              view === "list" ? "bg-brand-600 text-white" : "text-slate-400 hover:text-slate-50"
+            }`}
+          >
+            List
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("timeline")}
+            className={`rounded-md px-3 py-1.5 text-sm font-semibold transition-all ${
+              view === "timeline" ? "bg-brand-600 text-white" : "text-slate-400 hover:text-slate-50"
+            }`}
+          >
+            Timeline
+          </button>
+        </div>
         <Button onClick={() => setCreating(true)}>+ New contract</Button>
       </div>
 
@@ -38,7 +47,7 @@ export default function ContractsClient({ contracts, companies }: { contracts: C
           No contracts yet. Add your existing signed contracts here — how long they run, their rates, site counts,
           and type of work.
         </p>
-      ) : (
+      ) : view === "list" ? (
         <Card className="flex flex-col divide-y divide-purple-400/10 overflow-hidden">
           {contracts.map((c) => {
             const status = contractStatus(c.endDate);
@@ -51,7 +60,7 @@ export default function ContractsClient({ contracts, companies }: { contracts: C
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="truncate text-sm font-semibold text-slate-50">{c.name}</p>
-                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${status.className}`}>
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${status.badgeClassName}`}>
                       {status.label}
                     </span>
                   </div>
@@ -68,13 +77,15 @@ export default function ContractsClient({ contracts, companies }: { contracts: C
                     </span>
                   )}
                   <span className="tabular-nums">
-                    {formatDate(c.startDate)} – {formatDate(c.endDate)}
+                    {formatContractDate(c.startDate)} – {formatContractDate(c.endDate)}
                   </span>
                 </div>
               </button>
             );
           })}
         </Card>
+      ) : (
+        <ContractsTimeline contracts={contracts} onSelect={setEditingContract} />
       )}
 
       {(editingContract || creating) && (
