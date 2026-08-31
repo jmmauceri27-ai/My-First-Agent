@@ -16,7 +16,7 @@ export interface AssignmentDraft {
   subVendorPrice: string;
 }
 
-function emptyDraft(): AssignmentDraft {
+export function emptyDraft(): AssignmentDraft {
   return {
     vendorId: "",
     subVendorId: "",
@@ -156,7 +156,7 @@ export default function SiteTradeAssignmentsEditor({
               </label>
             </div>
 
-            <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="mt-2 grid grid-cols-3 gap-3">
               <label className="flex flex-col gap-1 text-sm">
                 <span className="font-medium text-slate-300">Contract value</span>
                 <input
@@ -168,15 +168,6 @@ export default function SiteTradeAssignmentsEditor({
                       updateTrade(trade, { contractValue: formatCurrency(num) });
                     }
                   }}
-                  className={inputClass}
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Rate frequency</span>
-                <input
-                  value={draft.rateFrequency}
-                  onChange={(e) => updateTrade(trade, { rateFrequency: e.target.value })}
-                  placeholder="e.g. Monthly, Per visit"
                   className={inputClass}
                 />
               </label>

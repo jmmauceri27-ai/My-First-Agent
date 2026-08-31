@@ -10,10 +10,10 @@ import TradeSelect from "@/components/TradeSelect";
 import SiteTradeAssignmentsEditor, {
   assignmentsToDrafts,
   draftsToAssignmentInputs,
+  emptyDraft,
   type AssignmentDraft,
 } from "@/components/SiteTradeAssignmentsEditor";
 import SiteMeasurementsEditor from "@/components/SiteMeasurementsEditor";
-import { formatCurrency } from "@/lib/siteMapColor";
 import { matchTrade } from "@/lib/trades";
 import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
 import type { Site, SiteInput, SiteMeasurements, Vendor } from "@/lib/networkTypes";
@@ -66,6 +66,10 @@ export default function SiteDetailClient({
     () => (companyId ? contracts.filter((c) => c.companyId === companyId) : contracts),
     [contracts, companyId],
   );
+
+  function updateAssignmentDraft(trade: string, patch: Partial<AssignmentDraft>) {
+    setAssignmentDrafts((prev) => ({ ...prev, [trade]: { ...(prev[trade] ?? emptyDraft()), ...patch } }));
+  }
 
   async function handleSave() {
     setError(null);
@@ -290,22 +294,31 @@ export default function SiteDetailClient({
 
           <Card className="p-5">
             <h2 className="text-lg font-bold text-slate-50">Rates</h2>
-            {site.tradeAssignments.length === 0 ? (
+            {trades.length === 0 ? (
               <p className="mt-2 text-xs text-slate-500">No trades assigned yet.</p>
             ) : (
-              <div className="mt-3 flex flex-col gap-2">
-                {site.tradeAssignments.map((a) => (
-                  <div key={a.id} className="flex items-center justify-between text-sm">
-                    <div>
-                      <p className="text-slate-300">{a.trade}</p>
-                      <p className="text-xs text-slate-500">{a.billingType ?? "No billing type (set on the Contract)"}</p>
+              <div className="mt-3 flex flex-col gap-3">
+                {trades.map((trade) => {
+                  const draft = assignmentDrafts[trade] ?? emptyDraft();
+                  const billingType = contractsForCompany.find((c) => c.id === draft.contractId)?.billingType ?? null;
+                  return (
+                    <div key={trade} className="flex items-center justify-between gap-3 text-sm">
+                      <div>
+                        <p className="text-slate-300">{trade}</p>
+                        <p className="text-xs text-slate-500">{billingType ?? "No billing type (set on the Contract)"}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-slate-50">{draft.contractValue || "—"}</span>
+                        <input
+                          value={draft.rateFrequency}
+                          onChange={(e) => updateAssignmentDraft(trade, { rateFrequency: e.target.value })}
+                          placeholder="Rate frequency"
+                          className={`${inputClass} w-32`}
+                        />
+                      </div>
                     </div>
-                    <p className="font-semibold text-slate-50">
-                      {a.contractValue != null ? formatCurrency(a.contractValue) : "—"}
-                      {a.rateFrequency && <span className="ml-1 text-xs font-normal text-slate-400">/ {a.rateFrequency}</span>}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </Card>
