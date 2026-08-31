@@ -15,6 +15,7 @@ import SiteTradeAssignmentsEditor, {
 } from "@/components/SiteTradeAssignmentsEditor";
 import SiteMeasurementsEditor from "@/components/SiteMeasurementsEditor";
 import { formatCurrency, parseCurrencyInput } from "@/lib/siteMapColor";
+import { MONTHS } from "@/lib/rateSchedule";
 import { matchTrade } from "@/lib/trades";
 import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
 import type { Site, SiteInput, SiteMeasurements, Vendor } from "@/lib/networkTypes";
@@ -70,6 +71,11 @@ export default function SiteDetailClient({
 
   function updateAssignmentDraft(trade: string, patch: Partial<AssignmentDraft>) {
     setAssignmentDrafts((prev) => ({ ...prev, [trade]: { ...(prev[trade] ?? emptyDraft()), ...patch } }));
+  }
+
+  function updateRateScheduleMonth(trade: string, month: (typeof MONTHS)[number], value: string) {
+    const current = assignmentDrafts[trade] ?? emptyDraft();
+    updateAssignmentDraft(trade, { rateSchedule: { ...current.rateSchedule, [month]: value } });
   }
 
   async function handleSave() {
@@ -294,42 +300,57 @@ export default function SiteDetailClient({
           </Card>
 
           <Card className="p-5">
-            <h2 className="text-lg font-bold text-slate-50">Rates</h2>
+            <h2 className="text-lg font-bold text-slate-50">Rate Schedule</h2>
             <p className="-mt-0.5 text-xs text-slate-500">
-              Tracked separately from Contract Value in Vendor & Contract assignments above.
+              Which months this trade gets paid, and how much -- e.g. a fixed-monthly client paid Mar-Nov. Repeats
+              every year until changed; tracked separately from Contract Value above.
             </p>
             {trades.length === 0 ? (
               <p className="mt-2 text-xs text-slate-500">No trades assigned yet.</p>
             ) : (
-              <div className="mt-3 flex flex-col gap-3">
+              <div className="mt-3 flex flex-col gap-4">
                 {trades.map((trade) => {
                   const draft = assignmentDrafts[trade] ?? emptyDraft();
                   const billingType = contractsForCompany.find((c) => c.id === draft.contractId)?.billingType ?? null;
+                  const total = MONTHS.reduce((sum, m) => {
+                    const raw = draft.rateSchedule[m];
+                    const num = raw ? Number(parseCurrencyInput(raw)) : 0;
+                    return sum + (Number.isFinite(num) ? num : 0);
+                  }, 0);
                   return (
-                    <div key={trade} className="flex items-center justify-between gap-3 text-sm">
-                      <div>
-                        <p className="text-slate-300">{trade}</p>
-                        <p className="text-xs text-slate-500">{billingType ?? "No billing type (set on the Contract)"}</p>
+                    <div key={trade} className="rounded-lg border border-purple-400/20 p-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-50">{trade}</p>
+                          <p className="text-xs text-slate-500">
+                            {billingType ?? "No billing type (set on the Contract)"}
+                          </p>
+                        </div>
+                        {total > 0 && (
+                          <p className="text-xs text-slate-400">
+                            Annual total: <span className="font-semibold text-slate-50">{formatCurrency(total)}</span>
+                          </p>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <input
-                          value={draft.rateAmount}
-                          onChange={(e) => updateAssignmentDraft(trade, { rateAmount: e.target.value })}
-                          onBlur={() => {
-                            const num = Number(parseCurrencyInput(draft.rateAmount));
-                            if (draft.rateAmount.trim() && Number.isFinite(num)) {
-                              updateAssignmentDraft(trade, { rateAmount: formatCurrency(num) });
-                            }
-                          }}
-                          placeholder="Rate amount"
-                          className={`${inputClass} w-28`}
-                        />
-                        <input
-                          value={draft.rateFrequency}
-                          onChange={(e) => updateAssignmentDraft(trade, { rateFrequency: e.target.value })}
-                          placeholder="Rate frequency"
-                          className={`${inputClass} w-32`}
-                        />
+                      <div className="mt-2 grid grid-cols-4 gap-2">
+                        {MONTHS.map((month) => (
+                          <label key={month} className="flex flex-col gap-1 text-xs">
+                            <span className="font-medium text-slate-400">{month}</span>
+                            <input
+                              value={draft.rateSchedule[month] ?? ""}
+                              onChange={(e) => updateRateScheduleMonth(trade, month, e.target.value)}
+                              onBlur={() => {
+                                const raw = draft.rateSchedule[month] ?? "";
+                                const num = Number(parseCurrencyInput(raw));
+                                if (raw.trim() && Number.isFinite(num)) {
+                                  updateRateScheduleMonth(trade, month, formatCurrency(num));
+                                }
+                              }}
+                              placeholder="—"
+                              className={`${inputClass} px-2 py-1 text-xs`}
+                            />
+                          </label>
+                        ))}
                       </div>
                     </div>
                   );

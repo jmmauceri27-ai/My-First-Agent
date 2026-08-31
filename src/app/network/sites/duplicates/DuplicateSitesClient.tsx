@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { formatCurrency } from "@/lib/siteMapColor";
+import { MONTHS } from "@/lib/rateSchedule";
 import {
   applyMergeSelections,
   buildMergePlan,
@@ -219,20 +220,16 @@ function GroupCard({ group, onMerged }: { group: Site[]; onMerged: () => void })
               format={(v) => formatCurrency(v)}
             />
             <FieldRow
-              label="Rate Amount"
-              fieldKey={`trade:${t.trade}:rateAmount`}
-              resolution={t.rateAmount}
-              selected={selections[`trade:${t.trade}:rateAmount`]}
+              label="Rate Schedule"
+              fieldKey={`trade:${t.trade}:rateSchedule`}
+              resolution={t.rateSchedule}
+              selected={selections[`trade:${t.trade}:rateSchedule`]}
               onSelect={select}
-              format={(v) => formatCurrency(v)}
-            />
-            <FieldRow
-              label="Rate Frequency"
-              fieldKey={`trade:${t.trade}:rateFrequency`}
-              resolution={t.rateFrequency}
-              selected={selections[`trade:${t.trade}:rateFrequency`]}
-              onSelect={select}
-              format={(v) => v}
+              format={(v) =>
+                MONTHS.filter((m) => v[m] != null)
+                  .map((m) => `${m}: ${formatCurrency(v[m] as number)}`)
+                  .join(", ") || "—"
+              }
             />
             <FieldRow
               label="Sub Price"

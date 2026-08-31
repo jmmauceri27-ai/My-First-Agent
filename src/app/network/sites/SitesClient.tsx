@@ -23,6 +23,7 @@ import {
 } from "@/lib/siteMapColor";
 import { TRADE_COLORS, TRADE_OPTIONS } from "@/lib/trades";
 import type { Trade } from "@/lib/trades";
+import { MONTHS, sumRateSchedule } from "@/lib/rateSchedule";
 import type { DatasetRecord } from "@/lib/types";
 import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
 import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
@@ -71,8 +72,8 @@ const SITE_EXPORT_COLUMNS = [
   "Latitude",
   "Longitude",
   "Contract Value",
-  "Rate Amount",
-  "Rate Frequency",
+  "Rate Schedule",
+  "Annual Rate Total",
   "Sub Price",
   "Sub-Vendor Price",
   "Measurements",
@@ -114,11 +115,16 @@ function siteToExportRow(s: Site): DatasetRecord {
     Latitude: s.lat,
     Longitude: s.lng,
     "Contract Value": sumOrNull(s.tradeAssignments.map((a) => a.contractValue)),
-    "Rate Amount": sumOrNull(s.tradeAssignments.map((a) => a.rateAmount)),
-    "Rate Frequency": s.tradeAssignments
-      .filter((a) => a.rateFrequency)
-      .map((a) => `${a.trade}: ${a.rateFrequency}`)
+    "Rate Schedule": s.tradeAssignments
+      .filter((a) => Object.keys(a.rateSchedule).length)
+      .map(
+        (a) =>
+          `${a.trade}: ${MONTHS.filter((m) => a.rateSchedule[m] != null)
+            .map((m) => `${m} ${formatCurrency(a.rateSchedule[m] as number)}`)
+            .join(", ")}`,
+      )
       .join("; "),
+    "Annual Rate Total": sumOrNull(s.tradeAssignments.map((a) => sumRateSchedule(a.rateSchedule))),
     "Sub Price": sumOrNull(s.tradeAssignments.map((a) => a.subPrice)),
     "Sub-Vendor Price": sumOrNull(s.tradeAssignments.map((a) => a.subVendorPrice)),
     Measurements: Object.entries(s.measurements)

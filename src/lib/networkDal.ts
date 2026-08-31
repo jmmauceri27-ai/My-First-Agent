@@ -1,5 +1,6 @@
 import "server-only";
 import { createAdminClient, OWNER_USER_ID } from "./supabase/admin";
+import type { RateSchedule } from "./rateSchedule";
 import type {
   Site,
   SiteBulkLinks,
@@ -138,7 +139,7 @@ export async function bulkCreateVendors(rows: VendorImportRow[]): Promise<{ inse
 // ---------- Sites ----------
 
 const ASSIGNMENT_COLUMNS =
-  "id, site_id, trade, vendor_id, sub_vendor_id, contract_id, contract_value, rate_amount, rate_frequency, sub_price, sub_vendor_price, vendor:vendors!site_trade_assignments_vendor_id_fkey(name), sub_vendor:vendors!site_trade_assignments_sub_vendor_id_fkey(name), contract:crm_contracts(name, billing_type)";
+  "id, site_id, trade, vendor_id, sub_vendor_id, contract_id, contract_value, rate_schedule, sub_price, sub_vendor_price, vendor:vendors!site_trade_assignments_vendor_id_fkey(name), sub_vendor:vendors!site_trade_assignments_sub_vendor_id_fkey(name), contract:crm_contracts(name, billing_type)";
 
 function mapAssignment(a: Record<string, unknown>): SiteTradeAssignment {
   const vendor = a.vendor as unknown as { name: string } | null;
@@ -156,8 +157,7 @@ function mapAssignment(a: Record<string, unknown>): SiteTradeAssignment {
     contractName: contract?.name ?? null,
     billingType: contract?.billing_type ?? null,
     contractValue: a.contract_value as number | null,
-    rateAmount: a.rate_amount as number | null,
-    rateFrequency: a.rate_frequency as string | null,
+    rateSchedule: (a.rate_schedule as RateSchedule | null) ?? {},
     subPrice: a.sub_price as number | null,
     subVendorPrice: a.sub_vendor_price as number | null,
   };
@@ -321,8 +321,7 @@ export async function saveSiteTradeAssignments(siteId: string, assignments: Site
       sub_vendor_id: a.subVendorId,
       contract_id: a.contractId,
       contract_value: a.contractValue,
-      rate_amount: a.rateAmount,
-      rate_frequency: a.rateFrequency,
+      rate_schedule: a.rateSchedule ?? {},
       sub_price: a.subPrice,
       sub_vendor_price: a.subVendorPrice,
     }));
@@ -960,8 +959,6 @@ export async function bulkUpdateSiteTradeAssignments(
     if ("subVendorId" in row) payload.sub_vendor_id = row.subVendorId;
     if ("contractId" in row) payload.contract_id = row.contractId;
     if ("contractValue" in row) payload.contract_value = row.contractValue;
-    if ("rateAmount" in row) payload.rate_amount = row.rateAmount;
-    if ("rateFrequency" in row) payload.rate_frequency = row.rateFrequency;
     if ("subPrice" in row) payload.sub_price = row.subPrice;
     if ("subVendorPrice" in row) payload.sub_vendor_price = row.subVendorPrice;
     if (Object.keys(payload).length === 0) return;

@@ -19,8 +19,6 @@ const OPTIONAL_FIELDS = [
   ["subVendorName", "Sub-Vendor Name column"],
   ["contractName", "Contract Name column"],
   ["contractValue", "Contract Value column"],
-  ["rateAmount", "Rate Amount column"],
-  ["rateFrequency", "Rate Frequency column"],
   ["subPrice", "Sub Price column"],
   ["subVendorPrice", "Sub-Vendor Price column"],
 ] as const;
@@ -53,8 +51,6 @@ export default function UpdateSiteTradeAssignmentsModal({
     subVendorName: NONE,
     contractName: NONE,
     contractValue: NONE,
-    rateAmount: NONE,
-    rateFrequency: NONE,
     subPrice: NONE,
     subVendorPrice: NONE,
   });
@@ -92,8 +88,6 @@ export default function UpdateSiteTradeAssignmentsModal({
         subVendorName: parsed.columns.find((c) => /sub.?vendor/i.test(c) && /name/i.test(c)) ?? NONE,
         contractName: parsed.columns.find((c) => /contract/i.test(c) && /name/i.test(c)) ?? NONE,
         contractValue: parsed.columns.find((c) => /contract/i.test(c) && !/name/i.test(c)) ?? NONE,
-        rateAmount: parsed.columns.find((c) => /rate.?amount/i.test(c)) ?? NONE,
-        rateFrequency: parsed.columns.find((c) => /rate.?frequency/i.test(c)) ?? NONE,
         subPrice: parsed.columns.find((c) => /^sub.?price/i.test(c)) ?? NONE,
         subVendorPrice: parsed.columns.find((c) => /sub.?vendor.?price/i.test(c)) ?? NONE,
       });
@@ -150,14 +144,6 @@ export default function UpdateSiteTradeAssignmentsModal({
         if (mapping.contractValue) {
           const v = Number(row[mapping.contractValue]);
           update.contractValue = Number.isFinite(v) ? v : null;
-        }
-        if (mapping.rateAmount) {
-          const v = Number(row[mapping.rateAmount]);
-          update.rateAmount = Number.isFinite(v) ? v : null;
-        }
-        if (mapping.rateFrequency) {
-          const raw = String(row[mapping.rateFrequency] ?? "").trim();
-          update.rateFrequency = raw || null;
         }
         if (mapping.subPrice) {
           const v = Number(row[mapping.subPrice]);

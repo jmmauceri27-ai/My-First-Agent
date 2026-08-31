@@ -1,3 +1,5 @@
+import type { RateSchedule } from "./rateSchedule";
+
 export interface Vendor {
   id: string;
   name: string;
@@ -113,10 +115,8 @@ export interface SiteTradeAssignment {
   billingType: string | null;
   /** What the client pays for this trade at this site. */
   contractValue: number | null;
-  /** The rate shown in the Rates section -- tracked separately from contractValue, since the two don't always match (e.g. a blended contract value vs. this trade's own billed rate). */
-  rateAmount: number | null;
-  /** How often rateAmount is billed, e.g. "Monthly", "Per visit", "Per push" -- freeform, not a fixed list. */
-  rateFrequency: string | null;
+  /** Which months this trade is paid for, and how much -- e.g. a fixed-monthly client paid Mar-Nov. The pattern repeats every year until changed; tracked separately from contractValue. */
+  rateSchedule: RateSchedule;
   /** What we pay the Vendor for this trade -- our margin is contractValue - subPrice. */
   subPrice: number | null;
   /** What the Vendor pays the Sub-Vendor for this trade -- Vendor's margin is subPrice - subVendorPrice. */
@@ -129,8 +129,7 @@ export interface SiteTradeAssignmentInput {
   subVendorId: string | null;
   contractId: string | null;
   contractValue: number | null;
-  rateAmount: number | null;
-  rateFrequency: string | null;
+  rateSchedule: RateSchedule;
   subPrice: number | null;
   subVendorPrice: number | null;
 }
@@ -197,8 +196,6 @@ export interface SiteTradeAssignmentUpdateRow {
   subVendorId?: string | null;
   contractId?: string | null;
   contractValue?: number | null;
-  rateAmount?: number | null;
-  rateFrequency?: string | null;
   subPrice?: number | null;
   subVendorPrice?: number | null;
 }

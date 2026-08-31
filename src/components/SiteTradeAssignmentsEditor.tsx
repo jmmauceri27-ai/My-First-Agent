@@ -2,17 +2,18 @@
 
 import { inputClass } from "@/components/ui/formClasses";
 import { computeSiteMargin, formatCurrency, parseCurrencyInput } from "@/lib/siteMapColor";
+import { MONTHS } from "@/lib/rateSchedule";
+import type { RateSchedule } from "@/lib/rateSchedule";
 import type { Contract } from "@/lib/crmTypes";
 import type { SiteTradeAssignment, SiteTradeAssignmentInput, Vendor } from "@/lib/networkTypes";
 
-/** One trade's in-progress form values -- currency fields are kept as display strings, like the rest of this app's price inputs. */
+/** One trade's in-progress form values -- currency fields are kept as display strings, like the rest of this app's price inputs. rateSchedule mirrors RateSchedule but keeps each month's amount as a display string. */
 export interface AssignmentDraft {
   vendorId: string;
   subVendorId: string;
   contractId: string;
   contractValue: string;
-  rateAmount: string;
-  rateFrequency: string;
+  rateSchedule: Partial<Record<(typeof MONTHS)[number], string>>;
   subPrice: string;
   subVendorPrice: string;
 }
@@ -23,8 +24,7 @@ export function emptyDraft(): AssignmentDraft {
     subVendorId: "",
     contractId: "",
     contractValue: "",
-    rateAmount: "",
-    rateFrequency: "",
+    rateSchedule: {},
     subPrice: "",
     subVendorPrice: "",
   };
@@ -38,8 +38,9 @@ export function assignmentsToDrafts(assignments: SiteTradeAssignment[]): Record<
       subVendorId: a.subVendorId ?? "",
       contractId: a.contractId ?? "",
       contractValue: a.contractValue != null ? formatCurrency(a.contractValue) : "",
-      rateAmount: a.rateAmount != null ? formatCurrency(a.rateAmount) : "",
-      rateFrequency: a.rateFrequency ?? "",
+      rateSchedule: Object.fromEntries(
+        MONTHS.filter((m) => a.rateSchedule[m] != null).map((m) => [m, formatCurrency(a.rateSchedule[m] as number)]),
+      ),
       subPrice: a.subPrice != null ? formatCurrency(a.subPrice) : "",
       subVendorPrice: a.subVendorPrice != null ? formatCurrency(a.subVendorPrice) : "",
     };
@@ -53,14 +54,18 @@ export function draftsToAssignmentInputs(
 ): SiteTradeAssignmentInput[] {
   return trades.map((trade) => {
     const d = drafts[trade] ?? emptyDraft();
+    const rateSchedule: RateSchedule = {};
+    for (const m of MONTHS) {
+      const raw = d.rateSchedule[m];
+      if (raw && raw.trim()) rateSchedule[m] = Number(parseCurrencyInput(raw));
+    }
     return {
       trade,
       vendorId: d.vendorId || null,
       subVendorId: d.subVendorId || null,
       contractId: d.contractId || null,
       contractValue: d.contractValue.trim() ? Number(parseCurrencyInput(d.contractValue)) : null,
-      rateAmount: d.rateAmount.trim() ? Number(parseCurrencyInput(d.rateAmount)) : null,
-      rateFrequency: d.rateFrequency.trim() || null,
+      rateSchedule,
       subPrice: d.subPrice.trim() ? Number(parseCurrencyInput(d.subPrice)) : null,
       subVendorPrice: d.subVendorPrice.trim() ? Number(parseCurrencyInput(d.subVendorPrice)) : null,
     };
