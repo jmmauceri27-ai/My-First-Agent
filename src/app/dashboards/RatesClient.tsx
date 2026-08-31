@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import Card from "@/components/ui/Card";
+import { inputClass } from "@/components/ui/formClasses";
 import { formatCurrency } from "@/lib/siteMapColor";
 import { MONTHS, sumRateSchedule } from "@/lib/rateSchedule";
 import { CHART_COLORS_DARK } from "@/lib/chartPalette";
@@ -19,7 +20,10 @@ interface ScheduleRow {
 }
 
 export default function RatesClient({ sites }: { sites: Site[] }) {
-  const rows: ScheduleRow[] = useMemo(
+  const [tradeFilter, setTradeFilter] = useState("");
+  const [clientFilter, setClientFilter] = useState("");
+
+  const allRows: ScheduleRow[] = useMemo(
     () =>
       sites.flatMap((s) =>
         s.tradeAssignments
@@ -37,6 +41,26 @@ export default function RatesClient({ sites }: { sites: Site[] }) {
     [sites],
   );
 
+  const tradeOptions = useMemo(
+    () => Array.from(new Set(allRows.map((r) => r.trade))).sort((a, b) => a.localeCompare(b)),
+    [allRows],
+  );
+  const clientOptions = useMemo(
+    () =>
+      Array.from(new Set(allRows.map((r) => r.companyName).filter((v): v is string => !!v))).sort((a, b) =>
+        a.localeCompare(b),
+      ),
+    [allRows],
+  );
+
+  const rows = useMemo(
+    () =>
+      allRows.filter(
+        (r) => (!tradeFilter || r.trade === tradeFilter) && (!clientFilter || r.companyName === clientFilter),
+      ),
+    [allRows, tradeFilter, clientFilter],
+  );
+
   const monthlyTotals = useMemo(
     () =>
       MONTHS.map((month) => ({
@@ -50,16 +74,45 @@ export default function RatesClient({ sites }: { sites: Site[] }) {
 
   return (
     <div className="flex flex-col gap-6">
+      {allRows.length > 0 && (
+        <Card className="flex flex-wrap gap-4 p-4">
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-slate-300">Trade</span>
+            <select value={tradeFilter} onChange={(e) => setTradeFilter(e.target.value)} className={inputClass}>
+              <option value="">All</option>
+              {tradeOptions.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-slate-300">Client</span>
+            <select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)} className={inputClass}>
+              <option value="">All</option>
+              {clientOptions.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </label>
+        </Card>
+      )}
+
       <Card className="p-5">
         <h2 className="text-lg font-bold text-slate-50">Monthly Revenue</h2>
         <p className="-mt-0.5 text-xs text-slate-500">
           Total rate schedule across every site and trade, recurring every year -- what we expect to be paid each
           month.
         </p>
-        {rows.length === 0 ? (
+        {allRows.length === 0 ? (
           <p className="mt-4 text-sm text-slate-500">
             No rate schedules set yet -- add one from a site&rsquo;s Rate Schedule section.
           </p>
+        ) : rows.length === 0 ? (
+          <p className="mt-4 text-sm text-slate-500">No rate schedules match these filters.</p>
         ) : (
           <div className="mt-4">
             <ResponsiveContainer width="100%" height={280}>
