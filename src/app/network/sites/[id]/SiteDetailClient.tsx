@@ -302,6 +302,7 @@ export default function SiteDetailClient({
                     </div>
                     <p className="font-semibold text-slate-50">
                       {a.contractValue != null ? formatCurrency(a.contractValue) : "—"}
+                      {a.rateFrequency && <span className="ml-1 text-xs font-normal text-slate-400">/ {a.rateFrequency}</span>}
                     </p>
                   </div>
                 ))}

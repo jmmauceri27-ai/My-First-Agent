@@ -219,6 +219,14 @@ function GroupCard({ group, onMerged }: { group: Site[]; onMerged: () => void })
               format={(v) => formatCurrency(v)}
             />
             <FieldRow
+              label="Rate Frequency"
+              fieldKey={`trade:${t.trade}:rateFrequency`}
+              resolution={t.rateFrequency}
+              selected={selections[`trade:${t.trade}:rateFrequency`]}
+              onSelect={select}
+              format={(v) => v}
+            />
+            <FieldRow
               label="Sub Price"
               fieldKey={`trade:${t.trade}:subPrice`}
               resolution={t.subPrice}

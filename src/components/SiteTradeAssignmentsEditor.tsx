@@ -11,6 +11,7 @@ export interface AssignmentDraft {
   subVendorId: string;
   contractId: string;
   contractValue: string;
+  rateFrequency: string;
   subPrice: string;
   subVendorPrice: string;
 }
@@ -21,6 +22,7 @@ function emptyDraft(): AssignmentDraft {
     subVendorId: "",
     contractId: "",
     contractValue: "",
+    rateFrequency: "",
     subPrice: "",
     subVendorPrice: "",
   };
@@ -34,6 +36,7 @@ export function assignmentsToDrafts(assignments: SiteTradeAssignment[]): Record<
       subVendorId: a.subVendorId ?? "",
       contractId: a.contractId ?? "",
       contractValue: a.contractValue != null ? formatCurrency(a.contractValue) : "",
+      rateFrequency: a.rateFrequency ?? "",
       subPrice: a.subPrice != null ? formatCurrency(a.subPrice) : "",
       subVendorPrice: a.subVendorPrice != null ? formatCurrency(a.subVendorPrice) : "",
     };
@@ -53,6 +56,7 @@ export function draftsToAssignmentInputs(
       subVendorId: d.subVendorId || null,
       contractId: d.contractId || null,
       contractValue: d.contractValue.trim() ? Number(parseCurrencyInput(d.contractValue)) : null,
+      rateFrequency: d.rateFrequency.trim() || null,
       subPrice: d.subPrice.trim() ? Number(parseCurrencyInput(d.subPrice)) : null,
       subVendorPrice: d.subVendorPrice.trim() ? Number(parseCurrencyInput(d.subVendorPrice)) : null,
     };
@@ -152,7 +156,7 @@ export default function SiteTradeAssignmentsEditor({
               </label>
             </div>
 
-            <div className="mt-2 grid grid-cols-3 gap-3">
+            <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
               <label className="flex flex-col gap-1 text-sm">
                 <span className="font-medium text-slate-300">Contract value</span>
                 <input
@@ -164,6 +168,15 @@ export default function SiteTradeAssignmentsEditor({
                       updateTrade(trade, { contractValue: formatCurrency(num) });
                     }
                   }}
+                  className={inputClass}
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium text-slate-300">Rate frequency</span>
+                <input
+                  value={draft.rateFrequency}
+                  onChange={(e) => updateTrade(trade, { rateFrequency: e.target.value })}
+                  placeholder="e.g. Monthly, Per visit"
                   className={inputClass}
                 />
               </label>

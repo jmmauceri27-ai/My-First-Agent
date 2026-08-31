@@ -71,6 +71,7 @@ const SITE_EXPORT_COLUMNS = [
   "Latitude",
   "Longitude",
   "Contract Value",
+  "Rate Frequency",
   "Sub Price",
   "Sub-Vendor Price",
   "Measurements",
@@ -112,6 +113,10 @@ function siteToExportRow(s: Site): DatasetRecord {
     Latitude: s.lat,
     Longitude: s.lng,
     "Contract Value": sumOrNull(s.tradeAssignments.map((a) => a.contractValue)),
+    "Rate Frequency": s.tradeAssignments
+      .filter((a) => a.rateFrequency)
+      .map((a) => `${a.trade}: ${a.rateFrequency}`)
+      .join("; "),
     "Sub Price": sumOrNull(s.tradeAssignments.map((a) => a.subPrice)),
     "Sub-Vendor Price": sumOrNull(s.tradeAssignments.map((a) => a.subVendorPrice)),
     Measurements: Object.entries(s.measurements)
