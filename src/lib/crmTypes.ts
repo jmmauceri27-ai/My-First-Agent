@@ -186,3 +186,59 @@ export interface ContractFile {
   sizeBytes: number;
   uploadedAt: string;
 }
+
+// ---------- Rate Rules (proposal builder rate card) ----------
+// Step 1 of the AI proposal builder: rate_rules holds each trade's default pricing formula, and
+// client_rate_overrides lets a specific client's negotiated rate for a trade take precedence over that
+// default. The pricing engine (a later step) checks for an override first, then falls back to the trade's
+// rate rule.
+
+export const PRICING_BASIS_OPTIONS = ["Per Sq Ft", "Per Visit", "Flat Monthly", "Per Event"] as const;
+
+export type PricingBasis = (typeof PRICING_BASIS_OPTIONS)[number];
+
+/** A trade's default pricing formula -- e.g. Landscaping billed Per Sq Ft at $0.03, or Snow Removal billed Per Event at $450. */
+export interface RateRule {
+  id: string;
+  trade: string;
+  pricingBasis: string;
+  baseRate: number;
+  /** Freeform clarification of the unit, e.g. "per 1,000 sq ft/month" -- optional, since pricingBasis usually says enough on its own. */
+  unitLabel: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RateRuleInput {
+  trade: string;
+  pricingBasis: string;
+  baseRate: number;
+  unitLabel: string | null;
+  notes: string | null;
+}
+
+export const OVERRIDE_TYPE_OPTIONS = ["Fixed Rate", "Discount %", "Markup %"] as const;
+
+export type OverrideType = (typeof OVERRIDE_TYPE_OPTIONS)[number];
+
+/** A specific client's negotiated rate for one trade, overriding that trade's default RateRule -- e.g. Client X gets a 10% discount on Landscaping, or a flat $0.025/sq ft regardless of the base rate. At most one override per (client, trade). */
+export interface ClientRateOverride {
+  id: string;
+  companyId: string;
+  companyName: string | null;
+  trade: string;
+  overrideType: string;
+  overrideValue: number;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ClientRateOverrideInput {
+  companyId: string;
+  trade: string;
+  overrideType: string;
+  overrideValue: number;
+  notes: string | null;
+}

@@ -5,9 +5,14 @@ const LINKS = [
   { href: "/crm/contracts", label: "Contracts", key: "contracts" },
   { href: "/crm/companies", label: "Companies", key: "companies" },
   { href: "/crm/contacts", label: "Contacts", key: "contacts" },
+  { href: "/crm/rate-rules", label: "Rate Rules", key: "rate-rules" },
 ] as const;
 
-export default function CrmNav({ active }: { active: "pipeline" | "companies" | "contacts" | "contracts" }) {
+export default function CrmNav({
+  active,
+}: {
+  active: "pipeline" | "companies" | "contacts" | "contracts" | "rate-rules";
+}) {
   return (
     <nav className="flex flex-wrap items-center gap-1 border-b border-slate-200 pb-2 dark:border-slate-800">
       {LINKS.map((link) => {

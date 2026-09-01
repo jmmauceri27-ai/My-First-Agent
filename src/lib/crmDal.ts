@@ -2,6 +2,8 @@ import "server-only";
 import { randomUUID } from "crypto";
 import { createAdminClient, OWNER_USER_ID } from "./supabase/admin";
 import type {
+  ClientRateOverride,
+  ClientRateOverrideInput,
   Company,
   CompanyImportRow,
   CompanyInput,
@@ -17,6 +19,8 @@ import type {
   OpportunityFile,
   OpportunityInput,
   OpportunityStage,
+  RateRule,
+  RateRuleInput,
 } from "./crmTypes";
 
 const ATTACHMENTS_BUCKET = "crm-attachments";
@@ -874,4 +878,149 @@ export async function getOpportunityFileDownloadUrl(id: string): Promise<string>
     .createSignedUrl(data.storage_path as string, 300, { download: data.file_name as string });
   if (error) throw new Error(error.message);
   return signed.signedUrl;
+}
+
+// ---------- Rate Rules ----------
+// Step 1 of the AI proposal builder: each trade's default pricing formula.
+
+const RATE_RULE_COLUMNS = "id, trade, pricing_basis, base_rate, unit_label, notes, created_at, updated_at";
+
+function mapRateRule(r: Record<string, unknown>): RateRule {
+  return {
+    id: r.id as string,
+    trade: r.trade as string,
+    pricingBasis: r.pricing_basis as string,
+    baseRate: r.base_rate as number,
+    unitLabel: r.unit_label as string | null,
+    notes: r.notes as string | null,
+    createdAt: r.created_at as string,
+    updatedAt: r.updated_at as string,
+  };
+}
+
+export async function listRateRules(): Promise<RateRule[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("rate_rules")
+    .select(RATE_RULE_COLUMNS)
+    .eq("user_id", OWNER_USER_ID)
+    .order("trade", { ascending: true });
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map(mapRateRule);
+}
+
+export async function createRateRule(input: RateRuleInput): Promise<string> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("rate_rules")
+    .insert({
+      user_id: OWNER_USER_ID,
+      trade: input.trade,
+      pricing_basis: input.pricingBasis,
+      base_rate: input.baseRate,
+      unit_label: input.unitLabel,
+      notes: input.notes,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return data.id as string;
+}
+
+export async function updateRateRule(id: string, input: RateRuleInput): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("rate_rules")
+    .update({
+      trade: input.trade,
+      pricing_basis: input.pricingBasis,
+      base_rate: input.baseRate,
+      unit_label: input.unitLabel,
+      notes: input.notes,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteRateRule(id: string): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("rate_rules").delete().eq("id", id).eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
+}
+
+// ---------- Client Rate Overrides ----------
+// A specific client's negotiated rate for one trade, taking precedence over that trade's RateRule.
+
+const CLIENT_RATE_OVERRIDE_COLUMNS =
+  "id, company_id, trade, override_type, override_value, notes, created_at, updated_at, crm_companies(name)";
+
+function mapClientRateOverride(o: Record<string, unknown>): ClientRateOverride {
+  const company = o.crm_companies as unknown as { name: string } | null;
+  return {
+    id: o.id as string,
+    companyId: o.company_id as string,
+    companyName: company?.name ?? null,
+    trade: o.trade as string,
+    overrideType: o.override_type as string,
+    overrideValue: o.override_value as number,
+    notes: o.notes as string | null,
+    createdAt: o.created_at as string,
+    updatedAt: o.updated_at as string,
+  };
+}
+
+export async function listClientRateOverrides(): Promise<ClientRateOverride[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("client_rate_overrides")
+    .select(CLIENT_RATE_OVERRIDE_COLUMNS)
+    .eq("user_id", OWNER_USER_ID)
+    .order("trade", { ascending: true });
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map(mapClientRateOverride);
+}
+
+export async function createClientRateOverride(input: ClientRateOverrideInput): Promise<string> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("client_rate_overrides")
+    .insert({
+      user_id: OWNER_USER_ID,
+      company_id: input.companyId,
+      trade: input.trade,
+      override_type: input.overrideType,
+      override_value: input.overrideValue,
+      notes: input.notes,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return data.id as string;
+}
+
+export async function updateClientRateOverride(id: string, input: ClientRateOverrideInput): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("client_rate_overrides")
+    .update({
+      company_id: input.companyId,
+      trade: input.trade,
+      override_type: input.overrideType,
+      override_value: input.overrideValue,
+      notes: input.notes,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteClientRateOverride(id: string): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("client_rate_overrides").delete().eq("id", id).eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
 }
