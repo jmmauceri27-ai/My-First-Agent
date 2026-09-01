@@ -28,7 +28,7 @@ export default async function DashboardPage() {
 
   const withValue = valueCandidates.map((p) => ({ player: p, value: adpValue(p)! }));
   const bestValue = withValue
-    .filter((v) => v.value > 0)
+    .filter((v) => v.value > 0 && v.player.espnAdp! <= 150)
     .sort((a, b) => b.value - a.value)
     .slice(0, 5);
   const worstValue = withValue
@@ -73,7 +73,7 @@ export default async function DashboardPage() {
         <div>
           <h2 className="mb-1 text-lg font-bold">Best Value</h2>
           <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">
-            Ranked well ahead of their ESPN ADP — should still be there when it's your pick.
+            Top-150 ADP, ranked well ahead of it — should still be there when it's your pick.
           </p>
           <div className="space-y-2">
             {bestValue.map(({ player: p, value }) => (
