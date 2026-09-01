@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { TAG_STYLES, tierColor } from "@/lib/constants";
 import { adpValue } from "@/lib/value";
 import TeamBadge from "@/components/TeamBadge";
+import ValueRow from "@/components/ValueRow";
 
 export const dynamic = "force-dynamic";
 
@@ -71,7 +72,12 @@ export default async function DashboardPage() {
 
       <div className="mb-6 grid gap-6 lg:grid-cols-2">
         <div>
-          <h2 className="mb-1 text-lg font-bold">Best Value</h2>
+          <div className="mb-1 flex items-baseline justify-between gap-2">
+            <h2 className="text-lg font-bold">Best Value</h2>
+            <Link href="/value" className="text-xs font-medium text-gridiron-600 hover:underline dark:text-gridiron-100">
+              See full list by range →
+            </Link>
+          </div>
           <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">
             Top-150 ADP, ranked well ahead of it — should still be there when it's your pick.
           </p>
@@ -88,7 +94,12 @@ export default async function DashboardPage() {
         </div>
 
         <div>
-          <h2 className="mb-1 text-lg font-bold">Worst Value</h2>
+          <div className="mb-1 flex items-baseline justify-between gap-2">
+            <h2 className="text-lg font-bold">Worst Value</h2>
+            <Link href="/value" className="text-xs font-medium text-gridiron-600 hover:underline dark:text-gridiron-100">
+              See full list by range →
+            </Link>
+          </div>
           <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">
             ESPN expects them gone before your rank says they should be — likely a reach.
           </p>
@@ -168,36 +179,6 @@ function StatCard({ label, value, href }: { label: string; value: number; href: 
     >
       <div className="text-2xl font-bold">{value}</div>
       <div className="text-xs text-zinc-500 dark:text-zinc-400">{label}</div>
-    </Link>
-  );
-}
-
-function ValueRow({
-  player: p,
-  value,
-}: {
-  player: { id: string; name: string; position: string; team: string | null; tier: number | null; overallRank: number | null; espnAdp: number | null };
-  value: number;
-}) {
-  return (
-    <Link
-      href={`/players/${p.id}`}
-      className={`flex items-center justify-between gap-2 rounded-lg border-l-4 bg-white p-2 text-sm shadow-sm backdrop-blur-md hover:shadow dark:bg-ink-900/70 ${tierColor(p.tier)}`}
-    >
-      <div>
-        <span className="font-medium">{p.name}</span>
-        <span className="ml-2 inline-flex items-center gap-1 text-xs text-zinc-500">
-          {p.position}
-          <TeamBadge team={p.team} />
-        </span>
-        <div className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-          Rank {p.overallRank} · ADP {p.espnAdp}
-        </div>
-      </div>
-      <span className={`text-sm font-semibold ${value >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
-        {value >= 0 ? "+" : ""}
-        {value.toFixed(1)}
-      </span>
     </Link>
   );
 }
