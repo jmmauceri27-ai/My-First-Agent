@@ -7,15 +7,34 @@ import type { RateSchedule } from "@/lib/rateSchedule";
 import type { Contract } from "@/lib/crmTypes";
 import type { SiteTradeAssignment, SiteTradeAssignmentInput, Vendor } from "@/lib/networkTypes";
 
-/** One trade's in-progress form values -- currency fields are kept as display strings, like the rest of this app's price inputs. rateSchedule mirrors RateSchedule but keeps each month's amount as a display string. */
+type MonthDraft = Partial<Record<(typeof MONTHS)[number], string>>;
+
+function monthDraftToRateSchedule(draft: MonthDraft): RateSchedule {
+  const schedule: RateSchedule = {};
+  for (const m of MONTHS) {
+    const raw = draft[m];
+    if (raw && raw.trim()) schedule[m] = Number(parseCurrencyInput(raw));
+  }
+  return schedule;
+}
+
+function rateScheduleToMonthDraft(schedule: RateSchedule): MonthDraft {
+  return Object.fromEntries(
+    MONTHS.filter((m) => schedule[m] != null).map((m) => [m, formatCurrency(schedule[m] as number)]),
+  );
+}
+
+/** One trade's in-progress form values -- currency fields are kept as display strings, like the rest of this app's price inputs. The *Schedule fields mirror RateSchedule but keep each month's amount as a display string. */
 export interface AssignmentDraft {
   vendorId: string;
   subVendorId: string;
   contractId: string;
   contractValue: string;
-  rateSchedule: Partial<Record<(typeof MONTHS)[number], string>>;
+  rateSchedule: MonthDraft;
   subPrice: string;
   subVendorPrice: string;
+  vendorExpenseSchedule: MonthDraft;
+  subVendorExpenseSchedule: MonthDraft;
 }
 
 export function emptyDraft(): AssignmentDraft {
@@ -27,6 +46,8 @@ export function emptyDraft(): AssignmentDraft {
     rateSchedule: {},
     subPrice: "",
     subVendorPrice: "",
+    vendorExpenseSchedule: {},
+    subVendorExpenseSchedule: {},
   };
 }
 
@@ -38,11 +59,11 @@ export function assignmentsToDrafts(assignments: SiteTradeAssignment[]): Record<
       subVendorId: a.subVendorId ?? "",
       contractId: a.contractId ?? "",
       contractValue: a.contractValue != null ? formatCurrency(a.contractValue) : "",
-      rateSchedule: Object.fromEntries(
-        MONTHS.filter((m) => a.rateSchedule[m] != null).map((m) => [m, formatCurrency(a.rateSchedule[m] as number)]),
-      ),
+      rateSchedule: rateScheduleToMonthDraft(a.rateSchedule),
       subPrice: a.subPrice != null ? formatCurrency(a.subPrice) : "",
       subVendorPrice: a.subVendorPrice != null ? formatCurrency(a.subVendorPrice) : "",
+      vendorExpenseSchedule: rateScheduleToMonthDraft(a.vendorExpenseSchedule),
+      subVendorExpenseSchedule: rateScheduleToMonthDraft(a.subVendorExpenseSchedule),
     };
   }
   return map;
@@ -54,20 +75,17 @@ export function draftsToAssignmentInputs(
 ): SiteTradeAssignmentInput[] {
   return trades.map((trade) => {
     const d = drafts[trade] ?? emptyDraft();
-    const rateSchedule: RateSchedule = {};
-    for (const m of MONTHS) {
-      const raw = d.rateSchedule[m];
-      if (raw && raw.trim()) rateSchedule[m] = Number(parseCurrencyInput(raw));
-    }
     return {
       trade,
       vendorId: d.vendorId || null,
       subVendorId: d.subVendorId || null,
       contractId: d.contractId || null,
       contractValue: d.contractValue.trim() ? Number(parseCurrencyInput(d.contractValue)) : null,
-      rateSchedule,
+      rateSchedule: monthDraftToRateSchedule(d.rateSchedule),
       subPrice: d.subPrice.trim() ? Number(parseCurrencyInput(d.subPrice)) : null,
       subVendorPrice: d.subVendorPrice.trim() ? Number(parseCurrencyInput(d.subVendorPrice)) : null,
+      vendorExpenseSchedule: monthDraftToRateSchedule(d.vendorExpenseSchedule),
+      subVendorExpenseSchedule: monthDraftToRateSchedule(d.subVendorExpenseSchedule),
     };
   });
 }

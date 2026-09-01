@@ -73,9 +73,22 @@ export default function SiteDetailClient({
     setAssignmentDrafts((prev) => ({ ...prev, [trade]: { ...(prev[trade] ?? emptyDraft()), ...patch } }));
   }
 
-  function updateRateScheduleMonth(trade: string, month: (typeof MONTHS)[number], value: string) {
+  function updateMonthSchedule(
+    trade: string,
+    field: "rateSchedule" | "vendorExpenseSchedule" | "subVendorExpenseSchedule",
+    month: (typeof MONTHS)[number],
+    value: string,
+  ) {
     const current = assignmentDrafts[trade] ?? emptyDraft();
-    updateAssignmentDraft(trade, { rateSchedule: { ...current.rateSchedule, [month]: value } });
+    updateAssignmentDraft(trade, { [field]: { ...current[field], [month]: value } });
+  }
+
+  function scheduleTotal(schedule: Partial<Record<(typeof MONTHS)[number], string>>): number {
+    return MONTHS.reduce((sum, m) => {
+      const raw = schedule[m];
+      const num = raw ? Number(parseCurrencyInput(raw)) : 0;
+      return sum + (Number.isFinite(num) ? num : 0);
+    }, 0);
   }
 
   async function handleSave() {
@@ -312,11 +325,7 @@ export default function SiteDetailClient({
                 {trades.map((trade) => {
                   const draft = assignmentDrafts[trade] ?? emptyDraft();
                   const billingType = contractsForCompany.find((c) => c.id === draft.contractId)?.billingType ?? null;
-                  const total = MONTHS.reduce((sum, m) => {
-                    const raw = draft.rateSchedule[m];
-                    const num = raw ? Number(parseCurrencyInput(raw)) : 0;
-                    return sum + (Number.isFinite(num) ? num : 0);
-                  }, 0);
+                  const total = scheduleTotal(draft.rateSchedule);
                   return (
                     <div key={trade} className="rounded-lg border border-purple-400/20 p-3">
                       <div className="flex items-center justify-between">
@@ -338,12 +347,102 @@ export default function SiteDetailClient({
                             <span className="font-medium text-slate-400">{month}</span>
                             <input
                               value={draft.rateSchedule[month] ?? ""}
-                              onChange={(e) => updateRateScheduleMonth(trade, month, e.target.value)}
+                              onChange={(e) => updateMonthSchedule(trade, "rateSchedule", month, e.target.value)}
                               onBlur={() => {
                                 const raw = draft.rateSchedule[month] ?? "";
                                 const num = Number(parseCurrencyInput(raw));
                                 if (raw.trim() && Number.isFinite(num)) {
-                                  updateRateScheduleMonth(trade, month, formatCurrency(num));
+                                  updateMonthSchedule(trade, "rateSchedule", month, formatCurrency(num));
+                                }
+                              }}
+                              placeholder="—"
+                              className={`${inputClass} px-2 py-1 text-xs`}
+                            />
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
+
+          <Card className="p-5">
+            <h2 className="text-lg font-bold text-slate-50">Expense Schedule</h2>
+            <p className="-mt-0.5 text-xs text-slate-500">
+              Which months the Vendor and Sub-Vendor are paid for this trade, and how much. Repeats every year
+              until changed; tracked separately from Sub Price/Sub-Vendor Price above.
+            </p>
+            {trades.length === 0 ? (
+              <p className="mt-2 text-xs text-slate-500">No trades assigned yet.</p>
+            ) : (
+              <div className="mt-3 flex flex-col gap-4">
+                {trades.map((trade) => {
+                  const draft = assignmentDrafts[trade] ?? emptyDraft();
+                  const vendorName = vendors.find((v) => v.id === draft.vendorId)?.name ?? null;
+                  const subVendorName = vendors.find((v) => v.id === draft.subVendorId)?.name ?? null;
+                  const vendorTotal = scheduleTotal(draft.vendorExpenseSchedule);
+                  const subVendorTotal = scheduleTotal(draft.subVendorExpenseSchedule);
+                  return (
+                    <div key={trade} className="rounded-lg border border-purple-400/20 p-3">
+                      <p className="text-sm font-semibold text-slate-50">{trade}</p>
+
+                      <div className="mt-2 flex items-center justify-between">
+                        <p className="text-xs text-slate-500">Vendor{vendorName ? `: ${vendorName}` : " (not assigned)"}</p>
+                        {vendorTotal > 0 && (
+                          <p className="text-xs text-slate-400">
+                            Annual total:{" "}
+                            <span className="font-semibold text-slate-50">{formatCurrency(vendorTotal)}</span>
+                          </p>
+                        )}
+                      </div>
+                      <div className="mt-1 grid grid-cols-4 gap-2">
+                        {MONTHS.map((month) => (
+                          <label key={month} className="flex flex-col gap-1 text-xs">
+                            <span className="font-medium text-slate-400">{month}</span>
+                            <input
+                              value={draft.vendorExpenseSchedule[month] ?? ""}
+                              onChange={(e) => updateMonthSchedule(trade, "vendorExpenseSchedule", month, e.target.value)}
+                              onBlur={() => {
+                                const raw = draft.vendorExpenseSchedule[month] ?? "";
+                                const num = Number(parseCurrencyInput(raw));
+                                if (raw.trim() && Number.isFinite(num)) {
+                                  updateMonthSchedule(trade, "vendorExpenseSchedule", month, formatCurrency(num));
+                                }
+                              }}
+                              placeholder="—"
+                              className={`${inputClass} px-2 py-1 text-xs`}
+                            />
+                          </label>
+                        ))}
+                      </div>
+
+                      <div className="mt-3 flex items-center justify-between">
+                        <p className="text-xs text-slate-500">
+                          Sub-Vendor{subVendorName ? `: ${subVendorName}` : " (not assigned)"}
+                        </p>
+                        {subVendorTotal > 0 && (
+                          <p className="text-xs text-slate-400">
+                            Annual total:{" "}
+                            <span className="font-semibold text-slate-50">{formatCurrency(subVendorTotal)}</span>
+                          </p>
+                        )}
+                      </div>
+                      <div className="mt-1 grid grid-cols-4 gap-2">
+                        {MONTHS.map((month) => (
+                          <label key={month} className="flex flex-col gap-1 text-xs">
+                            <span className="font-medium text-slate-400">{month}</span>
+                            <input
+                              value={draft.subVendorExpenseSchedule[month] ?? ""}
+                              onChange={(e) =>
+                                updateMonthSchedule(trade, "subVendorExpenseSchedule", month, e.target.value)
+                              }
+                              onBlur={() => {
+                                const raw = draft.subVendorExpenseSchedule[month] ?? "";
+                                const num = Number(parseCurrencyInput(raw));
+                                if (raw.trim() && Number.isFinite(num)) {
+                                  updateMonthSchedule(trade, "subVendorExpenseSchedule", month, formatCurrency(num));
                                 }
                               }}
                               placeholder="—"

@@ -121,6 +121,10 @@ export interface SiteTradeAssignment {
   subPrice: number | null;
   /** What the Vendor pays the Sub-Vendor for this trade -- Vendor's margin is subPrice - subVendorPrice. */
   subVendorPrice: number | null;
+  /** Which months we pay the Vendor for this trade, and how much. Repeats every year until changed; tracked separately from subPrice. */
+  vendorExpenseSchedule: RateSchedule;
+  /** Which months the Sub-Vendor gets paid for this trade, and how much. Repeats every year until changed; tracked separately from subVendorPrice. */
+  subVendorExpenseSchedule: RateSchedule;
 }
 
 export interface SiteTradeAssignmentInput {
@@ -132,6 +136,8 @@ export interface SiteTradeAssignmentInput {
   rateSchedule: RateSchedule;
   subPrice: number | null;
   subVendorPrice: number | null;
+  vendorExpenseSchedule: RateSchedule;
+  subVendorExpenseSchedule: RateSchedule;
 }
 
 /** A SiteTradeAssignment enriched with the site/client it belongs to -- used on the Vendor detail page, where a vendor's assignments span many sites. */
@@ -224,6 +230,18 @@ export interface SiteRateScheduleUpdateRow {
   matchId: string | null;
   matchName: string | null;
   rateSchedule: RateSchedule;
+}
+
+/**
+ * A single row parsed from an uploaded sheet meant to bulk-set one Trade's Expense Schedule -- for either the
+ * Vendor or the Sub-Vendor, picked once per upload -- on existing sites. Matched and merged the same way as
+ * SiteRateScheduleUpdateRow.
+ */
+export interface SiteExpenseScheduleUpdateRow {
+  matchCode: string | null;
+  matchId: string | null;
+  matchName: string | null;
+  expenseSchedule: RateSchedule;
 }
 
 export interface SiteUpdateResult {

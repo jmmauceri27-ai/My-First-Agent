@@ -57,6 +57,8 @@ export interface TradeMergeFields {
   rateSchedule: FieldResolution<RateSchedule>;
   subPrice: FieldResolution<number>;
   subVendorPrice: FieldResolution<number>;
+  vendorExpenseSchedule: FieldResolution<RateSchedule>;
+  subVendorExpenseSchedule: FieldResolution<RateSchedule>;
 }
 
 export interface SiteMergePlan {
@@ -105,6 +107,10 @@ export function buildMergePlan(group: Site[]): SiteMergePlan {
       rateSchedule: pick((a) => (Object.keys(a.rateSchedule).length ? a.rateSchedule : null)),
       subPrice: pick((a) => a.subPrice),
       subVendorPrice: pick((a) => a.subVendorPrice),
+      vendorExpenseSchedule: pick((a) => (Object.keys(a.vendorExpenseSchedule).length ? a.vendorExpenseSchedule : null)),
+      subVendorExpenseSchedule: pick((a) =>
+        Object.keys(a.subVendorExpenseSchedule).length ? a.subVendorExpenseSchedule : null,
+      ),
     };
   });
 
@@ -126,6 +132,8 @@ export function conflictFieldKeys(plan: SiteMergePlan): string[] {
       "rateSchedule",
       "subPrice",
       "subVendorPrice",
+      "vendorExpenseSchedule",
+      "subVendorExpenseSchedule",
     ] as const) {
       if (t[key].conflict) keys.push(`trade:${t.trade}:${key}`);
     }
@@ -175,6 +183,9 @@ export function applyMergeSelections(
     rateSchedule: pick(t.rateSchedule, `trade:${t.trade}:rateSchedule`, selections) ?? {},
     subPrice: pick(t.subPrice, `trade:${t.trade}:subPrice`, selections),
     subVendorPrice: pick(t.subVendorPrice, `trade:${t.trade}:subVendorPrice`, selections),
+    vendorExpenseSchedule: pick(t.vendorExpenseSchedule, `trade:${t.trade}:vendorExpenseSchedule`, selections) ?? {},
+    subVendorExpenseSchedule:
+      pick(t.subVendorExpenseSchedule, `trade:${t.trade}:subVendorExpenseSchedule`, selections) ?? {},
   }));
 
   return { input, trades: plan.trades.map((t) => t.trade), assignments };

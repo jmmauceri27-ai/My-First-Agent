@@ -15,6 +15,7 @@ import {
   bulkUnassignContractForTrade,
   bulkUnassignTrades,
   bulkUnassignVendorForTrade,
+  bulkUpdateSiteExpenseSchedule,
   bulkUpdateSiteMeasurements,
   bulkUpdateSiteRateSchedule,
   bulkUpdateSites,
@@ -41,9 +42,11 @@ import {
   updateSiteFilterTemplate,
   updateVendor,
 } from "@/lib/networkDal";
+import type { ExpensePayee } from "@/lib/networkDal";
 import type {
   Site,
   SiteBulkLinks,
+  SiteExpenseScheduleUpdateRow,
   SiteFilterTemplate,
   SiteFilters,
   SiteImportRow,
@@ -403,6 +406,28 @@ export async function bulkUpdateSiteRateScheduleAction(
       notFound: [],
       ambiguous: [],
       error: e instanceof Error ? e.message : "Failed to update rate schedule.",
+    };
+  }
+}
+
+/** Merges each matched row's Expense Schedule months into one Trade's existing schedule for the given payee (Vendor or Sub-Vendor), without touching the other payee, any other trade, or any month not present on the row. See bulkUpdateSiteExpenseSchedule for matching rules. */
+export async function bulkUpdateSiteExpenseScheduleAction(
+  trade: string,
+  payee: ExpensePayee,
+  rows: SiteExpenseScheduleUpdateRow[],
+  companyId: string | null,
+): Promise<SiteUpdateResult & { error?: string }> {
+  try {
+    const result = await bulkUpdateSiteExpenseSchedule(trade, payee, rows, companyId);
+    revalidatePath("/network/sites");
+    revalidatePath("/dashboards");
+    return result;
+  } catch (e) {
+    return {
+      updated: 0,
+      notFound: [],
+      ambiguous: [],
+      error: e instanceof Error ? e.message : "Failed to update expense schedule.",
     };
   }
 }

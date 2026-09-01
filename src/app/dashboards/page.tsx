@@ -6,11 +6,14 @@ import AreaSidebar from "./AreaSidebar";
 import DashboardPicker from "./DashboardPicker";
 import DashboardViewClient from "./DashboardViewClient";
 import RatesClient from "./RatesClient";
+import ExpensesClient from "./ExpensesClient";
 
-/** The Rate Schedule view is a hand-built page (chart + per-site/trade breakdown table), not a config-driven
- * dashboard -- it's pinned into this area as an extra picker tab rather than modeled as a DashboardDefinition. */
+/** The Rate Schedule and Monthly Expenses views are hand-built pages (chart + per-site/trade breakdown table),
+ * not config-driven dashboards -- they're pinned into this area as extra picker tabs rather than modeled as a
+ * DashboardDefinition. */
 const RATE_SCHEDULE_AREA = "Contract Value & Financials";
 const RATE_SCHEDULE_ID = "rate-schedule";
+const EXPENSE_SCHEDULE_ID = "expense-schedule";
 
 export default async function DashboardsPage({
   searchParams,
@@ -24,19 +27,26 @@ export default async function DashboardsPage({
 
   const areaDashboards = DASHBOARD_DEFINITIONS.filter((d) => d.area === selectedArea);
   const showRateSchedule = selectedArea === RATE_SCHEDULE_AREA && id === RATE_SCHEDULE_ID;
+  const showExpenseSchedule = selectedArea === RATE_SCHEDULE_AREA && id === EXPENSE_SCHEDULE_ID;
+  const showCustomTab = showRateSchedule || showExpenseSchedule;
   const selected =
-    !showRateSchedule && id && areaDashboards.some((d) => d.id === id)
+    !showCustomTab && id && areaDashboards.some((d) => d.id === id)
       ? byId.get(id)
-      : !showRateSchedule
+      : !showCustomTab
         ? areaDashboards[0]
         : undefined;
 
   const pickerItems = [
     ...areaDashboards.map((d) => ({ id: d.id, name: d.config.name })),
-    ...(selectedArea === RATE_SCHEDULE_AREA ? [{ id: RATE_SCHEDULE_ID, name: "Rate Schedule" }] : []),
+    ...(selectedArea === RATE_SCHEDULE_AREA
+      ? [
+          { id: RATE_SCHEDULE_ID, name: "Rate Schedule" },
+          { id: EXPENSE_SCHEDULE_ID, name: "Monthly Expenses" },
+        ]
+      : []),
   ];
 
-  const sites = showRateSchedule ? await listSites() : null;
+  const sites = showCustomTab ? await listSites() : null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -54,11 +64,13 @@ export default async function DashboardsPage({
             <>
               <DashboardPicker
                 dashboards={pickerItems}
-                selectedId={showRateSchedule ? RATE_SCHEDULE_ID : selected?.id}
+                selectedId={showRateSchedule ? RATE_SCHEDULE_ID : showExpenseSchedule ? EXPENSE_SCHEDULE_ID : selected?.id}
                 area={selectedArea}
               />
               {showRateSchedule ? (
                 <RatesClient sites={sites ?? []} />
+              ) : showExpenseSchedule ? (
+                <ExpensesClient sites={sites ?? []} />
               ) : !selected || selected.config.cards.length === 0 ? (
                 <p className="text-sm text-slate-400">This dashboard has no cards yet.</p>
               ) : (

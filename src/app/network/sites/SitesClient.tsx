@@ -35,6 +35,7 @@ import UpdateSitesModal from "../UpdateSitesModal";
 import UpdateSiteTradeAssignmentsModal from "../UpdateSiteTradeAssignmentsModal";
 import UpdateSiteMeasurementsModal from "../UpdateSiteMeasurementsModal";
 import UpdateSiteRateScheduleModal from "../UpdateSiteRateScheduleModal";
+import UpdateSiteExpenseScheduleModal from "../UpdateSiteExpenseScheduleModal";
 import {
   bulkAssignContractAction,
   bulkAssignTradesAction,
@@ -77,6 +78,10 @@ const SITE_EXPORT_COLUMNS = [
   "Annual Rate Total",
   "Sub Price",
   "Sub-Vendor Price",
+  "Vendor Expense Schedule",
+  "Annual Vendor Expense Total",
+  "Sub-Vendor Expense Schedule",
+  "Annual Sub-Vendor Expense Total",
   "Measurements",
   "Counts",
   "Last Season Snowfall",
@@ -86,6 +91,18 @@ const SITE_EXPORT_COLUMNS = [
 function sumOrNull(values: (number | null)[]): number | null {
   const present = values.filter((v): v is number => v !== null);
   return present.length ? present.reduce((a, b) => a + b, 0) : null;
+}
+
+function scheduleExportSummary(assignments: Site["tradeAssignments"], pick: (a: Site["tradeAssignments"][number]) => Record<string, number>): string {
+  return assignments
+    .filter((a) => Object.keys(pick(a)).length)
+    .map((a) => {
+      const schedule = pick(a);
+      return `${a.trade}: ${MONTHS.filter((m) => schedule[m] != null)
+        .map((m) => `${m} ${formatCurrency(schedule[m])}`)
+        .join(", ")}`;
+    })
+    .join("; ");
 }
 
 function siteToExportRow(s: Site): DatasetRecord {
@@ -116,18 +133,16 @@ function siteToExportRow(s: Site): DatasetRecord {
     Latitude: s.lat,
     Longitude: s.lng,
     "Contract Value": sumOrNull(s.tradeAssignments.map((a) => a.contractValue)),
-    "Rate Schedule": s.tradeAssignments
-      .filter((a) => Object.keys(a.rateSchedule).length)
-      .map(
-        (a) =>
-          `${a.trade}: ${MONTHS.filter((m) => a.rateSchedule[m] != null)
-            .map((m) => `${m} ${formatCurrency(a.rateSchedule[m] as number)}`)
-            .join(", ")}`,
-      )
-      .join("; "),
+    "Rate Schedule": scheduleExportSummary(s.tradeAssignments, (a) => a.rateSchedule),
     "Annual Rate Total": sumOrNull(s.tradeAssignments.map((a) => sumRateSchedule(a.rateSchedule))),
     "Sub Price": sumOrNull(s.tradeAssignments.map((a) => a.subPrice)),
     "Sub-Vendor Price": sumOrNull(s.tradeAssignments.map((a) => a.subVendorPrice)),
+    "Vendor Expense Schedule": scheduleExportSummary(s.tradeAssignments, (a) => a.vendorExpenseSchedule),
+    "Annual Vendor Expense Total": sumOrNull(s.tradeAssignments.map((a) => sumRateSchedule(a.vendorExpenseSchedule))),
+    "Sub-Vendor Expense Schedule": scheduleExportSummary(s.tradeAssignments, (a) => a.subVendorExpenseSchedule),
+    "Annual Sub-Vendor Expense Total": sumOrNull(
+      s.tradeAssignments.map((a) => sumRateSchedule(a.subVendorExpenseSchedule)),
+    ),
     Measurements: Object.entries(s.measurements)
       .map(([label, value]) => `${label}: ${formatSquareFeet(value)}`)
       .join("; "),
@@ -229,6 +244,7 @@ export default function SitesClient({
   const [updatingAssignments, setUpdatingAssignments] = useState(false);
   const [updatingMeasurements, setUpdatingMeasurements] = useState(false);
   const [updatingRateSchedule, setUpdatingRateSchedule] = useState(false);
+  const [updatingExpenseSchedule, setUpdatingExpenseSchedule] = useState(false);
   const [showUpdateMenu, setShowUpdateMenu] = useState(false);
   const updateMenuRef = useRef<HTMLDivElement>(null);
 
@@ -863,6 +879,16 @@ export default function SitesClient({
                 >
                   Rate schedule
                 </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUpdatingExpenseSchedule(true);
+                    setShowUpdateMenu(false);
+                  }}
+                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-100 hover:bg-purple-500/10"
+                >
+                  Expense schedule
+                </button>
               </div>
             )}
           </div>
@@ -1363,6 +1389,10 @@ export default function SitesClient({
 
       {updatingRateSchedule && (
         <UpdateSiteRateScheduleModal companies={companies} onClose={() => setUpdatingRateSchedule(false)} />
+      )}
+
+      {updatingExpenseSchedule && (
+        <UpdateSiteExpenseScheduleModal companies={companies} onClose={() => setUpdatingExpenseSchedule(false)} />
       )}
     </div>
   );

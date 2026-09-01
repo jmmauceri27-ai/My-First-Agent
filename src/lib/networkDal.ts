@@ -6,6 +6,7 @@ import type {
   SiteBulkLinks,
   SiteFilterTemplate,
   SiteFilters,
+  SiteExpenseScheduleUpdateRow,
   SiteImportRow,
   SiteInput,
   SiteMeasurementsUpdateRow,
@@ -140,7 +141,7 @@ export async function bulkCreateVendors(rows: VendorImportRow[]): Promise<{ inse
 // ---------- Sites ----------
 
 const ASSIGNMENT_COLUMNS =
-  "id, site_id, trade, vendor_id, sub_vendor_id, contract_id, contract_value, rate_schedule, sub_price, sub_vendor_price, vendor:vendors!site_trade_assignments_vendor_id_fkey(name), sub_vendor:vendors!site_trade_assignments_sub_vendor_id_fkey(name), contract:crm_contracts(name, billing_type)";
+  "id, site_id, trade, vendor_id, sub_vendor_id, contract_id, contract_value, rate_schedule, sub_price, sub_vendor_price, vendor_expense_schedule, sub_vendor_expense_schedule, vendor:vendors!site_trade_assignments_vendor_id_fkey(name), sub_vendor:vendors!site_trade_assignments_sub_vendor_id_fkey(name), contract:crm_contracts(name, billing_type)";
 
 function mapAssignment(a: Record<string, unknown>): SiteTradeAssignment {
   const vendor = a.vendor as unknown as { name: string } | null;
@@ -161,6 +162,8 @@ function mapAssignment(a: Record<string, unknown>): SiteTradeAssignment {
     rateSchedule: (a.rate_schedule as RateSchedule | null) ?? {},
     subPrice: a.sub_price as number | null,
     subVendorPrice: a.sub_vendor_price as number | null,
+    vendorExpenseSchedule: (a.vendor_expense_schedule as RateSchedule | null) ?? {},
+    subVendorExpenseSchedule: (a.sub_vendor_expense_schedule as RateSchedule | null) ?? {},
   };
 }
 
@@ -325,6 +328,8 @@ export async function saveSiteTradeAssignments(siteId: string, assignments: Site
       rate_schedule: a.rateSchedule ?? {},
       sub_price: a.subPrice,
       sub_vendor_price: a.subVendorPrice,
+      vendor_expense_schedule: a.vendorExpenseSchedule ?? {},
+      sub_vendor_expense_schedule: a.subVendorExpenseSchedule ?? {},
     }));
 
     const { error } = await supabase.from("site_trade_assignments").upsert(rows, { onConflict: "site_id,trade" });
@@ -1060,6 +1065,87 @@ export async function bulkUpdateSiteRateSchedule(
           const { error: insertError } = await supabase
             .from("site_trade_assignments")
             .insert({ user_id: OWNER_USER_ID, site_id: u.siteId, trade, rate_schedule: u.rateSchedule });
+          if (insertError) return { error: insertError };
+        }
+        return { error: null };
+      }),
+    );
+    const failed = results.find((r) => r.error);
+    if (failed?.error) throw new Error(failed.error.message);
+  }
+
+  return { updated: updates.length, notFound, ambiguous };
+}
+
+export type ExpensePayee = "vendor" | "subVendor";
+
+const EXPENSE_SCHEDULE_COLUMN: Record<ExpensePayee, "vendor_expense_schedule" | "sub_vendor_expense_schedule"> = {
+  vendor: "vendor_expense_schedule",
+  subVendor: "sub_vendor_expense_schedule",
+};
+
+/**
+ * Merges each matched row's `expenseSchedule` months into the single named Trade's existing expense schedule
+ * for the given payee (Vendor or Sub-Vendor) -- added or overwritten by month, for each matched site. Months
+ * not present on a row are left untouched, the other payee's schedule and any other trade are unaffected.
+ * Creates the trade's assignment row if the site doesn't have one yet. Matching rules are identical to
+ * bulkUpdateSites.
+ */
+export async function bulkUpdateSiteExpenseSchedule(
+  trade: string,
+  payee: ExpensePayee,
+  rows: SiteExpenseScheduleUpdateRow[],
+  companyId: string | null,
+): Promise<SiteUpdateResult> {
+  const supabase = createAdminClient();
+  const column = EXPENSE_SCHEDULE_COLUMN[payee];
+  const { siteIds, notFound, ambiguous } = await matchSiteIds(rows, companyId);
+
+  const matchedSiteIds = Array.from(new Set(siteIds.filter((id): id is string => !!id)));
+  const { data: existingAssignments, error: fetchError } =
+    matchedSiteIds.length > 0
+      ? await supabase
+          .from("site_trade_assignments")
+          .select(`site_id, ${column}`)
+          .in("site_id", matchedSiteIds)
+          .eq("trade", trade)
+          .eq("user_id", OWNER_USER_ID)
+      : { data: [] as Record<string, unknown>[], error: null };
+  if (fetchError) throw new Error(fetchError.message);
+  const existingBySiteId = new Map(
+    (existingAssignments ?? []).map((row) => {
+      const a = row as Record<string, unknown>;
+      return [a.site_id as string, (a[column] as RateSchedule | null) ?? {}] as const;
+    }),
+  );
+
+  const updates: { siteId: string; expenseSchedule: RateSchedule }[] = [];
+  rows.forEach((row, i) => {
+    const siteId = siteIds[i];
+    if (!siteId) return;
+    if (Object.keys(row.expenseSchedule).length === 0) return;
+
+    const expenseSchedule = { ...(existingBySiteId.get(siteId) ?? {}), ...row.expenseSchedule };
+    updates.push({ siteId, expenseSchedule });
+  });
+
+  const concurrency = 20;
+  for (let i = 0; i < updates.length; i += concurrency) {
+    const batch = updates.slice(i, i + concurrency);
+    const results = await Promise.all(
+      batch.map(async (u) => {
+        const { data, error } = await supabase
+          .from("site_trade_assignments")
+          .update({ [column]: u.expenseSchedule, updated_at: new Date().toISOString() })
+          .eq("site_id", u.siteId)
+          .eq("trade", trade)
+          .eq("user_id", OWNER_USER_ID)
+          .select("id");
+        if (error) return { error };
+        if (!data || data.length === 0) {
+          const { error: insertError } = await supabase
+            .from("site_trade_assignments")
+            .insert({ user_id: OWNER_USER_ID, site_id: u.siteId, trade, [column]: u.expenseSchedule });
           if (insertError) return { error: insertError };
         }
         return { error: null };

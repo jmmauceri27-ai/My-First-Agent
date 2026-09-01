@@ -7,6 +7,7 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { formatCurrency } from "@/lib/siteMapColor";
 import { MONTHS } from "@/lib/rateSchedule";
+import type { RateSchedule } from "@/lib/rateSchedule";
 import {
   applyMergeSelections,
   buildMergePlan,
@@ -23,6 +24,14 @@ function siteById(group: Site[], id: string): Site | undefined {
 
 function groupKey(group: Site[]): string {
   return group[0]?.siteCode ?? group[0]?.id ?? "";
+}
+
+function formatScheduleSummary(schedule: RateSchedule): string {
+  return (
+    MONTHS.filter((m) => schedule[m] != null)
+      .map((m) => `${m}: ${formatCurrency(schedule[m] as number)}`)
+      .join(", ") || "—"
+  );
 }
 
 function FieldRow<T>({
@@ -225,11 +234,7 @@ function GroupCard({ group, onMerged }: { group: Site[]; onMerged: () => void })
               resolution={t.rateSchedule}
               selected={selections[`trade:${t.trade}:rateSchedule`]}
               onSelect={select}
-              format={(v) =>
-                MONTHS.filter((m) => v[m] != null)
-                  .map((m) => `${m}: ${formatCurrency(v[m] as number)}`)
-                  .join(", ") || "—"
-              }
+              format={formatScheduleSummary}
             />
             <FieldRow
               label="Sub Price"
@@ -246,6 +251,22 @@ function GroupCard({ group, onMerged }: { group: Site[]; onMerged: () => void })
               selected={selections[`trade:${t.trade}:subVendorPrice`]}
               onSelect={select}
               format={(v) => formatCurrency(v)}
+            />
+            <FieldRow
+              label="Vendor Expense Schedule"
+              fieldKey={`trade:${t.trade}:vendorExpenseSchedule`}
+              resolution={t.vendorExpenseSchedule}
+              selected={selections[`trade:${t.trade}:vendorExpenseSchedule`]}
+              onSelect={select}
+              format={formatScheduleSummary}
+            />
+            <FieldRow
+              label="Sub-Vendor Expense Schedule"
+              fieldKey={`trade:${t.trade}:subVendorExpenseSchedule`}
+              resolution={t.subVendorExpenseSchedule}
+              selected={selections[`trade:${t.trade}:subVendorExpenseSchedule`]}
+              onSelect={select}
+              format={formatScheduleSummary}
             />
           </div>
         </div>
