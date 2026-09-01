@@ -6,9 +6,12 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import { TRADE_OPTIONS } from "@/lib/trades";
+import { sumRateSchedule } from "@/lib/rateSchedule";
+import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
 import type { Company, Contract } from "@/lib/crmTypes";
-import type { SiteTradeAssignmentUpdateRow, Vendor } from "@/lib/networkTypes";
-import { bulkUpdateSiteTradeAssignmentsAction, parseSiteSheetAction } from "./actions";
+import type { Site, SiteTradeAssignmentUpdateRow, Vendor } from "@/lib/networkTypes";
+import type { DatasetRecord } from "@/lib/types";
+import { bulkUpdateSiteTradeAssignmentsAction, exportSitesToExcelAction, parseSiteSheetAction } from "./actions";
 
 type ParsedRow = Record<string, string | number | boolean | null>;
 
@@ -23,12 +26,50 @@ const OPTIONAL_FIELDS = [
   ["subVendorPrice", "Sub-Vendor Price column"],
 ] as const;
 
+const TRADE_EXPORT_COLUMNS = [
+  "Site ID",
+  "Record ID",
+  "Site Name",
+  "Vendor Name",
+  "Sub-Vendor Name",
+  "Contract Name",
+  "Contract Value",
+  "Annual Rate Total",
+  "Sub Price",
+  "Sub-Vendor Price",
+];
+
+/** Only sites with `trade` assigned, and only that trade's own Vendor/Sub-Vendor/Contract/pricing -- no other
+ * trade's data leaks in. Annual Rate Total is read-only here (the sum of the Rate Schedule); re-upload ignores
+ * that column since editing it in bulk requires the month-by-month Update > Rate schedule tool instead. */
+function buildTradeExportRows(sites: Site[], trade: string): DatasetRecord[] {
+  return sites
+    .filter((s) => s.trades.includes(trade))
+    .map((s) => {
+      const a = s.tradeAssignments.find((x) => x.trade === trade);
+      return {
+        "Site ID": s.siteCode ?? "",
+        "Record ID": s.id,
+        "Site Name": s.name,
+        "Vendor Name": a?.vendorName ?? "",
+        "Sub-Vendor Name": a?.subVendorName ?? "",
+        "Contract Name": a?.contractName ?? "",
+        "Contract Value": a?.contractValue ?? null,
+        "Annual Rate Total": a ? sumRateSchedule(a.rateSchedule) : 0,
+        "Sub Price": a?.subPrice ?? null,
+        "Sub-Vendor Price": a?.subVendorPrice ?? null,
+      };
+    });
+}
+
 export default function UpdateSiteTradeAssignmentsModal({
+  sites,
   companies,
   vendors,
   contracts,
   onClose,
 }: {
+  sites: Site[];
   companies: Company[];
   vendors: Vendor[];
   contracts: Contract[];
@@ -38,6 +79,7 @@ export default function UpdateSiteTradeAssignmentsModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
 
   const [trade, setTrade] = useState("");
 
@@ -61,6 +103,20 @@ export default function UpdateSiteTradeAssignmentsModal({
   const [result, setResult] = useState<{ updated: number; notFound: string[]; ambiguous: string[] } | null>(null);
   const [unmatchedVendorNames, setUnmatchedVendorNames] = useState<string[]>([]);
   const [unmatchedContractNames, setUnmatchedContractNames] = useState<string[]>([]);
+
+  const tradeSiteCount = trade ? sites.filter((s) => s.trades.includes(trade)).length : 0;
+
+  async function handleDownloadCurrent() {
+    if (!trade) return;
+    setDownloading(true);
+    try {
+      const rows = buildTradeExportRows(sites, trade);
+      const base64 = await exportSitesToExcelAction(rows, TRADE_EXPORT_COLUMNS);
+      downloadBase64Xlsx(base64, `${trade.toLowerCase().replace(/\s+/g, "_")}_assignments.xlsx`);
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   async function handleUpload() {
     const file = fileInputRef.current?.files?.[0];
@@ -238,6 +294,25 @@ export default function UpdateSiteTradeAssignmentsModal({
             ))}
           </select>
         </label>
+
+        {trade && (
+          <div className="mt-3 flex flex-col gap-1">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleDownloadCurrent}
+              disabled={downloading || tradeSiteCount === 0}
+              className="w-fit"
+            >
+              {downloading ? "Preparing…" : `Download current ${trade} values (${tradeSiteCount} site${tradeSiteCount === 1 ? "" : "s"})`}
+            </Button>
+            <p className="text-xs text-slate-500">
+              Only sites with {trade} are included, and only that trade&rsquo;s Vendor/Sub-Vendor/Contract/pricing --
+              no other trade&rsquo;s data. Edit this file and re-upload it below; Annual Rate Total is shown for
+              reference only (bulk-edit the Rate Schedule from the Update &gt; Rate schedule tool instead).
+            </p>
+          </div>
+        )}
 
         <div className="mt-4 flex flex-col gap-2">
           <input

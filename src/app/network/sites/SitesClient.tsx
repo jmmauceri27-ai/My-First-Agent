@@ -1376,6 +1376,7 @@ export default function SitesClient({
 
       {updatingAssignments && (
         <UpdateSiteTradeAssignmentsModal
+          sites={sites}
           companies={companies}
           vendors={vendors}
           contracts={contracts}
