@@ -6,7 +6,6 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import { TRADE_OPTIONS } from "@/lib/trades";
-import { sumRateSchedule } from "@/lib/rateSchedule";
 import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
 import type { Company, Contract } from "@/lib/crmTypes";
 import type { Site, SiteTradeAssignmentUpdateRow, Vendor } from "@/lib/networkTypes";
@@ -22,6 +21,7 @@ const OPTIONAL_FIELDS = [
   ["subVendorName", "Sub-Vendor Name column"],
   ["contractName", "Contract Name column"],
   ["contractValue", "Contract Value column"],
+  ["annualRateTotal", "Annual Rate Total column"],
   ["subPrice", "Sub Price column"],
   ["subVendorPrice", "Sub-Vendor Price column"],
 ] as const;
@@ -40,8 +40,8 @@ const TRADE_EXPORT_COLUMNS = [
 ];
 
 /** Only sites with `trade` assigned, and only that trade's own Vendor/Sub-Vendor/Contract/pricing -- no other
- * trade's data leaks in. Annual Rate Total is read-only here (the sum of the Rate Schedule); re-upload ignores
- * that column since editing it in bulk requires the month-by-month Update > Rate schedule tool instead. */
+ * trade's data leaks in. Annual Rate Total here is the standalone flat figure (not the sum of the Rate
+ * Schedule) -- re-uploading it updates that same standalone figure, not the month-by-month schedule. */
 function buildTradeExportRows(sites: Site[], trade: string): DatasetRecord[] {
   return sites
     .filter((s) => s.trades.includes(trade))
@@ -55,7 +55,7 @@ function buildTradeExportRows(sites: Site[], trade: string): DatasetRecord[] {
         "Sub-Vendor Name": a?.subVendorName ?? "",
         "Contract Name": a?.contractName ?? "",
         "Contract Value": a?.contractValue ?? null,
-        "Annual Rate Total": a ? sumRateSchedule(a.rateSchedule) : 0,
+        "Annual Rate Total": a?.annualRateTotal ?? null,
         "Sub Price": a?.subPrice ?? null,
         "Sub-Vendor Price": a?.subVendorPrice ?? null,
       };
@@ -93,6 +93,7 @@ export default function UpdateSiteTradeAssignmentsModal({
     subVendorName: NONE,
     contractName: NONE,
     contractValue: NONE,
+    annualRateTotal: NONE,
     subPrice: NONE,
     subVendorPrice: NONE,
   });
@@ -144,6 +145,7 @@ export default function UpdateSiteTradeAssignmentsModal({
         subVendorName: parsed.columns.find((c) => /sub.?vendor/i.test(c) && /name/i.test(c)) ?? NONE,
         contractName: parsed.columns.find((c) => /contract/i.test(c) && /name/i.test(c)) ?? NONE,
         contractValue: parsed.columns.find((c) => /contract/i.test(c) && !/name/i.test(c)) ?? NONE,
+        annualRateTotal: parsed.columns.find((c) => /annual.?rate.?total/i.test(c)) ?? NONE,
         subPrice: parsed.columns.find((c) => /^sub.?price/i.test(c)) ?? NONE,
         subVendorPrice: parsed.columns.find((c) => /sub.?vendor.?price/i.test(c)) ?? NONE,
       });
@@ -200,6 +202,10 @@ export default function UpdateSiteTradeAssignmentsModal({
         if (mapping.contractValue) {
           const v = Number(row[mapping.contractValue]);
           update.contractValue = Number.isFinite(v) ? v : null;
+        }
+        if (mapping.annualRateTotal) {
+          const v = Number(row[mapping.annualRateTotal]);
+          update.annualRateTotal = Number.isFinite(v) ? v : null;
         }
         if (mapping.subPrice) {
           const v = Number(row[mapping.subPrice]);
@@ -308,8 +314,9 @@ export default function UpdateSiteTradeAssignmentsModal({
             </Button>
             <p className="text-xs text-slate-500">
               Only sites with {trade} are included, and only that trade&rsquo;s Vendor/Sub-Vendor/Contract/pricing --
-              no other trade&rsquo;s data. Edit this file and re-upload it below; Annual Rate Total is shown for
-              reference only (bulk-edit the Rate Schedule from the Update &gt; Rate schedule tool instead).
+              no other trade&rsquo;s data. Edit this file and re-upload it below. Annual Rate Total here is the
+              standalone flat figure, separate from the month-by-month Rate Schedule (bulk-edit that instead from
+              Update &gt; Rate schedule).
             </p>
           </div>
         )}

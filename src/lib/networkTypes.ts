@@ -117,6 +117,8 @@ export interface SiteTradeAssignment {
   contractValue: number | null;
   /** Which months this trade is paid for, and how much -- e.g. a fixed-monthly client paid Mar-Nov. The pattern repeats every year until changed; tracked separately from contractValue. */
   rateSchedule: RateSchedule;
+  /** A flat yearly figure for this trade, independently editable and bulk-uploadable -- tracked separately from rateSchedule and not derived from (or synced with) its monthly amounts. */
+  annualRateTotal: number | null;
   /** What we pay the Vendor for this trade -- our margin is contractValue - subPrice. */
   subPrice: number | null;
   /** What the Vendor pays the Sub-Vendor for this trade -- Vendor's margin is subPrice - subVendorPrice. */
@@ -134,6 +136,7 @@ export interface SiteTradeAssignmentInput {
   contractId: string | null;
   contractValue: number | null;
   rateSchedule: RateSchedule;
+  annualRateTotal: number | null;
   subPrice: number | null;
   subVendorPrice: number | null;
   vendorExpenseSchedule: RateSchedule;
@@ -202,6 +205,7 @@ export interface SiteTradeAssignmentUpdateRow {
   subVendorId?: string | null;
   contractId?: string | null;
   contractValue?: number | null;
+  annualRateTotal?: number | null;
   subPrice?: number | null;
   subVendorPrice?: number | null;
 }

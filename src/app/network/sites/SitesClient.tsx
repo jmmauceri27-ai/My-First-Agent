@@ -134,7 +134,7 @@ function siteToExportRow(s: Site): DatasetRecord {
     Longitude: s.lng,
     "Contract Value": sumOrNull(s.tradeAssignments.map((a) => a.contractValue)),
     "Rate Schedule": scheduleExportSummary(s.tradeAssignments, (a) => a.rateSchedule),
-    "Annual Rate Total": sumOrNull(s.tradeAssignments.map((a) => sumRateSchedule(a.rateSchedule))),
+    "Annual Rate Total": sumOrNull(s.tradeAssignments.map((a) => a.annualRateTotal)),
     "Sub Price": sumOrNull(s.tradeAssignments.map((a) => a.subPrice)),
     "Sub-Vendor Price": sumOrNull(s.tradeAssignments.map((a) => a.subVendorPrice)),
     "Vendor Expense Schedule": scheduleExportSummary(s.tradeAssignments, (a) => a.vendorExpenseSchedule),

@@ -315,8 +315,9 @@ export default function SiteDetailClient({
           <Card className="p-5">
             <h2 className="text-lg font-bold text-slate-50">Rate Schedule</h2>
             <p className="-mt-0.5 text-xs text-slate-500">
-              Which months this trade gets paid, and how much -- e.g. a fixed-monthly client paid Mar-Nov. Repeats
-              every year until changed; tracked separately from Contract Value above.
+              Annual Rate Total is a flat yearly figure you set directly. The monthly breakdown below (which
+              months this trade gets paid, and how much) is tracked separately and isn&rsquo;t derived from it --
+              the two aren&rsquo;t kept in sync.
             </p>
             {trades.length === 0 ? (
               <p className="mt-2 text-xs text-slate-500">No trades assigned yet.</p>
@@ -325,23 +326,34 @@ export default function SiteDetailClient({
                 {trades.map((trade) => {
                   const draft = assignmentDrafts[trade] ?? emptyDraft();
                   const billingType = contractsForCompany.find((c) => c.id === draft.contractId)?.billingType ?? null;
-                  const total = scheduleTotal(draft.rateSchedule);
+                  const monthlyTotal = scheduleTotal(draft.rateSchedule);
                   return (
                     <div key={trade} className="rounded-lg border border-purple-400/20 p-3">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-3">
                         <div>
                           <p className="text-sm font-semibold text-slate-50">{trade}</p>
                           <p className="text-xs text-slate-500">
                             {billingType ?? "No billing type (set on the Contract)"}
                           </p>
                         </div>
-                        {total > 0 && (
-                          <p className="text-xs text-slate-400">
-                            Annual total: <span className="font-semibold text-slate-50">{formatCurrency(total)}</span>
-                          </p>
-                        )}
+                        <label className="flex flex-col gap-1 text-xs">
+                          <span className="font-medium text-slate-400">Annual Rate Total</span>
+                          <input
+                            value={draft.annualRateTotal}
+                            onChange={(e) => updateAssignmentDraft(trade, { annualRateTotal: e.target.value })}
+                            onBlur={() => {
+                              const num = Number(parseCurrencyInput(draft.annualRateTotal));
+                              if (draft.annualRateTotal.trim() && Number.isFinite(num)) {
+                                updateAssignmentDraft(trade, { annualRateTotal: formatCurrency(num) });
+                              }
+                            }}
+                            placeholder="—"
+                            className={`${inputClass} w-32 px-2 py-1 text-xs`}
+                          />
+                        </label>
                       </div>
-                      <div className="mt-2 grid grid-cols-4 gap-2">
+                      <p className="mt-3 text-xs text-slate-500">Monthly breakdown (optional)</p>
+                      <div className="mt-1 grid grid-cols-4 gap-2">
                         {MONTHS.map((month) => (
                           <label key={month} className="flex flex-col gap-1 text-xs">
                             <span className="font-medium text-slate-400">{month}</span>
@@ -361,6 +373,9 @@ export default function SiteDetailClient({
                           </label>
                         ))}
                       </div>
+                      {monthlyTotal > 0 && (
+                        <p className="mt-1 text-xs text-slate-500">Sum of months: {formatCurrency(monthlyTotal)}</p>
+                      )}
                     </div>
                   );
                 })}
