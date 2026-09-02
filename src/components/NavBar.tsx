@@ -8,6 +8,7 @@ const LINKS = [
   { href: "/crm", label: "CRM" },
   { href: "/network", label: "Network" },
   { href: "/dashboards", label: "Dashboards" },
+  { href: "/proposals", label: "Proposals" },
 ];
 
 export default function NavBar() {

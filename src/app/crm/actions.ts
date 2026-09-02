@@ -6,16 +6,12 @@ import type { DatasetRecord } from "@/lib/types";
 import {
   bulkCreateCompanies,
   bulkCreateEmployees,
-  bulkCreateRateItems,
-  createClientRateOverride,
   createCompany,
   createContact,
   createContract,
   createEmployee,
   createEmployeeWithDetails,
   createOpportunity,
-  createRateItem,
-  deleteClientRateOverride,
   deleteCompany,
   deleteContact,
   deleteContract,
@@ -23,7 +19,6 @@ import {
   deleteEmployee,
   deleteOpportunity,
   deleteOpportunityFile,
-  deleteRateItem,
   fixMissingFileExtensions,
   getCompany,
   getContractFileDownloadUrl,
@@ -35,19 +30,16 @@ import {
   listEmployees,
   renameContractFile,
   renameOpportunityFile,
-  updateClientRateOverride,
   updateCompany,
   updateContact,
   updateContract,
   updateEmployee,
   updateOpportunity,
   updateOpportunityStage,
-  updateRateItem,
   uploadContractFile,
   uploadOpportunityFile,
 } from "@/lib/crmDal";
 import type {
-  ClientRateOverrideInput,
   Company,
   CompanyImportRow,
   CompanyInput,
@@ -60,8 +52,6 @@ import type {
   EmployeeInput,
   OpportunityInput,
   OpportunityStage,
-  RateItemImportRow,
-  RateItemInput,
 } from "@/lib/crmTypes";
 
 export async function exportPipelineToExcelAction(rows: DatasetRecord[], columns: string[]): Promise<string> {
@@ -157,52 +147,6 @@ export async function deleteContractAction(id: string): Promise<void> {
   await deleteContract(id);
   revalidatePath("/crm");
   revalidatePath("/crm/contracts");
-}
-
-export async function saveRateItemAction(id: string | null, input: RateItemInput): Promise<string> {
-  let itemId: string;
-  if (id) {
-    await updateRateItem(id, input);
-    itemId = id;
-  } else {
-    itemId = await createRateItem(input);
-  }
-  revalidatePath("/crm/rate-rules");
-  return itemId;
-}
-
-export async function deleteRateItemAction(id: string): Promise<void> {
-  await deleteRateItem(id);
-  revalidatePath("/crm/rate-rules");
-}
-
-export async function bulkCreateRateItemsAction(
-  rows: RateItemImportRow[],
-): Promise<{ inserted?: number; error?: string }> {
-  try {
-    const result = await bulkCreateRateItems(rows);
-    revalidatePath("/crm/rate-rules");
-    return result;
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : "Failed to import rate items." };
-  }
-}
-
-export async function saveClientRateOverrideAction(id: string | null, input: ClientRateOverrideInput): Promise<string> {
-  let overrideId: string;
-  if (id) {
-    await updateClientRateOverride(id, input);
-    overrideId = id;
-  } else {
-    overrideId = await createClientRateOverride(input);
-  }
-  revalidatePath("/crm/rate-rules");
-  return overrideId;
-}
-
-export async function deleteClientRateOverrideAction(id: string): Promise<void> {
-  await deleteClientRateOverride(id);
-  revalidatePath("/crm/rate-rules");
 }
 
 export async function listContractFilesAction(contractId: string): Promise<ContractFile[]> {

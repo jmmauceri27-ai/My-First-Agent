@@ -8,7 +8,7 @@ import { inputClass } from "@/components/ui/formClasses";
 import { OVERRIDE_TYPE_OPTIONS } from "@/lib/crmTypes";
 import type { ClientRateOverride, ClientRateOverrideInput, Company } from "@/lib/crmTypes";
 import { TRADE_OPTIONS } from "@/lib/trades";
-import { deleteClientRateOverrideAction, saveClientRateOverrideAction } from "../actions";
+import { deleteClientRateOverrideAction, saveClientRateOverrideAction } from "./actions";
 
 export default function ClientRateOverrideModal({
   override,

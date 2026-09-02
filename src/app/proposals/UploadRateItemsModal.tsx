@@ -10,7 +10,7 @@ import { buildTemplateXlsxAction, parseUploadedSheetAction } from "@/lib/sheetAc
 import { matchPricingBasis, matchRateItemCategory, matchRateTier } from "@/lib/crmTypes";
 import type { RateItemImportRow } from "@/lib/crmTypes";
 import { matchTrade } from "@/lib/trades";
-import { bulkCreateRateItemsAction } from "../actions";
+import { bulkCreateRateItemsAction } from "./actions";
 
 type ParsedRow = Record<string, string | number | boolean | null>;
 

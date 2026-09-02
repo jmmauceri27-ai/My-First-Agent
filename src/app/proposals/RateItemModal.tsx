@@ -8,7 +8,7 @@ import { inputClass } from "@/components/ui/formClasses";
 import { PRICING_BASIS_OPTIONS, RATE_ITEM_CATEGORIES, RATE_TIER_OPTIONS } from "@/lib/crmTypes";
 import type { RateItem, RateItemInput } from "@/lib/crmTypes";
 import { TRADE_OPTIONS } from "@/lib/trades";
-import { deleteRateItemAction, saveRateItemAction } from "../actions";
+import { deleteRateItemAction, saveRateItemAction } from "./actions";
 
 export default function RateItemModal({ item, onClose }: { item: RateItem | null; onClose: () => void }) {
   const router = useRouter();
