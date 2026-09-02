@@ -208,6 +208,7 @@ export const PRICING_BASIS_OPTIONS = [
   "Per Hour",
   "Per Day",
   "Per Each",
+  "Per Foot",
   "Per Sq Ft",
   "Per Visit",
   "Per Event",
