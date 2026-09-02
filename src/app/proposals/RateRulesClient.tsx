@@ -9,8 +9,9 @@ import RateItemModal from "./RateItemModal";
 import UploadRateItemsModal from "./UploadRateItemsModal";
 import ClientRateOverrideModal from "./ClientRateOverrideModal";
 import QuoteCalculator from "./QuoteCalculator";
+import ChatAssistant from "./ChatAssistant";
 
-type View = "rate-card" | "calculator";
+type View = "assistant" | "rate-card" | "calculator";
 
 export default function RateRulesClient({
   rateItems,
@@ -21,7 +22,7 @@ export default function RateRulesClient({
   overrides: ClientRateOverride[];
   companies: Company[];
 }) {
-  const [view, setView] = useState<View>("rate-card");
+  const [view, setView] = useState<View>("assistant");
   const [editingItem, setEditingItem] = useState<RateItem | null>(null);
   const [creatingItem, setCreatingItem] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -48,6 +49,15 @@ export default function RateRulesClient({
       <div className="flex gap-1 rounded-lg border border-purple-400/20 p-1">
         <button
           type="button"
+          onClick={() => setView("assistant")}
+          className={`rounded-md px-3 py-1.5 text-sm font-semibold transition-all ${
+            view === "assistant" ? "bg-brand-600 text-white" : "text-slate-400 hover:text-slate-50"
+          }`}
+        >
+          Assistant
+        </button>
+        <button
+          type="button"
           onClick={() => setView("rate-card")}
           className={`rounded-md px-3 py-1.5 text-sm font-semibold transition-all ${
             view === "rate-card" ? "bg-brand-600 text-white" : "text-slate-400 hover:text-slate-50"
@@ -66,7 +76,9 @@ export default function RateRulesClient({
         </button>
       </div>
 
-      {view === "calculator" ? (
+      {view === "assistant" ? (
+        <ChatAssistant companies={companies} hasRateItems={rateItems.length > 0} />
+      ) : view === "calculator" ? (
         <QuoteCalculator rateItems={rateItems} overrides={overrides} companies={companies} />
       ) : (
         <div className="flex flex-col gap-8">
