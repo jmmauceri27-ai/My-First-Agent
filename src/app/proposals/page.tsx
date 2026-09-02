@@ -12,7 +12,7 @@ export default async function ProposalsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-3xl font-extrabold tracking-tight text-slate-50">📋 Proposals</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight text-slate-50">📋 Proposal Assistant</h1>
       <RateRulesClient rateItems={rateItems} overrides={overrides} companies={companies} />
     </div>
   );
