@@ -128,9 +128,7 @@ export default function ClientRateOverrideModal({
               </select>
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">
-                {overrideType === "Fixed Rate" ? "Rate ($)" : overrideType ? "Percent (%)" : "Value"}
-              </span>
+              <span className="font-medium text-slate-300">Percent (%)</span>
               <input
                 type="number"
                 step="0.01"

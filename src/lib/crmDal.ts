@@ -19,8 +19,9 @@ import type {
   OpportunityFile,
   OpportunityInput,
   OpportunityStage,
-  RateRule,
-  RateRuleInput,
+  RateItem,
+  RateItemImportRow,
+  RateItemInput,
 } from "./crmTypes";
 
 const ATTACHMENTS_BUCKET = "crm-attachments";
@@ -880,17 +881,22 @@ export async function getOpportunityFileDownloadUrl(id: string): Promise<string>
   return signed.signedUrl;
 }
 
-// ---------- Rate Rules ----------
-// Step 1 of the AI proposal builder: each trade's default pricing formula.
+// ---------- Rate Items ----------
+// Step 1 of the AI proposal builder: a per-trade line-item catalog (labor, equipment, materials, flat-rate
+// service tasks) -- a trade's proposal price is composed from these, not a single base rate.
 
-const RATE_RULE_COLUMNS = "id, trade, pricing_basis, base_rate, unit_label, notes, created_at, updated_at";
+const RATE_ITEM_COLUMNS =
+  "id, trade, category, item_name, pricing_basis, rate_tier, rate, unit_label, notes, created_at, updated_at";
 
-function mapRateRule(r: Record<string, unknown>): RateRule {
+function mapRateItem(r: Record<string, unknown>): RateItem {
   return {
     id: r.id as string,
     trade: r.trade as string,
+    category: r.category as string,
+    itemName: r.item_name as string,
     pricingBasis: r.pricing_basis as string,
-    baseRate: r.base_rate as number,
+    rateTier: r.rate_tier as string,
+    rate: r.rate as number,
     unitLabel: r.unit_label as string | null,
     notes: r.notes as string | null,
     createdAt: r.created_at as string,
@@ -898,27 +904,32 @@ function mapRateRule(r: Record<string, unknown>): RateRule {
   };
 }
 
-export async function listRateRules(): Promise<RateRule[]> {
+export async function listRateItems(): Promise<RateItem[]> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
-    .from("rate_rules")
-    .select(RATE_RULE_COLUMNS)
+    .from("rate_items")
+    .select(RATE_ITEM_COLUMNS)
     .eq("user_id", OWNER_USER_ID)
-    .order("trade", { ascending: true });
+    .order("trade", { ascending: true })
+    .order("category", { ascending: true })
+    .order("item_name", { ascending: true });
   if (error) throw new Error(error.message);
 
-  return (data ?? []).map(mapRateRule);
+  return (data ?? []).map(mapRateItem);
 }
 
-export async function createRateRule(input: RateRuleInput): Promise<string> {
+export async function createRateItem(input: RateItemInput): Promise<string> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
-    .from("rate_rules")
+    .from("rate_items")
     .insert({
       user_id: OWNER_USER_ID,
       trade: input.trade,
+      category: input.category,
+      item_name: input.itemName,
       pricing_basis: input.pricingBasis,
-      base_rate: input.baseRate,
+      rate_tier: input.rateTier,
+      rate: input.rate,
       unit_label: input.unitLabel,
       notes: input.notes,
     })
@@ -928,14 +939,17 @@ export async function createRateRule(input: RateRuleInput): Promise<string> {
   return data.id as string;
 }
 
-export async function updateRateRule(id: string, input: RateRuleInput): Promise<void> {
+export async function updateRateItem(id: string, input: RateItemInput): Promise<void> {
   const supabase = createAdminClient();
   const { error } = await supabase
-    .from("rate_rules")
+    .from("rate_items")
     .update({
       trade: input.trade,
+      category: input.category,
+      item_name: input.itemName,
       pricing_basis: input.pricingBasis,
-      base_rate: input.baseRate,
+      rate_tier: input.rateTier,
+      rate: input.rate,
       unit_label: input.unitLabel,
       notes: input.notes,
       updated_at: new Date().toISOString(),
@@ -945,14 +959,34 @@ export async function updateRateRule(id: string, input: RateRuleInput): Promise<
   if (error) throw new Error(error.message);
 }
 
-export async function deleteRateRule(id: string): Promise<void> {
+export async function deleteRateItem(id: string): Promise<void> {
   const supabase = createAdminClient();
-  const { error } = await supabase.from("rate_rules").delete().eq("id", id).eq("user_id", OWNER_USER_ID);
+  const { error } = await supabase.from("rate_items").delete().eq("id", id).eq("user_id", OWNER_USER_ID);
   if (error) throw new Error(error.message);
 }
 
+export async function bulkCreateRateItems(rows: RateItemImportRow[]): Promise<{ inserted: number }> {
+  if (rows.length === 0) return { inserted: 0 };
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("rate_items").insert(
+    rows.map((r) => ({
+      user_id: OWNER_USER_ID,
+      trade: r.trade,
+      category: r.category,
+      item_name: r.itemName,
+      pricing_basis: r.pricingBasis,
+      rate_tier: r.rateTier,
+      rate: r.rate,
+      unit_label: r.unitLabel,
+      notes: r.notes,
+    })),
+  );
+  if (error) throw new Error(error.message);
+  return { inserted: rows.length };
+}
+
 // ---------- Client Rate Overrides ----------
-// A specific client's negotiated rate for one trade, taking precedence over that trade's RateRule.
+// A specific client's blanket discount/markup on one trade's computed total (the sum of its rate_items).
 
 const CLIENT_RATE_OVERRIDE_COLUMNS =
   "id, company_id, trade, override_type, override_value, notes, created_at, updated_at, crm_companies(name)";

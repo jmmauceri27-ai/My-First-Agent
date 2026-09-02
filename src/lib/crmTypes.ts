@@ -187,22 +187,64 @@ export interface ContractFile {
   uploadedAt: string;
 }
 
-// ---------- Rate Rules (proposal builder rate card) ----------
-// Step 1 of the AI proposal builder: rate_rules holds each trade's default pricing formula, and
-// client_rate_overrides lets a specific client's negotiated rate for a trade take precedence over that
-// default. The pricing engine (a later step) checks for an override first, then falls back to the trade's
-// rate rule.
+// ---------- Rate Items (proposal builder rate card) ----------
+// Step 1 of the AI proposal builder: rate_items is a per-trade line-item catalog -- labor rates by role,
+// equipment rates, material/plant unit prices, and flat-rate service tasks -- and client_rate_overrides lets a
+// specific client get a blanket discount/markup on a trade's computed total. A later step (the pricing
+// engine) composes a trade's price from its rate_items, then applies any client override on top.
 
-export const PRICING_BASIS_OPTIONS = ["Per Sq Ft", "Per Visit", "Flat Monthly", "Per Event"] as const;
+export const RATE_ITEM_CATEGORIES = ["Labor", "Equipment", "Materials", "Service"] as const;
+
+export type RateItemCategory = (typeof RATE_ITEM_CATEGORIES)[number];
+
+/** Matches a freeform value (e.g. from an uploaded sheet) against the fixed Category list, case-insensitively. */
+export function matchRateItemCategory(value: string | null | undefined): RateItemCategory | null {
+  if (!value) return null;
+  const normalized = value.trim().toLowerCase();
+  return RATE_ITEM_CATEGORIES.find((c) => c.toLowerCase() === normalized) ?? null;
+}
+
+export const PRICING_BASIS_OPTIONS = [
+  "Per Hour",
+  "Per Day",
+  "Per Each",
+  "Per Sq Ft",
+  "Per Visit",
+  "Per Event",
+  "Flat Monthly",
+  "Flat",
+] as const;
 
 export type PricingBasis = (typeof PRICING_BASIS_OPTIONS)[number];
 
-/** A trade's default pricing formula -- e.g. Landscaping billed Per Sq Ft at $0.03, or Snow Removal billed Per Event at $450. */
-export interface RateRule {
+/** Matches a freeform value (e.g. from an uploaded sheet) against the fixed Pricing Basis list, case-insensitively. */
+export function matchPricingBasis(value: string | null | undefined): PricingBasis | null {
+  if (!value) return null;
+  const normalized = value.trim().toLowerCase();
+  return PRICING_BASIS_OPTIONS.find((b) => b.toLowerCase() === normalized) ?? null;
+}
+
+export const RATE_TIER_OPTIONS = ["Standard", "OT", "Premium"] as const;
+
+export type RateTier = (typeof RATE_TIER_OPTIONS)[number];
+
+/** Matches a freeform value (e.g. from an uploaded sheet) against the fixed Rate Tier list, case-insensitively. */
+export function matchRateTier(value: string | null | undefined): RateTier | null {
+  if (!value) return null;
+  const normalized = value.trim().toLowerCase();
+  return RATE_TIER_OPTIONS.find((t) => t.toLowerCase() === normalized) ?? null;
+}
+
+/** One priceable line item under a trade -- e.g. "Landscape Laborer" (Labor, Per Hour, Standard tier), "1.5" Valve Replaced" (Service, Flat), or "Gold Mop #2" (Materials, Per Each). A proposal's price for a trade is composed from its rate_items, not a single number. */
+export interface RateItem {
   id: string;
   trade: string;
+  category: string;
+  itemName: string;
   pricingBasis: string;
-  baseRate: number;
+  /** Standard/OT/Premium -- meaningful mainly for Labor; other categories are almost always "Standard". */
+  rateTier: string;
+  rate: number;
   /** Freeform clarification of the unit, e.g. "per 1,000 sq ft/month" -- optional, since pricingBasis usually says enough on its own. */
   unitLabel: string | null;
   notes: string | null;
@@ -210,19 +252,34 @@ export interface RateRule {
   updatedAt: string;
 }
 
-export interface RateRuleInput {
+export interface RateItemInput {
   trade: string;
+  category: string;
+  itemName: string;
   pricingBasis: string;
-  baseRate: number;
+  rateTier: string;
+  rate: number;
   unitLabel: string | null;
   notes: string | null;
 }
 
-export const OVERRIDE_TYPE_OPTIONS = ["Fixed Rate", "Discount %", "Markup %"] as const;
+/** A single row parsed from an uploaded sheet, mapped onto RateItem's fixed fields, for bulk import. */
+export interface RateItemImportRow {
+  trade: string;
+  category: string;
+  itemName: string;
+  pricingBasis: string;
+  rateTier: string;
+  rate: number;
+  unitLabel: string | null;
+  notes: string | null;
+}
+
+export const OVERRIDE_TYPE_OPTIONS = ["Discount %", "Markup %"] as const;
 
 export type OverrideType = (typeof OVERRIDE_TYPE_OPTIONS)[number];
 
-/** A specific client's negotiated rate for one trade, overriding that trade's default RateRule -- e.g. Client X gets a 10% discount on Landscaping, or a flat $0.025/sq ft regardless of the base rate. At most one override per (client, trade). */
+/** A specific client's blanket discount/markup on one trade's computed total (the sum of its rate_items) -- e.g. Client X gets 10% off Landscaping. At most one override per (client, trade). */
 export interface ClientRateOverride {
   id: string;
   companyId: string;
