@@ -31,15 +31,16 @@ export function tierColor(tier: number | null | undefined): string {
   return TIER_COLORS[((tier - 1) % 8) + 1] ?? "border-l-zinc-300";
 }
 
-// Draft Board cell background once a pick is filled, by the player's position.
-// Saturated on purpose — this needs to read at a glance during a live draft.
+// Draft Board cell background once a pick is filled, by the player's
+// position. Light pastel on purpose, with black text (see DraftBoard.tsx) —
+// stays readable in both themes without needing a dark-mode variant.
 export const POSITION_BG: Record<string, string> = {
-  QB: "bg-pink-400 dark:bg-pink-600",
-  RB: "bg-orange-400 dark:bg-orange-600",
-  WR: "bg-blue-400 dark:bg-blue-600",
-  TE: "bg-green-400 dark:bg-green-600",
-  DST: "bg-yellow-400 dark:bg-yellow-600",
-  K: "bg-purple-400 dark:bg-purple-600",
+  QB: "bg-pink-200",
+  RB: "bg-orange-200",
+  WR: "bg-blue-200",
+  TE: "bg-green-200",
+  DST: "bg-yellow-200",
+  K: "bg-purple-200",
 };
 
 export const TAG_STYLES: Record<string, string> = {

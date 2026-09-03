@@ -165,7 +165,7 @@ export default function DraftBoard({
       </div>
       </div>
 
-      <div>
+      <div className="min-w-0">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-bold">Draft Board</h2>
           <button
@@ -255,7 +255,7 @@ export default function DraftBoard({
                   return (
                     <div
                       key={`${round}-${slot}`}
-                      className={`flex min-h-[92px] flex-col justify-between rounded-lg p-2 text-zinc-900 shadow-sm dark:text-white ${POSITION_BG[p.position] ?? "bg-zinc-100 dark:bg-ink-900"}`}
+                      className={`flex min-h-[92px] flex-col justify-between rounded-lg p-2 text-black shadow-sm ${POSITION_BG[p.position] ?? "bg-zinc-100"}`}
                     >
                       <span className="text-[10px] font-semibold opacity-70">
                         {pick.round}.{pick.pickInRound}
@@ -264,7 +264,7 @@ export default function DraftBoard({
                         <Link href={`/players/${p.id}`} className="block truncate text-sm font-bold hover:underline">
                           {p.name}
                         </Link>
-                        <span className="mt-0.5 inline-block rounded bg-black/10 px-1.5 py-0.5 text-[10px] font-semibold dark:bg-white/10">
+                        <span className="mt-0.5 inline-block rounded bg-black/10 px-1.5 py-0.5 text-[10px] font-semibold">
                           {p.position} {p.team ?? "FA"}
                           {p.byeWeek ? ` (${p.byeWeek})` : ""}
                         </span>
