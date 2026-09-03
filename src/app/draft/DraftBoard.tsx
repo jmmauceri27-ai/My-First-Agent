@@ -240,7 +240,11 @@ export default function DraftBoard({
                                   </button>
                                 </form>
                               ) : (
-                                <div className="flex items-baseline justify-between gap-1 text-[10px] text-zinc-400">
+                                <div
+                                  className={`flex items-baseline justify-between gap-1 text-[10px] ${
+                                    p ? "text-zinc-800 dark:text-white" : "text-zinc-400"
+                                  }`}
+                                >
                                   <button
                                     type="button"
                                     onClick={() => setEditingPickId(pick.id)}
@@ -253,23 +257,23 @@ export default function DraftBoard({
                                 </div>
                               )}
                               {p ? (
-                                <>
-                                  <Link href={`/players/${p.id}`} className="block truncate font-medium hover:underline">
+                                <div className="text-zinc-900 dark:text-white">
+                                  <Link href={`/players/${p.id}`} className="block truncate font-semibold hover:underline">
                                     {p.name}
                                   </Link>
                                   <div className="mt-0.5 flex items-center justify-between gap-1">
-                                    <span className="inline-flex items-center gap-1 text-[10px] text-zinc-500">
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-medium">
                                       {p.position}
                                       <TeamBadge team={p.team} />
                                     </span>
                                     <form action={handleUndo}>
                                       <input type="hidden" name="id" value={p.id} />
-                                      <button type="submit" className="text-[10px] text-rose-500 hover:underline">
+                                      <button type="submit" className="text-[10px] font-medium text-rose-900 hover:underline">
                                         Undo
                                       </button>
                                     </form>
                                   </div>
-                                </>
+                                </div>
                               ) : isOnTheClock ? (
                                 <span className="text-[10px] font-semibold uppercase tracking-wide text-gridiron-600 dark:text-gridiron-300">
                                   On the clock
