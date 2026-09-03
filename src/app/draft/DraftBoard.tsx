@@ -169,72 +169,86 @@ export default function DraftBoard({
         {numRounds === 0 || numSlots === 0 ? (
           <p className="text-sm text-zinc-500">Upload your draft order above to see the full board.</p>
         ) : (
-          <div className="max-h-[75vh] overflow-auto rounded-lg border border-zinc-200 dark:border-ink-800">
-            <table className="w-full border-collapse text-xs">
-              <thead className="sticky top-0 bg-white dark:bg-ink-900">
-                <tr>
-                  <th className="border-b border-r border-zinc-200 p-1.5 text-left dark:border-ink-800">Rnd</th>
-                  {Array.from({ length: numSlots }, (_, i) => i + 1).map((slot) => (
-                    <th key={slot} className="border-b border-zinc-200 p-1.5 text-center font-medium dark:border-ink-800">
-                      Pick {slot}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {Array.from({ length: numRounds }, (_, i) => i + 1).map((round) => (
-                  <tr key={round}>
-                    <td className="border-r border-b border-zinc-200 p-1.5 text-center font-semibold dark:border-ink-800">
-                      {round}
-                    </td>
-                    {Array.from({ length: numSlots }, (_, i) => i + 1).map((slot) => {
-                      const entry = boardBySlot.get(`${round}-${slot}`);
-                      if (!entry) return <td key={slot} className="border-b border-zinc-100 p-1.5 dark:border-ink-900" />;
-                      const { pick, player: p } = entry;
-                      const isOnTheClock = pick.overallPick === nextOverallPick;
-                      return (
-                        <td
-                          key={slot}
-                          className={`min-w-[110px] border-b p-1.5 align-top ${
-                            isOnTheClock
-                              ? "border-gridiron-500 bg-gridiron-50 dark:bg-gridiron-950/40"
-                              : "border-zinc-100 dark:border-ink-900"
-                          }`}
-                        >
-                          <div className="truncate text-[10px] text-zinc-400" title={pick.managerName}>
-                            {pick.managerName}
-                          </div>
-                          {p ? (
-                            <>
-                              <Link href={`/players/${p.id}`} className="block truncate font-medium hover:underline">
-                                {p.name}
-                              </Link>
-                              <div className="mt-0.5 flex items-center justify-between gap-1">
-                                <span className="inline-flex items-center gap-1 text-[10px] text-zinc-500">
-                                  {p.position}
-                                  <TeamBadge team={p.team} />
-                                </span>
-                                <form action={handleUndo}>
-                                  <input type="hidden" name="id" value={p.id} />
-                                  <button type="submit" className="text-[10px] text-rose-500 hover:underline">
-                                    Undo
-                                  </button>
-                                </form>
-                              </div>
-                            </>
-                          ) : isOnTheClock ? (
-                            <span className="text-[10px] font-semibold uppercase tracking-wide text-gridiron-600 dark:text-gridiron-300">
-                              On the clock
-                            </span>
-                          ) : null}
-                        </td>
-                      );
-                    })}
+          <>
+            <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+              Snakes each round — odd rounds run left→right, even rounds right→left, so consecutive picks stay
+              adjacent.
+            </p>
+            <div className="max-h-[75vh] overflow-auto rounded-lg border border-zinc-200 dark:border-ink-800">
+              <table className="w-full border-collapse text-xs">
+                <thead className="sticky top-0 bg-white dark:bg-ink-900">
+                  <tr>
+                    <th className="border-b border-r border-zinc-200 p-1.5 text-left dark:border-ink-800">Rnd</th>
+                    {Array.from({ length: numSlots }, (_, i) => i + 1).map((col) => (
+                      <th key={col} className="border-b border-zinc-200 p-1.5 text-center font-medium dark:border-ink-800">
+                        {col}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {Array.from({ length: numRounds }, (_, i) => i + 1).map((round) => {
+                    const isReversed = round % 2 === 0;
+                    const slotOrder = Array.from({ length: numSlots }, (_, i) => i + 1);
+                    if (isReversed) slotOrder.reverse();
+                    return (
+                      <tr key={round}>
+                        <td className="border-r border-b border-zinc-200 p-1.5 text-center font-semibold dark:border-ink-800">
+                          {round}
+                        </td>
+                        {slotOrder.map((slot) => {
+                          const entry = boardBySlot.get(`${round}-${slot}`);
+                          if (!entry) return <td key={slot} className="border-b border-zinc-100 p-1.5 dark:border-ink-900" />;
+                          const { pick, player: p } = entry;
+                          const isOnTheClock = pick.overallPick === nextOverallPick;
+                          return (
+                            <td
+                              key={slot}
+                              className={`min-w-[110px] border-b p-1.5 align-top ${
+                                isOnTheClock
+                                  ? "border-gridiron-500 bg-gridiron-50 dark:bg-gridiron-950/40"
+                                  : "border-zinc-100 dark:border-ink-900"
+                              }`}
+                            >
+                              <div className="flex items-baseline justify-between gap-1 text-[10px] text-zinc-400">
+                                <span className="truncate" title={pick.managerName}>
+                                  {pick.managerName}
+                                </span>
+                                <span className="shrink-0">#{pick.overallPick}</span>
+                              </div>
+                              {p ? (
+                                <>
+                                  <Link href={`/players/${p.id}`} className="block truncate font-medium hover:underline">
+                                    {p.name}
+                                  </Link>
+                                  <div className="mt-0.5 flex items-center justify-between gap-1">
+                                    <span className="inline-flex items-center gap-1 text-[10px] text-zinc-500">
+                                      {p.position}
+                                      <TeamBadge team={p.team} />
+                                    </span>
+                                    <form action={handleUndo}>
+                                      <input type="hidden" name="id" value={p.id} />
+                                      <button type="submit" className="text-[10px] text-rose-500 hover:underline">
+                                        Undo
+                                      </button>
+                                    </form>
+                                  </div>
+                                </>
+                              ) : isOnTheClock ? (
+                                <span className="text-[10px] font-semibold uppercase tracking-wide text-gridiron-600 dark:text-gridiron-300">
+                                  On the clock
+                                </span>
+                              ) : null}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
       </div>
