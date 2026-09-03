@@ -262,9 +262,9 @@ export default function DraftBoard({
                                     {p.name}
                                   </Link>
                                   <div className="mt-0.5 flex items-center justify-between gap-1">
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-medium">
-                                      {p.position}
-                                      <TeamBadge team={p.team} />
+                                    <span className="text-[10px] font-medium">
+                                      {p.position} {p.team ?? "—"}
+                                      {p.byeWeek ? ` · Bye ${p.byeWeek}` : ""}
                                     </span>
                                     <form action={handleUndo}>
                                       <input type="hidden" name="id" value={p.id} />
