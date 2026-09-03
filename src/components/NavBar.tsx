@@ -8,6 +8,7 @@ const LINKS = [
   { href: "/players", label: "Players", icon: "📋" },
   { href: "/board", label: "Tier Board", icon: "🗂️" },
   { href: "/draft", label: "Draft Day", icon: "🎯" },
+  { href: "/teams", label: "Teams", icon: "👥" },
   { href: "/history", label: "History", icon: "📈" },
 ];
 
