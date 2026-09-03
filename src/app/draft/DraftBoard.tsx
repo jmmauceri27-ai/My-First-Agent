@@ -6,7 +6,7 @@ import Link from "next/link";
 import type { DraftOrderPick, Player } from "@prisma/client";
 import { POSITIONS, tierColor } from "@/lib/constants";
 import TeamBadge from "@/components/TeamBadge";
-import { markDrafted, undoDraft, resetDraft } from "./actions";
+import { markDrafted, undoDraft, resetDraft, updateDraftOrderPickManager } from "./actions";
 
 export default function DraftBoard({
   players,
@@ -17,6 +17,7 @@ export default function DraftBoard({
 }) {
   const [positionFilter, setPositionFilter] = useState("ALL");
   const [pending, startTransition] = useTransition();
+  const [editingPickId, setEditingPickId] = useState<string | null>(null);
   const router = useRouter();
 
   const available = useMemo(() => {
@@ -75,6 +76,14 @@ export default function DraftBoard({
     if (!confirm("Reset the entire draft? This clears drafted status for every player.")) return;
     startTransition(async () => {
       await resetDraft();
+      router.refresh();
+    });
+  }
+
+  function handleUpdateManager(formData: FormData) {
+    startTransition(async () => {
+      await updateDraftOrderPickManager(formData);
+      setEditingPickId(null);
       router.refresh();
     });
   }
@@ -208,12 +217,39 @@ export default function DraftBoard({
                                   : "border-zinc-100 dark:border-ink-900"
                               }`}
                             >
-                              <div className="flex items-baseline justify-between gap-1 text-[10px] text-zinc-400">
-                                <span className="truncate" title={pick.managerName}>
-                                  {pick.managerName}
-                                </span>
-                                <span className="shrink-0">#{pick.overallPick}</span>
-                              </div>
+                              {editingPickId === pick.id ? (
+                                <form action={handleUpdateManager} className="mb-0.5 flex items-center gap-0.5">
+                                  <input type="hidden" name="id" value={pick.id} />
+                                  <input
+                                    name="managerName"
+                                    defaultValue={pick.managerName}
+                                    autoFocus
+                                    className="w-full min-w-0 rounded border border-zinc-300 px-1 py-0.5 text-[10px] dark:border-zinc-700 dark:bg-ink-800"
+                                  />
+                                  <button type="submit" className="shrink-0 text-[10px] text-emerald-600 hover:underline">
+                                    ✓
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingPickId(null)}
+                                    className="shrink-0 text-[10px] text-zinc-400 hover:underline"
+                                  >
+                                    ✕
+                                  </button>
+                                </form>
+                              ) : (
+                                <div className="flex items-baseline justify-between gap-1 text-[10px] text-zinc-400">
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingPickId(pick.id)}
+                                    className="truncate text-left hover:underline"
+                                    title={`${pick.managerName} — click to edit`}
+                                  >
+                                    {pick.managerName}
+                                  </button>
+                                  <span className="shrink-0">#{pick.overallPick}</span>
+                                </div>
+                              )}
                               {p ? (
                                 <>
                                   <Link href={`/players/${p.id}`} className="block truncate font-medium hover:underline">

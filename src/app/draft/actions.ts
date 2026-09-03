@@ -57,3 +57,15 @@ export async function clearDraftOrder(): Promise<void> {
   await prisma.draftOrderPick.deleteMany();
   revalidatePath("/draft");
 }
+
+export async function updateDraftOrderPickManager(formData: FormData): Promise<void> {
+  const id = String(formData.get("id"));
+  const managerName = String(formData.get("managerName") ?? "").trim();
+  if (!managerName) return;
+
+  await prisma.draftOrderPick.update({
+    where: { id },
+    data: { managerName },
+  });
+  revalidatePath("/draft");
+}
