@@ -40,6 +40,15 @@ export default function DraftBoard({
   const nextOverallPick = totalDrafted + 1;
   const onTheClock = draftOrder.find((p) => p.overallPick === nextOverallPick);
 
+  // The Nth player marked drafted (oldest first) is assumed to be whoever
+  // was taken at the draft order's Nth overall pick — this app has no
+  // other way to tie a drafted player back to a specific pick slot.
+  const draftedAscending = useMemo(() => [...drafted].reverse(), [drafted]);
+  const board = useMemo(
+    () => draftOrder.map((pick, idx) => ({ pick, player: draftedAscending[idx] ?? null })),
+    [draftOrder, draftedAscending]
+  );
+
   function handleDraft(formData: FormData) {
     startTransition(async () => {
       await markDrafted(formData);
@@ -176,6 +185,54 @@ export default function DraftBoard({
           {drafted.length === 0 && <p className="text-sm text-zinc-500">No players drafted yet.</p>}
         </div>
       </div>
+      </div>
+
+      <div className="mt-6">
+        <h2 className="mb-3 text-lg font-bold">Draft Board</h2>
+        <div className="max-h-[70vh] space-y-1 overflow-y-auto">
+          {board.map(({ pick, player: p }) => {
+            const isOnTheClock = pick.overallPick === nextOverallPick;
+            return (
+              <div
+                key={pick.id}
+                className={`flex items-center justify-between gap-2 rounded-lg border p-2 text-sm ${
+                  isOnTheClock
+                    ? "border-gridiron-500 bg-gridiron-50 dark:bg-gridiron-950/40"
+                    : p
+                      ? "border-zinc-200 dark:border-ink-800"
+                      : "border-zinc-100 text-zinc-400 dark:border-ink-900"
+                }`}
+              >
+                <div>
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                    #{pick.overallPick} · Rnd {pick.round} Pick {pick.pickInRound}
+                  </span>
+                  <span className="ml-2 font-medium">{pick.managerName}</span>
+                </div>
+                {p ? (
+                  <div className="text-right">
+                    <Link href={`/players/${p.id}`} className="font-medium hover:underline">
+                      {p.name}
+                    </Link>
+                    <span className="ml-2 inline-flex items-center gap-1 text-xs text-zinc-500">
+                      {p.position}
+                      <TeamBadge team={p.team} />
+                    </span>
+                  </div>
+                ) : isOnTheClock ? (
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gridiron-600 dark:text-gridiron-300">
+                    On the clock
+                  </span>
+                ) : (
+                  <span className="text-xs">Upcoming</span>
+                )}
+              </div>
+            );
+          })}
+          {board.length === 0 && (
+            <p className="text-sm text-zinc-500">Upload your draft order above to see the full board.</p>
+          )}
+        </div>
       </div>
     </div>
   );
