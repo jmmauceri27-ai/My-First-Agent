@@ -95,6 +95,8 @@ export default function DraftBoard({
           </span>
         )}
       </div>
+      <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
+      <div>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <h2 className="text-lg font-bold">On the Board ({available.length})</h2>
         <div className="ml-auto flex gap-1">
@@ -120,7 +122,7 @@ export default function DraftBoard({
         </div>
       </div>
 
-      <div className="max-h-[50vh] space-y-2 overflow-y-auto">
+      <div className="max-h-[75vh] space-y-2 overflow-y-auto">
         {available.map((p) => (
           <div key={p.id} className={`rounded-lg border-l-4 bg-white p-2 shadow-sm backdrop-blur-md dark:bg-ink-900/70 ${tierColor(p.tier)}`}>
             <div className="flex items-center justify-between gap-2">
@@ -152,8 +154,9 @@ export default function DraftBoard({
         ))}
         {available.length === 0 && <p className="text-sm text-zinc-500">No available players match this filter.</p>}
       </div>
+      </div>
 
-      <div className="mt-6">
+      <div>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-bold">Draft Board</h2>
           <button
@@ -233,6 +236,7 @@ export default function DraftBoard({
             </table>
           </div>
         )}
+      </div>
       </div>
     </div>
   );
