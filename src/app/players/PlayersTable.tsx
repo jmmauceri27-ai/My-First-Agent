@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import type { Player } from "@prisma/client";
-import { POSITIONS, TAG_STYLES, tierColor } from "@/lib/constants";
+import { POSITIONS, tierColor } from "@/lib/constants";
 import TeamBadge from "@/components/TeamBadge";
 import { computeVorp } from "@/lib/vorp";
+import { adpValue } from "@/lib/value";
 import PlayerFormModal from "./PlayerFormModal";
 import { deletePlayer, toggleWatchlist, reorderPlayers } from "./actions";
 
@@ -19,16 +20,17 @@ type SortKey =
   | "tier"
   | "name"
   | "projectedPoints"
-  | "vorp";
+  | "vorp"
+  | "value";
 
 type SortDir = "asc" | "desc";
 
 // Higher is better for these — everything else (ranks, ADP, tier, bye) is
 // lower-is-better — so clicking a new header for the first time should
 // start in whichever direction shows the "best" players first.
-const DESCENDING_DEFAULT_KEYS = new Set<SortKey>(["projectedPoints", "vorp"]);
+const DESCENDING_DEFAULT_KEYS = new Set<SortKey>(["projectedPoints", "vorp", "value"]);
 
-type PlayerWithVorp = Player & { vorp: number | null };
+type PlayerWithVorp = Player & { vorp: number | null; value: number | null };
 
 export default function PlayersTable({
   players,
@@ -89,7 +91,7 @@ export default function PlayersTable({
   }, [players]);
 
   const playersWithVorp = useMemo<PlayerWithVorp[]>(
-    () => players.map((p) => ({ ...p, vorp: computeVorp(p, replacementLevels) })),
+    () => players.map((p) => ({ ...p, vorp: computeVorp(p, replacementLevels), value: adpValue(p) })),
     [players, replacementLevels]
   );
 
@@ -100,12 +102,7 @@ export default function PlayersTable({
     if (watchlistOnly) list = list.filter((p) => p.watchlisted);
     if (search.trim()) {
       const q = search.trim().toLowerCase();
-      list = list.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          (p.team ?? "").toLowerCase().includes(q) ||
-          p.tags.some((t) => t.toLowerCase().includes(q))
-      );
+      list = list.filter((p) => p.name.toLowerCase().includes(q) || (p.team ?? "").toLowerCase().includes(q));
     }
     const direction = sortDir === "asc" ? 1 : -1;
     list.sort((a, b) => {
@@ -158,7 +155,7 @@ export default function PlayersTable({
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search name, team, tag..."
+          placeholder="Search name, team..."
           className="min-w-[180px] flex-1 rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-ink-800"
         />
         <select
@@ -205,7 +202,7 @@ export default function PlayersTable({
               <th className="px-3 py-2">{sortHeader("Sleeper ADP", "sleeperAdp")}</th>
               <th className="px-3 py-2">{sortHeader("Proj Pts", "projectedPoints")}</th>
               <th className="px-3 py-2">{sortHeader("VORP", "vorp")}</th>
-              <th className="px-3 py-2">Tags</th>
+              <th className="px-3 py-2">{sortHeader("Value", "value")}</th>
               <th className="px-3 py-2">Status</th>
               <th className="px-3 py-2"></th>
             </tr>
@@ -288,16 +285,14 @@ export default function PlayersTable({
                   )}
                 </td>
                 <td className="px-3 py-2">
-                  <div className="flex flex-wrap gap-1">
-                    {p.tags.map((t) => (
-                      <span
-                        key={t}
-                        className={`rounded px-1.5 py-0.5 text-xs ${TAG_STYLES[t] ?? "bg-zinc-200 text-zinc-700"}`}
-                      >
-                        {t}
-                      </span>
-                    ))}
-                  </div>
+                  {p.value != null ? (
+                    <span className={p.value >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}>
+                      {p.value >= 0 ? "+" : ""}
+                      {p.value.toFixed(1)}
+                    </span>
+                  ) : (
+                    "—"
+                  )}
                 </td>
                 <td className="px-3 py-2 text-xs">
                   {p.draftedBy ? `Drafted: ${p.draftedBy}` : "Available"}
