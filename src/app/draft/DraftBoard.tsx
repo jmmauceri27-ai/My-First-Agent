@@ -180,9 +180,7 @@ export default function DraftBoard({
                   <tr>
                     <th className="border-b border-r border-zinc-200 p-1.5 text-left dark:border-ink-800">Rnd</th>
                     {Array.from({ length: numSlots }, (_, i) => i + 1).map((col) => (
-                      <th key={col} className="border-b border-zinc-200 p-1.5 text-center font-medium dark:border-ink-800">
-                        {col}
-                      </th>
+                      <th key={col} className="border-b border-zinc-200 p-1.5 dark:border-ink-800" />
                     ))}
                   </tr>
                 </thead>
