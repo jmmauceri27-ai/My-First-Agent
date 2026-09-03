@@ -1,14 +1,12 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { TAG_STYLES, tierColor } from "@/lib/constants";
-import { adpValue } from "@/lib/value";
 import TeamBadge from "@/components/TeamBadge";
-import ValueRow from "@/components/ValueRow";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [totalPlayers, draftedCount, watchlistCount, recentNotes, spotlight, valueCandidates] = await Promise.all([
+  const [totalPlayers, draftedCount, watchlistCount, recentNotes, spotlight] = await Promise.all([
     prisma.player.count(),
     prisma.player.count({ where: { draftedBy: { not: null } } }),
     prisma.player.count({ where: { watchlisted: true } }),
@@ -22,20 +20,7 @@ export default async function DashboardPage() {
       orderBy: { overallRank: "asc" },
       take: 6,
     }),
-    prisma.player.findMany({
-      where: { draftedBy: null, overallRank: { not: null }, espnAdp: { not: null } },
-    }),
   ]);
-
-  const withValue = valueCandidates.map((p) => ({ player: p, value: adpValue(p)! }));
-  const bestValue = withValue
-    .filter((v) => v.value > 0 && v.player.espnAdp! <= 150)
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 5);
-  const worstValue = withValue
-    .filter((v) => v.value < 0)
-    .sort((a, b) => a.value - b.value)
-    .slice(0, 5);
 
   return (
     <div>
@@ -69,52 +54,6 @@ export default async function DashboardPage() {
           </div>
         </div>
       )}
-
-      <div className="mb-6 grid gap-6 lg:grid-cols-2">
-        <div>
-          <div className="mb-1 flex items-baseline justify-between gap-2">
-            <h2 className="text-lg font-bold">Best Value</h2>
-            <Link href="/value" className="text-xs font-medium text-gridiron-600 hover:underline dark:text-gridiron-100">
-              See full list by range →
-            </Link>
-          </div>
-          <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">
-            Top-150 ADP, ranked well ahead of it — should still be there when it's your pick.
-          </p>
-          <div className="space-y-2">
-            {bestValue.map(({ player: p, value }) => (
-              <ValueRow key={p.id} player={p} value={value} />
-            ))}
-            {bestValue.length === 0 && (
-              <p className="text-sm text-zinc-500">
-                Add both a rank and an ESPN ADP to your players to see value picks here.
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div>
-          <div className="mb-1 flex items-baseline justify-between gap-2">
-            <h2 className="text-lg font-bold">Worst Value</h2>
-            <Link href="/value" className="text-xs font-medium text-gridiron-600 hover:underline dark:text-gridiron-100">
-              See full list by range →
-            </Link>
-          </div>
-          <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">
-            ESPN expects them gone before your rank says they should be — likely a reach.
-          </p>
-          <div className="space-y-2">
-            {worstValue.map(({ player: p, value }) => (
-              <ValueRow key={p.id} player={p} value={value} />
-            ))}
-            {worstValue.length === 0 && (
-              <p className="text-sm text-zinc-500">
-                Add both a rank and an ESPN ADP to your players to see reaches here.
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div>
