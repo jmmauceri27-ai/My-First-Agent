@@ -178,117 +178,112 @@ export default function DraftBoard({
         {numRounds === 0 || numSlots === 0 ? (
           <p className="text-sm text-zinc-500">Upload your draft order above to see the full board.</p>
         ) : (
-          <>
-            <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-              Snakes each round — odd rounds run left→right, even rounds right→left, so consecutive picks stay
-              adjacent.
-            </p>
-            <div className="max-h-[75vh] overflow-auto rounded-lg border border-zinc-200 dark:border-ink-800">
-              <table className="w-full border-collapse text-xs">
-                <thead className="sticky top-0 bg-white dark:bg-ink-900">
-                  <tr>
-                    <th className="border-b border-r border-zinc-200 p-1.5 text-left dark:border-ink-800">Rnd</th>
-                    {Array.from({ length: numSlots }, (_, i) => i + 1).map((col) => (
-                      <th key={col} className="border-b border-zinc-200 p-1.5 dark:border-ink-800" />
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {Array.from({ length: numRounds }, (_, i) => i + 1).map((round) => {
-                    const isReversed = round % 2 === 0;
-                    const slotOrder = Array.from({ length: numSlots }, (_, i) => i + 1);
-                    if (isReversed) slotOrder.reverse();
+          <div className="max-h-[75vh] overflow-auto rounded-lg border border-zinc-200 p-2 dark:border-ink-800">
+            <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${numSlots}, minmax(120px, 1fr))` }}>
+              {Array.from({ length: numRounds }, (_, i) => i + 1).flatMap((round) => {
+                const isReversed = round % 2 === 0;
+                const slotOrder = Array.from({ length: numSlots }, (_, i) => i + 1);
+                if (isReversed) slotOrder.reverse();
+                return slotOrder.map((slot) => {
+                  const entry = boardBySlot.get(`${round}-${slot}`);
+                  if (!entry) return <div key={`${round}-${slot}`} className="min-h-[92px] rounded-lg bg-zinc-50 dark:bg-ink-950" />;
+                  const { pick, player: p } = entry;
+                  const isOnTheClock = pick.overallPick === nextOverallPick;
+                  const isEditing = editingPickId === pick.id;
+
+                  const managerControl = isEditing ? (
+                    <form action={handleUpdateManager} className="flex items-center gap-0.5">
+                      <input type="hidden" name="id" value={pick.id} />
+                      <input
+                        name="managerName"
+                        defaultValue={pick.managerName}
+                        autoFocus
+                        className="w-full min-w-0 rounded border border-zinc-300 px-1 py-0.5 text-[10px] text-zinc-900 dark:border-zinc-700 dark:bg-ink-800 dark:text-white"
+                      />
+                      <button type="submit" className="shrink-0 text-[10px] text-emerald-600 hover:underline">
+                        ✓
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingPickId(null)}
+                        className="shrink-0 text-[10px] opacity-70 hover:underline"
+                      >
+                        ✕
+                      </button>
+                    </form>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setEditingPickId(pick.id)}
+                      className="truncate text-left italic hover:underline"
+                      title="Click to edit"
+                    >
+                      {pick.managerName}
+                    </button>
+                  );
+
+                  if (isOnTheClock) {
                     return (
-                      <tr key={round}>
-                        <td className="border-r border-b border-zinc-200 p-1.5 text-center font-semibold dark:border-ink-800">
-                          {round}
-                        </td>
-                        {slotOrder.map((slot) => {
-                          const entry = boardBySlot.get(`${round}-${slot}`);
-                          if (!entry) return <td key={slot} className="border-b border-zinc-100 p-1.5 dark:border-ink-900" />;
-                          const { pick, player: p } = entry;
-                          const isOnTheClock = pick.overallPick === nextOverallPick;
-                          return (
-                            <td
-                              key={slot}
-                              className={`min-w-[110px] border-b p-1.5 align-top ${
-                                p
-                                  ? `border-zinc-100 dark:border-ink-900 ${POSITION_BG[p.position] ?? ""}`
-                                  : isOnTheClock
-                                    ? "border-gridiron-500 bg-gridiron-50 dark:bg-gridiron-950/40"
-                                    : "border-zinc-100 dark:border-ink-900"
-                              }`}
-                            >
-                              {editingPickId === pick.id ? (
-                                <form action={handleUpdateManager} className="mb-0.5 flex items-center gap-0.5">
-                                  <input type="hidden" name="id" value={pick.id} />
-                                  <input
-                                    name="managerName"
-                                    defaultValue={pick.managerName}
-                                    autoFocus
-                                    className="w-full min-w-0 rounded border border-zinc-300 px-1 py-0.5 text-[10px] dark:border-zinc-700 dark:bg-ink-800"
-                                  />
-                                  <button type="submit" className="shrink-0 text-[10px] text-emerald-600 hover:underline">
-                                    ✓
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setEditingPickId(null)}
-                                    className="shrink-0 text-[10px] text-zinc-400 hover:underline"
-                                  >
-                                    ✕
-                                  </button>
-                                </form>
-                              ) : (
-                                <div
-                                  className={`flex items-baseline justify-between gap-1 text-[10px] ${
-                                    p ? "text-zinc-800 dark:text-white" : "text-zinc-400"
-                                  }`}
-                                >
-                                  <button
-                                    type="button"
-                                    onClick={() => setEditingPickId(pick.id)}
-                                    className="truncate text-left hover:underline"
-                                    title={`${pick.managerName} — click to edit`}
-                                  >
-                                    {pick.managerName}
-                                  </button>
-                                  <span className="shrink-0">#{pick.overallPick}</span>
-                                </div>
-                              )}
-                              {p ? (
-                                <div className="text-zinc-900 dark:text-white">
-                                  <Link href={`/players/${p.id}`} className="block truncate font-semibold hover:underline">
-                                    {p.name}
-                                  </Link>
-                                  <div className="mt-0.5 flex items-center justify-between gap-1">
-                                    <span className="text-[10px] font-medium">
-                                      {p.position} {p.team ?? "—"}
-                                      {p.byeWeek ? ` · Bye ${p.byeWeek}` : ""}
-                                    </span>
-                                    <form action={handleUndo}>
-                                      <input type="hidden" name="id" value={p.id} />
-                                      <button type="submit" className="text-[10px] font-medium text-rose-900 hover:underline">
-                                        Undo
-                                      </button>
-                                    </form>
-                                  </div>
-                                </div>
-                              ) : isOnTheClock ? (
-                                <span className="text-[10px] font-semibold uppercase tracking-wide text-gridiron-600 dark:text-gridiron-300">
-                                  On the clock
-                                </span>
-                              ) : null}
-                            </td>
-                          );
-                        })}
-                      </tr>
+                      <div
+                        key={`${round}-${slot}`}
+                        className="flex min-h-[92px] flex-col items-center justify-center gap-0.5 rounded-lg bg-emerald-500 p-2 text-center text-white shadow-sm"
+                      >
+                        <span className="text-[10px] font-semibold opacity-80">
+                          {pick.round}.{pick.pickInRound}
+                        </span>
+                        <span className="text-base leading-none">⏱️</span>
+                        <span className="text-xs font-bold uppercase tracking-wide">On the Clock</span>
+                        <span className="w-full truncate text-[10px] opacity-90">{managerControl}</span>
+                      </div>
                     );
-                  })}
-                </tbody>
-              </table>
+                  }
+
+                  if (!p) {
+                    return (
+                      <div
+                        key={`${round}-${slot}`}
+                        className="flex min-h-[92px] flex-col justify-between rounded-lg bg-zinc-100 p-2 text-[10px] text-zinc-400 dark:bg-ink-900 dark:text-zinc-500"
+                      >
+                        <span className="font-semibold">
+                          {pick.round}.{pick.pickInRound}
+                        </span>
+                        {managerControl}
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={`${round}-${slot}`}
+                      className={`flex min-h-[92px] flex-col justify-between rounded-lg p-2 text-zinc-900 shadow-sm dark:text-white ${POSITION_BG[p.position] ?? "bg-zinc-100 dark:bg-ink-900"}`}
+                    >
+                      <span className="text-[10px] font-semibold opacity-70">
+                        {pick.round}.{pick.pickInRound}
+                      </span>
+                      <div>
+                        <Link href={`/players/${p.id}`} className="block truncate text-sm font-bold hover:underline">
+                          {p.name}
+                        </Link>
+                        <span className="mt-0.5 inline-block rounded bg-black/10 px-1.5 py-0.5 text-[10px] font-semibold dark:bg-white/10">
+                          {p.position} {p.team ?? "FA"}
+                          {p.byeWeek ? ` (${p.byeWeek})` : ""}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-1 text-[10px] opacity-80">
+                        {managerControl}
+                        <form action={handleUndo}>
+                          <input type="hidden" name="id" value={p.id} />
+                          <button type="submit" className="shrink-0 not-italic hover:underline">
+                            Undo
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  );
+                });
+              })}
             </div>
-          </>
+          </div>
         )}
       </div>
       </div>
