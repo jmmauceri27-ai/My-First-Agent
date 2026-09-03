@@ -2,8 +2,6 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { TAG_STYLES, tierColor } from "@/lib/constants";
-import { getOrCreateLeagueSettings } from "@/lib/leagueSettings";
-import { computeReplacementLevels, computeVorp } from "@/lib/vorp";
 import TeamBadge from "@/components/TeamBadge";
 import PlayerFormModal from "../PlayerFormModal";
 import NoteForm from "./NoteForm";
@@ -14,22 +12,15 @@ import { deleteNote } from "../actions";
 export const dynamic = "force-dynamic";
 
 export default async function PlayerDetailPage({ params }: { params: { id: string } }) {
-  const [player, allPlayers, leagueSettings] = await Promise.all([
-    prisma.player.findUnique({
-      where: { id: params.id },
-      include: {
-        notes: { orderBy: { createdAt: "desc" } },
-        gameLogs: { orderBy: [{ season: "desc" }, { week: "asc" }] },
-      },
-    }),
-    prisma.player.findMany({ select: { position: true, projectedPoints: true } }),
-    getOrCreateLeagueSettings(),
-  ]);
+  const player = await prisma.player.findUnique({
+    where: { id: params.id },
+    include: {
+      notes: { orderBy: { createdAt: "desc" } },
+      gameLogs: { orderBy: [{ season: "desc" }, { week: "asc" }] },
+    },
+  });
 
   if (!player) notFound();
-
-  const replacementLevels = computeReplacementLevels(allPlayers, leagueSettings);
-  const vorp = computeVorp(player, replacementLevels);
 
   const kindEmoji: Record<string, string> = { note: "📝", trend: "📈", news: "📰", injury: "🩹" };
 
@@ -71,10 +62,6 @@ export default async function PlayerDetailPage({ params }: { params: { id: strin
           <Stat label="Sleeper ADP" value={player.sleeperAdp ?? "—"} />
           <Stat label="Tier" value={player.tier ? `Tier ${player.tier}` : "—"} />
           <Stat label="Proj Pts" value={player.projectedPoints ?? "—"} />
-          <Stat
-            label="VORP"
-            value={vorp != null ? `${vorp >= 0 ? "+" : ""}${vorp.toFixed(1)}` : "—"}
-          />
           <Stat
             label="2025 PPR"
             value={

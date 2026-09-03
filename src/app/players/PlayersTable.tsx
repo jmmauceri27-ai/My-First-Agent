@@ -7,7 +7,6 @@ import Image from "next/image";
 import type { Player } from "@prisma/client";
 import { POSITIONS, tierColor } from "@/lib/constants";
 import TeamBadge from "@/components/TeamBadge";
-import { computeVorp } from "@/lib/vorp";
 import { adpValue } from "@/lib/value";
 import PlayerFormModal from "./PlayerFormModal";
 import { deletePlayer, toggleWatchlist, reorderPlayers } from "./actions";
@@ -20,7 +19,6 @@ type SortKey =
   | "tier"
   | "name"
   | "projectedPoints"
-  | "vorp"
   | "value";
 
 type SortDir = "asc" | "desc";
@@ -28,16 +26,14 @@ type SortDir = "asc" | "desc";
 // Higher is better for these — everything else (ranks, ADP, tier, bye) is
 // lower-is-better — so clicking a new header for the first time should
 // start in whichever direction shows the "best" players first.
-const DESCENDING_DEFAULT_KEYS = new Set<SortKey>(["projectedPoints", "vorp", "value"]);
+const DESCENDING_DEFAULT_KEYS = new Set<SortKey>(["projectedPoints", "value"]);
 
-type PlayerWithVorp = Player & { vorp: number | null; value: number | null };
+type PlayerWithValue = Player & { value: number | null };
 
 export default function PlayersTable({
   players,
-  replacementLevels,
 }: {
   players: Player[];
-  replacementLevels: Record<string, number | null>;
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -90,13 +86,13 @@ export default function PlayersTable({
     setDragOrderIds(null);
   }, [players]);
 
-  const playersWithVorp = useMemo<PlayerWithVorp[]>(
-    () => players.map((p) => ({ ...p, vorp: computeVorp(p, replacementLevels), value: adpValue(p) })),
-    [players, replacementLevels]
+  const playersWithValue = useMemo<PlayerWithValue[]>(
+    () => players.map((p) => ({ ...p, value: adpValue(p) })),
+    [players]
   );
 
   const filtered = useMemo(() => {
-    let list = playersWithVorp.slice();
+    let list = playersWithValue.slice();
     if (positionFilter !== "ALL") list = list.filter((p) => p.position === positionFilter);
     if (hideDrafted) list = list.filter((p) => !p.draftedBy);
     if (watchlistOnly) list = list.filter((p) => p.watchlisted);
@@ -115,14 +111,14 @@ export default function PlayersTable({
       return ((av as number) - (bv as number)) * direction;
     });
     return list;
-  }, [playersWithVorp, search, positionFilter, sortKey, sortDir, hideDrafted, watchlistOnly]);
+  }, [playersWithValue, search, positionFilter, sortKey, sortDir, hideDrafted, watchlistOnly]);
 
   // While actively dragging, show the locally-reordered list instead of
   // re-deriving from `players` — the server write happens on drop.
   const displayList = useMemo(() => {
     if (!canReorder || !dragOrderIds) return filtered;
     const byId = new Map(filtered.map((p) => [p.id, p]));
-    return dragOrderIds.map((id) => byId.get(id)).filter((p): p is PlayerWithVorp => Boolean(p));
+    return dragOrderIds.map((id) => byId.get(id)).filter((p): p is PlayerWithValue => Boolean(p));
   }, [filtered, canReorder, dragOrderIds]);
 
   function persistOrder(orderedIds: string[]) {
@@ -201,7 +197,6 @@ export default function PlayersTable({
               <th className="px-3 py-2">{sortHeader("ESPN ADP", "espnAdp")}</th>
               <th className="px-3 py-2">{sortHeader("Sleeper ADP", "sleeperAdp")}</th>
               <th className="px-3 py-2">{sortHeader("Proj Pts", "projectedPoints")}</th>
-              <th className="px-3 py-2">{sortHeader("VORP", "vorp")}</th>
               <th className="px-3 py-2">{sortHeader("Value", "value")}</th>
               <th className="px-3 py-2">Status</th>
               <th className="px-3 py-2"></th>
@@ -275,16 +270,6 @@ export default function PlayersTable({
                 <td className="px-3 py-2">{p.sleeperAdp ?? "—"}</td>
                 <td className="px-3 py-2">{p.projectedPoints ?? "—"}</td>
                 <td className="px-3 py-2">
-                  {p.vorp != null ? (
-                    <span className={p.vorp >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}>
-                      {p.vorp >= 0 ? "+" : ""}
-                      {p.vorp.toFixed(1)}
-                    </span>
-                  ) : (
-                    "—"
-                  )}
-                </td>
-                <td className="px-3 py-2">
                   {p.value != null ? (
                     <span className={p.value >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}>
                       {p.value >= 0 ? "+" : ""}
@@ -322,7 +307,7 @@ export default function PlayersTable({
             ))}
             {displayList.length === 0 && (
               <tr>
-                <td colSpan={canReorder ? 15 : 14} className="px-3 py-8 text-center text-zinc-500">
+                <td colSpan={canReorder ? 14 : 13} className="px-3 py-8 text-center text-zinc-500">
                   No players match your filters yet.
                 </td>
               </tr>
