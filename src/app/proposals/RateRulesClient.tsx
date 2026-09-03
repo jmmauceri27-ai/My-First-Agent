@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { formatCurrency } from "@/lib/siteMapColor";
-import type { ClientRateOverride, Company, RateItem } from "@/lib/crmTypes";
+import type { ClientRateOverride, Company, Contract, RateItem } from "@/lib/crmTypes";
 import RateItemModal from "./RateItemModal";
 import UploadRateItemsModal from "./UploadRateItemsModal";
 import ClientRateOverrideModal from "./ClientRateOverrideModal";
@@ -17,10 +17,12 @@ export default function RateRulesClient({
   rateItems,
   overrides,
   companies,
+  contracts,
 }: {
   rateItems: RateItem[];
   overrides: ClientRateOverride[];
   companies: Company[];
+  contracts: Contract[];
 }) {
   const [view, setView] = useState<View>("assistant");
   const [editingItem, setEditingItem] = useState<RateItem | null>(null);
@@ -29,32 +31,36 @@ export default function RateRulesClient({
   const [editingOverride, setEditingOverride] = useState<ClientRateOverride | null>(null);
   const [creatingOverride, setCreatingOverride] = useState(false);
 
-  const GENERIC_LABEL = "Generic (all clients)";
+  const GENERIC_LABEL = "Generic (no contract)";
 
   const byTrade = useMemo(() => {
     const trades = new Map<string, Map<string, RateItem[]>>();
     for (const item of rateItems) {
       if (!trades.has(item.trade)) trades.set(item.trade, new Map());
-      const byCompany = trades.get(item.trade)!;
-      const companyLabel = item.companyName ?? GENERIC_LABEL;
-      if (!byCompany.has(companyLabel)) byCompany.set(companyLabel, []);
-      byCompany.get(companyLabel)!.push(item);
+      const byContract = trades.get(item.trade)!;
+      const contractLabel = item.contractName
+        ? item.companyName
+          ? `${item.contractName} · ${item.companyName}`
+          : item.contractName
+        : GENERIC_LABEL;
+      if (!byContract.has(contractLabel)) byContract.set(contractLabel, []);
+      byContract.get(contractLabel)!.push(item);
     }
-    return Array.from(trades.entries()).map(([trade, byCompany]) => {
-      const companyGroups = Array.from(byCompany.entries())
+    return Array.from(trades.entries()).map(([trade, byContract]) => {
+      const contractGroups = Array.from(byContract.entries())
         .sort(([a], [b]) => (a === GENERIC_LABEL ? -1 : b === GENERIC_LABEL ? 1 : a.localeCompare(b)))
-        .map(([companyLabel, items]) => {
+        .map(([contractLabel, items]) => {
           const categories = new Map<string, RateItem[]>();
           for (const item of items) {
             if (!categories.has(item.category)) categories.set(item.category, []);
             categories.get(item.category)!.push(item);
           }
-          return { companyLabel, categories: Array.from(categories.entries()), count: items.length };
+          return { contractLabel, categories: Array.from(categories.entries()), count: items.length };
         });
       return {
         trade,
-        companyGroups,
-        count: companyGroups.reduce((sum, g) => sum + g.count, 0),
+        contractGroups,
+        count: contractGroups.reduce((sum, g) => sum + g.count, 0),
       };
     });
   }, [rateItems]);
@@ -92,9 +98,9 @@ export default function RateRulesClient({
       </div>
 
       {view === "assistant" ? (
-        <ChatAssistant companies={companies} hasRateItems={rateItems.length > 0} />
+        <ChatAssistant companies={companies} contracts={contracts} hasRateItems={rateItems.length > 0} />
       ) : view === "calculator" ? (
-        <QuoteCalculator rateItems={rateItems} overrides={overrides} companies={companies} />
+        <QuoteCalculator rateItems={rateItems} overrides={overrides} companies={companies} contracts={contracts} />
       ) : (
         <div className="flex flex-col gap-8">
           <div className="flex flex-col gap-2">
@@ -118,16 +124,16 @@ export default function RateRulesClient({
               <p className="text-sm text-slate-400">No rate items yet.</p>
             ) : (
               <div className="flex flex-col gap-4">
-                {byTrade.map(({ trade, companyGroups, count }) => (
+                {byTrade.map(({ trade, contractGroups, count }) => (
                   <div key={trade} className="flex flex-col gap-2">
                     <h3 className="text-sm font-bold uppercase tracking-wide text-slate-400">
                       {trade} <span className="font-normal text-slate-500">({count})</span>
                     </h3>
                     <div className="flex flex-col gap-3">
-                      {companyGroups.map(({ companyLabel, categories }) => (
-                        <div key={companyLabel} className="flex flex-col gap-1">
-                          {(companyGroups.length > 1 || companyLabel !== GENERIC_LABEL) && (
-                            <p className="text-xs font-semibold text-purple-300">{companyLabel}</p>
+                      {contractGroups.map(({ contractLabel, categories }) => (
+                        <div key={contractLabel} className="flex flex-col gap-1">
+                          {(contractGroups.length > 1 || contractLabel !== GENERIC_LABEL) && (
+                            <p className="text-xs font-semibold text-purple-300">{contractLabel}</p>
                           )}
                           <Card className="flex flex-col divide-y divide-purple-400/10 overflow-hidden">
                             {categories.map(([category, items]) => (
@@ -215,7 +221,7 @@ export default function RateRulesClient({
           {(editingItem || creatingItem) && (
             <RateItemModal
               item={editingItem}
-              companies={companies}
+              contracts={contracts}
               onClose={() => {
                 setEditingItem(null);
                 setCreatingItem(false);
@@ -223,7 +229,7 @@ export default function RateRulesClient({
             />
           )}
 
-          {uploading && <UploadRateItemsModal companies={companies} onClose={() => setUploading(false)} />}
+          {uploading && <UploadRateItemsModal contracts={contracts} onClose={() => setUploading(false)} />}
 
           {(editingOverride || creatingOverride) && (
             <ClientRateOverrideModal

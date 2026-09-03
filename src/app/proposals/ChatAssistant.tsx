@@ -1,11 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type Anthropic from "@anthropic-ai/sdk";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
-import type { Company } from "@/lib/crmTypes";
+import type { Company, Contract } from "@/lib/crmTypes";
 import { sendProposalChatMessageAction } from "./chatActions";
 
 interface ChatBubble {
@@ -35,12 +35,15 @@ function toBubbles(messages: Anthropic.MessageParam[]): ChatBubble[] {
 
 export default function ChatAssistant({
   companies,
+  contracts,
   hasRateItems,
 }: {
   companies: Company[];
+  contracts: Contract[];
   hasRateItems: boolean;
 }) {
   const [companyId, setCompanyId] = useState("");
+  const [contractId, setContractId] = useState("");
   const [messages, setMessages] = useState<Anthropic.MessageParam[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -48,6 +51,10 @@ export default function ChatAssistant({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const bubbles = toBubbles(messages);
+  const contractsForClient = useMemo(
+    () => (companyId ? contracts.filter((c) => c.companyId === companyId) : contracts),
+    [contracts, companyId],
+  );
 
   function scrollToBottom() {
     requestAnimationFrame(() => {
@@ -68,9 +75,12 @@ export default function ChatAssistant({
     scrollToBottom();
 
     const company = companies.find((c) => c.id === companyId);
+    const contract = contracts.find((c) => c.id === contractId);
     const result = await sendProposalChatMessageAction(nextHistory, {
       companyId: companyId || undefined,
       companyName: company?.name,
+      contractId: contractId || undefined,
+      contractName: contract?.name,
     });
 
     if ("error" in result) {
@@ -89,22 +99,43 @@ export default function ChatAssistant({
 
   return (
     <div className="flex flex-col gap-4">
-      <Card className="flex flex-wrap items-center justify-between gap-4 p-4">
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-slate-300">Client (optional, for override pricing)</span>
-          <select
-            value={companyId}
-            onChange={(e) => setCompanyId(e.target.value)}
-            className={`${inputClass} min-w-56`}
-          >
-            <option value="">No client selected</option>
-            {companies.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </label>
+      <Card className="flex flex-wrap items-end justify-between gap-4 p-4">
+        <div className="flex flex-wrap gap-4">
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-slate-300">Client (optional, for override pricing)</span>
+            <select
+              value={companyId}
+              onChange={(e) => {
+                setCompanyId(e.target.value);
+                setContractId("");
+              }}
+              className={`${inputClass} min-w-56`}
+            >
+              <option value="">No client selected</option>
+              {companies.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-slate-300">Contract (optional, for its own rate card)</span>
+            <select
+              value={contractId}
+              onChange={(e) => setContractId(e.target.value)}
+              className={`${inputClass} min-w-56`}
+            >
+              <option value="">No contract selected</option>
+              {contractsForClient.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                  {!companyId && c.companyName ? ` · ${c.companyName}` : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
         <Button variant="secondary" onClick={newConversation} disabled={messages.length === 0}>
           New conversation
         </Button>

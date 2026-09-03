@@ -886,10 +886,10 @@ export async function getOpportunityFileDownloadUrl(id: string): Promise<string>
 // service tasks) -- a trade's proposal price is composed from these, not a single base rate.
 
 const RATE_ITEM_COLUMNS =
-  "id, trade, category, item_name, pricing_basis, rate_tier, rate, unit_label, notes, company_id, created_at, updated_at, crm_companies(name)";
+  "id, trade, category, item_name, pricing_basis, rate_tier, rate, unit_label, notes, contract_id, created_at, updated_at, crm_contracts(name, crm_companies(name))";
 
 function mapRateItem(r: Record<string, unknown>): RateItem {
-  const company = r.crm_companies as unknown as { name: string } | null;
+  const contract = r.crm_contracts as unknown as { name: string; crm_companies: { name: string } | null } | null;
   return {
     id: r.id as string,
     trade: r.trade as string,
@@ -900,8 +900,9 @@ function mapRateItem(r: Record<string, unknown>): RateItem {
     rate: r.rate as number,
     unitLabel: r.unit_label as string | null,
     notes: r.notes as string | null,
-    companyId: r.company_id as string | null,
-    companyName: company?.name ?? null,
+    contractId: r.contract_id as string | null,
+    contractName: contract?.name ?? null,
+    companyName: contract?.crm_companies?.name ?? null,
     createdAt: r.created_at as string,
     updatedAt: r.updated_at as string,
   };
@@ -935,7 +936,7 @@ export async function createRateItem(input: RateItemInput): Promise<string> {
       rate: input.rate,
       unit_label: input.unitLabel,
       notes: input.notes,
-      company_id: input.companyId,
+      contract_id: input.contractId,
     })
     .select("id")
     .single();
@@ -956,7 +957,7 @@ export async function updateRateItem(id: string, input: RateItemInput): Promise<
       rate: input.rate,
       unit_label: input.unitLabel,
       notes: input.notes,
-      company_id: input.companyId,
+      contract_id: input.contractId,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
@@ -984,7 +985,7 @@ export async function bulkCreateRateItems(rows: RateItemImportRow[]): Promise<{ 
       rate: r.rate,
       unit_label: r.unitLabel,
       notes: r.notes,
-      company_id: r.companyId,
+      contract_id: r.contractId,
     })),
   );
   if (error) throw new Error(error.message);

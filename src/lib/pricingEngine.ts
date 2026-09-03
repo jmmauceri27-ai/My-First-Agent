@@ -26,17 +26,19 @@ export interface TradePricingResult {
 }
 
 /**
- * The rate items to price `trade` with for a given client: that client's own rate items for the trade if they
- * have any (e.g. a negotiated MSA rate card), otherwise the generic, company-wide catalog for the trade. A
- * client's rate card fully replaces the generic one for a trade when present -- the two are never merged line
- * by line, since a real client rate sheet is a complete, self-contained replacement, not a partial patch.
+ * The rate items to price `trade` with for a given contract: that contract's own rate items for the trade if
+ * it has any (e.g. a negotiated MSA rate card), otherwise the generic, company-wide catalog for the trade. A
+ * rate card ties to a Contract, not directly to a Company, since one client can have several contracts each
+ * with their own rates. A contract's rate card fully replaces the generic one for a trade when present -- the
+ * two are never merged line by line, since a real rate sheet is a complete, self-contained replacement, not a
+ * partial patch.
  */
-export function resolveTradeRateItems(rateItems: RateItem[], trade: string, companyId: string | null): RateItem[] {
-  if (companyId) {
-    const clientSpecific = rateItems.filter((r) => r.trade === trade && r.companyId === companyId);
-    if (clientSpecific.length > 0) return clientSpecific;
+export function resolveTradeRateItems(rateItems: RateItem[], trade: string, contractId: string | null): RateItem[] {
+  if (contractId) {
+    const contractSpecific = rateItems.filter((r) => r.trade === trade && r.contractId === contractId);
+    if (contractSpecific.length > 0) return contractSpecific;
   }
-  return rateItems.filter((r) => r.trade === trade && !r.companyId);
+  return rateItems.filter((r) => r.trade === trade && !r.contractId);
 }
 
 /** This client's override for `trade`, if any -- there's at most one per (client, trade), enforced by a unique constraint. */

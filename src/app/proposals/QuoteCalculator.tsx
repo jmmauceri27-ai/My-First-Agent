@@ -5,21 +5,24 @@ import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import { formatCurrency } from "@/lib/siteMapColor";
 import { findOverrideForTrade, priceTradeSelections, resolveTradeRateItems } from "@/lib/pricingEngine";
-import type { ClientRateOverride, Company, RateItem } from "@/lib/crmTypes";
+import type { ClientRateOverride, Company, Contract, RateItem } from "@/lib/crmTypes";
 
-/** Manually exercises the pricing engine against real rate items -- pick a client/trade, enter quantities, and
- * see exactly how a trade's price gets composed (line by line) and adjusted by a client override. Nothing here
- * is saved; this is a calculator, not a proposal (that's a later step). */
+/** Manually exercises the pricing engine against real rate items -- pick a client/contract/trade, enter
+ * quantities, and see exactly how a trade's price gets composed (line by line) and adjusted by a client
+ * override. Nothing here is saved; this is a calculator, not a proposal (that's a later step). */
 export default function QuoteCalculator({
   rateItems,
   overrides,
   companies,
+  contracts,
 }: {
   rateItems: RateItem[];
   overrides: ClientRateOverride[];
   companies: Company[];
+  contracts: Contract[];
 }) {
   const [companyId, setCompanyId] = useState("");
+  const [contractId, setContractId] = useState("");
   const [trade, setTrade] = useState("");
   const [quantities, setQuantities] = useState<Record<string, string>>({});
 
@@ -28,11 +31,16 @@ export default function QuoteCalculator({
     [rateItems],
   );
 
-  const tradeItems = useMemo(
-    () => (trade ? resolveTradeRateItems(rateItems, trade, companyId || null) : []),
-    [rateItems, trade, companyId],
+  const contractsForClient = useMemo(
+    () => (companyId ? contracts.filter((c) => c.companyId === companyId) : contracts),
+    [contracts, companyId],
   );
-  const usingClientRateCard = tradeItems.length > 0 && tradeItems[0].companyId != null;
+
+  const tradeItems = useMemo(
+    () => (trade ? resolveTradeRateItems(rateItems, trade, contractId || null) : []),
+    [rateItems, trade, contractId],
+  );
+  const usingContractRateCard = tradeItems.length > 0 && tradeItems[0].contractId != null;
 
   const itemsByCategory = useMemo(() => {
     const categories = new Map<string, RateItem[]>();
@@ -65,11 +73,30 @@ export default function QuoteCalculator({
       <Card className="flex flex-wrap gap-4 p-4">
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium text-slate-300">Client (optional, for override)</span>
-          <select value={companyId} onChange={(e) => setCompanyId(e.target.value)} className={inputClass}>
+          <select
+            value={companyId}
+            onChange={(e) => {
+              setCompanyId(e.target.value);
+              setContractId("");
+            }}
+            className={inputClass}
+          >
             <option value="">No client</option>
             {companies.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium text-slate-300">Contract (optional, for its own rate card)</span>
+          <select value={contractId} onChange={(e) => setContractId(e.target.value)} className={inputClass}>
+            <option value="">No contract</option>
+            {contractsForClient.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+                {!companyId && c.companyName ? ` · ${c.companyName}` : ""}
               </option>
             ))}
           </select>
@@ -102,8 +129,8 @@ export default function QuoteCalculator({
         <div className="flex flex-col gap-6 lg:flex-row">
           <Card className="flex flex-1 flex-col divide-y divide-purple-400/10 overflow-hidden">
             <p className="bg-purple-500/5 px-4 py-1.5 text-xs font-semibold text-slate-400">
-              {usingClientRateCard
-                ? `Using ${companies.find((c) => c.id === companyId)?.name ?? "this client"}'s rate card for ${trade}`
+              {usingContractRateCard
+                ? `Using ${contracts.find((c) => c.id === contractId)?.name ?? "this contract"}'s rate card for ${trade}`
                 : `Using the generic rate card for ${trade}`}
             </p>
             {itemsByCategory.map(([category, items]) => (
