@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { DraftOrderPick, Player } from "@prisma/client";
-import { POSITIONS, tierColor } from "@/lib/constants";
+import { POSITIONS, POSITION_BG, tierColor } from "@/lib/constants";
 import TeamBadge from "@/components/TeamBadge";
 import { markDrafted, undoDraft, resetDraft, updateDraftOrderPickManager } from "./actions";
 
@@ -212,9 +212,11 @@ export default function DraftBoard({
                             <td
                               key={slot}
                               className={`min-w-[110px] border-b p-1.5 align-top ${
-                                isOnTheClock
-                                  ? "border-gridiron-500 bg-gridiron-50 dark:bg-gridiron-950/40"
-                                  : "border-zinc-100 dark:border-ink-900"
+                                p
+                                  ? `border-zinc-100 dark:border-ink-900 ${POSITION_BG[p.position] ?? ""}`
+                                  : isOnTheClock
+                                    ? "border-gridiron-500 bg-gridiron-50 dark:bg-gridiron-950/40"
+                                    : "border-zinc-100 dark:border-ink-900"
                               }`}
                             >
                               {editingPickId === pick.id ? (

@@ -31,6 +31,16 @@ export function tierColor(tier: number | null | undefined): string {
   return TIER_COLORS[((tier - 1) % 8) + 1] ?? "border-l-zinc-300";
 }
 
+// Draft Board cell background once a pick is filled, by the player's position.
+export const POSITION_BG: Record<string, string> = {
+  QB: "bg-pink-100 dark:bg-pink-950/40",
+  RB: "bg-orange-100 dark:bg-orange-950/40",
+  WR: "bg-blue-100 dark:bg-blue-950/40",
+  TE: "bg-green-100 dark:bg-green-950/40",
+  DST: "bg-yellow-100 dark:bg-yellow-950/40",
+  K: "bg-purple-100 dark:bg-purple-950/40",
+};
+
 export const TAG_STYLES: Record<string, string> = {
   target: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300",
   sleeper: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300",
