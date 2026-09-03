@@ -49,6 +49,14 @@ export default function DraftBoard({
     [draftOrder, draftedAscending]
   );
 
+  const numRounds = useMemo(() => draftOrder.reduce((max, p) => Math.max(max, p.round), 0), [draftOrder]);
+  const numSlots = useMemo(() => draftOrder.reduce((max, p) => Math.max(max, p.pickInRound), 0), [draftOrder]);
+  const boardBySlot = useMemo(() => {
+    const map = new Map<string, { pick: DraftOrderPick; player: Player | null }>();
+    for (const entry of board) map.set(`${entry.pick.round}-${entry.pick.pickInRound}`, entry);
+    return map;
+  }, [board]);
+
   function handleDraft(formData: FormData) {
     startTransition(async () => {
       await markDrafted(formData);
@@ -87,70 +95,67 @@ export default function DraftBoard({
           </span>
         )}
       </div>
-      <div className="grid gap-6 lg:grid-cols-2">
-      <div>
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <h2 className="text-lg font-bold">On the Board ({available.length})</h2>
-          <div className="ml-auto flex gap-1">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <h2 className="text-lg font-bold">On the Board ({available.length})</h2>
+        <div className="ml-auto flex gap-1">
+          <button
+            onClick={() => setPositionFilter("ALL")}
+            className={`rounded-md px-2 py-1 text-xs font-medium ${
+              positionFilter === "ALL" ? "bg-gridiron-500 text-white" : "bg-zinc-100 dark:bg-ink-800"
+            }`}
+          >
+            ALL
+          </button>
+          {POSITIONS.map((p) => (
             <button
-              onClick={() => setPositionFilter("ALL")}
+              key={p}
+              onClick={() => setPositionFilter(p)}
               className={`rounded-md px-2 py-1 text-xs font-medium ${
-                positionFilter === "ALL" ? "bg-gridiron-500 text-white" : "bg-zinc-100 dark:bg-ink-800"
+                positionFilter === p ? "bg-gridiron-500 text-white" : "bg-zinc-100 dark:bg-ink-800"
               }`}
             >
-              ALL
+              {p}
             </button>
-            {POSITIONS.map((p) => (
-              <button
-                key={p}
-                onClick={() => setPositionFilter(p)}
-                className={`rounded-md px-2 py-1 text-xs font-medium ${
-                  positionFilter === p ? "bg-gridiron-500 text-white" : "bg-zinc-100 dark:bg-ink-800"
-                }`}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="max-h-[70vh] space-y-2 overflow-y-auto">
-          {available.map((p) => (
-            <div key={p.id} className={`rounded-lg border-l-4 bg-white p-2 shadow-sm backdrop-blur-md dark:bg-ink-900/70 ${tierColor(p.tier)}`}>
-              <div className="flex items-center justify-between gap-2">
-                <div>
-                  <Link href={`/players/${p.id}`} className="font-medium hover:underline">
-                    {p.overallRank ? `${p.overallRank}. ` : ""}
-                    {p.name}
-                  </Link>
-                  <span className="ml-2 inline-flex items-center gap-1 text-xs text-zinc-500">
-                    {p.position}
-                    <TeamBadge team={p.team} />
-                  </span>
-                </div>
-                <form action={handleDraft}>
-                  <input type="hidden" name="id" value={p.id} />
-                  <input type="hidden" name="draftedBy" value={onTheClock?.managerName ?? ""} />
-                  <input type="hidden" name="draftRound" value={onTheClock?.round ?? ""} />
-                  <input type="hidden" name="draftPick" value={onTheClock?.pickInRound ?? ""} />
-                  <button
-                    type="submit"
-                    disabled={pending}
-                    className="rounded-md bg-gridiron-500 px-2 py-1 text-xs font-semibold text-white hover:bg-gridiron-600 disabled:opacity-60"
-                  >
-                    Draft
-                  </button>
-                </form>
-              </div>
-            </div>
           ))}
-          {available.length === 0 && <p className="text-sm text-zinc-500">No available players match this filter.</p>}
         </div>
       </div>
 
-      <div>
+      <div className="max-h-[50vh] space-y-2 overflow-y-auto">
+        {available.map((p) => (
+          <div key={p.id} className={`rounded-lg border-l-4 bg-white p-2 shadow-sm backdrop-blur-md dark:bg-ink-900/70 ${tierColor(p.tier)}`}>
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <Link href={`/players/${p.id}`} className="font-medium hover:underline">
+                  {p.overallRank ? `${p.overallRank}. ` : ""}
+                  {p.name}
+                </Link>
+                <span className="ml-2 inline-flex items-center gap-1 text-xs text-zinc-500">
+                  {p.position}
+                  <TeamBadge team={p.team} />
+                </span>
+              </div>
+              <form action={handleDraft}>
+                <input type="hidden" name="id" value={p.id} />
+                <input type="hidden" name="draftedBy" value={onTheClock?.managerName ?? ""} />
+                <input type="hidden" name="draftRound" value={onTheClock?.round ?? ""} />
+                <input type="hidden" name="draftPick" value={onTheClock?.pickInRound ?? ""} />
+                <button
+                  type="submit"
+                  disabled={pending}
+                  className="rounded-md bg-gridiron-500 px-2 py-1 text-xs font-semibold text-white hover:bg-gridiron-600 disabled:opacity-60"
+                >
+                  Draft
+                </button>
+              </form>
+            </div>
+          </div>
+        ))}
+        {available.length === 0 && <p className="text-sm text-zinc-500">No available players match this filter.</p>}
+      </div>
+
+      <div className="mt-6">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-bold">Draft Results ({drafted.length})</h2>
+          <h2 className="text-lg font-bold">Draft Board</h2>
           <button
             onClick={handleReset}
             className="rounded-md border border-rose-300 px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:hover:bg-rose-950/40"
@@ -158,81 +163,76 @@ export default function DraftBoard({
             Reset Draft
           </button>
         </div>
-        <div className="max-h-[70vh] space-y-2 overflow-y-auto">
-          {drafted.map((p) => (
-            <div key={p.id} className="flex items-center justify-between rounded-lg border border-zinc-200 p-2 text-sm dark:border-ink-800">
-              <div>
-                <Link href={`/players/${p.id}`} className="font-medium hover:underline">
-                  {p.name}
-                </Link>
-                <span className="ml-2 inline-flex items-center gap-1 text-xs text-zinc-500">
-                  {p.position}
-                  <TeamBadge team={p.team} />
-                  <span>
-                    · {p.draftedBy}
-                    {p.draftRound ? ` · Rnd ${p.draftRound} Pick ${p.draftPick}` : ""}
-                  </span>
-                </span>
-              </div>
-              <form action={handleUndo}>
-                <input type="hidden" name="id" value={p.id} />
-                <button type="submit" className="text-xs text-gridiron-600 hover:underline dark:text-gridiron-100">
-                  Undo
-                </button>
-              </form>
-            </div>
-          ))}
-          {drafted.length === 0 && <p className="text-sm text-zinc-500">No players drafted yet.</p>}
-        </div>
-      </div>
-      </div>
-
-      <div className="mt-6">
-        <h2 className="mb-3 text-lg font-bold">Draft Board</h2>
-        <div className="max-h-[70vh] space-y-1 overflow-y-auto">
-          {board.map(({ pick, player: p }) => {
-            const isOnTheClock = pick.overallPick === nextOverallPick;
-            return (
-              <div
-                key={pick.id}
-                className={`flex items-center justify-between gap-2 rounded-lg border p-2 text-sm ${
-                  isOnTheClock
-                    ? "border-gridiron-500 bg-gridiron-50 dark:bg-gridiron-950/40"
-                    : p
-                      ? "border-zinc-200 dark:border-ink-800"
-                      : "border-zinc-100 text-zinc-400 dark:border-ink-900"
-                }`}
-              >
-                <div>
-                  <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                    #{pick.overallPick} · Rnd {pick.round} Pick {pick.pickInRound}
-                  </span>
-                  <span className="ml-2 font-medium">{pick.managerName}</span>
-                </div>
-                {p ? (
-                  <div className="text-right">
-                    <Link href={`/players/${p.id}`} className="font-medium hover:underline">
-                      {p.name}
-                    </Link>
-                    <span className="ml-2 inline-flex items-center gap-1 text-xs text-zinc-500">
-                      {p.position}
-                      <TeamBadge team={p.team} />
-                    </span>
-                  </div>
-                ) : isOnTheClock ? (
-                  <span className="text-xs font-semibold uppercase tracking-wide text-gridiron-600 dark:text-gridiron-300">
-                    On the clock
-                  </span>
-                ) : (
-                  <span className="text-xs">Upcoming</span>
-                )}
-              </div>
-            );
-          })}
-          {board.length === 0 && (
-            <p className="text-sm text-zinc-500">Upload your draft order above to see the full board.</p>
-          )}
-        </div>
+        {numRounds === 0 || numSlots === 0 ? (
+          <p className="text-sm text-zinc-500">Upload your draft order above to see the full board.</p>
+        ) : (
+          <div className="max-h-[75vh] overflow-auto rounded-lg border border-zinc-200 dark:border-ink-800">
+            <table className="w-full border-collapse text-xs">
+              <thead className="sticky top-0 bg-white dark:bg-ink-900">
+                <tr>
+                  <th className="border-b border-r border-zinc-200 p-1.5 text-left dark:border-ink-800">Rnd</th>
+                  {Array.from({ length: numSlots }, (_, i) => i + 1).map((slot) => (
+                    <th key={slot} className="border-b border-zinc-200 p-1.5 text-center font-medium dark:border-ink-800">
+                      Pick {slot}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: numRounds }, (_, i) => i + 1).map((round) => (
+                  <tr key={round}>
+                    <td className="border-r border-b border-zinc-200 p-1.5 text-center font-semibold dark:border-ink-800">
+                      {round}
+                    </td>
+                    {Array.from({ length: numSlots }, (_, i) => i + 1).map((slot) => {
+                      const entry = boardBySlot.get(`${round}-${slot}`);
+                      if (!entry) return <td key={slot} className="border-b border-zinc-100 p-1.5 dark:border-ink-900" />;
+                      const { pick, player: p } = entry;
+                      const isOnTheClock = pick.overallPick === nextOverallPick;
+                      return (
+                        <td
+                          key={slot}
+                          className={`min-w-[110px] border-b p-1.5 align-top ${
+                            isOnTheClock
+                              ? "border-gridiron-500 bg-gridiron-50 dark:bg-gridiron-950/40"
+                              : "border-zinc-100 dark:border-ink-900"
+                          }`}
+                        >
+                          <div className="truncate text-[10px] text-zinc-400" title={pick.managerName}>
+                            {pick.managerName}
+                          </div>
+                          {p ? (
+                            <>
+                              <Link href={`/players/${p.id}`} className="block truncate font-medium hover:underline">
+                                {p.name}
+                              </Link>
+                              <div className="mt-0.5 flex items-center justify-between gap-1">
+                                <span className="inline-flex items-center gap-1 text-[10px] text-zinc-500">
+                                  {p.position}
+                                  <TeamBadge team={p.team} />
+                                </span>
+                                <form action={handleUndo}>
+                                  <input type="hidden" name="id" value={p.id} />
+                                  <button type="submit" className="text-[10px] text-rose-500 hover:underline">
+                                    Undo
+                                  </button>
+                                </form>
+                              </div>
+                            </>
+                          ) : isOnTheClock ? (
+                            <span className="text-[10px] font-semibold uppercase tracking-wide text-gridiron-600 dark:text-gridiron-300">
+                              On the clock
+                            </span>
+                          ) : null}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
