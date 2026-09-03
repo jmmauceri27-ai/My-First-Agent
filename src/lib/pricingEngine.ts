@@ -25,6 +25,20 @@ export interface TradePricingResult {
   total: number;
 }
 
+/**
+ * The rate items to price `trade` with for a given client: that client's own rate items for the trade if they
+ * have any (e.g. a negotiated MSA rate card), otherwise the generic, company-wide catalog for the trade. A
+ * client's rate card fully replaces the generic one for a trade when present -- the two are never merged line
+ * by line, since a real client rate sheet is a complete, self-contained replacement, not a partial patch.
+ */
+export function resolveTradeRateItems(rateItems: RateItem[], trade: string, companyId: string | null): RateItem[] {
+  if (companyId) {
+    const clientSpecific = rateItems.filter((r) => r.trade === trade && r.companyId === companyId);
+    if (clientSpecific.length > 0) return clientSpecific;
+  }
+  return rateItems.filter((r) => r.trade === trade && !r.companyId);
+}
+
 /** This client's override for `trade`, if any -- there's at most one per (client, trade), enforced by a unique constraint. */
 export function findOverrideForTrade(
   overrides: ClientRateOverride[],

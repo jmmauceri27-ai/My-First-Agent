@@ -6,12 +6,21 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import { PRICING_BASIS_OPTIONS, RATE_ITEM_CATEGORIES, RATE_TIER_OPTIONS } from "@/lib/crmTypes";
-import type { RateItem, RateItemInput } from "@/lib/crmTypes";
+import type { Company, RateItem, RateItemInput } from "@/lib/crmTypes";
 import { TRADE_OPTIONS } from "@/lib/trades";
 import { deleteRateItemAction, saveRateItemAction } from "./actions";
 
-export default function RateItemModal({ item, onClose }: { item: RateItem | null; onClose: () => void }) {
+export default function RateItemModal({
+  item,
+  companies,
+  onClose,
+}: {
+  item: RateItem | null;
+  companies: Company[];
+  onClose: () => void;
+}) {
   const router = useRouter();
+  const [companyId, setCompanyId] = useState(item?.companyId ?? "");
   const [trade, setTrade] = useState(item?.trade ?? "");
   const [category, setCategory] = useState(item?.category ?? "");
   const [itemName, setItemName] = useState(item?.itemName ?? "");
@@ -58,6 +67,7 @@ export default function RateItemModal({ item, onClose }: { item: RateItem | null
         rate: rateValue,
         unitLabel: unitLabel.trim() || null,
         notes: notes.trim() || null,
+        companyId: companyId || null,
       };
       await saveRateItemAction(item?.id ?? null, input);
       router.refresh();
@@ -87,10 +97,26 @@ export default function RateItemModal({ item, onClose }: { item: RateItem | null
         <h2 className="text-lg font-bold text-slate-50">{item ? "Edit rate item" : "New rate item"}</h2>
 
         <div className="mt-4 flex flex-col gap-4">
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-slate-300">Client (optional)</span>
+            <select value={companyId} onChange={(e) => setCompanyId(e.target.value)} className={inputClass} autoFocus>
+              <option value="">Generic (all clients)</option>
+              {companies.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            <span className="text-xs text-slate-500">
+              Leave as Generic for the default catalog, or pick a client if this rate comes from their own
+              negotiated rate card -- it&rsquo;ll be used instead of the generic rate for this trade.
+            </span>
+          </label>
+
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium text-slate-300">Trade</span>
-              <select value={trade} onChange={(e) => setTrade(e.target.value)} className={inputClass} autoFocus>
+              <select value={trade} onChange={(e) => setTrade(e.target.value)} className={inputClass}>
                 <option value="">Choose a trade…</option>
                 {TRADE_OPTIONS.map((t) => (
                   <option key={t} value={t}>

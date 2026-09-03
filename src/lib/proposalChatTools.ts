@@ -1,5 +1,5 @@
 import type Anthropic from "@anthropic-ai/sdk";
-import { findOverrideForTrade, priceTradeSelections } from "./pricingEngine";
+import { findOverrideForTrade, priceTradeSelections, resolveTradeRateItems } from "./pricingEngine";
 import type { ClientRateOverride, RateItem } from "./crmTypes";
 
 export interface ProposalToolContext {
@@ -26,17 +26,23 @@ export const PROPOSAL_CHAT_TOOLS: Anthropic.Tool[] = [
   {
     name: "list_rate_items",
     description:
-      "Lists the real, priced line items for one trade -- labor, equipment, materials, and flat-rate service tasks -- each with its exact rateItemId, category, pricing basis, rate tier, and rate. Always call this before pricing a trade so you use real item ids and rates, never invented ones.",
+      "Lists the real, priced line items for one trade -- labor, equipment, materials, and flat-rate service tasks -- each with its exact rateItemId, category, pricing basis, rate tier, and rate. Always call this before pricing a trade so you use real item ids and rates, never invented ones. Pass companyId when a client is selected: if that client has their own negotiated rate items for the trade (e.g. from an MSA rate card), you'll get exactly those instead of the generic catalog -- a client's rate card fully replaces the generic one for that trade, so use the same companyId here and in compute_trade_price for consistent results.",
     input_schema: {
       type: "object",
-      properties: { trade: { type: "string", description: "Exact trade name, from list_trades." } },
+      properties: {
+        trade: { type: "string", description: "Exact trade name, from list_trades." },
+        companyId: {
+          type: "string",
+          description: "The selected client's companyId, if any -- see description above.",
+        },
+      },
       required: ["trade"],
     },
   },
   {
     name: "compute_trade_price",
     description:
-      "Prices one trade's selected line items (rateItemId + quantity pairs) using the real rate card, and applies the client's override automatically when companyId is given. Returns each line's extended price, the subtotal, the override adjustment, and the trade total. This is the ONLY way to get a trade's price -- never calculate it yourself.",
+      "Prices one trade's selected line items (rateItemId + quantity pairs) using the real rate card, and applies the client's override automatically when companyId is given. Pass the same companyId you used in list_rate_items so the ids you picked resolve correctly. Returns each line's extended price, the subtotal, the override adjustment, and the trade total. This is the ONLY way to get a trade's price -- never calculate it yourself.",
     input_schema: {
       type: "object",
       properties: {
@@ -79,21 +85,21 @@ export function runProposalChatTool(name: string, input: unknown, ctx: ProposalT
     }
 
     case "list_rate_items": {
-      const { trade } = (input ?? {}) as { trade?: string };
+      const { trade, companyId } = (input ?? {}) as { trade?: string; companyId?: string };
       if (!trade) throw new Error("trade is required.");
-      const items = ctx.rateItems
-        .filter((r) => r.trade.toLowerCase() === trade.toLowerCase())
-        .map((r) => ({
-          rateItemId: r.id,
-          category: r.category,
-          itemName: r.itemName,
-          pricingBasis: r.pricingBasis,
-          rateTier: r.rateTier,
-          rate: r.rate,
-          unitLabel: r.unitLabel,
-          notes: r.notes,
-        }));
-      return { trade, items };
+      const resolved = resolveTradeRateItems(ctx.rateItems, trade, companyId ?? null);
+      const usingClientRateCard = resolved.length > 0 && resolved[0].companyId != null;
+      const items = resolved.map((r) => ({
+        rateItemId: r.id,
+        category: r.category,
+        itemName: r.itemName,
+        pricingBasis: r.pricingBasis,
+        rateTier: r.rateTier,
+        rate: r.rate,
+        unitLabel: r.unitLabel,
+        notes: r.notes,
+      }));
+      return { trade, usingClientRateCard, items };
     }
 
     case "compute_trade_price": {

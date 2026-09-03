@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import { formatCurrency } from "@/lib/siteMapColor";
-import { findOverrideForTrade, priceTradeSelections } from "@/lib/pricingEngine";
+import { findOverrideForTrade, priceTradeSelections, resolveTradeRateItems } from "@/lib/pricingEngine";
 import type { ClientRateOverride, Company, RateItem } from "@/lib/crmTypes";
 
 /** Manually exercises the pricing engine against real rate items -- pick a client/trade, enter quantities, and
@@ -28,15 +28,20 @@ export default function QuoteCalculator({
     [rateItems],
   );
 
+  const tradeItems = useMemo(
+    () => (trade ? resolveTradeRateItems(rateItems, trade, companyId || null) : []),
+    [rateItems, trade, companyId],
+  );
+  const usingClientRateCard = tradeItems.length > 0 && tradeItems[0].companyId != null;
+
   const itemsByCategory = useMemo(() => {
     const categories = new Map<string, RateItem[]>();
-    for (const item of rateItems) {
-      if (item.trade !== trade) continue;
+    for (const item of tradeItems) {
       if (!categories.has(item.category)) categories.set(item.category, []);
       categories.get(item.category)!.push(item);
     }
     return Array.from(categories.entries());
-  }, [rateItems, trade]);
+  }, [tradeItems]);
 
   const override = useMemo(
     () => findOverrideForTrade(overrides, companyId || null, trade),
@@ -96,6 +101,11 @@ export default function QuoteCalculator({
       ) : (
         <div className="flex flex-col gap-6 lg:flex-row">
           <Card className="flex flex-1 flex-col divide-y divide-purple-400/10 overflow-hidden">
+            <p className="bg-purple-500/5 px-4 py-1.5 text-xs font-semibold text-slate-400">
+              {usingClientRateCard
+                ? `Using ${companies.find((c) => c.id === companyId)?.name ?? "this client"}'s rate card for ${trade}`
+                : `Using the generic rate card for ${trade}`}
+            </p>
             {itemsByCategory.map(([category, items]) => (
               <div key={category}>
                 <p className="bg-purple-500/5 px-4 py-1.5 text-xs font-semibold text-slate-400">{category}</p>

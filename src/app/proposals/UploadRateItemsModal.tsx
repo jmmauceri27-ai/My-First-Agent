@@ -8,7 +8,7 @@ import { inputClass } from "@/components/ui/formClasses";
 import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
 import { buildTemplateXlsxAction, parseUploadedSheetAction } from "@/lib/sheetActions";
 import { matchPricingBasis, matchRateItemCategory, matchRateTier } from "@/lib/crmTypes";
-import type { RateItemImportRow } from "@/lib/crmTypes";
+import type { Company, RateItemImportRow } from "@/lib/crmTypes";
 import { matchTrade } from "@/lib/trades";
 import { bulkCreateRateItemsAction } from "./actions";
 
@@ -43,9 +43,16 @@ async function handleDownloadTemplate() {
   downloadBase64Xlsx(base64, "rate_items_template.xlsx");
 }
 
-export default function UploadRateItemsModal({ onClose }: { onClose: () => void }) {
+export default function UploadRateItemsModal({
+  companies,
+  onClose,
+}: {
+  companies: Company[];
+  onClose: () => void;
+}) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [companyId, setCompanyId] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -159,6 +166,7 @@ export default function UploadRateItemsModal({ onClose }: { onClose: () => void 
           rate: rateValue,
           unitLabel: mapping.unitLabel ? String(row[mapping.unitLabel] ?? "").trim() || null : null,
           notes: mapping.notes ? String(row[mapping.notes] ?? "").trim() || null : null,
+          companyId: companyId || null,
         });
       }
 
@@ -231,6 +239,23 @@ export default function UploadRateItemsModal({ onClose }: { onClose: () => void 
             Download example template
           </button>
         </p>
+
+        <label className="mt-4 flex flex-col gap-1 text-sm">
+          <span className="font-medium text-slate-300">Client (optional)</span>
+          <select value={companyId} onChange={(e) => setCompanyId(e.target.value)} className={inputClass}>
+            <option value="">Generic (all clients)</option>
+            {companies.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+          <span className="text-xs text-slate-500">
+            Applies to every row in this file -- leave as Generic for the default catalog, or pick a client to
+            import their own negotiated rate card (e.g. an MSA rate sheet). It&rsquo;ll be used instead of the
+            generic rate for any trade it covers.
+          </span>
+        </label>
 
         <div className="mt-4 flex flex-col gap-2">
           <input

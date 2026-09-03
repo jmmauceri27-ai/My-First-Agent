@@ -29,19 +29,34 @@ export default function RateRulesClient({
   const [editingOverride, setEditingOverride] = useState<ClientRateOverride | null>(null);
   const [creatingOverride, setCreatingOverride] = useState(false);
 
+  const GENERIC_LABEL = "Generic (all clients)";
+
   const byTrade = useMemo(() => {
     const trades = new Map<string, Map<string, RateItem[]>>();
     for (const item of rateItems) {
       if (!trades.has(item.trade)) trades.set(item.trade, new Map());
-      const categories = trades.get(item.trade)!;
-      if (!categories.has(item.category)) categories.set(item.category, []);
-      categories.get(item.category)!.push(item);
+      const byCompany = trades.get(item.trade)!;
+      const companyLabel = item.companyName ?? GENERIC_LABEL;
+      if (!byCompany.has(companyLabel)) byCompany.set(companyLabel, []);
+      byCompany.get(companyLabel)!.push(item);
     }
-    return Array.from(trades.entries()).map(([trade, categories]) => ({
-      trade,
-      categories: Array.from(categories.entries()),
-      count: Array.from(categories.values()).reduce((sum, items) => sum + items.length, 0),
-    }));
+    return Array.from(trades.entries()).map(([trade, byCompany]) => {
+      const companyGroups = Array.from(byCompany.entries())
+        .sort(([a], [b]) => (a === GENERIC_LABEL ? -1 : b === GENERIC_LABEL ? 1 : a.localeCompare(b)))
+        .map(([companyLabel, items]) => {
+          const categories = new Map<string, RateItem[]>();
+          for (const item of items) {
+            if (!categories.has(item.category)) categories.set(item.category, []);
+            categories.get(item.category)!.push(item);
+          }
+          return { companyLabel, categories: Array.from(categories.entries()), count: items.length };
+        });
+      return {
+        trade,
+        companyGroups,
+        count: companyGroups.reduce((sum, g) => sum + g.count, 0),
+      };
+    });
   }, [rateItems]);
 
   return (
@@ -103,47 +118,56 @@ export default function RateRulesClient({
               <p className="text-sm text-slate-400">No rate items yet.</p>
             ) : (
               <div className="flex flex-col gap-4">
-                {byTrade.map(({ trade, categories, count }) => (
+                {byTrade.map(({ trade, companyGroups, count }) => (
                   <div key={trade} className="flex flex-col gap-2">
                     <h3 className="text-sm font-bold uppercase tracking-wide text-slate-400">
                       {trade} <span className="font-normal text-slate-500">({count})</span>
                     </h3>
-                    <Card className="flex flex-col divide-y divide-purple-400/10 overflow-hidden">
-                      {categories.map(([category, items]) => (
-                        <div key={category}>
-                          <p className="bg-purple-500/5 px-4 py-1.5 text-xs font-semibold text-slate-400">
-                            {category}
-                          </p>
-                          <div className="flex flex-col divide-y divide-purple-400/10">
-                            {items.map((item) => (
-                              <button
-                                key={item.id}
-                                onClick={() => setEditingItem(item)}
-                                className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-purple-500/5"
-                              >
-                                <div className="min-w-0">
-                                  <p className="text-sm font-semibold text-slate-50">
-                                    {item.itemName}
-                                    {item.rateTier !== "Standard" && (
-                                      <span className="ml-2 rounded-full bg-purple-500/15 px-2 py-0.5 text-xs font-medium text-purple-300">
-                                        {item.rateTier}
-                                      </span>
-                                    )}
-                                  </p>
-                                  <p className="mt-0.5 text-xs text-slate-400">
-                                    {item.pricingBasis}
-                                    {item.unitLabel ? ` -- ${item.unitLabel}` : ""}
-                                  </p>
-                                </div>
-                                <p className="shrink-0 text-sm font-semibold tabular-nums text-slate-50">
-                                  {formatCurrency(item.rate)}
+                    <div className="flex flex-col gap-3">
+                      {companyGroups.map(({ companyLabel, categories }) => (
+                        <div key={companyLabel} className="flex flex-col gap-1">
+                          {(companyGroups.length > 1 || companyLabel !== GENERIC_LABEL) && (
+                            <p className="text-xs font-semibold text-purple-300">{companyLabel}</p>
+                          )}
+                          <Card className="flex flex-col divide-y divide-purple-400/10 overflow-hidden">
+                            {categories.map(([category, items]) => (
+                              <div key={category}>
+                                <p className="bg-purple-500/5 px-4 py-1.5 text-xs font-semibold text-slate-400">
+                                  {category}
                                 </p>
-                              </button>
+                                <div className="flex flex-col divide-y divide-purple-400/10">
+                                  {items.map((item) => (
+                                    <button
+                                      key={item.id}
+                                      onClick={() => setEditingItem(item)}
+                                      className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-purple-500/5"
+                                    >
+                                      <div className="min-w-0">
+                                        <p className="text-sm font-semibold text-slate-50">
+                                          {item.itemName}
+                                          {item.rateTier !== "Standard" && (
+                                            <span className="ml-2 rounded-full bg-purple-500/15 px-2 py-0.5 text-xs font-medium text-purple-300">
+                                              {item.rateTier}
+                                            </span>
+                                          )}
+                                        </p>
+                                        <p className="mt-0.5 text-xs text-slate-400">
+                                          {item.pricingBasis}
+                                          {item.unitLabel ? ` -- ${item.unitLabel}` : ""}
+                                        </p>
+                                      </div>
+                                      <p className="shrink-0 text-sm font-semibold tabular-nums text-slate-50">
+                                        {formatCurrency(item.rate)}
+                                      </p>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
                             ))}
-                          </div>
+                          </Card>
                         </div>
                       ))}
-                    </Card>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -191,6 +215,7 @@ export default function RateRulesClient({
           {(editingItem || creatingItem) && (
             <RateItemModal
               item={editingItem}
+              companies={companies}
               onClose={() => {
                 setEditingItem(null);
                 setCreatingItem(false);
@@ -198,7 +223,7 @@ export default function RateRulesClient({
             />
           )}
 
-          {uploading && <UploadRateItemsModal onClose={() => setUploading(false)} />}
+          {uploading && <UploadRateItemsModal companies={companies} onClose={() => setUploading(false)} />}
 
           {(editingOverride || creatingOverride) && (
             <ClientRateOverrideModal
