@@ -104,7 +104,7 @@ export default function DraftBoard({
           </span>
         )}
       </div>
-      <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
+      <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
       <div>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <h2 className="text-lg font-bold">On the Board ({available.length})</h2>
@@ -178,15 +178,15 @@ export default function DraftBoard({
         {numRounds === 0 || numSlots === 0 ? (
           <p className="text-sm text-zinc-500">Upload your draft order above to see the full board.</p>
         ) : (
-          <div className="max-h-[75vh] overflow-auto rounded-lg border border-zinc-200 p-2 dark:border-ink-800">
-            <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${numSlots}, minmax(120px, 1fr))` }}>
+          <div className="rounded-lg border border-zinc-200 p-1.5 dark:border-ink-800">
+            <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${numSlots}, 1fr)` }}>
               {Array.from({ length: numRounds }, (_, i) => i + 1).flatMap((round) => {
                 const isReversed = round % 2 === 0;
                 const slotOrder = Array.from({ length: numSlots }, (_, i) => i + 1);
                 if (isReversed) slotOrder.reverse();
                 return slotOrder.map((slot) => {
                   const entry = boardBySlot.get(`${round}-${slot}`);
-                  if (!entry) return <div key={`${round}-${slot}`} className="min-h-[92px] rounded-lg bg-zinc-50 dark:bg-ink-950" />;
+                  if (!entry) return <div key={`${round}-${slot}`} className="min-h-[52px] rounded-lg bg-zinc-50 dark:bg-ink-950" />;
                   const { pick, player: p } = entry;
                   const isOnTheClock = pick.overallPick === nextOverallPick;
                   const isEditing = editingPickId === pick.id;
@@ -226,14 +226,13 @@ export default function DraftBoard({
                     return (
                       <div
                         key={`${round}-${slot}`}
-                        className="flex min-h-[92px] flex-col items-center justify-center gap-0.5 rounded-lg bg-emerald-500 p-2 text-center text-white shadow-sm"
+                        className="flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-lg bg-emerald-500 p-1 text-center text-white shadow-sm"
                       >
-                        <span className="text-[10px] font-semibold opacity-80">
+                        <span className="text-[9px] font-semibold opacity-80">
                           {pick.round}.{pick.pickInRound}
                         </span>
-                        <span className="text-base leading-none">⏱️</span>
-                        <span className="text-xs font-bold uppercase tracking-wide">On the Clock</span>
-                        <span className="w-full truncate text-[10px] opacity-90">{managerControl}</span>
+                        <span className="text-[10px] font-bold uppercase leading-tight tracking-wide">On Clock</span>
+                        <span className="w-full truncate text-[9px] opacity-90">{managerControl}</span>
                       </div>
                     );
                   }
@@ -242,7 +241,7 @@ export default function DraftBoard({
                     return (
                       <div
                         key={`${round}-${slot}`}
-                        className="flex min-h-[92px] flex-col justify-between rounded-lg bg-zinc-100 p-2 text-[10px] text-zinc-400 dark:bg-ink-900 dark:text-zinc-500"
+                        className="flex min-h-[52px] flex-col justify-between rounded-lg bg-zinc-100 p-1 text-[9px] text-zinc-400 dark:bg-ink-900 dark:text-zinc-500"
                       >
                         <span className="font-semibold">
                           {pick.round}.{pick.pickInRound}
@@ -255,21 +254,21 @@ export default function DraftBoard({
                   return (
                     <div
                       key={`${round}-${slot}`}
-                      className={`flex min-h-[92px] flex-col justify-between rounded-lg p-2 text-black shadow-sm ${POSITION_BG[p.position] ?? "bg-zinc-100"}`}
+                      className={`flex min-h-[52px] flex-col justify-between rounded-lg p-1 text-black shadow-sm ${POSITION_BG[p.position] ?? "bg-zinc-100"}`}
                     >
-                      <span className="text-[10px] font-semibold opacity-70">
+                      <span className="text-[9px] font-semibold opacity-70">
                         {pick.round}.{pick.pickInRound}
                       </span>
                       <div>
-                        <Link href={`/players/${p.id}`} className="block truncate text-sm font-bold hover:underline">
+                        <Link href={`/players/${p.id}`} className="block truncate text-xs font-bold hover:underline">
                           {p.name}
                         </Link>
-                        <span className="mt-0.5 inline-block rounded bg-black/10 px-1.5 py-0.5 text-[10px] font-semibold">
+                        <span className="mt-0.5 inline-block truncate rounded bg-black/10 px-1 py-0.5 text-[9px] font-semibold">
                           {p.position} {p.team ?? "FA"}
                           {p.byeWeek ? ` (${p.byeWeek})` : ""}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between gap-1 text-[10px] opacity-80">
+                      <div className="flex items-center justify-between gap-1 text-[9px] opacity-80">
                         {managerControl}
                         <form action={handleUndo}>
                           <input type="hidden" name="id" value={p.id} />
