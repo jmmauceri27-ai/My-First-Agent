@@ -16,6 +16,7 @@ export default function DraftBoard({
   draftOrder: DraftOrderPick[];
 }) {
   const [positionFilter, setPositionFilter] = useState("ALL");
+  const [search, setSearch] = useState("");
   const [pending, startTransition] = useTransition();
   const [editingPickId, setEditingPickId] = useState<string | null>(null);
   const router = useRouter();
@@ -23,8 +24,12 @@ export default function DraftBoard({
   const available = useMemo(() => {
     let list = players.filter((p) => !p.draftedBy);
     if (positionFilter !== "ALL") list = list.filter((p) => p.position === positionFilter);
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter((p) => p.name.toLowerCase().includes(q) || (p.team ?? "").toLowerCase().includes(q));
+    }
     return list.sort((a, b) => (a.overallRank ?? 9999) - (b.overallRank ?? 9999));
-  }, [players, positionFilter]);
+  }, [players, positionFilter, search]);
 
   const drafted = useMemo(
     () =>
@@ -106,29 +111,33 @@ export default function DraftBoard({
       </div>
       <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
       <div>
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <h2 className="text-lg font-bold">On the Board ({available.length})</h2>
-        <div className="ml-auto flex gap-1">
+      <h2 className="mb-2 text-lg font-bold">On the Board ({available.length})</h2>
+      <input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search players..."
+        className="mb-2 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-ink-800"
+      />
+      <div className="mb-3 flex flex-wrap gap-1">
+        <button
+          onClick={() => setPositionFilter("ALL")}
+          className={`rounded-md px-2 py-1 text-xs font-medium ${
+            positionFilter === "ALL" ? "bg-gridiron-500 text-white" : "bg-zinc-100 dark:bg-ink-800"
+          }`}
+        >
+          ALL
+        </button>
+        {POSITIONS.map((p) => (
           <button
-            onClick={() => setPositionFilter("ALL")}
+            key={p}
+            onClick={() => setPositionFilter(p)}
             className={`rounded-md px-2 py-1 text-xs font-medium ${
-              positionFilter === "ALL" ? "bg-gridiron-500 text-white" : "bg-zinc-100 dark:bg-ink-800"
+              positionFilter === p ? "bg-gridiron-500 text-white" : "bg-zinc-100 dark:bg-ink-800"
             }`}
           >
-            ALL
+            {p}
           </button>
-          {POSITIONS.map((p) => (
-            <button
-              key={p}
-              onClick={() => setPositionFilter(p)}
-              className={`rounded-md px-2 py-1 text-xs font-medium ${
-                positionFilter === p ? "bg-gridiron-500 text-white" : "bg-zinc-100 dark:bg-ink-800"
-              }`}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
+        ))}
       </div>
 
       <div className="max-h-[75vh] space-y-2 overflow-y-auto">
