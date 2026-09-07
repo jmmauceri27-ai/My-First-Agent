@@ -44,7 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
         <NavBar />
-        <main className="mx-auto max-w-6xl px-4 pb-20 pt-4 sm:pb-10">{children}</main>
+        <main className="mx-auto max-w-[1600px] px-4 pb-20 pt-4 sm:pb-10">{children}</main>
       </body>
     </html>
   );

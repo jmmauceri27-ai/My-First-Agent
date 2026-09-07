@@ -18,7 +18,7 @@ export default function NavBar() {
   return (
     <>
       <nav className="sticky top-0 z-40 border-b border-zinc-200 bg-white/90 backdrop-blur dark:border-ink-800 dark:bg-ink-950/90">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+        <div className="mx-auto flex max-w-[1600px] items-center justify-between px-4 py-3">
           <Link href="/" className="flex items-center gap-2 font-display text-xl font-semibold uppercase tracking-wide text-gridiron-600 dark:text-gridiron-100">
             🏈 Draft Hub
           </Link>
