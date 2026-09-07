@@ -30,7 +30,7 @@ export default function DraftOrderImportForm({ picks }: { picks: DraftOrderPick[
   const maxRound = picks.reduce((max, p) => Math.max(max, p.round), 0);
 
   return (
-    <div className="mb-4 rounded-lg border border-zinc-200 bg-white/90 backdrop-blur-md dark:border-ink-800 dark:bg-ink-900/70">
+    <div className="mb-2 rounded-lg border border-zinc-200 bg-white/90 backdrop-blur-md dark:border-ink-800 dark:bg-ink-900/70">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}

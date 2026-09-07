@@ -12,10 +12,7 @@ export default async function DraftPage() {
 
   return (
     <div>
-      <h1 className="mb-1 text-2xl font-bold">Draft Day Tracker</h1>
-      <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
-        Mark players as they come off the board — by you or an opponent — and watch your remaining board update live.
-      </p>
+      <h1 className="mb-2 text-xl font-bold">Draft Day Tracker</h1>
       <DraftOrderImportForm picks={draftOrder} />
       <DraftBoard players={players} draftOrder={draftOrder} />
     </div>
