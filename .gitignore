@@ -8,3 +8,11 @@ dist/
 build/
 .DS_Store
 *.log
+
+# Next.js / Node
+node_modules/
+.next/
+.env*.local
+.vercel
+next-env.d.ts
+*.tsbuildinfo

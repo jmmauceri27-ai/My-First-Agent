@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// One row per player in your personal draft pool.
+model Player {
+  id            String   @id @default(cuid())
+  name          String
+  position      String // QB, RB, WR, TE, K, DST
+  team          String?
+  byeWeek       Int?
+  overallRank   Int? // your custom overall rank
+  positionRank  Int? // your custom rank within position
+  adp           Float? // deprecated — superseded by espnAdp/sleeperAdp; no longer read or written anywhere
+  espnAdp       Float? // ESPN's average draft position
+  sleeperAdp    Float? // Sleeper's average draft position
+  tier          Int? // 1 = best tier; null = unranked / not tiered yet
+  projectedPoints Float? // your projected PPR points for the upcoming season, used for VORP
+  tags          String[] // sleeper, bust, breakout, injury-risk, rookie, handcuff, target, avoid, ...
+  bio           String? // short freeform summary / cheat-sheet blurb
+  watchlisted   Boolean  @default(false)
+
+  // Draft-day tracking
+  draftedBy     String? // null = still available; otherwise "Me" or an opponent's name
+  draftRound    Int?
+  draftPick     Int?
+  draftedAt     DateTime?
+
+  // Actual season performance, imported after the season for comparison
+  // against your preseason rank/tier.
+  actualPointsPPR   Float?
+  actualGamesPlayed Int?
+  headshotUrl       String?
+
+  notes         Note[]
+  gameLogs      GameLog[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([position])
+  @@index([tier])
+  @@index([overallRank])
+}
+
+// One week's box score for a player.
+model GameLog {
+  id              String   @id @default(cuid())
+  playerId        String
+  player          Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  season          Int
+  week            Int
+  team            String?
+  opponent        String?
+  isHome          Boolean? // null = unknown (e.g. bye week placeholder)
+  passCompletions Int?
+  passAttempts    Int?
+  passYards       Int?
+  passTDs         Int?
+  passInt         Int?
+  carries         Int?
+  rushYards       Int?
+  rushTDs         Int?
+  targets         Int?
+  receptions      Int?
+  recYards        Int?
+  recTDs          Int?
+  miscTDs         Int? // return TDs, fumble recovery TDs, etc.
+  pointsPPR       Float
+  createdAt       DateTime @default(now())
+
+  @@unique([playerId, season, week])
+  @@index([playerId])
+  @@index([season, week])
+}
+
+// A timestamped note / trend / news blurb attached to a player.
+// The running feed of these across all players is your "trends" view.
+model Note {
+  id        String   @id @default(cuid())
+  playerId  String
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  body      String
+  kind      String   @default("note") // note | trend | news | injury
+  createdAt DateTime @default(now())
+
+  @@index([playerId])
+  @@index([createdAt])
+}
+
+// One past draft (a single league, single year) whose full results you've logged.
+model DraftSeason {
+  id        String   @id @default(cuid())
+  year      Int
+  name      String? // optional label, e.g. "Redraft" or "Keeper League"
+  numTeams  Int?
+  createdAt DateTime @default(now())
+
+  picks DraftHistoryPick[]
+
+  @@index([year])
+}
+
+// One pick from a past draft: who took whom, at what spot, playing what position.
+model DraftHistoryPick {
+  id          String      @id @default(cuid())
+  seasonId    String
+  season      DraftSeason @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  round       Int
+  pickInRound Int
+  manager     String // the manager/team that made this pick
+  playerName  String
+  position    String // QB, RB, WR, TE, K, DST
+  nflTeam     String?
+  createdAt   DateTime    @default(now())
+
+  @@unique([seasonId, round, pickInRound])
+  @@index([seasonId])
+  @@index([manager])
+  @@index([position])
+}
+
+// One physical pick in your real league's draft, uploaded directly as a
+// full list (e.g. all 192 picks for a 12-team/16-round league) rather
+// than computed from a snake order — since pick trading can scramble
+// ownership in ways a formula can't reconstruct, the sheet you upload is
+// just the ground truth. Powers the live Draft Day Tracker.
+model DraftOrderPick {
+  id          String @id @default(cuid())
+  overallPick Int    @unique
+  round       Int
+  pickInRound Int
+  managerName String
+}
