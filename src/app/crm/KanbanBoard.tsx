@@ -107,7 +107,23 @@ export default function KanbanBoard({
     setExporting(true);
     try {
       const rows = opportunities.map(opportunityToExportRow);
-      const base64 = await exportPipelineToExcelAction(rows, PIPELINE_EXPORT_COLUMNS);
+      const totalsRow: DatasetRecord = {
+        Opportunity: "TOTAL",
+        Client: "",
+        Stage: "",
+        Amount: opportunities.reduce((sum, o) => sum + (o.amount ?? 0), 0),
+        "Site Count": opportunities.reduce((sum, o) => sum + (o.siteCount ?? 0), 0),
+        "Work Type": "",
+        "Submission Due Date": "",
+        "Sales Manager": "",
+        Notes: "",
+        Created: "",
+      };
+      const base64 = await exportPipelineToExcelAction(
+        [...rows, totalsRow],
+        PIPELINE_EXPORT_COLUMNS,
+        true,
+      );
       const date = new Date().toISOString().slice(0, 10);
       downloadBase64Xlsx(base64, `crm_pipeline_${date}.xlsx`);
     } finally {

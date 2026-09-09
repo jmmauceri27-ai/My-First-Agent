@@ -54,8 +54,12 @@ import type {
   OpportunityStage,
 } from "@/lib/crmTypes";
 
-export async function exportPipelineToExcelAction(rows: DatasetRecord[], columns: string[]): Promise<string> {
-  return buildXlsxBase64(rows, columns);
+export async function exportPipelineToExcelAction(
+  rows: DatasetRecord[],
+  columns: string[],
+  boldLastRow?: boolean,
+): Promise<string> {
+  return buildXlsxBase64(rows, columns, boldLastRow);
 }
 
 /** Renames every Opportunity/Contract file attachment whose name is missing an extension (from before uploads

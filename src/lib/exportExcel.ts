@@ -2,8 +2,9 @@ import "server-only";
 import ExcelJS from "exceljs";
 import type { DatasetRecord } from "./types";
 
-/** Builds a single-sheet .xlsx workbook from rows + column order, returned as base64 for the client to download. */
-export async function buildXlsxBase64(rows: DatasetRecord[], columns: string[]): Promise<string> {
+/** Builds a single-sheet .xlsx workbook from rows + column order, returned as base64 for the client to download.
+ * boldLastRow bolds the final row -- for a trailing totals/summary row appended onto the data. */
+export async function buildXlsxBase64(rows: DatasetRecord[], columns: string[], boldLastRow = false): Promise<string> {
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Data");
   sheet.columns = columns.map((c) => ({
@@ -13,6 +14,9 @@ export async function buildXlsxBase64(rows: DatasetRecord[], columns: string[]):
   }));
   sheet.getRow(1).font = { bold: true };
   rows.forEach((row) => sheet.addRow(row));
+  if (boldLastRow && rows.length > 0) {
+    sheet.getRow(rows.length + 1).font = { bold: true };
+  }
 
   const buffer = await workbook.xlsx.writeBuffer();
   return Buffer.from(buffer).toString("base64");
