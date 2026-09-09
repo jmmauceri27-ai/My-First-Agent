@@ -8,6 +8,10 @@
 :root {
   --background: #0a070f;
   --foreground: #f0edfb;
+  /* Always-dark app (see the .dark note above) -- without this, native form controls (date-picker
+     calendar icon, scrollbars) render assuming a light UI and the calendar icon comes out near-black,
+     invisible against the dark inputs. */
+  color-scheme: dark;
 }
 
 @theme inline {

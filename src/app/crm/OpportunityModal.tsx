@@ -278,7 +278,7 @@ export default function OpportunityModal({
               />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-700 dark:text-slate-300">Expected close date</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Submission due date</span>
               <input
                 type="date"
                 value={expectedCloseDate}

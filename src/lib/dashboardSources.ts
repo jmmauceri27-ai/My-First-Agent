@@ -33,7 +33,7 @@ export const DASHBOARD_SOURCES: DashboardSourceDef[] = [
       { key: "amount", label: "Amount", type: "number" },
       { key: "siteCount", label: "Site count", type: "number" },
       { key: "workType", label: "Work type", type: "string" },
-      { key: "expectedCloseDate", label: "Expected close date", type: "date" },
+      { key: "expectedCloseDate", label: "Submission due date", type: "date" },
       { key: "salesManagerName", label: "Sales manager", type: "string" },
       { key: "createdAt", label: "Created", type: "date" },
       { key: "updatedAt", label: "Updated", type: "date" },
