@@ -106,13 +106,14 @@ export default function KanbanBoard({
     if (opportunities.length === 0) return;
     setExporting(true);
     try {
-      const rows = opportunities.map(opportunityToExportRow);
+      const sortedByStage = OPPORTUNITY_STAGES.flatMap((s) => grouped[s]);
+      const rows = sortedByStage.map(opportunityToExportRow);
       const totalsRow: DatasetRecord = {
         Opportunity: "TOTAL",
         Client: "",
         Stage: "",
-        Amount: opportunities.reduce((sum, o) => sum + (o.amount ?? 0), 0),
-        "Site Count": opportunities.reduce((sum, o) => sum + (o.siteCount ?? 0), 0),
+        Amount: sortedByStage.reduce((sum, o) => sum + (o.amount ?? 0), 0),
+        "Site Count": sortedByStage.reduce((sum, o) => sum + (o.siteCount ?? 0), 0),
         "Work Type": "",
         "Submission Due Date": "",
         "Sales Manager": "",
