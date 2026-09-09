@@ -115,7 +115,7 @@ export default function OpportunityDetailClient({
         salesManagerId: salesManagerId || null,
       };
       await saveOpportunityAction(opportunity.id, input);
-      router.refresh();
+      router.push("/crm");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save opportunity.");
     } finally {
