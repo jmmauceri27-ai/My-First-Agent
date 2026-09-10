@@ -32,7 +32,7 @@ export default function CompaniesClient({ companies }: { companies: Company[] })
               className="flex items-center justify-between gap-4 px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-900/50"
             >
               <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900">
                   {c.logoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={c.logoUrl} alt="" className="h-full w-full object-contain" />

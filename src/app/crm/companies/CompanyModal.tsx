@@ -129,7 +129,7 @@ export default function CompanyModal({ company, onClose }: { company: Company | 
 
           {company && (
             <div className="mt-4 flex items-center gap-4">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900">
                 {logoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={logoUrl} alt={`${company.name} logo`} className="h-full w-full object-contain" />
