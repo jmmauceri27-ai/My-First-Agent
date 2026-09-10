@@ -20,16 +20,26 @@ function ContractRow({ contract: c, onSelect }: { contract: Contract; onSelect: 
       onClick={() => onSelect(c)}
       className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-left hover:bg-purple-500/5"
     >
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="truncate text-sm font-semibold text-slate-50">{c.name}</p>
-          <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${status.badgeClassName}`}>
-            {status.label}
-          </span>
+      <div className="flex min-w-0 items-center gap-3">
+        {c.companyLogoUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={c.companyLogoUrl}
+            alt=""
+            className="h-8 w-8 shrink-0 rounded-full border border-purple-400/20 object-contain"
+          />
+        )}
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="truncate text-sm font-semibold text-slate-50">{c.name}</p>
+            <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${status.badgeClassName}`}>
+              {status.label}
+            </span>
+          </div>
+          <p className="mt-0.5 text-xs text-slate-400">
+            {[c.companyName, c.workType].filter(Boolean).join(" · ") || "No details"}
+          </p>
         </div>
-        <p className="mt-0.5 text-xs text-slate-400">
-          {[c.companyName, c.workType].filter(Boolean).join(" · ") || "No details"}
-        </p>
       </div>
       <div className="flex shrink-0 flex-wrap items-center gap-4 text-xs text-slate-400">
         {c.siteCount != null && <span>{c.siteCount} sites</span>}

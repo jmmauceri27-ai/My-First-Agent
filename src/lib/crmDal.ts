@@ -142,14 +142,23 @@ export async function fixMissingFileExtensions(): Promise<FileExtensionFixResult
 
 const COMPANY_LOGO_BUCKET = "crm-logos";
 
+/** Public URL for a logo at `logoStoragePath`, or null if there isn't one. `cacheBustKey` (the company row's
+ * updated_at) is appended as a query param so a re-uploaded logo doesn't keep showing a stale cached image at
+ * the same path -- the storage path itself never changes, only this key does. */
+function buildLogoUrl(
+  supabase: ReturnType<typeof createAdminClient>,
+  logoStoragePath: string | null | undefined,
+  cacheBustKey: string | null | undefined,
+): string | null {
+  if (!logoStoragePath) return null;
+  const publicUrl = supabase.storage.from(COMPANY_LOGO_BUCKET).getPublicUrl(logoStoragePath).data.publicUrl;
+  return cacheBustKey ? `${publicUrl}?v=${encodeURIComponent(cacheBustKey)}` : publicUrl;
+}
+
 const COMPANY_COLUMNS =
   "id, name, address, city, state, website, notes, logo_storage_path, updated_at, created_at";
 
 function mapCompany(c: Record<string, unknown>, supabase: ReturnType<typeof createAdminClient>): Company {
-  const logoStoragePath = c.logo_storage_path as string | null;
-  const logoUrl = logoStoragePath
-    ? `${supabase.storage.from(COMPANY_LOGO_BUCKET).getPublicUrl(logoStoragePath).data.publicUrl}?v=${encodeURIComponent(c.updated_at as string)}`
-    : null;
   return {
     id: c.id as string,
     name: c.name as string,
@@ -158,7 +167,7 @@ function mapCompany(c: Record<string, unknown>, supabase: ReturnType<typeof crea
     state: c.state as string | null,
     website: c.website as string | null,
     notes: c.notes as string | null,
-    logoUrl,
+    logoUrl: buildLogoUrl(supabase, c.logo_storage_path as string | null, c.updated_at as string),
     createdAt: c.created_at as string,
   };
 }
@@ -296,17 +305,24 @@ export async function listContacts(): Promise<Contact[]> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("crm_contacts")
-    .select("id, company_id, name, email, phone, title, notes, created_at, crm_companies(name)")
+    .select(
+      "id, company_id, name, email, phone, title, notes, created_at, crm_companies(name, logo_storage_path, updated_at)",
+    )
     .eq("user_id", OWNER_USER_ID)
     .order("name", { ascending: true });
   if (error) throw new Error(error.message);
 
   return (data ?? []).map((c) => {
-    const company = c.crm_companies as unknown as { name: string } | null;
+    const company = c.crm_companies as unknown as {
+      name: string;
+      logo_storage_path: string | null;
+      updated_at: string;
+    } | null;
     return {
       id: c.id as string,
       companyId: c.company_id as string | null,
       companyName: company?.name ?? null,
+      companyLogoUrl: buildLogoUrl(supabase, company?.logo_storage_path, company?.updated_at),
       name: c.name as string,
       email: c.email as string | null,
       phone: c.phone as string | null,
@@ -475,14 +491,19 @@ export async function bulkCreateEmployees(rows: EmployeeImportRow[]): Promise<{ 
 // pipeline): a validity window, rate, site count, and type of work.
 
 const CONTRACT_COLUMNS =
-  "id, company_id, name, work_type, site_count, rate_amount, rate_frequency, billing_type, start_date, end_date, notes, created_at, updated_at, crm_companies(name)";
+  "id, company_id, name, work_type, site_count, rate_amount, rate_frequency, billing_type, start_date, end_date, notes, created_at, updated_at, crm_companies(name, logo_storage_path, updated_at)";
 
-function mapContract(c: Record<string, unknown>): Contract {
-  const company = c.crm_companies as unknown as { name: string } | null;
+function mapContract(c: Record<string, unknown>, supabase: ReturnType<typeof createAdminClient>): Contract {
+  const company = c.crm_companies as unknown as {
+    name: string;
+    logo_storage_path: string | null;
+    updated_at: string;
+  } | null;
   return {
     id: c.id as string,
     companyId: c.company_id as string | null,
     companyName: company?.name ?? null,
+    companyLogoUrl: buildLogoUrl(supabase, company?.logo_storage_path, company?.updated_at),
     name: c.name as string,
     workType: c.work_type as string | null,
     siteCount: c.site_count as number | null,
@@ -506,7 +527,7 @@ export async function listContracts(): Promise<Contract[]> {
     .order("end_date", { ascending: true, nullsFirst: false });
   if (error) throw new Error(error.message);
 
-  return (data ?? []).map(mapContract);
+  return (data ?? []).map((c) => mapContract(c, supabase));
 }
 
 export async function createContract(input: ContractInput): Promise<string> {
@@ -666,10 +687,14 @@ export async function getContractFileDownloadUrl(id: string): Promise<string> {
 // ---------- Opportunities ----------
 
 const OPPORTUNITY_COLUMNS =
-  "id, name, company_id, stage, amount, site_count, work_type, expected_close_date, notes, sales_manager_id, position, created_at, updated_at, crm_companies(name), crm_employees(name), crm_opportunity_contacts(contact_id)";
+  "id, name, company_id, stage, amount, site_count, work_type, expected_close_date, notes, sales_manager_id, position, created_at, updated_at, crm_companies(name, logo_storage_path, updated_at), crm_employees(name), crm_opportunity_contacts(contact_id)";
 
-function mapOpportunity(o: Record<string, unknown>): Opportunity {
-  const company = o.crm_companies as unknown as { name: string } | null;
+function mapOpportunity(o: Record<string, unknown>, supabase: ReturnType<typeof createAdminClient>): Opportunity {
+  const company = o.crm_companies as unknown as {
+    name: string;
+    logo_storage_path: string | null;
+    updated_at: string;
+  } | null;
   const salesManager = o.crm_employees as unknown as { name: string } | null;
   const contactRows = (o.crm_opportunity_contacts ?? []) as unknown as { contact_id: string }[];
   return {
@@ -677,6 +702,7 @@ function mapOpportunity(o: Record<string, unknown>): Opportunity {
     name: o.name as string,
     companyId: o.company_id as string | null,
     companyName: company?.name ?? null,
+    companyLogoUrl: buildLogoUrl(supabase, company?.logo_storage_path, company?.updated_at),
     stage: o.stage as OpportunityStage,
     amount: o.amount as number | null,
     siteCount: o.site_count as number | null,
@@ -701,7 +727,7 @@ export async function listOpportunities(): Promise<Opportunity[]> {
     .order("position", { ascending: true });
   if (error) throw new Error(error.message);
 
-  return (data ?? []).map(mapOpportunity);
+  return (data ?? []).map((o) => mapOpportunity(o, supabase));
 }
 
 export async function getOpportunity(id: string): Promise<Opportunity | null> {
@@ -715,7 +741,7 @@ export async function getOpportunity(id: string): Promise<Opportunity | null> {
   if (error) throw new Error(error.message);
   if (!data) return null;
 
-  return mapOpportunity(data);
+  return mapOpportunity(data, supabase);
 }
 
 async function nextPositionForStage(stage: OpportunityStage): Promise<number> {

@@ -26,14 +26,24 @@ export default function ContactsClient({ contacts, companies }: { contacts: Cont
               onClick={() => setEditingContact(c)}
               className="flex items-center justify-between gap-4 px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-900/50"
             >
-              <div>
-                <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-                  {c.name}
-                  {c.title && <span className="ml-2 text-xs font-normal text-slate-400">{c.title}</span>}
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {[c.companyName, c.email, c.phone].filter(Boolean).join(" · ") || "No details"}
-                </p>
+              <div className="flex min-w-0 items-center gap-3">
+                {c.companyLogoUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={c.companyLogoUrl}
+                    alt=""
+                    className="h-8 w-8 shrink-0 rounded-full border border-slate-200 bg-slate-50 object-contain dark:border-slate-800 dark:bg-slate-900"
+                  />
+                )}
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">
+                    {c.name}
+                    {c.title && <span className="ml-2 text-xs font-normal text-slate-400">{c.title}</span>}
+                  </p>
+                  <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                    {[c.companyName, c.email, c.phone].filter(Boolean).join(" · ") || "No details"}
+                  </p>
+                </div>
               </div>
             </button>
           ))}

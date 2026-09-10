@@ -36,7 +36,19 @@ export default function OpportunityCard({
       }`}
     >
       <p className="font-semibold text-slate-50">{opportunity.name}</p>
-      {opportunity.companyName && <p className="text-xs text-slate-300">{opportunity.companyName}</p>}
+      {opportunity.companyName && (
+        <p className="flex items-center gap-1.5 text-xs text-slate-300">
+          {opportunity.companyLogoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={opportunity.companyLogoUrl}
+              alt=""
+              className="h-4 w-4 shrink-0 rounded-full border border-purple-400/20 object-contain"
+            />
+          )}
+          {opportunity.companyName}
+        </p>
+      )}
       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
         {opportunity.amount !== null && (
           <span className="rounded-full bg-brand-500/25 px-2 py-0.5 font-semibold text-brand-300">

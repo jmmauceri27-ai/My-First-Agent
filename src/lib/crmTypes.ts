@@ -29,6 +29,7 @@ export interface Contact {
   id: string;
   companyId: string | null;
   companyName: string | null;
+  companyLogoUrl: string | null;
   name: string;
   email: string | null;
   phone: string | null;
@@ -64,6 +65,7 @@ export interface Opportunity {
   name: string;
   companyId: string | null;
   companyName: string | null;
+  companyLogoUrl: string | null;
   stage: OpportunityStage;
   amount: number | null;
   siteCount: number | null;
@@ -152,6 +154,7 @@ export interface Contract {
   id: string;
   companyId: string | null;
   companyName: string | null;
+  companyLogoUrl: string | null;
   name: string;
   workType: string | null;
   siteCount: number | null;

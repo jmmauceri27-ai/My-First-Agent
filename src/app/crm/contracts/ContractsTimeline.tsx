@@ -96,9 +96,19 @@ export default function ContractsTimeline({
           <div className="flex w-56 shrink-0 flex-col">
             <div className="h-6" />
             {rows.map(({ contract: c }) => (
-              <div key={c.id} className="flex h-14 flex-col justify-center border-t border-purple-400/5 pr-3">
-                <p className="truncate text-xs font-semibold text-slate-100">{c.name}</p>
-                <p className="truncate text-[11px] text-slate-400">{c.companyName ?? "No client"}</p>
+              <div key={c.id} className="flex h-14 items-center gap-2 border-t border-purple-400/5 pr-3">
+                {c.companyLogoUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={c.companyLogoUrl}
+                    alt=""
+                    className="h-6 w-6 shrink-0 rounded-full border border-purple-400/20 object-contain"
+                  />
+                )}
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-semibold text-slate-100">{c.name}</p>
+                  <p className="truncate text-[11px] text-slate-400">{c.companyName ?? "No client"}</p>
+                </div>
               </div>
             ))}
           </div>
