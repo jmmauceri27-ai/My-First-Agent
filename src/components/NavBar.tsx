@@ -19,9 +19,10 @@ export default function NavBar() {
     <header className="sticky top-0 z-10 border-b border-purple-500/15 bg-white/85 backdrop-blur-md dark:bg-[#0a070f]/85">
       <div className="h-1 bg-gradient-to-r from-brand-700 via-brand-400 to-purple-300" />
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-        <span className="flex items-center gap-2 text-sm font-bold tracking-tight text-slate-900 dark:text-slate-50">
-          <span className="text-lg">🛠️</span> Facility Maintenance Dashboard
-        </span>
+        <Link href="/" className="flex items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/dvm-logo.png" alt="DVM Facility Services" className="h-8 w-auto" />
+        </Link>
 
         <div className="flex flex-wrap items-center gap-2">
           <nav className="flex flex-wrap items-center gap-1">
