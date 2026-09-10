@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { listDuplicateSiteGroups } from "@/lib/networkDal";
-import NetworkNav from "../../NetworkNav";
 import DuplicateSitesClient from "./DuplicateSitesClient";
 
 export const dynamic = "force-dynamic";
@@ -10,10 +9,6 @@ export default async function DuplicateSitesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-lg font-bold text-slate-900 dark:text-slate-50">🌐 Network</h1>
-        <NetworkNav active="sites" />
-      </div>
       <div>
         <Link href="/network/sites" className="text-sm font-medium text-brand-600 dark:text-brand-400 hover:underline">
           ← Back to Sites

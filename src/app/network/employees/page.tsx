@@ -1,7 +1,6 @@
 export const dynamic = "force-dynamic";
 
 import { listEmployees } from "@/lib/crmDal";
-import NetworkNav from "../NetworkNav";
 import EmployeesClient from "./EmployeesClient";
 
 export default async function EmployeesPage() {
@@ -9,8 +8,7 @@ export default async function EmployeesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">🌐 Network</h1>
-      <NetworkNav active="employees" />
+      <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">🌐 Network · Employees</h1>
       <EmployeesClient employees={employees} />
     </div>
   );

@@ -28,7 +28,6 @@ import type { DatasetRecord } from "@/lib/types";
 import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
 import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
 import type { Site, SiteFilterTemplate, SiteFilters, Vendor } from "@/lib/networkTypes";
-import NetworkNav from "../NetworkNav";
 import SiteModal from "../SiteModal";
 import UploadSitesModal from "../UploadSitesModal";
 import UpdateSitesModal from "../UpdateSitesModal";
@@ -818,10 +817,7 @@ export default function SitesClient({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-purple-400/10 bg-slate-50 dark:bg-[#150f26] px-4 py-3">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-lg font-bold text-slate-900 dark:text-slate-50">🌐 Network</h1>
-          <NetworkNav active="sites" />
-        </div>
+        <h1 className="text-lg font-bold text-slate-900 dark:text-slate-50">🌐 Network · Sites</h1>
         <div className="flex gap-2">
           <Button
             variant="secondary"

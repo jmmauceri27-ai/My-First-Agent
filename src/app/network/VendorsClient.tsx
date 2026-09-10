@@ -6,7 +6,6 @@ import { useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import type { MapPin } from "@/components/SiteMap";
 import type { Vendor } from "@/lib/networkTypes";
-import NetworkNav from "./NetworkNav";
 import VendorModal from "./VendorModal";
 import UploadVendorsModal from "./UploadVendorsModal";
 
@@ -34,10 +33,7 @@ export default function VendorsClient({ vendors }: { vendors: Vendor[] }) {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-purple-400/10 bg-slate-50 dark:bg-[#150f26] px-4 py-3">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-lg font-bold text-slate-900 dark:text-slate-50">🌐 Network</h1>
-          <NetworkNav active="vendors" />
-        </div>
+        <h1 className="text-lg font-bold text-slate-900 dark:text-slate-50">🌐 Network · Vendors</h1>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={() => setUploading(true)}>
             Upload vendors

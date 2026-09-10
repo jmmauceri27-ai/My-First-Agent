@@ -2,7 +2,6 @@ export const dynamic = "force-dynamic";
 
 import { listCompanies } from "@/lib/crmDal";
 import { listFieldClasses } from "@/lib/fieldsDal";
-import CrmNav from "../CrmNav";
 import CompaniesClient from "./CompaniesClient";
 
 export default async function CompaniesPage() {
@@ -10,8 +9,7 @@ export default async function CompaniesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">💼 CRM</h1>
-      <CrmNav active="companies" />
+      <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">💼 CRM · Companies</h1>
       <CompaniesClient companies={companies} fieldClasses={fieldClasses} />
     </div>
   );
