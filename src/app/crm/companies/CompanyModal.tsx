@@ -1,16 +1,26 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
-import type { Company } from "@/lib/crmTypes";
+import type { Company, FieldClass } from "@/lib/crmTypes";
 import { deleteCompanyAction, deleteCompanyLogoAction, saveCompanyAction, uploadCompanyLogoAction } from "../actions";
+import { getFieldValuesForRecordAction, saveFieldValuesForRecordAction } from "../fields/actions";
+import DynamicFieldsSection from "../fields/DynamicFieldsSection";
 import LogoCropModal from "./LogoCropModal";
 import RemoveLogoBackgroundModal from "./RemoveLogoBackgroundModal";
 
-export default function CompanyModal({ company, onClose }: { company: Company | null; onClose: () => void }) {
+export default function CompanyModal({
+  company,
+  fieldClasses,
+  onClose,
+}: {
+  company: Company | null;
+  fieldClasses: FieldClass[];
+  onClose: () => void;
+}) {
   const router = useRouter();
   const [name, setName] = useState(company?.name ?? "");
   const [address, setAddress] = useState(company?.address ?? "");
@@ -21,6 +31,19 @@ export default function CompanyModal({ company, onClose }: { company: Company | 
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!company) return;
+    getFieldValuesForRecordAction(company.id).then((values) => {
+      const asStrings: Record<string, string> = {};
+      for (const [fieldId, value] of Object.entries(values)) {
+        if (value != null) asStrings[fieldId] = value;
+      }
+      setFieldValues(asStrings);
+    });
+  }, [company]);
 
   const logoInputRef = useRef<HTMLInputElement>(null);
   const [logoUrl, setLogoUrl] = useState(company?.logoUrl ?? null);
@@ -87,7 +110,7 @@ export default function CompanyModal({ company, onClose }: { company: Company | 
     }
     setSaving(true);
     try {
-      await saveCompanyAction(company?.id ?? null, {
+      const companyId = await saveCompanyAction(company?.id ?? null, {
         name: name.trim(),
         address: address.trim() || null,
         city: city.trim() || null,
@@ -95,6 +118,10 @@ export default function CompanyModal({ company, onClose }: { company: Company | 
         website: website.trim() || null,
         notes: notes.trim() || null,
       });
+      await saveFieldValuesForRecordAction(
+        companyId,
+        Object.entries(fieldValues).map(([fieldId, value]) => ({ fieldId, value: value || null })),
+      );
       router.refresh();
       onClose();
     } catch (e) {
@@ -192,6 +219,14 @@ export default function CompanyModal({ company, onClose }: { company: Company | 
               <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>
               <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputClass} />
             </label>
+          </div>
+
+          <div className="mt-4">
+            <DynamicFieldsSection
+              classes={fieldClasses}
+              values={fieldValues}
+              onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}
+            />
           </div>
 
           {error && <p className="mt-3 text-sm text-critical">{error}</p>}

@@ -6,9 +6,15 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import CompanyModal from "@/app/crm/companies/CompanyModal";
 import UploadCompaniesModal from "@/app/crm/companies/UploadCompaniesModal";
-import type { Company } from "@/lib/crmTypes";
+import type { Company, FieldClass } from "@/lib/crmTypes";
 
-export default function ClientsClient({ companies }: { companies: Company[] }) {
+export default function ClientsClient({
+  companies,
+  fieldClasses,
+}: {
+  companies: Company[];
+  fieldClasses: FieldClass[];
+}) {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -47,6 +53,7 @@ export default function ClientsClient({ companies }: { companies: Company[] }) {
       {creating && (
         <CompanyModal
           company={null}
+          fieldClasses={fieldClasses}
           onClose={() => {
             setCreating(false);
             router.refresh();

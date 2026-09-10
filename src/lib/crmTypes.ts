@@ -312,3 +312,64 @@ export interface ClientRateOverrideInput {
   overrideValue: number;
   notes: string | null;
 }
+
+// ---------- CRM Fields (HubSpot-style custom properties) ----------
+// A Class is a named section (e.g. "Contact Info") holding one or more Fields (e.g. "Phone Number"), each
+// scoped to one object type. A record's actual values live separately in crm_field_values, keyed by
+// (fieldId, recordId) -- see fieldsDal.ts.
+
+export const FIELD_OBJECT_TYPES = ["Company", "Contact", "Opportunity", "Contract"] as const;
+
+export type FieldObjectType = (typeof FIELD_OBJECT_TYPES)[number];
+
+export const FIELD_TYPES = ["Text", "Number", "Date", "Dropdown", "Checkbox"] as const;
+
+export type FieldType = (typeof FIELD_TYPES)[number];
+
+/** A named section (e.g. "Contact Info") that groups related Fields together, scoped to one object type. */
+export interface FieldClass {
+  id: string;
+  objectType: string;
+  name: string;
+  position: number;
+  fields: CrmField[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FieldClassInput {
+  objectType: string;
+  name: string;
+}
+
+/** One custom field definition -- e.g. "Phone Number" (Text, in the "Contact Info" class). Named CrmField,
+ * not Field, to avoid colliding with the FieldChoice/FieldResolution "field" concept used in mergeSites.ts. */
+export interface CrmField {
+  id: string;
+  objectType: string;
+  classId: string;
+  /** Stable internal key, slugified from the label at creation (e.g. "phone_number"). Unique per object type. */
+  name: string;
+  label: string;
+  fieldType: string;
+  /** Only set when fieldType is "Dropdown" -- the fixed list of choices. */
+  options: string[] | null;
+  position: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CrmFieldInput {
+  objectType: string;
+  classId: string;
+  label: string;
+  fieldType: string;
+  options: string[] | null;
+}
+
+/** One record's stored value for one field. value is always a string on the wire -- Number/Date/Checkbox
+ * are parsed/formatted by the UI, not by this type. */
+export interface FieldValue {
+  fieldId: string;
+  value: string | null;
+}

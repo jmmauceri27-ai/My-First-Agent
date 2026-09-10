@@ -7,7 +7,7 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import CompanyModal from "@/app/crm/companies/CompanyModal";
 import { formatCurrency } from "@/lib/siteMapColor";
-import type { Company, Contact, Contract, Opportunity } from "@/lib/crmTypes";
+import type { Company, Contact, Contract, FieldClass, Opportunity } from "@/lib/crmTypes";
 import type { Site } from "@/lib/networkTypes";
 
 export default function ClientDetailClient({
@@ -16,12 +16,14 @@ export default function ClientDetailClient({
   opportunities,
   contracts,
   sites,
+  fieldClasses,
 }: {
   company: Company;
   contacts: Contact[];
   opportunities: Opportunity[];
   contracts: Contract[];
   sites: Site[];
+  fieldClasses: FieldClass[];
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
@@ -151,6 +153,7 @@ export default function ClientDetailClient({
       {editing && (
         <CompanyModal
           company={company}
+          fieldClasses={fieldClasses}
           onClose={() => {
             setEditing(false);
             router.refresh();

@@ -3,11 +3,17 @@
 import { useState } from "react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
-import type { Company } from "@/lib/crmTypes";
+import type { Company, FieldClass } from "@/lib/crmTypes";
 import CompanyModal from "./CompanyModal";
 import UploadCompaniesModal from "./UploadCompaniesModal";
 
-export default function CompaniesClient({ companies }: { companies: Company[] }) {
+export default function CompaniesClient({
+  companies,
+  fieldClasses,
+}: {
+  companies: Company[];
+  fieldClasses: FieldClass[];
+}) {
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [creating, setCreating] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -56,6 +62,7 @@ export default function CompaniesClient({ companies }: { companies: Company[] })
       {(editingCompany || creating) && (
         <CompanyModal
           company={editingCompany}
+          fieldClasses={fieldClasses}
           onClose={() => {
             setEditingCompany(null);
             setCreating(false);
