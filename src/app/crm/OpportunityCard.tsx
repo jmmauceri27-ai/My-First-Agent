@@ -31,13 +31,13 @@ export default function OpportunityCard({
       {...listeners}
       {...attributes}
       onClick={onClick}
-      className={`cursor-grab rounded-lg border border-purple-400/40 bg-[#3c2b6b] p-3 text-sm shadow-lg shadow-black/40 transition-shadow hover:shadow-xl active:cursor-grabbing ${
+      className={`cursor-grab rounded-lg border border-purple-200 bg-white p-3 text-sm shadow-md transition-shadow hover:shadow-lg dark:border-purple-400/40 dark:bg-[#3c2b6b] dark:shadow-lg dark:shadow-black/40 dark:hover:shadow-xl active:cursor-grabbing ${
         isDragging ? "opacity-40" : ""
       }`}
     >
-      <p className="font-semibold text-slate-50">{opportunity.name}</p>
+      <p className="font-semibold text-slate-900 dark:text-slate-50">{opportunity.name}</p>
       {opportunity.companyName && (
-        <p className="flex items-center gap-1.5 text-xs text-slate-300">
+        <p className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300">
           {opportunity.companyLogoUrl && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -51,19 +51,19 @@ export default function OpportunityCard({
       )}
       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
         {opportunity.amount !== null && (
-          <span className="rounded-full bg-brand-500/25 px-2 py-0.5 font-semibold text-brand-300">
+          <span className="rounded-full bg-brand-500/25 px-2 py-0.5 font-semibold text-brand-700 dark:text-brand-300">
             {formatAmount(opportunity.amount)}
           </span>
         )}
         {opportunity.siteCount !== null && (
-          <span className="rounded-full bg-black/25 px-2 py-0.5 text-slate-300">
+          <span className="rounded-full bg-black/25 px-2 py-0.5 text-slate-700 dark:text-slate-300">
             {opportunity.siteCount} site{opportunity.siteCount === 1 ? "" : "s"}
           </span>
         )}
       </div>
-      {opportunity.workType && <p className="mt-1.5 truncate text-xs text-slate-300">{opportunity.workType}</p>}
+      {opportunity.workType && <p className="mt-1.5 truncate text-xs text-slate-700 dark:text-slate-300">{opportunity.workType}</p>}
       {opportunity.salesManagerName && (
-        <p className="mt-1.5 truncate text-xs text-slate-400">👤 {opportunity.salesManagerName}</p>
+        <p className="mt-1.5 truncate text-xs text-slate-500 dark:text-slate-400">👤 {opportunity.salesManagerName}</p>
       )}
     </div>
   );

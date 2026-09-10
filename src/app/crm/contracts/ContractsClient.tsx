@@ -31,17 +31,17 @@ function ContractRow({ contract: c, onSelect }: { contract: Contract; onSelect: 
         )}
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <p className="truncate text-sm font-semibold text-slate-50">{c.name}</p>
+            <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">{c.name}</p>
             <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${status.badgeClassName}`}>
               {status.label}
             </span>
           </div>
-          <p className="mt-0.5 text-xs text-slate-400">
+          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
             {[c.companyName, c.workType].filter(Boolean).join(" · ") || "No details"}
           </p>
         </div>
       </div>
-      <div className="flex shrink-0 flex-wrap items-center gap-4 text-xs text-slate-400">
+      <div className="flex shrink-0 flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
         {c.siteCount != null && <span>{c.siteCount} sites</span>}
         {c.rateAmount != null && (
           <span className="tabular-nums">
@@ -83,7 +83,7 @@ export default function ContractsClient({ contracts, companies }: { contracts: C
             type="button"
             onClick={() => setView("list")}
             className={`rounded-md px-3 py-1.5 text-sm font-semibold transition-all ${
-              view === "list" ? "bg-brand-600 text-white" : "text-slate-400 hover:text-slate-50"
+              view === "list" ? "bg-brand-600 text-white" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-50"
             }`}
           >
             List
@@ -92,7 +92,7 @@ export default function ContractsClient({ contracts, companies }: { contracts: C
             type="button"
             onClick={() => setView("timeline")}
             className={`rounded-md px-3 py-1.5 text-sm font-semibold transition-all ${
-              view === "timeline" ? "bg-brand-600 text-white" : "text-slate-400 hover:text-slate-50"
+              view === "timeline" ? "bg-brand-600 text-white" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-50"
             }`}
           >
             Timeline
@@ -102,7 +102,7 @@ export default function ContractsClient({ contracts, companies }: { contracts: C
       </div>
 
       {contracts.length === 0 ? (
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-slate-500 dark:text-slate-400">
           No contracts yet. Add your existing signed contracts here — how long they run, their rates, site counts,
           and type of work.
         </p>
@@ -110,8 +110,8 @@ export default function ContractsClient({ contracts, companies }: { contracts: C
         <div className="flex flex-col gap-6">
           {byTrade.map(([trade, list]) => (
             <div key={trade} className="flex flex-col gap-2">
-              <h2 className="text-sm font-bold uppercase tracking-wide text-slate-400">
-                {trade} <span className="font-normal text-slate-500">({list.length})</span>
+              <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {trade} <span className="font-normal text-slate-600 dark:text-slate-500">({list.length})</span>
               </h2>
               <Card className="flex flex-col divide-y divide-purple-400/10 overflow-hidden">
                 {list.map((c) => (

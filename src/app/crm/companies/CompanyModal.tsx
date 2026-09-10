@@ -134,7 +134,7 @@ export default function CompanyModal({ company, onClose }: { company: Company | 
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={logoUrl} alt={`${company.name} logo`} className="h-full w-full object-contain" />
                 ) : (
-                  <span className="text-xs text-slate-400">No logo</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">No logo</span>
                 )}
               </div>
               <div className="flex flex-col gap-1">

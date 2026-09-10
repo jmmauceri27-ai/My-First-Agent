@@ -37,7 +37,7 @@ export default function CompaniesClient({ companies }: { companies: Company[] })
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={c.logoUrl} alt="" className="h-full w-full object-contain" />
                   ) : (
-                    <span className="text-xs font-semibold text-slate-400">{c.name.charAt(0).toUpperCase()}</span>
+                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">{c.name.charAt(0).toUpperCase()}</span>
                   )}
                 </div>
                 <div className="min-w-0">

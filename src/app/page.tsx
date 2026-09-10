@@ -35,25 +35,25 @@ export default async function HomePage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-50">🤝 CRM Pipeline</h1>
-        <p className="mt-1 text-sm text-slate-400">Your deals, at a glance.</p>
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">🤝 CRM Pipeline</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Your deals, at a glance.</p>
       </div>
 
       <section className="flex flex-col gap-4">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           <Card className="border-t-4 p-5" style={{ borderTopColor: "#1baf7a" }}>
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Open pipeline value</p>
-            <p className="mt-1.5 text-3xl font-extrabold tabular-nums text-slate-50">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Open pipeline value</p>
+            <p className="mt-1.5 text-3xl font-extrabold tabular-nums text-slate-900 dark:text-slate-50">
               {formatCurrency(openPipelineValue)}
             </p>
           </Card>
           <Card className="border-t-4 p-5" style={{ borderTopColor: "#9055f6" }}>
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Open opportunities</p>
-            <p className="mt-1.5 text-3xl font-extrabold tabular-nums text-slate-50">{openCount}</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Open opportunities</p>
+            <p className="mt-1.5 text-3xl font-extrabold tabular-nums text-slate-900 dark:text-slate-50">{openCount}</p>
           </Card>
           <Card className="border-t-4 p-5" style={{ borderTopColor: "#eda100" }}>
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Awarded</p>
-            <p className="mt-1.5 text-3xl font-extrabold tabular-nums text-slate-50">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Awarded</p>
+            <p className="mt-1.5 text-3xl font-extrabold tabular-nums text-slate-900 dark:text-slate-50">
               {stageCounts.get("Awarded") ?? 0}
             </p>
           </Card>
@@ -61,8 +61,8 @@ export default async function HomePage() {
 
         <Card className="p-5">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-slate-50">Pipeline by stage</h2>
-            <Link href="/crm" className="text-sm font-medium text-brand-400 hover:underline">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Pipeline by stage</h2>
+            <Link href="/crm" className="text-sm font-medium text-brand-600 dark:text-brand-400 hover:underline">
               View full pipeline →
             </Link>
           </div>
@@ -72,8 +72,8 @@ export default async function HomePage() {
                 key={stage}
                 className="flex min-w-[7rem] flex-1 flex-col gap-1 rounded-lg border border-purple-400/20 bg-purple-500/5 px-3 py-2"
               >
-                <span className="text-xs font-medium text-slate-400">{stage}</span>
-                <span className="text-xl font-extrabold tabular-nums text-slate-50">
+                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{stage}</span>
+                <span className="text-xl font-extrabold tabular-nums text-slate-900 dark:text-slate-50">
                   {stageCounts.get(stage) ?? 0}
                 </span>
               </div>
@@ -82,11 +82,11 @@ export default async function HomePage() {
         </Card>
 
         <Card className="p-5">
-          <h2 className="text-lg font-bold text-slate-50">Recently updated</h2>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Recently updated</h2>
           {recentOpportunities.length === 0 ? (
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
               No opportunities yet. Head to{" "}
-              <Link href="/crm" className="font-medium text-brand-400 hover:underline">
+              <Link href="/crm" className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
                 CRM
               </Link>{" "}
               to add your first deal.
@@ -97,11 +97,11 @@ export default async function HomePage() {
                 <li key={o.id} className="flex items-center justify-between gap-3 py-2">
                   <Link
                     href={`/crm/opportunities/${o.id}`}
-                    className="min-w-0 truncate text-sm font-medium text-slate-50 hover:text-brand-400 hover:underline"
+                    className="min-w-0 truncate text-sm font-medium text-slate-900 dark:text-slate-50 hover:text-brand-600 dark:hover:text-brand-400 hover:underline"
                   >
                     {o.name}
                   </Link>
-                  <div className="flex shrink-0 items-center gap-3 text-xs text-slate-400">
+                  <div className="flex shrink-0 items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
                     <span>{o.stage}</span>
                     {o.amount != null && <span className="tabular-nums">{formatCurrency(o.amount)}</span>}
                   </div>
@@ -113,16 +113,16 @@ export default async function HomePage() {
       </section>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-bold text-slate-300">Dashboards</h2>
+        <h2 className="text-lg font-bold text-slate-700 dark:text-slate-300">Dashboards</h2>
         <Card className="p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Saved dashboards</p>
-              <p className="mt-1.5 text-2xl font-extrabold tabular-nums text-slate-50">
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Saved dashboards</p>
+              <p className="mt-1.5 text-2xl font-extrabold tabular-nums text-slate-900 dark:text-slate-50">
                 {DASHBOARD_DEFINITIONS.length}
               </p>
             </div>
-            <Link href="/dashboards" className="text-sm font-medium text-brand-400 hover:underline">
+            <Link href="/dashboards" className="text-sm font-medium text-brand-600 dark:text-brand-400 hover:underline">
               View dashboards →
             </Link>
           </div>

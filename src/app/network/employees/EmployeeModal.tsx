@@ -50,19 +50,19 @@ export default function EmployeeModal({ onClose, onSaved }: { onClose: () => voi
   return (
     <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <Card className="max-h-[90vh] w-full max-w-md overflow-y-auto p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-bold text-slate-50">New employee</h2>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">New employee</h2>
 
         <div className="mt-4 flex flex-col gap-4">
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Name</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Name</span>
             <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} autoFocus />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Title</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Title</span>
             <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Department</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Department</span>
             <select value={department} onChange={(e) => setDepartment(e.target.value)} className={inputClass}>
               <option value="">(none)</option>
               {DEPARTMENTS.map((d) => (
@@ -74,11 +74,11 @@ export default function EmployeeModal({ onClose, onSaved }: { onClose: () => voi
           </label>
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Email</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Email</span>
               <input value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Phone</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Phone</span>
               <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} />
             </label>
           </div>

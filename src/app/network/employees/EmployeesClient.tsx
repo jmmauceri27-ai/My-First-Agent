@@ -38,13 +38,13 @@ export default function EmployeesClient({ employees }: { employees: Employee[] }
       </div>
 
       {employees.length === 0 ? (
-        <p className="text-sm text-slate-400">No employees yet.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">No employees yet.</p>
       ) : (
         <div className="flex flex-col gap-6">
           {groups.map(([department, list]) => (
             <div key={department} className="flex flex-col gap-2">
-              <h2 className="text-sm font-bold uppercase tracking-wide text-slate-400">
-                {department} <span className="font-normal text-slate-500">({list.length})</span>
+              <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {department} <span className="font-normal text-slate-600 dark:text-slate-500">({list.length})</span>
               </h2>
               <Card className="flex flex-col divide-y divide-purple-400/10 overflow-hidden">
                 {list.map((e) => (
@@ -54,8 +54,8 @@ export default function EmployeesClient({ employees }: { employees: Employee[] }
                     className="flex items-center justify-between gap-4 px-4 py-3 text-left hover:bg-purple-500/5"
                   >
                     <div>
-                      <p className="text-sm font-semibold text-slate-50">{e.name}</p>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{e.name}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
                         {[e.title, e.email, e.phone].filter(Boolean).join(" · ") || "No details"}
                       </p>
                     </div>

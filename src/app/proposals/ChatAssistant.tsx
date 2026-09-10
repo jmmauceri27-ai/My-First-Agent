@@ -102,7 +102,7 @@ export default function ChatAssistant({
       <Card className="flex flex-wrap items-end justify-between gap-4 p-4">
         <div className="flex flex-wrap gap-4">
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Client (optional, for override pricing)</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Client (optional, for override pricing)</span>
             <select
               value={companyId}
               onChange={(e) => {
@@ -120,7 +120,7 @@ export default function ChatAssistant({
             </select>
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Contract (optional, for its own rate card)</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Contract (optional, for its own rate card)</span>
             <select
               value={contractId}
               onChange={(e) => setContractId(e.target.value)}
@@ -142,7 +142,7 @@ export default function ChatAssistant({
       </Card>
 
       {!hasRateItems ? (
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-slate-500 dark:text-slate-400">
           There aren&rsquo;t any rate items yet -- add some on the Rate Card tab before using the assistant.
         </p>
       ) : (
@@ -150,7 +150,7 @@ export default function ChatAssistant({
           <Card className="flex h-[28rem] flex-col overflow-hidden p-0">
             <div ref={scrollRef} className="flex flex-1 flex-col gap-3 overflow-y-auto p-4">
               {bubbles.length === 0 && (
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
                   Describe the proposal you want to build -- the trade, the scope, and the client -- and I&rsquo;ll
                   price it against the real rate card. Nothing here is saved yet; this is a preview.
                 </p>
@@ -161,13 +161,13 @@ export default function ChatAssistant({
                   className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm ${
                     bubble.role === "user"
                       ? "self-end bg-brand-600 text-white"
-                      : "self-start bg-purple-500/10 text-slate-100"
+                      : "self-start bg-purple-500/10 text-slate-900 dark:text-slate-100"
                   }`}
                 >
                   {bubble.text}
                 </div>
               ))}
-              {sending && <p className="self-start text-xs text-slate-500">Thinking…</p>}
+              {sending && <p className="self-start text-xs text-slate-600 dark:text-slate-500">Thinking…</p>}
             </div>
 
             <div className="flex items-center gap-2 border-t border-purple-400/10 p-3">

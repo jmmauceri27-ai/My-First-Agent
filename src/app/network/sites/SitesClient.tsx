@@ -166,7 +166,7 @@ function infoValueOf(s: Site, field: InfoField): string {
 function FilterGroup({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-2 border-b border-purple-400/10 pb-3 last:border-b-0 last:pb-0">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{title}</p>
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500">{title}</p>
       <div className="flex flex-col gap-2">{children}</div>
     </div>
   );
@@ -176,7 +176,7 @@ function FilterGroup({ title, children }: { title: string; children: ReactNode }
 function FilterField({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-1 text-xs">
-      <span className="font-medium text-slate-400">{label}</span>
+      <span className="font-medium text-slate-500 dark:text-slate-400">{label}</span>
       {children}
     </div>
   );
@@ -817,9 +817,9 @@ export default function SitesClient({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-purple-400/10 bg-[#150f26] px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-purple-400/10 bg-slate-50 dark:bg-[#150f26] px-4 py-3">
         <div className="flex flex-col gap-2">
-          <h1 className="text-lg font-bold text-slate-50">🌐 Network</h1>
+          <h1 className="text-lg font-bold text-slate-900 dark:text-slate-50">🌐 Network</h1>
           <NetworkNav active="sites" />
         </div>
         <div className="flex gap-2">
@@ -838,14 +838,14 @@ export default function SitesClient({
               Update
             </Button>
             {showUpdateMenu && (
-              <div className="absolute right-0 z-[2000] mt-1 w-56 rounded-lg border border-purple-400/40 bg-[#3c2b6b] p-1.5 shadow-xl shadow-black/50">
+              <div className="absolute right-0 z-[2000] mt-1 w-56 rounded-lg border border-purple-200 bg-white p-1.5 shadow-xl dark:border-purple-400/40 dark:bg-[#3c2b6b] dark:shadow-black/50">
                 <button
                   type="button"
                   onClick={() => {
                     setUpdatingSheet(true);
                     setShowUpdateMenu(false);
                   }}
-                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-100 hover:bg-purple-500/10"
+                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-900 dark:text-slate-100 hover:bg-purple-500/10"
                 >
                   Sites
                 </button>
@@ -855,7 +855,7 @@ export default function SitesClient({
                     setUpdatingAssignments(true);
                     setShowUpdateMenu(false);
                   }}
-                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-100 hover:bg-purple-500/10"
+                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-900 dark:text-slate-100 hover:bg-purple-500/10"
                 >
                   Trade assignments
                 </button>
@@ -865,7 +865,7 @@ export default function SitesClient({
                     setUpdatingMeasurements(true);
                     setShowUpdateMenu(false);
                   }}
-                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-100 hover:bg-purple-500/10"
+                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-900 dark:text-slate-100 hover:bg-purple-500/10"
                 >
                   Measurements
                 </button>
@@ -875,7 +875,7 @@ export default function SitesClient({
                     setUpdatingRateSchedule(true);
                     setShowUpdateMenu(false);
                   }}
-                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-100 hover:bg-purple-500/10"
+                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-900 dark:text-slate-100 hover:bg-purple-500/10"
                 >
                   Rate schedule
                 </button>
@@ -885,7 +885,7 @@ export default function SitesClient({
                     setUpdatingExpenseSchedule(true);
                     setShowUpdateMenu(false);
                   }}
-                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-100 hover:bg-purple-500/10"
+                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-900 dark:text-slate-100 hover:bg-purple-500/10"
                 >
                   Expense schedule
                 </button>
@@ -900,9 +900,9 @@ export default function SitesClient({
       </div>
 
       {selectedIds.size > 0 && (
-        <div className="flex flex-col gap-2 border-b border-purple-400/10 bg-[#1a1330] px-4 py-2">
+        <div className="flex flex-col gap-2 border-b border-purple-400/10 bg-white dark:bg-[#1a1330] px-4 py-2">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-sm text-slate-300">{selectedIds.size} selected</span>
+            <span className="text-sm text-slate-700 dark:text-slate-300">{selectedIds.size} selected</span>
             <TradeSelect value={bulkTrades} onChange={setBulkTrades} className="w-56" placeholder="Add trade(s)…" />
             <Button variant="secondary" onClick={handleBulkAssign} disabled={bulkTrades.length === 0 || assigning}>
               {assigning ? "Assigning…" : "Assign to selected"}
@@ -949,7 +949,7 @@ export default function SitesClient({
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-xs text-slate-400">Assign/unassign vendor for one trade:</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Assign/unassign vendor for one trade:</span>
             <select
               value={bulkVendorTrade}
               onChange={(e) => setBulkVendorTrade(e.target.value)}
@@ -1004,7 +1004,7 @@ export default function SitesClient({
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-xs text-slate-400">Assign/unassign contract for one trade:</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Assign/unassign contract for one trade:</span>
             <select
               value={bulkContractTrade}
               onChange={(e) => setBulkContractTrade(e.target.value)}
@@ -1049,9 +1049,9 @@ export default function SitesClient({
       )}
 
       <div className="flex min-h-0 flex-1">
-        <div className="flex w-64 shrink-0 flex-col gap-4 overflow-y-auto border-r border-purple-400/10 bg-[#150f26] p-3">
+        <div className="flex w-64 shrink-0 flex-col gap-4 overflow-y-auto border-r border-purple-400/10 bg-slate-50 dark:bg-[#150f26] p-3">
           <div className="flex flex-col gap-2">
-            <h2 className="text-sm font-bold text-slate-50">Filters</h2>
+            <h2 className="text-sm font-bold text-slate-900 dark:text-slate-50">Filters</h2>
             <Button variant="secondary" onClick={clearAllFilters} disabled={!hasActiveFilters} className="w-full">
               Clear all filters
             </Button>
@@ -1303,18 +1303,18 @@ export default function SitesClient({
           {pins.length > 0 ? (
             <SiteMap pins={pins} onPinClick={(id) => router.push(`/network/sites/${id}`)} />
           ) : (
-            <div className="flex h-full items-center justify-center p-6 text-center text-sm text-slate-400">
+            <div className="flex h-full items-center justify-center p-6 text-center text-sm text-slate-500 dark:text-slate-400">
               No sites match these filters and have a latitude/longitude yet.
             </div>
           )}
         </div>
 
-        <div className="flex w-80 shrink-0 flex-col divide-y divide-purple-400/10 overflow-y-auto border-l border-purple-400/10 bg-[#150f26]">
+        <div className="flex w-80 shrink-0 flex-col divide-y divide-purple-400/10 overflow-y-auto border-l border-purple-400/10 bg-slate-50 dark:bg-[#150f26]">
           {filteredSites.length === 0 ? (
-            <p className="p-4 text-sm text-slate-400">No sites match these filters.</p>
+            <p className="p-4 text-sm text-slate-500 dark:text-slate-400">No sites match these filters.</p>
           ) : (
             <>
-              <label className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-slate-400">
+              <label className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-slate-500 dark:text-slate-400">
                 <input
                   type="checkbox"
                   checked={allFilteredSelected}
@@ -1335,11 +1335,11 @@ export default function SitesClient({
                     onClick={() => router.push(`/network/sites/${s.id}`)}
                     className="flex min-w-0 flex-1 flex-col gap-0.5 text-left"
                   >
-                    <span className="truncate text-sm font-semibold text-slate-50">
+                    <span className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">
                       {s.name}
-                      {s.siteCode ? <span className="font-normal text-slate-400"> · {s.siteCode}</span> : null}
+                      {s.siteCode ? <span className="font-normal text-slate-500 dark:text-slate-400"> · {s.siteCode}</span> : null}
                     </span>
-                    <span className="truncate text-xs text-slate-400">
+                    <span className="truncate text-xs text-slate-500 dark:text-slate-400">
                       {[
                         s.companyName,
                         ...Array.from(new Set(s.tradeAssignments.map((a) => a.vendorName).filter((v): v is string => !!v))),

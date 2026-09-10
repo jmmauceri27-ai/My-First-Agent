@@ -106,11 +106,11 @@ export default function ContractModal({
   return (
     <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <Card className="max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-bold text-slate-50">{contract ? "Edit contract" : "New contract"}</h2>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">{contract ? "Edit contract" : "New contract"}</h2>
 
         <div className="mt-4 flex flex-col gap-4">
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Contract name</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Contract name</span>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -121,7 +121,7 @@ export default function ContractModal({
           </label>
 
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Company</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Company</span>
             <select value={companyId} onChange={(e) => setCompanyId(e.target.value)} className={inputClass}>
               <option value="">(none)</option>
               {companies.map((c) => (
@@ -133,7 +133,7 @@ export default function ContractModal({
           </label>
 
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Trade</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Trade</span>
             <input
               value={workType}
               onChange={(e) => setWorkType(e.target.value)}
@@ -144,7 +144,7 @@ export default function ContractModal({
 
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300"># of sites</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300"># of sites</span>
               <input
                 type="number"
                 value={siteCount}
@@ -153,7 +153,7 @@ export default function ContractModal({
               />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Rate ($)</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Rate ($)</span>
               <input
                 type="number"
                 value={rateAmount}
@@ -164,7 +164,7 @@ export default function ContractModal({
           </div>
 
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Rate frequency</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Rate frequency</span>
             <select value={rateFrequency} onChange={(e) => setRateFrequency(e.target.value)} className={inputClass}>
               <option value="">(none)</option>
               {RATE_FREQUENCIES.map((f) => (
@@ -176,7 +176,7 @@ export default function ContractModal({
           </label>
 
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Billing type</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Billing type</span>
             <select value={billingType} onChange={(e) => setBillingType(e.target.value)} className={inputClass}>
               <option value="">(none)</option>
               {BILLING_TYPE_OPTIONS.map((b) => (
@@ -185,12 +185,12 @@ export default function ContractModal({
                 </option>
               ))}
             </select>
-            <span className="text-xs text-slate-500">Applies to every site/trade linked to this contract.</span>
+            <span className="text-xs text-slate-600 dark:text-slate-500">Applies to every site/trade linked to this contract.</span>
           </label>
 
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Start date</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Start date</span>
               <input
                 type="date"
                 value={startDate}
@@ -199,13 +199,13 @@ export default function ContractModal({
               />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">End date</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">End date</span>
               <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={inputClass} />
             </label>
           </div>
 
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Notes</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputClass} />
           </label>
         </div>

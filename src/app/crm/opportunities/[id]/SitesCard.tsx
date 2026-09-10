@@ -137,8 +137,8 @@ export default function SitesCard({
     <Card className="flex flex-col p-5">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <h2 className="text-lg font-bold text-slate-50">Sites</h2>
-          <p className="mt-1 text-xs text-slate-400">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Sites</h2>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             Upload the properties covered by this RFP — adds to Network → Sites, linked back to this opportunity.
           </p>
         </div>
@@ -149,7 +149,7 @@ export default function SitesCard({
           ref={fileInputRef}
           type="file"
           accept=".xlsx,.csv"
-          className="text-xs text-slate-300 file:mr-2 file:rounded-lg file:border-0 file:bg-slate-800 file:px-2.5 file:py-1 file:text-xs file:font-semibold file:text-brand-400"
+          className="text-xs text-slate-700 dark:text-slate-300 file:mr-2 file:rounded-lg file:border-0 file:bg-slate-200 dark:file:bg-slate-800 file:px-2.5 file:py-1 file:text-xs file:font-semibold file:text-brand-600 dark:file:text-brand-400"
         />
         <Button type="button" variant="secondary" onClick={handleUpload} disabled={uploading} className="w-fit">
           {uploading ? "Uploading…" : "Upload sites"}
@@ -159,7 +159,7 @@ export default function SitesCard({
 
       {parsedRows && (
         <div className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-purple-400/30 p-3">
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-slate-700 dark:text-slate-300">
             Map this sheet&rsquo;s columns — {parsedRows.length} row{parsedRows.length === 1 ? "" : "s"} found.
           </p>
           <div className="flex flex-wrap gap-3">
@@ -175,7 +175,7 @@ export default function SitesCard({
               ] as const
             ).map(([key, label]) => (
               <label key={key} className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">{label}</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">{label}</span>
                 <select
                   value={mapping[key]}
                   onChange={(e) => setMapping((prev) => ({ ...prev, [key]: e.target.value }))}
@@ -211,7 +211,7 @@ export default function SitesCard({
 
       {sites.length > 0 && (
         <div className="mt-4 flex flex-col gap-2">
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             {pins.length} of {sites.length} site{sites.length === 1 ? "" : "s"} plotted
             {sites.length - pins.length > 0 ? ` (${sites.length - pins.length} missing coordinates)` : ""}
           </p>
@@ -223,7 +223,7 @@ export default function SitesCard({
           <div className="flex flex-col divide-y divide-purple-400/10">
             {sites.map((s) => (
               <div key={s.id} className="flex items-center justify-between gap-2 py-2">
-                <Link href={`/network/sites/${s.id}`} className="min-w-0 truncate text-sm text-slate-50 hover:text-brand-400 hover:underline">
+                <Link href={`/network/sites/${s.id}`} className="min-w-0 truncate text-sm text-slate-900 dark:text-slate-50 hover:text-brand-600 dark:hover:text-brand-400 hover:underline">
                   {s.name}
                 </Link>
                 <button
@@ -240,7 +240,7 @@ export default function SitesCard({
       )}
 
       {sites.length === 0 && !parsedRows && (
-        <p className="mt-4 text-xs text-slate-400">No sites uploaded yet for this opportunity.</p>
+        <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">No sites uploaded yet for this opportunity.</p>
       )}
     </Card>
   );

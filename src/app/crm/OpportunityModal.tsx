@@ -315,7 +315,7 @@ export default function OpportunityModal({
             <span className="font-medium text-slate-700 dark:text-slate-300">Contacts involved</span>
             <div className="flex max-h-32 flex-col gap-1 overflow-y-auto rounded-lg border border-slate-300 p-2 dark:border-slate-700">
               {contacts.length === 0 ? (
-                <span className="text-xs text-slate-400">No contacts yet — add some on the Contacts page.</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">No contacts yet — add some on the Contacts page.</span>
               ) : (
                 contacts.map((c) => (
                   <label key={c.id} className="flex items-center gap-1.5 text-sm">
@@ -326,7 +326,7 @@ export default function OpportunityModal({
                       className="accent-brand-600"
                     />
                     {c.name}
-                    {c.companyName && <span className="text-xs text-slate-400">({c.companyName})</span>}
+                    {c.companyName && <span className="text-xs text-slate-500 dark:text-slate-400">({c.companyName})</span>}
                   </label>
                 ))
               )}

@@ -155,8 +155,8 @@ export default function UpdateSiteMeasurementsModal({
     return (
       <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
         <Card className="w-full max-w-md p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-          <h2 className="text-lg font-bold text-slate-50">Measurements updated</h2>
-          <p className="mt-2 text-sm text-slate-300">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Measurements updated</h2>
+          <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
             Updated {result.updated} site{result.updated === 1 ? "" : "s"}. Only the mapped labels changed --
             everything else on those sites, including other measurements/counts, was left as-is.
           </p>
@@ -185,11 +185,11 @@ export default function UpdateSiteMeasurementsModal({
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <Card className="max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-bold text-slate-50">Update measurements</h2>
-        <p className="mt-1 text-xs text-slate-400">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Update measurements</h2>
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
           Bulk-set sq. ft measurements and plant/shrub counts on existing sites from a sheet -- only the labels you
           map below are touched.{" "}
-          <button type="button" onClick={handleDownloadTemplate} className="text-brand-400 hover:underline">
+          <button type="button" onClick={handleDownloadTemplate} className="text-brand-600 dark:text-brand-400 hover:underline">
             Download example template
           </button>
         </p>
@@ -199,7 +199,7 @@ export default function UpdateSiteMeasurementsModal({
             ref={fileInputRef}
             type="file"
             accept=".xlsx,.csv"
-            className="text-xs text-slate-300 file:mr-2 file:rounded-lg file:border-0 file:bg-slate-800 file:px-2.5 file:py-1 file:text-xs file:font-semibold file:text-brand-400"
+            className="text-xs text-slate-700 dark:text-slate-300 file:mr-2 file:rounded-lg file:border-0 file:bg-slate-200 dark:file:bg-slate-800 file:px-2.5 file:py-1 file:text-xs file:font-semibold file:text-brand-600 dark:file:text-brand-400"
           />
           <Button type="button" variant="secondary" onClick={handleUpload} disabled={uploading} className="w-fit">
             {uploading ? "Parsing…" : "Choose file"}
@@ -210,12 +210,12 @@ export default function UpdateSiteMeasurementsModal({
         {parsedRows && (
           <>
             <div className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-purple-400/30 p-3">
-              <p className="text-sm text-slate-300">
+              <p className="text-sm text-slate-700 dark:text-slate-300">
                 Match sites by — {parsedRows.length} row{parsedRows.length === 1 ? "" : "s"} found.
               </p>
               <div className="flex flex-wrap gap-3">
                 <label className="flex flex-col gap-1 text-sm">
-                  <span className="font-medium text-slate-300">Site ID column (recommended)</span>
+                  <span className="font-medium text-slate-700 dark:text-slate-300">Site ID column (recommended)</span>
                   <select
                     value={matchMapping.matchCode}
                     onChange={(e) => setMatchMapping((prev) => ({ ...prev, matchCode: e.target.value }))}
@@ -230,7 +230,7 @@ export default function UpdateSiteMeasurementsModal({
                   </select>
                 </label>
                 <label className="flex flex-col gap-1 text-sm">
-                  <span className="font-medium text-slate-300">Record ID column</span>
+                  <span className="font-medium text-slate-700 dark:text-slate-300">Record ID column</span>
                   <select
                     value={matchMapping.matchId}
                     onChange={(e) => setMatchMapping((prev) => ({ ...prev, matchId: e.target.value }))}
@@ -245,7 +245,7 @@ export default function UpdateSiteMeasurementsModal({
                   </select>
                 </label>
                 <label className="flex flex-col gap-1 text-sm">
-                  <span className="font-medium text-slate-300">Site Name column</span>
+                  <span className="font-medium text-slate-700 dark:text-slate-300">Site Name column</span>
                   <select
                     value={matchMapping.matchName}
                     onChange={(e) => setMatchMapping((prev) => ({ ...prev, matchName: e.target.value }))}
@@ -262,7 +262,7 @@ export default function UpdateSiteMeasurementsModal({
               </div>
               {!matchMapping.matchCode && !matchMapping.matchId && (
                 <label className="flex flex-col gap-1 text-sm">
-                  <span className="font-medium text-slate-300">Client (optional, disambiguates name matches)</span>
+                  <span className="font-medium text-slate-700 dark:text-slate-300">Client (optional, disambiguates name matches)</span>
                   <select value={companyId} onChange={(e) => setCompanyId(e.target.value)} className={inputClass}>
                     <option value="">All clients</option>
                     {companies.map((c) => (
@@ -280,13 +280,13 @@ export default function UpdateSiteMeasurementsModal({
                 key={group.label}
                 className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-purple-400/30 p-3"
               >
-                <p className="text-sm text-slate-300">
+                <p className="text-sm text-slate-700 dark:text-slate-300">
                   {group.label} (sq. ft) — leave as None to leave untouched
                 </p>
                 <div className="flex flex-wrap gap-3">
                   {group.fields.map((field) => (
                     <label key={field} className="flex flex-col gap-1 text-sm">
-                      <span className="font-medium text-slate-300">{field}</span>
+                      <span className="font-medium text-slate-700 dark:text-slate-300">{field}</span>
                       <select
                         value={fieldMapping[field]}
                         onChange={(e) => setFieldMapping((prev) => ({ ...prev, [field]: e.target.value }))}
@@ -306,11 +306,11 @@ export default function UpdateSiteMeasurementsModal({
             ))}
 
             <div className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-purple-400/30 p-3">
-              <p className="text-sm text-slate-300">Counts — leave as None to leave untouched</p>
+              <p className="text-sm text-slate-700 dark:text-slate-300">Counts — leave as None to leave untouched</p>
               <div className="flex flex-wrap gap-3">
                 {COUNT_FIELDS.map((field) => (
                   <label key={field} className="flex flex-col gap-1 text-sm">
-                    <span className="font-medium text-slate-300">{field}</span>
+                    <span className="font-medium text-slate-700 dark:text-slate-300">{field}</span>
                     <select
                       value={fieldMapping[field]}
                       onChange={(e) => setFieldMapping((prev) => ({ ...prev, [field]: e.target.value }))}

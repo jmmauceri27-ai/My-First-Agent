@@ -88,16 +88,16 @@ export default function VendorModal({
   return (
     <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <Card className="max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-bold text-slate-50">{vendor ? "Edit vendor" : "New vendor"}</h2>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">{vendor ? "Edit vendor" : "New vendor"}</h2>
 
         <div className="mt-4 flex flex-col gap-4">
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Vendor name</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Vendor name</span>
             <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} autoFocus />
           </label>
 
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Services</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Services</span>
             <input
               value={services}
               onChange={(e) => setServices(e.target.value)}
@@ -108,55 +108,55 @@ export default function VendorModal({
 
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Contact name</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Contact name</span>
               <input value={contactName} onChange={(e) => setContactName(e.target.value)} className={inputClass} />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Phone</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Phone</span>
               <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} />
             </label>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Email</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Email</span>
               <input value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Website</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Website</span>
               <input value={website} onChange={(e) => setWebsite(e.target.value)} className={inputClass} />
             </label>
           </div>
 
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Address</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Address</span>
             <input value={address} onChange={(e) => setAddress(e.target.value)} className={inputClass} />
           </label>
 
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">City</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">City</span>
               <input value={city} onChange={(e) => setCity(e.target.value)} className={inputClass} />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">State</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">State</span>
               <input value={state} onChange={(e) => setState(e.target.value)} className={inputClass} />
             </label>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Latitude (optional)</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Latitude (optional)</span>
               <input type="number" value={lat} onChange={(e) => setLat(e.target.value)} className={inputClass} />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Longitude (optional)</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Longitude (optional)</span>
               <input type="number" value={lng} onChange={(e) => setLng(e.target.value)} className={inputClass} />
             </label>
           </div>
 
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Notes</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputClass} />
           </label>
         </div>

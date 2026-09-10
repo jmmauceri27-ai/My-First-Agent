@@ -72,7 +72,7 @@ export default function QuoteCalculator({
     <div className="flex flex-col gap-4">
       <Card className="flex flex-wrap gap-4 p-4">
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-slate-300">Client (optional, for override)</span>
+          <span className="font-medium text-slate-700 dark:text-slate-300">Client (optional, for override)</span>
           <select
             value={companyId}
             onChange={(e) => {
@@ -90,7 +90,7 @@ export default function QuoteCalculator({
           </select>
         </label>
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-slate-300">Contract (optional, for its own rate card)</span>
+          <span className="font-medium text-slate-700 dark:text-slate-300">Contract (optional, for its own rate card)</span>
           <select value={contractId} onChange={(e) => setContractId(e.target.value)} className={inputClass}>
             <option value="">No contract</option>
             {contractsForClient.map((c) => (
@@ -102,7 +102,7 @@ export default function QuoteCalculator({
           </select>
         </label>
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-slate-300">Trade</span>
+          <span className="font-medium text-slate-700 dark:text-slate-300">Trade</span>
           <select
             value={trade}
             onChange={(e) => {
@@ -122,20 +122,20 @@ export default function QuoteCalculator({
       </Card>
 
       {!trade ? (
-        <p className="text-sm text-slate-400">Choose a trade to start building a quote.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">Choose a trade to start building a quote.</p>
       ) : itemsByCategory.length === 0 ? (
-        <p className="text-sm text-slate-400">No rate items for {trade} yet.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">No rate items for {trade} yet.</p>
       ) : (
         <div className="flex flex-col gap-6 lg:flex-row">
           <Card className="flex flex-1 flex-col divide-y divide-purple-400/10 overflow-hidden">
-            <p className="bg-purple-500/5 px-4 py-1.5 text-xs font-semibold text-slate-400">
+            <p className="bg-purple-500/5 px-4 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
               {usingContractRateCard
                 ? `Using ${contracts.find((c) => c.id === contractId)?.name ?? "this contract"}'s rate card for ${trade}`
                 : `Using the generic rate card for ${trade}`}
             </p>
             {itemsByCategory.map(([category, items]) => (
               <div key={category}>
-                <p className="bg-purple-500/5 px-4 py-1.5 text-xs font-semibold text-slate-400">{category}</p>
+                <p className="bg-purple-500/5 px-4 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">{category}</p>
                 <div className="flex flex-col divide-y divide-purple-400/10">
                   {items.map((item) => {
                     const qty = quantities[item.id] ?? "";
@@ -144,7 +144,7 @@ export default function QuoteCalculator({
                     return (
                       <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5">
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-slate-50">
+                          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
                             {item.itemName}
                             {item.rateTier !== "Standard" && (
                               <span className="ml-2 rounded-full bg-purple-500/15 px-2 py-0.5 text-xs font-medium text-purple-300">
@@ -152,7 +152,7 @@ export default function QuoteCalculator({
                               </span>
                             )}
                           </p>
-                          <p className="mt-0.5 text-xs text-slate-400">
+                          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                             {formatCurrency(item.rate)} {item.pricingBasis}
                             {item.unitLabel ? ` -- ${item.unitLabel}` : ""}
                           </p>
@@ -167,7 +167,7 @@ export default function QuoteCalculator({
                             placeholder="Qty"
                             className={`${inputClass} w-20 text-right`}
                           />
-                          <p className="w-24 text-right text-sm font-semibold tabular-nums text-slate-50">
+                          <p className="w-24 text-right text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-50">
                             {extended > 0 ? formatCurrency(extended) : "—"}
                           </p>
                         </div>
@@ -180,27 +180,27 @@ export default function QuoteCalculator({
           </Card>
 
           <Card className="flex h-fit w-full flex-col gap-2 p-4 lg:w-72">
-            <h3 className="text-sm font-bold text-slate-50">{trade} Quote</h3>
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-50">{trade} Quote</h3>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-400">Subtotal</span>
-              <span className="font-semibold tabular-nums text-slate-50">
+              <span className="text-slate-500 dark:text-slate-400">Subtotal</span>
+              <span className="font-semibold tabular-nums text-slate-900 dark:text-slate-50">
                 {formatCurrency(result?.subtotal ?? 0)}
               </span>
             </div>
             {result?.override && (
               <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-400">
+                <span className="text-slate-500 dark:text-slate-400">
                   {result.override.overrideType} ({result.override.overrideValue}%)
                 </span>
-                <span className="font-semibold tabular-nums text-slate-50">
+                <span className="font-semibold tabular-nums text-slate-900 dark:text-slate-50">
                   {result.overrideAdjustment >= 0 ? "+" : ""}
                   {formatCurrency(result.overrideAdjustment)}
                 </span>
               </div>
             )}
             <div className="mt-1 flex items-center justify-between border-t border-purple-400/10 pt-2 text-sm">
-              <span className="font-semibold text-slate-300">Total</span>
-              <span className="text-base font-bold tabular-nums text-slate-50">
+              <span className="font-semibold text-slate-700 dark:text-slate-300">Total</span>
+              <span className="text-base font-bold tabular-nums text-slate-900 dark:text-slate-50">
                 {formatCurrency(result?.total ?? 0)}
               </span>
             </div>

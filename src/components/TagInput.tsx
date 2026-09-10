@@ -92,14 +92,14 @@ export default function TagInput({
           className={`${inputClass} w-full`}
         />
         {focused && filteredSuggestions.length > 0 && (
-          <div className="absolute z-[2000] mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-purple-400/40 bg-[#3c2b6b] py-1 shadow-xl shadow-black/50">
+          <div className="absolute z-[2000] mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-purple-200 bg-white py-1 shadow-xl dark:border-purple-400/40 dark:bg-[#3c2b6b] dark:shadow-black/50">
             {filteredSuggestions.map((s) => (
               <button
                 key={s}
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => selectSuggestion(s)}
-                className="block w-full truncate px-2.5 py-1.5 text-left text-xs text-slate-100 hover:bg-purple-500/20"
+                className="block w-full truncate px-2.5 py-1.5 text-left text-xs text-slate-900 dark:text-slate-100 hover:bg-purple-500/20"
               >
                 {s}
               </button>
@@ -108,14 +108,14 @@ export default function TagInput({
         )}
       </div>
       {values.length > 0 && (
-        <div className="rounded-lg border border-purple-400/30 bg-[#1a1330]">
-          <div className="flex items-center justify-between border-b border-purple-400/10 px-2 py-1 text-xs text-slate-400">
+        <div className="rounded-lg border border-purple-200 bg-white dark:border-purple-400/30 dark:bg-[#1a1330]">
+          <div className="flex items-center justify-between border-b border-purple-400/10 px-2 py-1 text-xs text-slate-500 dark:text-slate-400">
             <span>
               {values.length} value{values.length === 1 ? "" : "s"}
             </span>
             <div className="flex items-center gap-2">
               <span className="font-medium">Equals Any</span>
-              <button type="button" onClick={() => onChange([])} className="text-brand-400 hover:underline">
+              <button type="button" onClick={() => onChange([])} className="text-brand-600 dark:text-brand-400 hover:underline">
                 Clear all
               </button>
             </div>
@@ -124,13 +124,13 @@ export default function TagInput({
             {values.map((v, i) => (
               <div
                 key={`${v}-${i}`}
-                className="flex items-center justify-between gap-2 border-b border-purple-400/10 px-2 py-1.5 text-xs text-slate-100 last:border-b-0"
+                className="flex items-center justify-between gap-2 border-b border-purple-400/10 px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100 last:border-b-0"
               >
                 <span className="truncate">{v}</span>
                 <button
                   type="button"
                   onClick={() => removeAt(i)}
-                  className="shrink-0 text-slate-400 hover:text-critical"
+                  className="shrink-0 text-slate-500 dark:text-slate-400 hover:text-critical"
                   aria-label={`Remove ${v}`}
                 >
                   ×

@@ -114,7 +114,7 @@ export default function SiteTradeAssignmentsEditor({
   }
 
   if (trades.length === 0) {
-    return <p className="text-xs text-slate-500">Add a Trade above to assign a Vendor and pricing to it.</p>;
+    return <p className="text-xs text-slate-600 dark:text-slate-500">Add a Trade above to assign a Vendor and pricing to it.</p>;
   }
 
   return (
@@ -131,10 +131,10 @@ export default function SiteTradeAssignmentsEditor({
         );
         return (
           <div key={trade} className="rounded-lg border border-purple-400/20 p-3">
-            <p className="text-sm font-semibold text-slate-50">{trade}</p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{trade}</p>
             <div className="mt-2 grid grid-cols-3 gap-3">
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Vendor</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Vendor</span>
                 <select
                   value={draft.vendorId}
                   onChange={(e) => updateTrade(trade, { vendorId: e.target.value })}
@@ -149,7 +149,7 @@ export default function SiteTradeAssignmentsEditor({
                 </select>
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Sub-Vendor</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Sub-Vendor</span>
                 <select
                   value={draft.subVendorId}
                   onChange={(e) => updateTrade(trade, { subVendorId: e.target.value })}
@@ -166,7 +166,7 @@ export default function SiteTradeAssignmentsEditor({
                 </select>
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Contract</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Contract</span>
                 <select
                   value={draft.contractId}
                   onChange={(e) => updateTrade(trade, { contractId: e.target.value })}
@@ -180,7 +180,7 @@ export default function SiteTradeAssignmentsEditor({
                   ))}
                 </select>
                 {draft.contractId && (
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-slate-600 dark:text-slate-500">
                     Billing type: {contracts.find((c) => c.id === draft.contractId)?.billingType ?? "—"}
                   </span>
                 )}
@@ -189,7 +189,7 @@ export default function SiteTradeAssignmentsEditor({
 
             <div className="mt-2 grid grid-cols-3 gap-3">
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Contract value</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Contract value</span>
                 <input
                   value={draft.contractValue}
                   onChange={(e) => updateTrade(trade, { contractValue: e.target.value })}
@@ -203,7 +203,7 @@ export default function SiteTradeAssignmentsEditor({
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Sub price (to Vendor)</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Sub price (to Vendor)</span>
                 <input
                   value={draft.subPrice}
                   onChange={(e) => updateTrade(trade, { subPrice: e.target.value })}
@@ -215,7 +215,7 @@ export default function SiteTradeAssignmentsEditor({
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Sub-Vendor price</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Sub-Vendor price</span>
                 <input
                   value={draft.subVendorPrice}
                   onChange={(e) => updateTrade(trade, { subVendorPrice: e.target.value })}
@@ -231,15 +231,15 @@ export default function SiteTradeAssignmentsEditor({
             </div>
 
             {(ourMargin !== null || vendorMargin !== null) && (
-              <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-400">
+              <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-500 dark:text-slate-400">
                 {ourMargin !== null && (
                   <span>
-                    Our margin: <span className="font-semibold text-slate-50">{formatCurrency(ourMargin)}</span>
+                    Our margin: <span className="font-semibold text-slate-900 dark:text-slate-50">{formatCurrency(ourMargin)}</span>
                   </span>
                 )}
                 {vendorMargin !== null && (
                   <span>
-                    Vendor margin: <span className="font-semibold text-slate-50">{formatCurrency(vendorMargin)}</span>
+                    Vendor margin: <span className="font-semibold text-slate-900 dark:text-slate-50">{formatCurrency(vendorMargin)}</span>
                   </span>
                 )}
               </div>

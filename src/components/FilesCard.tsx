@@ -142,14 +142,14 @@ export default function FilesCard({
 
   return (
     <Card className="flex flex-col p-5">
-      <h2 className="text-lg font-bold text-slate-50">{title}</h2>
-      {description && <p className="mt-1 text-xs text-slate-400">{description}</p>}
+      <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">{title}</h2>
+      {description && <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{description}</p>}
 
       <div className="mt-4 flex flex-col gap-2">
         <input
           ref={fileInputRef}
           type="file"
-          className="text-xs text-slate-300 file:mr-2 file:rounded-lg file:border-0 file:bg-slate-800 file:px-2.5 file:py-1 file:text-xs file:font-semibold file:text-brand-400"
+          className="text-xs text-slate-700 dark:text-slate-300 file:mr-2 file:rounded-lg file:border-0 file:bg-slate-200 dark:file:bg-slate-800 file:px-2.5 file:py-1 file:text-xs file:font-semibold file:text-brand-600 dark:file:text-brand-400"
         />
         <Button type="button" variant="secondary" onClick={handleUpload} disabled={uploading} className="w-fit">
           {uploading ? "Uploading…" : "Upload"}
@@ -159,7 +159,7 @@ export default function FilesCard({
 
       <div className="mt-4 flex flex-col divide-y divide-purple-400/10">
         {files.length === 0 ? (
-          <p className="py-2 text-xs text-slate-400">No files attached yet.</p>
+          <p className="py-2 text-xs text-slate-500 dark:text-slate-400">No files attached yet.</p>
         ) : (
           files.map((f) =>
             editingId === f.id ? (
@@ -179,14 +179,14 @@ export default function FilesCard({
                   <button
                     onClick={handleRename}
                     disabled={renaming}
-                    className="rounded-lg px-2 py-1 text-xs font-semibold text-brand-400 hover:bg-brand-500/10"
+                    className="rounded-lg px-2 py-1 text-xs font-semibold text-brand-600 dark:text-brand-400 hover:bg-brand-500/10"
                   >
                     {renaming ? "…" : "Save"}
                   </button>
                   <button
                     onClick={() => setEditingId(null)}
                     disabled={renaming}
-                    className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-400 hover:bg-purple-500/10"
+                    className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-purple-500/10"
                   >
                     Cancel
                   </button>
@@ -197,10 +197,10 @@ export default function FilesCard({
                 <div className="flex items-start gap-2">
                   <span className="text-lg leading-none">{fileIcon(f.fileName)}</span>
                   <div className="min-w-0">
-                    <p className="break-all text-sm font-medium text-slate-50" title={f.fileName}>
+                    <p className="break-all text-sm font-medium text-slate-900 dark:text-slate-50" title={f.fileName}>
                       {f.fileName}
                     </p>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       {formatSize(f.sizeBytes)} · {new Date(f.uploadedAt).toLocaleDateString()}
                     </p>
                   </div>
@@ -209,7 +209,7 @@ export default function FilesCard({
                   {onRename && (
                     <button
                       onClick={() => startRename(f)}
-                      className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-400 hover:bg-purple-500/10"
+                      className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-purple-500/10"
                     >
                       Rename
                     </button>
@@ -217,7 +217,7 @@ export default function FilesCard({
                   <button
                     onClick={() => handleDownload(f.id)}
                     disabled={pendingDownloadId === f.id}
-                    className="rounded-lg px-2 py-1 text-xs font-semibold text-brand-400 hover:bg-brand-500/10"
+                    className="rounded-lg px-2 py-1 text-xs font-semibold text-brand-600 dark:text-brand-400 hover:bg-brand-500/10"
                   >
                     {pendingDownloadId === f.id ? "…" : "Download"}
                   </button>

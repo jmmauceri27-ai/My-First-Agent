@@ -67,11 +67,11 @@ export default function MultiSelectDropdown({
         }}
         className={`${inputClass} flex w-full items-center justify-between gap-2 text-left`}
       >
-        <span className={`truncate ${values.length === 0 ? "text-slate-400" : ""}`}>{summary}</span>
-        <span className="shrink-0 text-slate-500">▾</span>
+        <span className={`truncate ${values.length === 0 ? "text-slate-500 dark:text-slate-400" : ""}`}>{summary}</span>
+        <span className="shrink-0 text-slate-600 dark:text-slate-500">▾</span>
       </button>
       {open && (
-        <div className="absolute z-[2000] mt-1 w-56 rounded-lg border border-purple-400/40 bg-[#3c2b6b] p-2 shadow-xl shadow-black/50">
+        <div className="absolute z-[2000] mt-1 w-56 rounded-lg border border-purple-200 bg-white p-2 shadow-xl dark:border-purple-400/40 dark:bg-[#3c2b6b] dark:shadow-black/50">
           {options.length > 5 && (
             <input
               autoFocus
@@ -83,14 +83,14 @@ export default function MultiSelectDropdown({
           )}
           <div className="max-h-56 overflow-y-auto">
             {visibleOptions.length === 0 ? (
-              <p className="px-2 py-1.5 text-sm text-slate-400">
+              <p className="px-2 py-1.5 text-sm text-slate-500 dark:text-slate-400">
                 {options.length === 0 ? "No options." : "No matches."}
               </p>
             ) : (
               visibleOptions.map((o) => (
                 <label
                   key={o.value}
-                  className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-100 hover:bg-purple-500/10"
+                  className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-900 dark:text-slate-100 hover:bg-purple-500/10"
                 >
                   <input
                     type="checkbox"

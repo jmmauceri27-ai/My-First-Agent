@@ -55,8 +55,8 @@ function FieldRow<T>({
     const only = resolution.choices[0];
     return (
       <div className="flex items-center justify-between gap-3 py-1 text-sm">
-        <span className="text-slate-400">{label}</span>
-        <span className="text-slate-100">{format(only.value, only.siteId)}</span>
+        <span className="text-slate-500 dark:text-slate-400">{label}</span>
+        <span className="text-slate-900 dark:text-slate-100">{format(only.value, only.siteId)}</span>
       </div>
     );
   }
@@ -130,8 +130,8 @@ function GroupCard({ group, onMerged }: { group: Site[]; onMerged: () => void })
     <Card className="p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="text-base font-bold text-slate-50">{plan.siteCode || "(no Site ID)"}</h3>
-          <p className="text-xs text-slate-400">
+          <h3 className="text-base font-bold text-slate-900 dark:text-slate-50">{plan.siteCode || "(no Site ID)"}</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             {plan.siteIds.length} records — {Array.from(new Set(group.map((s) => s.name))).join(" / ")}
           </p>
         </div>
@@ -330,7 +330,7 @@ export default function DuplicateSitesClient({ groups }: { groups: Site[][] }) {
   }
 
   if (groups.length === 0) {
-    return <p className="text-sm text-slate-400">No duplicate Site IDs found.</p>;
+    return <p className="text-sm text-slate-500 dark:text-slate-400">No duplicate Site IDs found.</p>;
   }
 
   return (
@@ -338,10 +338,10 @@ export default function DuplicateSitesClient({ groups }: { groups: Site[][] }) {
       {cleanGroups.length > 0 && (
         <Card className="flex flex-wrap items-center justify-between gap-3 p-4">
           <div>
-            <p className="text-sm font-semibold text-slate-100">
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
               {cleanGroups.length} group{cleanGroups.length === 1 ? "" : "s"} have no conflicts
             </p>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Every field cleanly fills in from whichever record has it -- safe to merge automatically.
             </p>
           </div>
@@ -354,7 +354,7 @@ export default function DuplicateSitesClient({ groups }: { groups: Site[][] }) {
 
       {conflictGroups.length > 0 && (
         <div className="flex flex-col gap-4">
-          <p className="text-sm font-semibold text-slate-100">
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
             {conflictGroups.length} group{conflictGroups.length === 1 ? "" : "s"} need your input
           </p>
           {conflictGroups.map(({ group }) => (
@@ -364,7 +364,7 @@ export default function DuplicateSitesClient({ groups }: { groups: Site[][] }) {
       )}
 
       {cleanGroups.length === 0 && conflictGroups.length === 0 && (
-        <p className="text-sm text-slate-400">All duplicate groups have been merged.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">All duplicate groups have been merged.</p>
       )}
     </div>
   );

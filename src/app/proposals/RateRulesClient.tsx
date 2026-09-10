@@ -72,7 +72,7 @@ export default function RateRulesClient({
           type="button"
           onClick={() => setView("assistant")}
           className={`rounded-md px-3 py-1.5 text-sm font-semibold transition-all ${
-            view === "assistant" ? "bg-brand-600 text-white" : "text-slate-400 hover:text-slate-50"
+            view === "assistant" ? "bg-brand-600 text-white" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-50"
           }`}
         >
           Assistant
@@ -81,7 +81,7 @@ export default function RateRulesClient({
           type="button"
           onClick={() => setView("rate-card")}
           className={`rounded-md px-3 py-1.5 text-sm font-semibold transition-all ${
-            view === "rate-card" ? "bg-brand-600 text-white" : "text-slate-400 hover:text-slate-50"
+            view === "rate-card" ? "bg-brand-600 text-white" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-50"
           }`}
         >
           Rate Card
@@ -90,7 +90,7 @@ export default function RateRulesClient({
           type="button"
           onClick={() => setView("calculator")}
           className={`rounded-md px-3 py-1.5 text-sm font-semibold transition-all ${
-            view === "calculator" ? "bg-brand-600 text-white" : "text-slate-400 hover:text-slate-50"
+            view === "calculator" ? "bg-brand-600 text-white" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-50"
           }`}
         >
           Calculator
@@ -106,8 +106,8 @@ export default function RateRulesClient({
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-bold text-slate-50">Rate Card by Trade</h2>
-                <p className="text-xs text-slate-400">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Rate Card by Trade</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Labor, equipment, materials, and flat-rate service items -- a proposal&rsquo;s price for a trade
                   is composed from these, not a single number.
                 </p>
@@ -121,13 +121,13 @@ export default function RateRulesClient({
             </div>
 
             {rateItems.length === 0 ? (
-              <p className="text-sm text-slate-400">No rate items yet.</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">No rate items yet.</p>
             ) : (
               <div className="flex flex-col gap-4">
                 {byTrade.map(({ trade, contractGroups, count }) => (
                   <div key={trade} className="flex flex-col gap-2">
-                    <h3 className="text-sm font-bold uppercase tracking-wide text-slate-400">
-                      {trade} <span className="font-normal text-slate-500">({count})</span>
+                    <h3 className="text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      {trade} <span className="font-normal text-slate-600 dark:text-slate-500">({count})</span>
                     </h3>
                     <div className="flex flex-col gap-3">
                       {contractGroups.map(({ contractLabel, categories }) => (
@@ -138,7 +138,7 @@ export default function RateRulesClient({
                           <Card className="flex flex-col divide-y divide-purple-400/10 overflow-hidden">
                             {categories.map(([category, items]) => (
                               <div key={category}>
-                                <p className="bg-purple-500/5 px-4 py-1.5 text-xs font-semibold text-slate-400">
+                                <p className="bg-purple-500/5 px-4 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
                                   {category}
                                 </p>
                                 <div className="flex flex-col divide-y divide-purple-400/10">
@@ -149,7 +149,7 @@ export default function RateRulesClient({
                                       className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-purple-500/5"
                                     >
                                       <div className="min-w-0">
-                                        <p className="text-sm font-semibold text-slate-50">
+                                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
                                           {item.itemName}
                                           {item.rateTier !== "Standard" && (
                                             <span className="ml-2 rounded-full bg-purple-500/15 px-2 py-0.5 text-xs font-medium text-purple-300">
@@ -157,12 +157,12 @@ export default function RateRulesClient({
                                             </span>
                                           )}
                                         </p>
-                                        <p className="mt-0.5 text-xs text-slate-400">
+                                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                                           {item.pricingBasis}
                                           {item.unitLabel ? ` -- ${item.unitLabel}` : ""}
                                         </p>
                                       </div>
-                                      <p className="shrink-0 text-sm font-semibold tabular-nums text-slate-50">
+                                      <p className="shrink-0 text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-50">
                                         {formatCurrency(item.rate)}
                                       </p>
                                     </button>
@@ -183,8 +183,8 @@ export default function RateRulesClient({
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-bold text-slate-50">Client Overrides</h2>
-                <p className="text-xs text-slate-400">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Client Overrides</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   A specific client&rsquo;s blanket discount or markup on one trade&rsquo;s computed total --
                   applied on top of that trade&rsquo;s rate items above.
                 </p>
@@ -195,7 +195,7 @@ export default function RateRulesClient({
             </div>
 
             {overrides.length === 0 ? (
-              <p className="text-sm text-slate-400">No client overrides yet.</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">No client overrides yet.</p>
             ) : (
               <Card className="flex flex-col divide-y divide-purple-400/10 overflow-hidden">
                 {overrides.map((o) => (
@@ -205,13 +205,13 @@ export default function RateRulesClient({
                     className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-left hover:bg-purple-500/5"
                   >
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-50">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
                         {o.companyName ?? "Unknown client"}{" "}
-                        <span className="font-normal text-slate-500">&middot;</span> {o.trade}
+                        <span className="font-normal text-slate-600 dark:text-slate-500">&middot;</span> {o.trade}
                       </p>
-                      <p className="mt-0.5 text-xs text-slate-400">{o.overrideType}</p>
+                      <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{o.overrideType}</p>
                     </div>
-                    <p className="shrink-0 text-sm font-semibold tabular-nums text-slate-50">{o.overrideValue}%</p>
+                    <p className="shrink-0 text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-50">{o.overrideValue}%</p>
                   </button>
                 ))}
               </Card>

@@ -172,16 +172,16 @@ export default function SiteModal({
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <Card className="max-h-[90vh] w-full max-w-2xl overflow-y-auto p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-bold text-slate-50">{site ? "Edit site" : "New site"}</h2>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">{site ? "Edit site" : "New site"}</h2>
 
         <div className="mt-4 flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Site name</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Site name</span>
               <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} autoFocus />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Site ID</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Site ID</span>
               <input
                 value={siteCode}
                 onChange={(e) => setSiteCode(e.target.value)}
@@ -192,7 +192,7 @@ export default function SiteModal({
           </div>
 
           <div className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Client</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Client</span>
             {addingCompany ? (
               <div className="flex gap-2">
                 <input
@@ -230,7 +230,7 @@ export default function SiteModal({
           </div>
 
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Opportunity (optional)</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Opportunity (optional)</span>
             <select
               value={opportunityId}
               onChange={(e) => {
@@ -252,13 +252,13 @@ export default function SiteModal({
           </label>
 
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Trade</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Trade</span>
             <TradeSelect value={trades} onChange={setTrades} />
           </label>
 
           <div className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Vendor & Contract assignments</span>
-            <p className="-mt-0.5 text-xs text-slate-500">
+            <span className="font-medium text-slate-700 dark:text-slate-300">Vendor & Contract assignments</span>
+            <p className="-mt-0.5 text-xs text-slate-600 dark:text-slate-500">
               A site often uses a different vendor -- and can be covered under a different signed contract -- per
               trade, e.g. one for Land, another for Snow Removal.
             </p>
@@ -272,38 +272,38 @@ export default function SiteModal({
           </div>
 
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Address</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Address</span>
             <input value={address} onChange={(e) => setAddress(e.target.value)} className={inputClass} />
           </label>
 
           <div className="grid grid-cols-3 gap-3">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">City</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">City</span>
               <input value={city} onChange={(e) => setCity(e.target.value)} className={inputClass} />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">State</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">State</span>
               <input value={state} onChange={(e) => setState(e.target.value)} className={inputClass} />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Zip</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Zip</span>
               <input value={zip} onChange={(e) => setZip(e.target.value)} className={inputClass} />
             </label>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Latitude</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Latitude</span>
               <input type="number" value={lat} onChange={(e) => setLat(e.target.value)} className={inputClass} />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Longitude</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Longitude</span>
               <input type="number" value={lng} onChange={(e) => setLng(e.target.value)} className={inputClass} />
             </label>
           </div>
 
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Notes</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputClass} />
           </label>
         </div>
@@ -318,9 +318,9 @@ export default function SiteModal({
         </div>
 
         <div className="mt-6 border-t border-purple-400/10 pt-4">
-          <span className="text-sm font-medium text-slate-300">Last Season Snowfall</span>
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Last Season Snowfall</span>
           <label className="mt-2 flex flex-col gap-1 text-sm">
-            <span className="text-slate-400">Total snowfall (in.)</span>
+            <span className="text-slate-500 dark:text-slate-400">Total snowfall (in.)</span>
             <input
               type="number"
               value={lastSeasonSnowfall}

@@ -38,7 +38,7 @@ export default function ContactsClient({ contacts, companies }: { contacts: Cont
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">
                     {c.name}
-                    {c.title && <span className="ml-2 text-xs font-normal text-slate-400">{c.title}</span>}
+                    {c.title && <span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">{c.title}</span>}
                   </p>
                   <p className="truncate text-xs text-slate-500 dark:text-slate-400">
                     {[c.companyName, c.email, c.phone].filter(Boolean).join(" · ") || "No details"}

@@ -18,6 +18,10 @@ export const metadata: Metadata = {
   description: "Private KPI dashboards built from your facility maintenance data.",
 };
 
+/** Applies the stored theme (defaulting to dark) to <html> before the page paints, so switching to
+ * light mode doesn't flash dark on every load first -- ThemeToggle.tsx only reflects/flips this. */
+const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem("theme");document.documentElement.classList.toggle("dark",t!=="light");}catch(e){document.documentElement.classList.add("dark");}})();`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -26,9 +30,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${displayFont.variable} ${geistMono.variable} dark h-full antialiased`}
+      suppressHydrationWarning
+      className={`${displayFont.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <AppShell>{children}</AppShell>
       </body>
     </html>

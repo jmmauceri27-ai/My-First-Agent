@@ -204,8 +204,8 @@ export default function UploadSitesModal({
     return (
       <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
         <Card className="w-full max-w-md p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-          <h2 className="text-lg font-bold text-slate-50">Sites imported</h2>
-          <p className="mt-2 text-sm text-slate-300">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Sites imported</h2>
+          <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
             Added {importedCount} site{importedCount === 1 ? "" : "s"} to Network → Sites.
           </p>
           {unmatchedClientNames.length > 0 && (
@@ -227,10 +227,10 @@ export default function UploadSitesModal({
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <Card className="max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-bold text-slate-50">Upload sites</h2>
-        <p className="mt-1 text-xs text-slate-400">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Upload sites</h2>
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
           Upload an .xlsx or .csv sheet of sites — every row shares the Client/Opportunity links you pick below.{" "}
-          <button type="button" onClick={handleDownloadSiteTemplate} className="text-brand-400 hover:underline">
+          <button type="button" onClick={handleDownloadSiteTemplate} className="text-brand-600 dark:text-brand-400 hover:underline">
             Download example template
           </button>
         </p>
@@ -240,7 +240,7 @@ export default function UploadSitesModal({
             ref={fileInputRef}
             type="file"
             accept=".xlsx,.csv"
-            className="text-xs text-slate-300 file:mr-2 file:rounded-lg file:border-0 file:bg-slate-800 file:px-2.5 file:py-1 file:text-xs file:font-semibold file:text-brand-400"
+            className="text-xs text-slate-700 dark:text-slate-300 file:mr-2 file:rounded-lg file:border-0 file:bg-slate-200 dark:file:bg-slate-800 file:px-2.5 file:py-1 file:text-xs file:font-semibold file:text-brand-600 dark:file:text-brand-400"
           />
           <Button type="button" variant="secondary" onClick={handleUpload} disabled={uploading} className="w-fit">
             {uploading ? "Parsing…" : "Choose file"}
@@ -251,7 +251,7 @@ export default function UploadSitesModal({
         {parsedRows && (
           <>
             <div className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-purple-400/30 p-3">
-              <p className="text-sm text-slate-300">
+              <p className="text-sm text-slate-700 dark:text-slate-300">
                 Map this sheet&rsquo;s columns — {parsedRows.length} row{parsedRows.length === 1 ? "" : "s"} found.
               </p>
               <div className="flex flex-wrap gap-3">
@@ -269,7 +269,7 @@ export default function UploadSitesModal({
                   ] as const
                 ).map(([key, label]) => (
                   <label key={key} className="flex flex-col gap-1 text-sm">
-                    <span className="font-medium text-slate-300">{label}</span>
+                    <span className="font-medium text-slate-700 dark:text-slate-300">{label}</span>
                     <select
                       value={mapping[key]}
                       onChange={(e) => setMapping((prev) => ({ ...prev, [key]: e.target.value }))}
@@ -290,14 +290,14 @@ export default function UploadSitesModal({
             </div>
 
             <div className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-purple-400/30 p-3">
-              <p className="text-sm text-slate-300">
+              <p className="text-sm text-slate-700 dark:text-slate-300">
                 {mapping.clientName
                   ? "Applied to every imported site, except Client — each row uses its matched Client Name (this is the fallback for rows that don't match)"
                   : "Apply to every imported site"}
               </p>
 
               <div className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Client{mapping.clientName ? " (fallback)" : ""}</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Client{mapping.clientName ? " (fallback)" : ""}</span>
                 {addingCompany ? (
                   <div className="flex gap-2">
                     <input
@@ -335,7 +335,7 @@ export default function UploadSitesModal({
               </div>
 
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Opportunity (optional)</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Opportunity (optional)</span>
                 <select
                   value={opportunityId}
                   onChange={(e) => {
@@ -357,10 +357,10 @@ export default function UploadSitesModal({
               </label>
 
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Trade (optional)</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Trade (optional)</span>
                 <TradeSelect value={trades} onChange={setTrades} placeholder="(none)" />
               </label>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-600 dark:text-slate-500">
                 Vendor and Contract assignments (and pricing) are per-trade -- add those from each site&rsquo;s detail
                 page after importing.
               </p>

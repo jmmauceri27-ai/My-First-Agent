@@ -27,7 +27,7 @@ const RIDGES = [
 
 export default function BackgroundArt() {
   return (
-    <div aria-hidden className="bg-art pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+    <div aria-hidden className="bg-art pointer-events-none fixed inset-0 -z-10 hidden overflow-hidden dark:block">
       {RIDGES.map((ridge, i) => (
         <div
           key={i}

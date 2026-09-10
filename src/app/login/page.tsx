@@ -55,7 +55,7 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <p className="mt-6 text-xs text-slate-400">
+        <p className="mt-6 text-xs text-slate-500 dark:text-slate-400">
           Accounts are created in the Supabase dashboard — there is no public sign-up.
         </p>
       </Card>

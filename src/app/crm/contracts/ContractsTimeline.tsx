@@ -73,19 +73,19 @@ export default function ContractsTimeline({
   }, [contracts, today]);
 
   if (rows.length === 0) {
-    return <p className="text-sm text-slate-400">No contracts have a start date set yet, so there&rsquo;s nothing to plot.</p>;
+    return <p className="text-sm text-slate-500 dark:text-slate-400">No contracts have a start date set yet, so there&rsquo;s nothing to plot.</p>;
   }
 
   return (
     <Card className="p-4">
       <div className="flex flex-wrap items-center gap-4">
         {LEGEND.map((l) => (
-          <span key={l.label} className="flex items-center gap-1.5 text-xs text-slate-400">
+          <span key={l.label} className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
             <span className={`h-2.5 w-2.5 rounded-full ${l.swatchClassName}`} />
             {l.label}
           </span>
         ))}
-        <span className="flex items-center gap-1.5 text-xs text-slate-400">
+        <span className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
           <span className="h-2.5 border-l border-dashed border-brand-400" />
           Today
         </span>
@@ -106,8 +106,8 @@ export default function ContractsTimeline({
                   />
                 )}
                 <div className="min-w-0">
-                  <p className="truncate text-xs font-semibold text-slate-100">{c.name}</p>
-                  <p className="truncate text-[11px] text-slate-400">{c.companyName ?? "No client"}</p>
+                  <p className="truncate text-xs font-semibold text-slate-900 dark:text-slate-100">{c.name}</p>
+                  <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">{c.companyName ?? "No client"}</p>
                 </div>
               </div>
             ))}
@@ -132,7 +132,7 @@ export default function ContractsTimeline({
               {yearTicks.map((t) => (
                 <span
                   key={t.label}
-                  className="absolute top-0 -translate-x-1/2 text-[11px] text-slate-500"
+                  className="absolute top-0 -translate-x-1/2 text-[11px] text-slate-600 dark:text-slate-500"
                   style={{ left: `${t.pct}%` }}
                 >
                   {t.label}
@@ -152,16 +152,16 @@ export default function ContractsTimeline({
                   style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
                 />
                 <span
-                  className="pointer-events-none absolute top-1/2 z-10 hidden w-60 -translate-y-full rounded-lg border border-purple-400/30 bg-[#241a44] p-3 text-xs shadow-xl group-hover:block"
+                  className="pointer-events-none absolute top-1/2 z-10 hidden w-60 -translate-y-full rounded-lg border border-purple-200 bg-white p-3 text-xs shadow-xl group-hover:block dark:border-purple-400/30 dark:bg-[#241a44]"
                   style={{ left: `${Math.min(leftPct, 60)}%` }}
                 >
-                  <p className="font-semibold text-slate-50">{c.name}</p>
-                  <p className="mt-0.5 text-slate-400">{c.companyName ?? "No client"}</p>
-                  <p className="mt-1.5 text-slate-300">
+                  <p className="font-semibold text-slate-900 dark:text-slate-50">{c.name}</p>
+                  <p className="mt-0.5 text-slate-500 dark:text-slate-400">{c.companyName ?? "No client"}</p>
+                  <p className="mt-1.5 text-slate-700 dark:text-slate-300">
                     {formatContractDate(c.startDate)} – {formatContractDate(c.endDate)}
                   </p>
                   {c.rateAmount != null && (
-                    <p className="text-slate-300">
+                    <p className="text-slate-700 dark:text-slate-300">
                       {formatCurrency(c.rateAmount)}
                       {c.rateFrequency ? ` / ${c.rateFrequency}` : ""}
                     </p>
@@ -177,7 +177,7 @@ export default function ContractsTimeline({
       </div>
 
       {undated > 0 && (
-        <p className="mt-3 text-xs text-slate-500">
+        <p className="mt-3 text-xs text-slate-600 dark:text-slate-500">
           {undated} contract{undated === 1 ? "" : "s"} without a start date {undated === 1 ? "isn't" : "aren't"} shown
           here.
         </p>

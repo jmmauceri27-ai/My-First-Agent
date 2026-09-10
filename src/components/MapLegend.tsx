@@ -22,7 +22,7 @@ function formatValue(value: number, format: "currency" | "percent" | "number"): 
 export default function MapLegend(props: MapLegendProps) {
   if (props.mode === "gradient") {
     return (
-      <div className="flex items-center gap-2 text-xs text-slate-400">
+      <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
         <span>{formatValue(props.min, props.format)}</span>
         <div
           className="h-2 w-32 rounded-full"
@@ -36,7 +36,7 @@ export default function MapLegend(props: MapLegendProps) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
+    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
       {props.entries.map((entry) => (
         <span key={entry.label} className="flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.color }} />

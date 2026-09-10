@@ -94,11 +94,11 @@ export default function RateItemModal({
   return (
     <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <Card className="w-full max-w-md p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-bold text-slate-50">{item ? "Edit rate item" : "New rate item"}</h2>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">{item ? "Edit rate item" : "New rate item"}</h2>
 
         <div className="mt-4 flex flex-col gap-4">
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Contract (optional)</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Contract (optional)</span>
             <select value={contractId} onChange={(e) => setContractId(e.target.value)} className={inputClass} autoFocus>
               <option value="">Generic (no contract)</option>
               {contracts.map((c) => (
@@ -108,7 +108,7 @@ export default function RateItemModal({
                 </option>
               ))}
             </select>
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-slate-600 dark:text-slate-500">
               Leave as Generic for the default catalog, or pick a contract if this rate comes from its own
               negotiated rate card -- it&rsquo;ll be used instead of the generic rate for this trade.
             </span>
@@ -116,7 +116,7 @@ export default function RateItemModal({
 
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Trade</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Trade</span>
               <select value={trade} onChange={(e) => setTrade(e.target.value)} className={inputClass}>
                 <option value="">Choose a trade…</option>
                 {TRADE_OPTIONS.map((t) => (
@@ -127,7 +127,7 @@ export default function RateItemModal({
               </select>
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Category</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Category</span>
               <select value={category} onChange={(e) => setCategory(e.target.value)} className={inputClass}>
                 <option value="">Choose a category…</option>
                 {RATE_ITEM_CATEGORIES.map((c) => (
@@ -140,7 +140,7 @@ export default function RateItemModal({
           </div>
 
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Item name</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Item name</span>
             <input
               value={itemName}
               onChange={(e) => setItemName(e.target.value)}
@@ -151,7 +151,7 @@ export default function RateItemModal({
 
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Pricing basis</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Pricing basis</span>
               <select value={pricingBasis} onChange={(e) => setPricingBasis(e.target.value)} className={inputClass}>
                 <option value="">Choose a basis…</option>
                 {PRICING_BASIS_OPTIONS.map((b) => (
@@ -162,7 +162,7 @@ export default function RateItemModal({
               </select>
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Rate tier</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Rate tier</span>
               <select value={rateTier} onChange={(e) => setRateTier(e.target.value)} className={inputClass}>
                 {RATE_TIER_OPTIONS.map((t) => (
                   <option key={t} value={t}>
@@ -175,11 +175,11 @@ export default function RateItemModal({
 
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Rate ($)</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Rate ($)</span>
               <input type="number" step="0.01" value={rate} onChange={(e) => setRate(e.target.value)} className={inputClass} />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Unit label (optional)</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Unit label (optional)</span>
               <input
                 value={unitLabel}
                 onChange={(e) => setUnitLabel(e.target.value)}
@@ -190,7 +190,7 @@ export default function RateItemModal({
           </div>
 
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Notes</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputClass} />
           </label>
         </div>

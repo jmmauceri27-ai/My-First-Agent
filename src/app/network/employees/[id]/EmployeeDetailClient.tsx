@@ -63,27 +63,27 @@ export default function EmployeeDetailClient({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <Link href="/network/employees" className="text-sm font-medium text-brand-400 hover:underline">
+        <Link href="/network/employees" className="text-sm font-medium text-brand-600 dark:text-brand-400 hover:underline">
           ← Back to Employees
         </Link>
-        <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-50">{employee.name}</h1>
+        <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">{employee.name}</h1>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className="p-5 lg:col-span-2">
-          <h2 className="text-lg font-bold text-slate-50">Details</h2>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Details</h2>
 
           <div className="mt-4 flex flex-col gap-4">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Name</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Name</span>
               <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Title</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Title</span>
               <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Department</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Department</span>
               <select value={department} onChange={(e) => setDepartment(e.target.value)} className={inputClass}>
                 <option value="">(none)</option>
                 {DEPARTMENTS.map((d) => (
@@ -95,11 +95,11 @@ export default function EmployeeDetailClient({
             </label>
             <div className="grid grid-cols-2 gap-3">
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Email</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Email</span>
                 <input value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Phone</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Phone</span>
                 <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} />
               </label>
             </div>
@@ -118,24 +118,24 @@ export default function EmployeeDetailClient({
         </Card>
 
         <Card className="flex flex-col p-5">
-          <h2 className="text-lg font-bold text-slate-50">Opportunities managed</h2>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Opportunities managed</h2>
 
           <div className="mt-4 flex flex-col divide-y divide-purple-400/10">
             {opportunities.length === 0 ? (
-              <p className="py-2 text-xs text-slate-400">Not managing any opportunities yet.</p>
+              <p className="py-2 text-xs text-slate-500 dark:text-slate-400">Not managing any opportunities yet.</p>
             ) : (
               opportunities.map((o) => (
                 <Link
                   key={o.id}
                   href={`/crm/opportunities/${o.id}`}
-                  className="flex items-center justify-between gap-2 py-2 hover:text-brand-400"
+                  className="flex items-center justify-between gap-2 py-2 hover:text-brand-600 dark:hover:text-brand-400"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-slate-50">{o.name}</p>
-                    <p className="text-xs text-slate-400">{o.stage}</p>
+                    <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-50">{o.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{o.stage}</p>
                   </div>
                   {o.amount != null && (
-                    <span className="shrink-0 text-xs tabular-nums text-slate-400">{formatCurrency(o.amount)}</span>
+                    <span className="shrink-0 text-xs tabular-nums text-slate-500 dark:text-slate-400">{formatCurrency(o.amount)}</span>
                   )}
                 </Link>
               ))

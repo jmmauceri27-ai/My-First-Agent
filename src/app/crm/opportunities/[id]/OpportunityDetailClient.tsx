@@ -249,7 +249,7 @@ export default function OpportunityDetailClient({
                 {sites.length > 0 ? (
                   <div className={`${inputClass} flex items-center bg-slate-100 dark:bg-slate-900`}>
                     {siteCount || 0}
-                    <span className="ml-1.5 text-xs text-slate-400">(from uploaded sites, see below)</span>
+                    <span className="ml-1.5 text-xs text-slate-500 dark:text-slate-400">(from uploaded sites, see below)</span>
                   </div>
                 ) : (
                   <input
@@ -285,7 +285,7 @@ export default function OpportunityDetailClient({
               <span className="font-medium text-slate-700 dark:text-slate-300">Contacts involved</span>
               <div className="flex max-h-32 flex-col gap-1 overflow-y-auto rounded-lg border border-slate-300 p-2 dark:border-slate-700">
                 {contacts.length === 0 ? (
-                  <span className="text-xs text-slate-400">No contacts yet — add some on the Contacts page.</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">No contacts yet — add some on the Contacts page.</span>
                 ) : (
                   contacts.map((c) => (
                     <label key={c.id} className="flex items-center gap-1.5 text-sm">
@@ -296,7 +296,7 @@ export default function OpportunityDetailClient({
                         className="accent-brand-600"
                       />
                       {c.name}
-                      {c.companyName && <span className="text-xs text-slate-400">({c.companyName})</span>}
+                      {c.companyName && <span className="text-xs text-slate-500 dark:text-slate-400">({c.companyName})</span>}
                     </label>
                   ))
                 )}

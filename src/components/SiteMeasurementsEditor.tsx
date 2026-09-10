@@ -74,21 +74,21 @@ export default function SiteMeasurementsEditor({
   return (
     <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${className}`}>
       <div>
-        <h3 className="text-sm font-bold text-slate-50">Measurements</h3>
+        <h3 className="text-sm font-bold text-slate-900 dark:text-slate-50">Measurements</h3>
         <div className="mt-2 flex flex-col gap-3">
           {groupedMeasurements.every((g) => g.entries.length === 0) ? (
-            <p className="text-xs text-slate-400">No measurements yet.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">No measurements yet.</p>
           ) : (
             groupedMeasurements
               .filter((g) => g.entries.length > 0)
               .map((group) => (
                 <div key={group.label} className="flex flex-col gap-1">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{group.label}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{group.label}</p>
                   {group.entries.map(([label, value]) => (
                     <div key={label} className="flex items-center justify-between gap-2 text-sm">
-                      <span className="text-slate-300">{label}</span>
+                      <span className="text-slate-700 dark:text-slate-300">{label}</span>
                       <div className="flex items-center gap-2">
-                        <span className="tabular-nums text-slate-50">{formatSquareFeet(value)}</span>
+                        <span className="tabular-nums text-slate-900 dark:text-slate-50">{formatSquareFeet(value)}</span>
                         <button
                           type="button"
                           onClick={() => removeMeasurement(label)}
@@ -123,16 +123,16 @@ export default function SiteMeasurementsEditor({
       </div>
 
       <div>
-        <h3 className="text-sm font-bold text-slate-50">Counts</h3>
+        <h3 className="text-sm font-bold text-slate-900 dark:text-slate-50">Counts</h3>
         <div className="mt-2 flex flex-col gap-1">
           {Object.entries(counts).length === 0 ? (
-            <p className="text-xs text-slate-400">No counts yet.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">No counts yet.</p>
           ) : (
             Object.entries(counts).map(([label, value]) => (
               <div key={label} className="flex items-center justify-between gap-2 text-sm">
-                <span className="text-slate-300">{label}</span>
+                <span className="text-slate-700 dark:text-slate-300">{label}</span>
                 <div className="flex items-center gap-2">
-                  <span className="tabular-nums text-slate-50">{value.toLocaleString("en-US")}</span>
+                  <span className="tabular-nums text-slate-900 dark:text-slate-50">{value.toLocaleString("en-US")}</span>
                   <button
                     type="button"
                     onClick={() => removeCount(label)}

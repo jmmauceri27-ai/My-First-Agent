@@ -144,8 +144,8 @@ export default function UpdateSiteRateScheduleModal({
     return (
       <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
         <Card className="w-full max-w-md p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-          <h2 className="text-lg font-bold text-slate-50">{trade} rate schedule updated</h2>
-          <p className="mt-2 text-sm text-slate-300">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">{trade} rate schedule updated</h2>
+          <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
             Updated {result.updated} site{result.updated === 1 ? "" : "s"}&rsquo; {trade} rate schedule. Only the
             mapped months changed -- every other trade, and any month you didn&rsquo;t map, was left untouched.
           </p>
@@ -174,18 +174,18 @@ export default function UpdateSiteRateScheduleModal({
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <Card className="max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-bold text-slate-50">Update rate schedule</h2>
-        <p className="mt-1 text-xs text-slate-400">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Update rate schedule</h2>
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
           Bulk-set which months one Trade is paid for, and how much, on existing sites from a sheet -- scoped to a
           single Trade you pick below, so e.g. updating Land&rsquo;s schedule never touches a site&rsquo;s Snow
           Removal schedule.{" "}
-          <button type="button" onClick={handleDownloadTemplate} className="text-brand-400 hover:underline">
+          <button type="button" onClick={handleDownloadTemplate} className="text-brand-600 dark:text-brand-400 hover:underline">
             Download example template
           </button>
         </p>
 
         <label className="mt-4 flex flex-col gap-1 text-sm">
-          <span className="font-medium text-slate-300">Trade (required)</span>
+          <span className="font-medium text-slate-700 dark:text-slate-300">Trade (required)</span>
           <select value={trade} onChange={(e) => setTrade(e.target.value)} className={inputClass}>
             <option value="">Choose a trade…</option>
             {TRADE_OPTIONS.map((t) => (
@@ -201,7 +201,7 @@ export default function UpdateSiteRateScheduleModal({
             ref={fileInputRef}
             type="file"
             accept=".xlsx,.csv"
-            className="text-xs text-slate-300 file:mr-2 file:rounded-lg file:border-0 file:bg-slate-800 file:px-2.5 file:py-1 file:text-xs file:font-semibold file:text-brand-400"
+            className="text-xs text-slate-700 dark:text-slate-300 file:mr-2 file:rounded-lg file:border-0 file:bg-slate-200 dark:file:bg-slate-800 file:px-2.5 file:py-1 file:text-xs file:font-semibold file:text-brand-600 dark:file:text-brand-400"
           />
           <Button type="button" variant="secondary" onClick={handleUpload} disabled={uploading} className="w-fit">
             {uploading ? "Parsing…" : "Choose file"}
@@ -212,12 +212,12 @@ export default function UpdateSiteRateScheduleModal({
         {parsedRows && (
           <>
             <div className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-purple-400/30 p-3">
-              <p className="text-sm text-slate-300">
+              <p className="text-sm text-slate-700 dark:text-slate-300">
                 Match sites by — {parsedRows.length} row{parsedRows.length === 1 ? "" : "s"} found.
               </p>
               <div className="flex flex-wrap gap-3">
                 <label className="flex flex-col gap-1 text-sm">
-                  <span className="font-medium text-slate-300">Site ID column (recommended)</span>
+                  <span className="font-medium text-slate-700 dark:text-slate-300">Site ID column (recommended)</span>
                   <select
                     value={matchMapping.matchCode}
                     onChange={(e) => setMatchMapping((prev) => ({ ...prev, matchCode: e.target.value }))}
@@ -232,7 +232,7 @@ export default function UpdateSiteRateScheduleModal({
                   </select>
                 </label>
                 <label className="flex flex-col gap-1 text-sm">
-                  <span className="font-medium text-slate-300">Record ID column</span>
+                  <span className="font-medium text-slate-700 dark:text-slate-300">Record ID column</span>
                   <select
                     value={matchMapping.matchId}
                     onChange={(e) => setMatchMapping((prev) => ({ ...prev, matchId: e.target.value }))}
@@ -247,7 +247,7 @@ export default function UpdateSiteRateScheduleModal({
                   </select>
                 </label>
                 <label className="flex flex-col gap-1 text-sm">
-                  <span className="font-medium text-slate-300">Site Name column</span>
+                  <span className="font-medium text-slate-700 dark:text-slate-300">Site Name column</span>
                   <select
                     value={matchMapping.matchName}
                     onChange={(e) => setMatchMapping((prev) => ({ ...prev, matchName: e.target.value }))}
@@ -264,7 +264,7 @@ export default function UpdateSiteRateScheduleModal({
               </div>
               {!matchMapping.matchCode && !matchMapping.matchId && (
                 <label className="flex flex-col gap-1 text-sm">
-                  <span className="font-medium text-slate-300">Client (optional, disambiguates name matches)</span>
+                  <span className="font-medium text-slate-700 dark:text-slate-300">Client (optional, disambiguates name matches)</span>
                   <select value={companyId} onChange={(e) => setCompanyId(e.target.value)} className={inputClass}>
                     <option value="">All clients</option>
                     {companies.map((c) => (
@@ -278,14 +278,14 @@ export default function UpdateSiteRateScheduleModal({
             </div>
 
             <div className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-purple-400/30 p-3">
-              <p className="text-sm text-slate-300">
+              <p className="text-sm text-slate-700 dark:text-slate-300">
                 Months to update on the {trade || "selected trade"} schedule (leave as None to leave that month
                 untouched)
               </p>
               <div className="flex flex-wrap gap-3">
                 {MONTHS.map((month) => (
                   <label key={month} className="flex flex-col gap-1 text-sm">
-                    <span className="font-medium text-slate-300">{month}</span>
+                    <span className="font-medium text-slate-700 dark:text-slate-300">{month}</span>
                     <select
                       value={monthMapping[month]}
                       onChange={(e) => setMonthMapping((prev) => ({ ...prev, [month]: e.target.value }))}
@@ -301,7 +301,7 @@ export default function UpdateSiteRateScheduleModal({
                   </label>
                 ))}
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-600 dark:text-slate-500">
                 A row&rsquo;s blank or non-numeric cell in a mapped month column leaves that month untouched for
                 that site, rather than clearing it.
               </p>

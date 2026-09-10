@@ -77,7 +77,7 @@ export default function RatesClient({ sites }: { sites: Site[] }) {
       {allRows.length > 0 && (
         <Card className="flex flex-wrap gap-4 p-4">
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Trade</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Trade</span>
             <select value={tradeFilter} onChange={(e) => setTradeFilter(e.target.value)} className={inputClass}>
               <option value="">All</option>
               {tradeOptions.map((t) => (
@@ -88,7 +88,7 @@ export default function RatesClient({ sites }: { sites: Site[] }) {
             </select>
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Client</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Client</span>
             <select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)} className={inputClass}>
               <option value="">All</option>
               {clientOptions.map((c) => (
@@ -102,17 +102,17 @@ export default function RatesClient({ sites }: { sites: Site[] }) {
       )}
 
       <Card className="p-5">
-        <h2 className="text-lg font-bold text-slate-50">Monthly Revenue</h2>
-        <p className="-mt-0.5 text-xs text-slate-500">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Monthly Revenue</h2>
+        <p className="-mt-0.5 text-xs text-slate-600 dark:text-slate-500">
           Total rate schedule across every site and trade, recurring every year -- what we expect to be paid each
           month.
         </p>
         {allRows.length === 0 ? (
-          <p className="mt-4 text-sm text-slate-500">
+          <p className="mt-4 text-sm text-slate-600 dark:text-slate-500">
             No rate schedules set yet -- add one from a site&rsquo;s Rate Schedule section.
           </p>
         ) : rows.length === 0 ? (
-          <p className="mt-4 text-sm text-slate-500">No rate schedules match these filters.</p>
+          <p className="mt-4 text-sm text-slate-600 dark:text-slate-500">No rate schedules match these filters.</p>
         ) : (
           <div className="mt-4">
             <ResponsiveContainer width="100%" height={280}>
@@ -145,12 +145,12 @@ export default function RatesClient({ sites }: { sites: Site[] }) {
 
       {rows.length > 0 && (
         <Card className="p-5">
-          <h2 className="text-lg font-bold text-slate-50">Rate Schedule by Site</h2>
-          <p className="-mt-0.5 text-xs text-slate-500">Every site/trade with a rate schedule set, across the portfolio.</p>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Rate Schedule by Site</h2>
+          <p className="-mt-0.5 text-xs text-slate-600 dark:text-slate-500">Every site/trade with a rate schedule set, across the portfolio.</p>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[900px] border-collapse text-sm">
               <thead>
-                <tr className="border-b border-purple-400/10 text-left text-xs uppercase tracking-wide text-slate-400">
+                <tr className="border-b border-purple-400/10 text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   <th className="py-2 pr-3">Client</th>
                   <th className="py-2 pr-3">Site</th>
                   <th className="py-2 pr-3">Trade</th>
@@ -165,29 +165,29 @@ export default function RatesClient({ sites }: { sites: Site[] }) {
               <tbody>
                 {rows.map((r) => (
                   <tr key={r.key} className="border-b border-purple-400/5">
-                    <td className="py-2 pr-3 text-slate-300">{r.companyName ?? "—"}</td>
-                    <td className="py-2 pr-3 text-slate-300">{r.siteName}</td>
-                    <td className="py-2 pr-3 text-slate-300">{r.trade}</td>
+                    <td className="py-2 pr-3 text-slate-700 dark:text-slate-300">{r.companyName ?? "—"}</td>
+                    <td className="py-2 pr-3 text-slate-700 dark:text-slate-300">{r.siteName}</td>
+                    <td className="py-2 pr-3 text-slate-700 dark:text-slate-300">{r.trade}</td>
                     {MONTHS.map((m) => (
-                      <td key={m} className="py-2 pr-3 text-right text-slate-400">
+                      <td key={m} className="py-2 pr-3 text-right text-slate-500 dark:text-slate-400">
                         {r.amounts[m] != null ? formatCurrency(r.amounts[m] as number) : "—"}
                       </td>
                     ))}
-                    <td className="py-2 pl-3 text-right font-semibold text-slate-50">{formatCurrency(r.total)}</td>
+                    <td className="py-2 pl-3 text-right font-semibold text-slate-900 dark:text-slate-50">{formatCurrency(r.total)}</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
                 <tr className="border-t border-purple-400/20 font-semibold">
-                  <td className="py-2 pr-3 text-slate-50" colSpan={3}>
+                  <td className="py-2 pr-3 text-slate-900 dark:text-slate-50" colSpan={3}>
                     Portfolio Total
                   </td>
                   {monthlyTotals.map((m) => (
-                    <td key={m.month} className="py-2 pr-3 text-right text-slate-50">
+                    <td key={m.month} className="py-2 pr-3 text-right text-slate-900 dark:text-slate-50">
                       {formatCurrency(m.total)}
                     </td>
                   ))}
-                  <td className="py-2 pl-3 text-right text-slate-50">{formatCurrency(grandTotal)}</td>
+                  <td className="py-2 pl-3 text-right text-slate-900 dark:text-slate-50">{formatCurrency(grandTotal)}</td>
                 </tr>
               </tfoot>
             </table>

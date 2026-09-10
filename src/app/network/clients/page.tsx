@@ -9,7 +9,7 @@ export default async function ClientsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-3xl font-extrabold tracking-tight text-slate-50">🌐 Network</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">🌐 Network</h1>
       <NetworkNav active="clients" />
       <ClientsClient companies={companies} />
     </div>

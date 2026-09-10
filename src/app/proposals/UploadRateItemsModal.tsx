@@ -192,8 +192,8 @@ export default function UploadRateItemsModal({
     return (
       <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
         <Card className="w-full max-w-md p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-          <h2 className="text-lg font-bold text-slate-50">Rate items imported</h2>
-          <p className="mt-2 text-sm text-slate-300">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Rate items imported</h2>
+          <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
             Added {result.inserted} rate item{result.inserted === 1 ? "" : "s"}.
           </p>
           {result.skipped > 0 && (
@@ -231,17 +231,17 @@ export default function UploadRateItemsModal({
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <Card className="max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-bold text-slate-50">Upload rate items</h2>
-        <p className="mt-1 text-xs text-slate-400">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Upload rate items</h2>
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
           Upload an .xlsx or .csv sheet of rate items -- Trade and Category must match the app&rsquo;s fixed lists
           (e.g. Trade: Land, Snow Removal...; Category: Labor, Equipment, Materials, Service).{" "}
-          <button type="button" onClick={handleDownloadTemplate} className="text-brand-400 hover:underline">
+          <button type="button" onClick={handleDownloadTemplate} className="text-brand-600 dark:text-brand-400 hover:underline">
             Download example template
           </button>
         </p>
 
         <label className="mt-4 flex flex-col gap-1 text-sm">
-          <span className="font-medium text-slate-300">Contract (optional)</span>
+          <span className="font-medium text-slate-700 dark:text-slate-300">Contract (optional)</span>
           <select value={contractId} onChange={(e) => setContractId(e.target.value)} className={inputClass}>
             <option value="">Generic (no contract)</option>
             {contracts.map((c) => (
@@ -251,7 +251,7 @@ export default function UploadRateItemsModal({
               </option>
             ))}
           </select>
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-slate-600 dark:text-slate-500">
             Applies to every row in this file -- leave as Generic for the default catalog, or pick a contract to
             import its own negotiated rate card (e.g. an MSA rate sheet). It&rsquo;ll be used instead of the
             generic rate for any trade it covers.
@@ -263,7 +263,7 @@ export default function UploadRateItemsModal({
             ref={fileInputRef}
             type="file"
             accept=".xlsx,.csv"
-            className="text-xs text-slate-300 file:mr-2 file:rounded-lg file:border-0 file:bg-slate-800 file:px-2.5 file:py-1 file:text-xs file:font-semibold file:text-brand-400"
+            className="text-xs text-slate-700 dark:text-slate-300 file:mr-2 file:rounded-lg file:border-0 file:bg-slate-200 dark:file:bg-slate-800 file:px-2.5 file:py-1 file:text-xs file:font-semibold file:text-brand-600 dark:file:text-brand-400"
           />
           <Button type="button" variant="secondary" onClick={handleUpload} disabled={uploading} className="w-fit">
             {uploading ? "Parsing…" : "Choose file"}
@@ -274,7 +274,7 @@ export default function UploadRateItemsModal({
         {parsedRows && (
           <>
             <div className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-purple-400/30 p-3">
-              <p className="text-sm text-slate-300">
+              <p className="text-sm text-slate-700 dark:text-slate-300">
                 Map this sheet&rsquo;s columns — {parsedRows.length} row{parsedRows.length === 1 ? "" : "s"} found.
               </p>
               <div className="flex flex-wrap gap-3">
@@ -291,7 +291,7 @@ export default function UploadRateItemsModal({
                   ] as const
                 ).map(([key, label]) => (
                   <label key={key} className="flex flex-col gap-1 text-sm">
-                    <span className="font-medium text-slate-300">{label}</span>
+                    <span className="font-medium text-slate-700 dark:text-slate-300">{label}</span>
                     <select
                       value={mapping[key]}
                       onChange={(e) => setMapping((prev) => ({ ...prev, [key]: e.target.value }))}
@@ -307,7 +307,7 @@ export default function UploadRateItemsModal({
                   </label>
                 ))}
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-600 dark:text-slate-500">
                 Rate Tier defaults to Standard when left unmapped or a cell doesn&rsquo;t match Standard/OT/Premium.
                 Rows with an unrecognized Trade, Category, or Pricing Basis are skipped and reported after import.
               </p>

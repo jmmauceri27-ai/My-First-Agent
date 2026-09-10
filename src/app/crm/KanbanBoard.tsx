@@ -162,9 +162,9 @@ export default function KanbanBoard({
 
       {fixError && <p className="text-sm text-critical">{fixError}</p>}
       {fixResult && (
-        <div className="rounded-lg border border-purple-400/20 bg-[#1a1330] p-3 text-sm">
+        <div className="rounded-lg border border-purple-400/20 bg-white p-3 text-sm dark:bg-[#1a1330]">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-slate-100">
+            <p className="text-slate-900 dark:text-slate-100">
               {fixResult.fixed.length === 0
                 ? "No file attachments needed fixing."
                 : `Fixed ${fixResult.fixed.length} file name${fixResult.fixed.length === 1 ? "" : "s"}.`}
@@ -174,7 +174,7 @@ export default function KanbanBoard({
             </Button>
           </div>
           {fixResult.fixed.length > 0 && (
-            <ul className="mt-2 flex flex-col gap-0.5 text-xs text-slate-400">
+            <ul className="mt-2 flex flex-col gap-0.5 text-xs text-slate-500 dark:text-slate-400">
               {fixResult.fixed.map((f) => (
                 <li key={f.fileName}>
                   {f.fileName} → {f.newFileName}

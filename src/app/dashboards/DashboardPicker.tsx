@@ -20,7 +20,7 @@ export default function DashboardPicker({
             className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
               active
                 ? "bg-brand-600 text-white shadow-sm shadow-brand-600/30"
-                : "text-slate-400 hover:bg-purple-500/10 hover:text-slate-50"
+                : "text-slate-500 dark:text-slate-400 hover:bg-purple-500/10 hover:text-slate-900 dark:hover:text-slate-50"
             }`}
           >
             {d.name}

@@ -23,7 +23,7 @@ export default function CrmNav({
             className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
               isActive
                 ? "bg-brand-600 text-white shadow-sm shadow-brand-600/30 dark:bg-brand-500"
-                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-50"
+                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-900 dark:hover:text-slate-50"
             }`}
           >
             {link.label}

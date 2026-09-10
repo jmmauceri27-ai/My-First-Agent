@@ -50,14 +50,14 @@ export default async function DashboardsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-3xl font-extrabold tracking-tight text-slate-50">📊 Dashboards</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">📊 Dashboards</h1>
 
       <div className="flex flex-col gap-6 lg:flex-row">
         <AreaSidebar selectedArea={selectedArea} />
 
         <div className="flex min-w-0 flex-1 flex-col gap-6">
           {pickerItems.length === 0 && (
-            <p className="text-sm text-slate-400">No dashboards yet for {selectedArea}.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">No dashboards yet for {selectedArea}.</p>
           )}
 
           {pickerItems.length > 0 && (
@@ -72,7 +72,7 @@ export default async function DashboardsPage({
               ) : showExpenseSchedule ? (
                 <ExpensesClient sites={sites ?? []} />
               ) : !selected || selected.config.cards.length === 0 ? (
-                <p className="text-sm text-slate-400">This dashboard has no cards yet.</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">This dashboard has no cards yet.</p>
               ) : (
                 <DashboardViewClient key={selected.id} config={selected.config} />
               )}

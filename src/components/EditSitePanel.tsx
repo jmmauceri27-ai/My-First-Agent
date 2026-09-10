@@ -114,14 +114,14 @@ export default function EditSitePanel({
         className="max-h-[90vh] w-full max-w-md overflow-y-auto p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-lg font-bold text-slate-50">{title}</h2>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">{title}</h2>
 
         {readOnlyFields.length > 0 && (
           <div className="mt-3 flex flex-col gap-1 rounded-lg bg-purple-500/10 px-3 py-2">
             {readOnlyFields.map((field) => (
               <div key={field.key} className="flex items-center justify-between text-sm">
-                <span className="text-slate-400">{field.key}</span>
-                <span className="font-semibold text-slate-100">{field.value}</span>
+                <span className="text-slate-500 dark:text-slate-400">{field.key}</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">{field.value}</span>
               </div>
             ))}
           </div>
@@ -130,7 +130,7 @@ export default function EditSitePanel({
         <div className="mt-4 flex flex-col gap-3">
           {fields.map((field, i) => (
             <label key={field.key} className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">{field.key}</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">{field.key}</span>
               <input
                 value={field.value}
                 onChange={(e) => updateValue(i, e.target.value)}
@@ -141,18 +141,18 @@ export default function EditSitePanel({
                 <button
                   type="button"
                   onClick={() => onOpenLink(field.value.trim())}
-                  className="w-fit text-xs font-medium text-brand-400 hover:text-brand-300 hover:underline"
+                  className="w-fit text-xs font-medium text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 hover:underline"
                 >
                   View vendor details →
                 </button>
               )}
             </label>
           ))}
-          {fields.length === 0 && <p className="text-sm text-slate-400">No fields yet — add one below.</p>}
+          {fields.length === 0 && <p className="text-sm text-slate-500 dark:text-slate-400">No fields yet — add one below.</p>}
         </div>
 
         <div className="mt-4 rounded-lg border border-dashed border-purple-400/30 p-3">
-          <p className="text-sm font-medium text-slate-300">Add a field</p>
+          <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Add a field</p>
           <div className="mt-2 flex flex-wrap gap-2">
             <input
               value={newKey}

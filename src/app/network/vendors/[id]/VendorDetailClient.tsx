@@ -86,78 +86,78 @@ export default function VendorDetailClient({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <Link href="/network" className="text-sm font-medium text-brand-400 hover:underline">
+        <Link href="/network" className="text-sm font-medium text-brand-600 dark:text-brand-400 hover:underline">
           ← Back to Network
         </Link>
-        <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-50">{vendor.name}</h1>
+        <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">{vendor.name}</h1>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className="p-5 lg:col-span-2">
-          <h2 className="text-lg font-bold text-slate-50">Details</h2>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Details</h2>
 
           <div className="mt-4 flex flex-col gap-4">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Vendor name</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Vendor name</span>
               <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
             </label>
 
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Services</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Services</span>
               <input value={services} onChange={(e) => setServices(e.target.value)} className={inputClass} />
             </label>
 
             <div className="grid grid-cols-2 gap-3">
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Contact name</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Contact name</span>
                 <input value={contactName} onChange={(e) => setContactName(e.target.value)} className={inputClass} />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Phone</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Phone</span>
                 <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} />
               </label>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Email</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Email</span>
                 <input value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Website</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Website</span>
                 <input value={website} onChange={(e) => setWebsite(e.target.value)} className={inputClass} />
               </label>
             </div>
 
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Address</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Address</span>
               <input value={address} onChange={(e) => setAddress(e.target.value)} className={inputClass} />
             </label>
 
             <div className="grid grid-cols-2 gap-3">
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">City</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">City</span>
                 <input value={city} onChange={(e) => setCity(e.target.value)} className={inputClass} />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">State</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">State</span>
                 <input value={state} onChange={(e) => setState(e.target.value)} className={inputClass} />
               </label>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Latitude</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Latitude</span>
                 <input type="number" value={lat} onChange={(e) => setLat(e.target.value)} className={inputClass} />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Longitude</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Longitude</span>
                 <input type="number" value={lng} onChange={(e) => setLng(e.target.value)} className={inputClass} />
               </label>
             </div>
 
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Notes</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>
               <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputClass} />
             </label>
           </div>
@@ -175,14 +175,14 @@ export default function VendorDetailClient({
         </Card>
 
         <Card className="flex flex-col p-5">
-          <h2 className="text-lg font-bold text-slate-50">Sites serviced directly</h2>
-          <p className="mt-1 text-xs text-slate-400">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Sites serviced directly</h2>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             (Site, Trade) pairs where this vendor is contracted to directly.
           </p>
 
           <div className="mt-4 flex flex-col divide-y divide-purple-400/10">
             {assignmentsAsVendor.length === 0 ? (
-              <p className="py-2 text-xs text-slate-400">No sites assigned yet.</p>
+              <p className="py-2 text-xs text-slate-500 dark:text-slate-400">No sites assigned yet.</p>
             ) : (
               assignmentsAsVendor.map((a) => {
                 const vendorMargin = computeSiteMargin(a.subPrice, a.subVendorPrice);
@@ -190,18 +190,18 @@ export default function VendorDetailClient({
                   <Link
                     key={a.id}
                     href={`/network/sites/${a.siteId}`}
-                    className="flex items-center justify-between gap-2 py-2 hover:text-brand-400"
+                    className="flex items-center justify-between gap-2 py-2 hover:text-brand-600 dark:hover:text-brand-400"
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-slate-50">{a.siteName}</p>
-                      <p className="text-xs text-slate-400">
+                      <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-50">{a.siteName}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
                         {a.trade} · {a.companyName ?? "No client"}
                         {a.subVendorName ? ` · Sub-Vendor: ${a.subVendorName}` : ""}
                       </p>
                     </div>
-                    <div className="shrink-0 text-right text-xs tabular-nums text-slate-400">
+                    <div className="shrink-0 text-right text-xs tabular-nums text-slate-500 dark:text-slate-400">
                       {a.subPrice != null && <p>{formatCurrency(a.subPrice)}</p>}
-                      {vendorMargin != null && <p className="text-slate-50">Margin {formatCurrency(vendorMargin)}</p>}
+                      {vendorMargin != null && <p className="text-slate-900 dark:text-slate-50">Margin {formatCurrency(vendorMargin)}</p>}
                     </div>
                   </Link>
                 );
@@ -211,29 +211,29 @@ export default function VendorDetailClient({
         </Card>
 
         <Card className="flex flex-col p-5 lg:col-start-3">
-          <h2 className="text-lg font-bold text-slate-50">Sites serviced as Sub-Vendor</h2>
-          <p className="mt-1 text-xs text-slate-400">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Sites serviced as Sub-Vendor</h2>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             (Site, Trade) pairs where another vendor subcontracts work to this vendor.
           </p>
 
           <div className="mt-4 flex flex-col divide-y divide-purple-400/10">
             {assignmentsAsSubVendor.length === 0 ? (
-              <p className="py-2 text-xs text-slate-400">Not used as a sub-vendor yet.</p>
+              <p className="py-2 text-xs text-slate-500 dark:text-slate-400">Not used as a sub-vendor yet.</p>
             ) : (
               assignmentsAsSubVendor.map((a) => (
                 <Link
                   key={a.id}
                   href={`/network/sites/${a.siteId}`}
-                  className="flex items-center justify-between gap-2 py-2 hover:text-brand-400"
+                  className="flex items-center justify-between gap-2 py-2 hover:text-brand-600 dark:hover:text-brand-400"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-slate-50">{a.siteName}</p>
-                    <p className="text-xs text-slate-400">
+                    <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-50">{a.siteName}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       {a.trade} · Via {a.vendorName ?? "unknown vendor"}
                     </p>
                   </div>
                   {a.subVendorPrice != null && (
-                    <span className="shrink-0 text-xs tabular-nums text-slate-400">
+                    <span className="shrink-0 text-xs tabular-nums text-slate-500 dark:text-slate-400">
                       {formatCurrency(a.subVendorPrice)}
                     </span>
                   )}

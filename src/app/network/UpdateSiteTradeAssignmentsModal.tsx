@@ -236,8 +236,8 @@ export default function UpdateSiteTradeAssignmentsModal({
     return (
       <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
         <Card className="w-full max-w-md p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-          <h2 className="text-lg font-bold text-slate-50">{trade} assignments updated</h2>
-          <p className="mt-2 text-sm text-slate-300">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">{trade} assignments updated</h2>
+          <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
             Updated {result.updated} site{result.updated === 1 ? "" : "s"}&rsquo; {trade} assignment. Every other trade
             on those sites was left untouched.
           </p>
@@ -282,15 +282,15 @@ export default function UpdateSiteTradeAssignmentsModal({
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <Card className="max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-bold text-slate-50">Update trade assignments</h2>
-        <p className="mt-1 text-xs text-slate-400">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Update trade assignments</h2>
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
           Bulk-update one Trade&rsquo;s Vendor/Sub-Vendor/pricing on existing sites from a sheet -- scoped to a single
           Trade you pick below, so e.g. updating Land contract values never touches a site&rsquo;s Snow Removal
           assignment.
         </p>
 
         <label className="mt-4 flex flex-col gap-1 text-sm">
-          <span className="font-medium text-slate-300">Trade (required)</span>
+          <span className="font-medium text-slate-700 dark:text-slate-300">Trade (required)</span>
           <select value={trade} onChange={(e) => setTrade(e.target.value)} className={inputClass}>
             <option value="">Choose a trade…</option>
             {TRADE_OPTIONS.map((t) => (
@@ -312,7 +312,7 @@ export default function UpdateSiteTradeAssignmentsModal({
             >
               {downloading ? "Preparing…" : `Download current ${trade} values (${tradeSiteCount} site${tradeSiteCount === 1 ? "" : "s"})`}
             </Button>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-600 dark:text-slate-500">
               Only sites with {trade} are included, and only that trade&rsquo;s Vendor/Sub-Vendor/Contract/pricing --
               no other trade&rsquo;s data. Edit this file and re-upload it below. Annual Rate Total here is the
               standalone flat figure, separate from the month-by-month Rate Schedule (bulk-edit that instead from
@@ -326,7 +326,7 @@ export default function UpdateSiteTradeAssignmentsModal({
             ref={fileInputRef}
             type="file"
             accept=".xlsx,.csv"
-            className="text-xs text-slate-300 file:mr-2 file:rounded-lg file:border-0 file:bg-slate-800 file:px-2.5 file:py-1 file:text-xs file:font-semibold file:text-brand-400"
+            className="text-xs text-slate-700 dark:text-slate-300 file:mr-2 file:rounded-lg file:border-0 file:bg-slate-200 dark:file:bg-slate-800 file:px-2.5 file:py-1 file:text-xs file:font-semibold file:text-brand-600 dark:file:text-brand-400"
           />
           <Button type="button" variant="secondary" onClick={handleUpload} disabled={uploading} className="w-fit">
             {uploading ? "Parsing…" : "Choose file"}
@@ -337,12 +337,12 @@ export default function UpdateSiteTradeAssignmentsModal({
         {parsedRows && (
           <>
             <div className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-purple-400/30 p-3">
-              <p className="text-sm text-slate-300">
+              <p className="text-sm text-slate-700 dark:text-slate-300">
                 Match sites by — {parsedRows.length} row{parsedRows.length === 1 ? "" : "s"} found.
               </p>
               <div className="flex flex-wrap gap-3">
                 <label className="flex flex-col gap-1 text-sm">
-                  <span className="font-medium text-slate-300">Site ID column (recommended)</span>
+                  <span className="font-medium text-slate-700 dark:text-slate-300">Site ID column (recommended)</span>
                   <select
                     value={mapping.matchCode}
                     onChange={(e) => setMapping((prev) => ({ ...prev, matchCode: e.target.value }))}
@@ -357,7 +357,7 @@ export default function UpdateSiteTradeAssignmentsModal({
                   </select>
                 </label>
                 <label className="flex flex-col gap-1 text-sm">
-                  <span className="font-medium text-slate-300">Record ID column</span>
+                  <span className="font-medium text-slate-700 dark:text-slate-300">Record ID column</span>
                   <select
                     value={mapping.matchId}
                     onChange={(e) => setMapping((prev) => ({ ...prev, matchId: e.target.value }))}
@@ -372,7 +372,7 @@ export default function UpdateSiteTradeAssignmentsModal({
                   </select>
                 </label>
                 <label className="flex flex-col gap-1 text-sm">
-                  <span className="font-medium text-slate-300">Site Name column</span>
+                  <span className="font-medium text-slate-700 dark:text-slate-300">Site Name column</span>
                   <select
                     value={mapping.matchName}
                     onChange={(e) => setMapping((prev) => ({ ...prev, matchName: e.target.value }))}
@@ -389,7 +389,7 @@ export default function UpdateSiteTradeAssignmentsModal({
               </div>
               {!mapping.matchCode && !mapping.matchId && (
                 <label className="flex flex-col gap-1 text-sm">
-                  <span className="font-medium text-slate-300">Client (optional, disambiguates name matches)</span>
+                  <span className="font-medium text-slate-700 dark:text-slate-300">Client (optional, disambiguates name matches)</span>
                   <select value={companyId} onChange={(e) => setCompanyId(e.target.value)} className={inputClass}>
                     <option value="">All clients</option>
                     {companies.map((c) => (
@@ -403,14 +403,14 @@ export default function UpdateSiteTradeAssignmentsModal({
             </div>
 
             <div className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-purple-400/30 p-3">
-              <p className="text-sm text-slate-300">
+              <p className="text-sm text-slate-700 dark:text-slate-300">
                 Fields to update on the {trade || "selected trade"} assignment (leave as None to leave that field
                 untouched)
               </p>
               <div className="flex flex-wrap gap-3">
                 {OPTIONAL_FIELDS.map(([key, label]) => (
                   <label key={key} className="flex flex-col gap-1 text-sm">
-                    <span className="font-medium text-slate-300">{label}</span>
+                    <span className="font-medium text-slate-700 dark:text-slate-300">{label}</span>
                     <select
                       value={mapping[key]}
                       onChange={(e) => setMapping((prev) => ({ ...prev, [key]: e.target.value }))}
@@ -426,7 +426,7 @@ export default function UpdateSiteTradeAssignmentsModal({
                   </label>
                 ))}
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-600 dark:text-slate-500">
                 Vendor/Sub-Vendor/Contract Name columns are matched by exact name (case-insensitive). A row whose
                 value doesn&rsquo;t match leaves that site&rsquo;s current value alone and is reported after import.
               </p>

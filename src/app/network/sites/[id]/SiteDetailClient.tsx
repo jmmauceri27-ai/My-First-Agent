@@ -152,25 +152,25 @@ export default function SiteDetailClient({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <Link href="/network/sites" className="text-sm font-medium text-brand-400 hover:underline">
+        <Link href="/network/sites" className="text-sm font-medium text-brand-600 dark:text-brand-400 hover:underline">
           ← Back to Sites
         </Link>
-        <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-50">{site.name}</h1>
-        {site.siteCode && <p className="text-sm text-slate-400">Site ID: {site.siteCode}</p>}
+        <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">{site.name}</h1>
+        {site.siteCode && <p className="text-sm text-slate-500 dark:text-slate-400">Site ID: {site.siteCode}</p>}
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-5">
         <Card className="p-5 xl:col-span-3">
-          <h2 className="text-lg font-bold text-slate-50">Details</h2>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Details</h2>
 
           <div className="mt-4 flex flex-col gap-4">
             <div className="grid grid-cols-2 gap-3">
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Site name</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Site name</span>
                 <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Site ID</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Site ID</span>
                 <input
                   value={siteCode}
                   onChange={(e) => setSiteCode(e.target.value)}
@@ -182,7 +182,7 @@ export default function SiteDetailClient({
 
             <div className="grid grid-cols-3 gap-3">
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Client</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Client</span>
                 <select
                   value={companyId}
                   onChange={(e) => {
@@ -201,7 +201,7 @@ export default function SiteDetailClient({
               </label>
 
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Opportunity</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Opportunity</span>
                 <select
                   value={opportunityId}
                   onChange={(e) => {
@@ -223,14 +223,14 @@ export default function SiteDetailClient({
               </label>
 
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Trade</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Trade</span>
                 <TradeSelect value={trades} onChange={setTrades} />
               </label>
             </div>
 
             <div className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Vendor & Contract assignments</span>
-              <p className="-mt-0.5 text-xs text-slate-500">
+              <span className="font-medium text-slate-700 dark:text-slate-300">Vendor & Contract assignments</span>
+              <p className="-mt-0.5 text-xs text-slate-600 dark:text-slate-500">
                 A site often uses a different vendor -- and can be covered under a different signed contract -- per
                 trade, e.g. one for Land, another for Snow Removal.
               </p>
@@ -244,35 +244,35 @@ export default function SiteDetailClient({
             </div>
 
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Address</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Address</span>
               <input value={address} onChange={(e) => setAddress(e.target.value)} className={inputClass} />
             </label>
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">City</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">City</span>
                 <input value={city} onChange={(e) => setCity(e.target.value)} className={inputClass} />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">State</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">State</span>
                 <input value={state} onChange={(e) => setState(e.target.value)} className={inputClass} />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Zip</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Zip</span>
                 <input value={zip} onChange={(e) => setZip(e.target.value)} className={inputClass} />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Latitude</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Latitude</span>
                 <input type="number" value={lat} onChange={(e) => setLat(e.target.value)} className={inputClass} />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-300">Longitude</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Longitude</span>
                 <input type="number" value={lng} onChange={(e) => setLng(e.target.value)} className={inputClass} />
               </label>
             </div>
 
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Notes</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>
               <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputClass} />
             </label>
           </div>
@@ -300,9 +300,9 @@ export default function SiteDetailClient({
           </Card>
 
           <Card className="p-5">
-            <h2 className="text-lg font-bold text-slate-50">Last Season Snowfall</h2>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Last Season Snowfall</h2>
             <label className="mt-3 flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Total snowfall (in.)</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Total snowfall (in.)</span>
               <input
                 type="number"
                 value={lastSeasonSnowfall}
@@ -313,14 +313,14 @@ export default function SiteDetailClient({
           </Card>
 
           <Card className="p-5">
-            <h2 className="text-lg font-bold text-slate-50">Rate Schedule</h2>
-            <p className="-mt-0.5 text-xs text-slate-500">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Rate Schedule</h2>
+            <p className="-mt-0.5 text-xs text-slate-600 dark:text-slate-500">
               Annual Rate Total is a flat yearly figure you set directly. The monthly breakdown below (which
               months this trade gets paid, and how much) is tracked separately and isn&rsquo;t derived from it --
               the two aren&rsquo;t kept in sync.
             </p>
             {trades.length === 0 ? (
-              <p className="mt-2 text-xs text-slate-500">No trades assigned yet.</p>
+              <p className="mt-2 text-xs text-slate-600 dark:text-slate-500">No trades assigned yet.</p>
             ) : (
               <div className="mt-3 flex flex-col gap-4">
                 {trades.map((trade) => {
@@ -331,13 +331,13 @@ export default function SiteDetailClient({
                     <div key={trade} className="rounded-lg border border-purple-400/20 p-3">
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                          <p className="text-sm font-semibold text-slate-50">{trade}</p>
-                          <p className="text-xs text-slate-500">
+                          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{trade}</p>
+                          <p className="text-xs text-slate-600 dark:text-slate-500">
                             {billingType ?? "No billing type (set on the Contract)"}
                           </p>
                         </div>
                         <label className="flex flex-col gap-1 text-xs">
-                          <span className="font-medium text-slate-400">Annual Rate Total</span>
+                          <span className="font-medium text-slate-500 dark:text-slate-400">Annual Rate Total</span>
                           <input
                             value={draft.annualRateTotal}
                             onChange={(e) => updateAssignmentDraft(trade, { annualRateTotal: e.target.value })}
@@ -352,11 +352,11 @@ export default function SiteDetailClient({
                           />
                         </label>
                       </div>
-                      <p className="mt-3 text-xs text-slate-500">Monthly breakdown (optional)</p>
+                      <p className="mt-3 text-xs text-slate-600 dark:text-slate-500">Monthly breakdown (optional)</p>
                       <div className="mt-1 grid grid-cols-4 gap-2">
                         {MONTHS.map((month) => (
                           <label key={month} className="flex flex-col gap-1 text-xs">
-                            <span className="font-medium text-slate-400">{month}</span>
+                            <span className="font-medium text-slate-500 dark:text-slate-400">{month}</span>
                             <input
                               value={draft.rateSchedule[month] ?? ""}
                               onChange={(e) => updateMonthSchedule(trade, "rateSchedule", month, e.target.value)}
@@ -374,7 +374,7 @@ export default function SiteDetailClient({
                         ))}
                       </div>
                       {monthlyTotal > 0 && (
-                        <p className="mt-1 text-xs text-slate-500">Sum of months: {formatCurrency(monthlyTotal)}</p>
+                        <p className="mt-1 text-xs text-slate-600 dark:text-slate-500">Sum of months: {formatCurrency(monthlyTotal)}</p>
                       )}
                     </div>
                   );
@@ -384,13 +384,13 @@ export default function SiteDetailClient({
           </Card>
 
           <Card className="p-5">
-            <h2 className="text-lg font-bold text-slate-50">Expense Schedule</h2>
-            <p className="-mt-0.5 text-xs text-slate-500">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Expense Schedule</h2>
+            <p className="-mt-0.5 text-xs text-slate-600 dark:text-slate-500">
               Which months the Vendor and Sub-Vendor are paid for this trade, and how much. Repeats every year
               until changed; tracked separately from Sub Price/Sub-Vendor Price above.
             </p>
             {trades.length === 0 ? (
-              <p className="mt-2 text-xs text-slate-500">No trades assigned yet.</p>
+              <p className="mt-2 text-xs text-slate-600 dark:text-slate-500">No trades assigned yet.</p>
             ) : (
               <div className="mt-3 flex flex-col gap-4">
                 {trades.map((trade) => {
@@ -401,21 +401,21 @@ export default function SiteDetailClient({
                   const subVendorTotal = scheduleTotal(draft.subVendorExpenseSchedule);
                   return (
                     <div key={trade} className="rounded-lg border border-purple-400/20 p-3">
-                      <p className="text-sm font-semibold text-slate-50">{trade}</p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{trade}</p>
 
                       <div className="mt-2 flex items-center justify-between">
-                        <p className="text-xs text-slate-500">Vendor{vendorName ? `: ${vendorName}` : " (not assigned)"}</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-500">Vendor{vendorName ? `: ${vendorName}` : " (not assigned)"}</p>
                         {vendorTotal > 0 && (
-                          <p className="text-xs text-slate-400">
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
                             Annual total:{" "}
-                            <span className="font-semibold text-slate-50">{formatCurrency(vendorTotal)}</span>
+                            <span className="font-semibold text-slate-900 dark:text-slate-50">{formatCurrency(vendorTotal)}</span>
                           </p>
                         )}
                       </div>
                       <div className="mt-1 grid grid-cols-4 gap-2">
                         {MONTHS.map((month) => (
                           <label key={month} className="flex flex-col gap-1 text-xs">
-                            <span className="font-medium text-slate-400">{month}</span>
+                            <span className="font-medium text-slate-500 dark:text-slate-400">{month}</span>
                             <input
                               value={draft.vendorExpenseSchedule[month] ?? ""}
                               onChange={(e) => updateMonthSchedule(trade, "vendorExpenseSchedule", month, e.target.value)}
@@ -434,20 +434,20 @@ export default function SiteDetailClient({
                       </div>
 
                       <div className="mt-3 flex items-center justify-between">
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-slate-600 dark:text-slate-500">
                           Sub-Vendor{subVendorName ? `: ${subVendorName}` : " (not assigned)"}
                         </p>
                         {subVendorTotal > 0 && (
-                          <p className="text-xs text-slate-400">
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
                             Annual total:{" "}
-                            <span className="font-semibold text-slate-50">{formatCurrency(subVendorTotal)}</span>
+                            <span className="font-semibold text-slate-900 dark:text-slate-50">{formatCurrency(subVendorTotal)}</span>
                           </p>
                         )}
                       </div>
                       <div className="mt-1 grid grid-cols-4 gap-2">
                         {MONTHS.map((month) => (
                           <label key={month} className="flex flex-col gap-1 text-xs">
-                            <span className="font-medium text-slate-400">{month}</span>
+                            <span className="font-medium text-slate-500 dark:text-slate-400">{month}</span>
                             <input
                               value={draft.subVendorExpenseSchedule[month] ?? ""}
                               onChange={(e) =>
@@ -474,69 +474,69 @@ export default function SiteDetailClient({
           </Card>
 
           <Card className="flex flex-col gap-3 p-5">
-            <h2 className="text-lg font-bold text-slate-50">Connections</h2>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Connections</h2>
             <div className="flex flex-col gap-2 text-sm">
               <div>
-                <p className="text-xs text-slate-400">Client</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Client</p>
                 {site.companyId ? (
-                  <Link href={`/network/clients/${site.companyId}`} className="font-medium text-brand-400 hover:underline">
+                  <Link href={`/network/clients/${site.companyId}`} className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
                     {site.companyName}
                   </Link>
                 ) : (
-                  <p className="text-slate-500">Not linked</p>
+                  <p className="text-slate-600 dark:text-slate-500">Not linked</p>
                 )}
               </div>
               <div>
-                <p className="text-xs text-slate-400">Opportunity</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Opportunity</p>
                 {site.opportunityId ? (
                   <Link
                     href={`/crm/opportunities/${site.opportunityId}`}
-                    className="font-medium text-brand-400 hover:underline"
+                    className="font-medium text-brand-600 dark:text-brand-400 hover:underline"
                   >
                     {site.opportunityName}
                   </Link>
                 ) : (
-                  <p className="text-slate-500">Not linked</p>
+                  <p className="text-slate-600 dark:text-slate-500">Not linked</p>
                 )}
               </div>
             </div>
 
             <div className="mt-2 border-t border-purple-400/10 pt-3">
-              <p className="text-xs font-medium text-slate-400">Vendors & Contracts by trade</p>
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Vendors & Contracts by trade</p>
               {site.tradeAssignments.length === 0 ? (
-                <p className="mt-1 text-xs text-slate-500">No vendor assignments yet.</p>
+                <p className="mt-1 text-xs text-slate-600 dark:text-slate-500">No vendor assignments yet.</p>
               ) : (
                 <div className="mt-2 flex flex-col gap-2">
                   {site.tradeAssignments.map((a) => (
                     <div key={a.id} className="text-sm">
-                      <p className="text-slate-300">{a.trade}</p>
+                      <p className="text-slate-700 dark:text-slate-300">{a.trade}</p>
                       {a.vendorId ? (
-                        <Link href={`/network/vendors/${a.vendorId}`} className="font-medium text-brand-400 hover:underline">
+                        <Link href={`/network/vendors/${a.vendorId}`} className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
                           {a.vendorName}
                         </Link>
                       ) : (
-                        <p className="text-slate-500">Not assigned</p>
+                        <p className="text-slate-600 dark:text-slate-500">Not assigned</p>
                       )}
                       {a.subVendorId && (
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
                           Sub-Vendor:{" "}
                           <Link
                             href={`/network/vendors/${a.subVendorId}`}
-                            className="font-medium text-brand-400 hover:underline"
+                            className="font-medium text-brand-600 dark:text-brand-400 hover:underline"
                           >
                             {a.subVendorName}
                           </Link>
                         </p>
                       )}
                       {a.contractId && (
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
                           Contract:{" "}
-                          <Link href="/crm/contracts" className="font-medium text-brand-400 hover:underline">
+                          <Link href="/crm/contracts" className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
                             {a.contractName}
                           </Link>
                         </p>
                       )}
-                      {a.billingType && <p className="text-xs text-slate-400">Billing: {a.billingType}</p>}
+                      {a.billingType && <p className="text-xs text-slate-500 dark:text-slate-400">Billing: {a.billingType}</p>}
                     </div>
                   ))}
                 </div>

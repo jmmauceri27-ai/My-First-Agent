@@ -1,16 +1,22 @@
 @import "tailwindcss";
 
-/* Always-dark: `dark:` utilities activate off the `.dark` class (forced on <html>)
-   instead of the system's prefers-color-scheme, so the deep theme never depends
-   on the visitor's device settings. */
+/* Theme is a manual toggle (see ThemeToggle.tsx), not the visitor's OS setting: `dark:` utilities
+   activate off the `.dark` class, applied by a no-FOUC init script in layout.tsx before hydration
+   paints, and flipped at runtime by the toggle. Defaults to dark for first-time visitors -- this
+   app has been dark-first since its early days -- with light as an opt-in. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
+  --background: #f7f5fb;
+  --foreground: #1b1530;
+  color-scheme: light;
+}
+
+.dark {
   --background: #0a070f;
   --foreground: #f0edfb;
-  /* Always-dark app (see the .dark note above) -- without this, native form controls (date-picker
-     calendar icon, scrollbars) render assuming a light UI and the calendar icon comes out near-black,
-     invisible against the dark inputs. */
+  /* Without this, native form controls (date-picker calendar icon, scrollbars) render assuming a
+     light UI and the calendar icon comes out near-black, invisible against the dark inputs. */
   color-scheme: dark;
 }
 

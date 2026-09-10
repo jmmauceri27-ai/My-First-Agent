@@ -141,8 +141,8 @@ export default function RemoveLogoBackgroundModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div>
-          <h2 className="text-lg font-bold text-slate-50">Remove background</h2>
-          <p className="mt-1 text-xs text-slate-400">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Remove background</h2>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             Click the background color to make it transparent, then adjust the slider for how much of that
             color gets removed. Skip this if the logo already looks right.
           </p>
@@ -158,12 +158,12 @@ export default function RemoveLogoBackgroundModal({
               className="max-h-[50vh] max-w-full cursor-crosshair"
             />
           ) : (
-            !loadError && <p className="p-8 text-sm text-slate-400">Loading…</p>
+            !loadError && <p className="p-8 text-sm text-slate-500 dark:text-slate-400">Loading…</p>
           )}
         </div>
 
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-slate-300">Tolerance{pickedColor ? ` (${tolerance}%)` : ""}</span>
+          <span className="font-medium text-slate-700 dark:text-slate-300">Tolerance{pickedColor ? ` (${tolerance}%)` : ""}</span>
           <input
             type="range"
             min={0}

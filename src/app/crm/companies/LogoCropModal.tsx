@@ -92,8 +92,8 @@ export default function LogoCropModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div>
-          <h2 className="text-lg font-bold text-slate-50">Crop logo</h2>
-          <p className="mt-1 text-xs text-slate-400">Drag the circle to select the area you want to keep.</p>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Crop logo</h2>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Drag the circle to select the area you want to keep.</p>
         </div>
 
         <div className="flex justify-center rounded-lg bg-black/20 p-2">

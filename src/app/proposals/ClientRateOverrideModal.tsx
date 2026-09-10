@@ -88,11 +88,11 @@ export default function ClientRateOverrideModal({
   return (
     <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <Card className="w-full max-w-md p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-bold text-slate-50">{override ? "Edit client override" : "New client override"}</h2>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">{override ? "Edit client override" : "New client override"}</h2>
 
         <div className="mt-4 flex flex-col gap-4">
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Client</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Client</span>
             <select value={companyId} onChange={(e) => setCompanyId(e.target.value)} className={inputClass} autoFocus>
               <option value="">Choose a client…</option>
               {companies.map((c) => (
@@ -104,7 +104,7 @@ export default function ClientRateOverrideModal({
           </label>
 
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Trade</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Trade</span>
             <select value={trade} onChange={(e) => setTrade(e.target.value)} className={inputClass}>
               <option value="">Choose a trade…</option>
               {TRADE_OPTIONS.map((t) => (
@@ -117,7 +117,7 @@ export default function ClientRateOverrideModal({
 
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Override type</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Override type</span>
               <select value={overrideType} onChange={(e) => setOverrideType(e.target.value)} className={inputClass}>
                 <option value="">Choose a type…</option>
                 {OVERRIDE_TYPE_OPTIONS.map((t) => (
@@ -128,7 +128,7 @@ export default function ClientRateOverrideModal({
               </select>
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-300">Percent (%)</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Percent (%)</span>
               <input
                 type="number"
                 step="0.01"
@@ -140,7 +140,7 @@ export default function ClientRateOverrideModal({
           </div>
 
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-300">Notes</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputClass} />
           </label>
         </div>
