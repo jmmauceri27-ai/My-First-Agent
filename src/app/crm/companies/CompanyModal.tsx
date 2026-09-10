@@ -8,6 +8,7 @@ import { inputClass } from "@/components/ui/formClasses";
 import type { Company } from "@/lib/crmTypes";
 import { deleteCompanyAction, deleteCompanyLogoAction, saveCompanyAction, uploadCompanyLogoAction } from "../actions";
 import LogoCropModal from "./LogoCropModal";
+import RemoveLogoBackgroundModal from "./RemoveLogoBackgroundModal";
 
 export default function CompanyModal({ company, onClose }: { company: Company | null; onClose: () => void }) {
   const router = useRouter();
@@ -26,6 +27,7 @@ export default function CompanyModal({ company, onClose }: { company: Company | 
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [logoError, setLogoError] = useState<string | null>(null);
   const [cropFile, setCropFile] = useState<File | null>(null);
+  const [bgRemovalFile, setBgRemovalFile] = useState<File | null>(null);
 
   function handleLogoFileSelected() {
     const file = logoInputRef.current?.files?.[0];
@@ -35,20 +37,25 @@ export default function CompanyModal({ company, onClose }: { company: Company | 
     setCropFile(file);
   }
 
-  async function handleCropped(cropped: File) {
-    if (!company) return;
+  function handleCropped(cropped: File) {
     setCropFile(null);
+    setBgRemovalFile(cropped);
+  }
+
+  async function handleBackgroundDone(finalFile: File) {
+    if (!company) return;
+    setBgRemovalFile(null);
     setLogoError(null);
     setUploadingLogo(true);
     try {
       const formData = new FormData();
-      formData.set("file", cropped);
+      formData.set("file", finalFile);
       const result = await uploadCompanyLogoAction(company.id, formData);
       if (result.error) {
         setLogoError(result.error);
         return;
       }
-      setLogoUrl(URL.createObjectURL(cropped));
+      setLogoUrl(URL.createObjectURL(finalFile));
       router.refresh();
     } finally {
       setUploadingLogo(false);
@@ -208,6 +215,14 @@ export default function CompanyModal({ company, onClose }: { company: Company | 
       </div>
 
       {cropFile && <LogoCropModal file={cropFile} onCancel={() => setCropFile(null)} onCropped={handleCropped} />}
+
+      {bgRemovalFile && (
+        <RemoveLogoBackgroundModal
+          file={bgRemovalFile}
+          onCancel={() => setBgRemovalFile(null)}
+          onDone={handleBackgroundDone}
+        />
+      )}
     </>
   );
 }
