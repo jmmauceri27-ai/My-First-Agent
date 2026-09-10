@@ -78,30 +78,32 @@ export default function Sidebar() {
             </Link>
 
             {area.subLinks && (
-              <div className="invisible absolute left-full top-0 z-30 ml-2 w-52 rounded-xl border border-purple-200 bg-white p-2 opacity-0 shadow-xl transition-opacity group-hover:visible group-hover:opacity-100 dark:border-purple-400/30 dark:bg-[#1c1530] dark:shadow-black/50">
-                <p className="px-2 py-1 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  {area.label}
-                </p>
-                <div className="flex flex-col gap-0.5">
-                  {area.subLinks.map((link) => {
-                    const isDashboardLink = link.href.startsWith("/dashboards?area=");
-                    const subActive = isDashboardLink
-                      ? pathname === "/dashboards" && activeDashboardArea === link.label
-                      : pathname === link.href;
-                    return (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        className={`truncate rounded-lg px-2 py-1.5 text-sm font-medium transition-all ${
-                          subActive
-                            ? "bg-brand-600 text-white"
-                            : "text-slate-600 hover:bg-purple-500/10 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-50"
-                        }`}
-                      >
-                        {link.label}
-                      </Link>
-                    );
-                  })}
+              <div className="invisible absolute left-full top-0 z-30 pl-2 opacity-0 transition-opacity group-hover:visible group-hover:opacity-100">
+                <div className="w-52 rounded-xl border border-purple-200 bg-white p-2 shadow-xl dark:border-purple-400/30 dark:bg-[#1c1530] dark:shadow-black/50">
+                  <p className="px-2 py-1 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    {area.label}
+                  </p>
+                  <div className="flex flex-col gap-0.5">
+                    {area.subLinks.map((link) => {
+                      const isDashboardLink = link.href.startsWith("/dashboards?area=");
+                      const subActive = isDashboardLink
+                        ? pathname === "/dashboards" && activeDashboardArea === link.label
+                        : pathname === link.href;
+                      return (
+                        <Link
+                          key={link.href}
+                          href={link.href}
+                          className={`truncate rounded-lg px-2 py-1.5 text-sm font-medium transition-all ${
+                            subActive
+                              ? "bg-brand-600 text-white"
+                              : "text-slate-600 hover:bg-purple-500/10 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-50"
+                          }`}
+                        >
+                          {link.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             )}
