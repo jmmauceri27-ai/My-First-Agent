@@ -1,7 +1,6 @@
--- Recreates HubSpot-style custom "Properties" -- called Fields here, organized into Classes -- for CRM
--- records: user-defined fields attached to a CRM object type (Company, Contact, Opportunity, Contract -- more
--- can be added later without a schema change, since object_type is just a text tag, not a foreign key to
--- separate tables per type).
+-- Custom properties for CRM records: user-defined Fields, organized into Classes, attached to a CRM object
+-- type (Company, Contact, Opportunity, Contract -- more can be added later without a schema change, since
+-- object_type is just a text tag, not a foreign key to separate tables per type).
 --
 -- crm_field_values is a generic EAV table keyed by (field_id, record_id) rather than a column per object
 -- type: record_id points at whichever table object_type says it does (crm_companies.id, crm_contacts.id,

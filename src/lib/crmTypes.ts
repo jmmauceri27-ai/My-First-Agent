@@ -313,7 +313,7 @@ export interface ClientRateOverrideInput {
   notes: string | null;
 }
 
-// ---------- CRM Fields (HubSpot-style custom properties) ----------
+// ---------- CRM Fields (custom properties) ----------
 // A Class is a named section (e.g. "Contact Info") holding one or more Fields (e.g. "Phone Number"), each
 // scoped to one object type. A record's actual values live separately in crm_field_values, keyed by
 // (fieldId, recordId) -- see fieldsDal.ts.
