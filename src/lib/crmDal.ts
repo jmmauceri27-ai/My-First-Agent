@@ -140,16 +140,17 @@ export async function fixMissingFileExtensions(): Promise<FileExtensionFixResult
 
 // ---------- Companies ----------
 
-export async function listCompanies(): Promise<Company[]> {
-  const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("crm_companies")
-    .select("id, name, address, city, state, website, notes, created_at")
-    .eq("user_id", OWNER_USER_ID)
-    .order("name", { ascending: true });
-  if (error) throw new Error(error.message);
+const COMPANY_LOGO_BUCKET = "crm-logos";
 
-  return (data ?? []).map((c) => ({
+const COMPANY_COLUMNS =
+  "id, name, address, city, state, website, notes, logo_storage_path, updated_at, created_at";
+
+function mapCompany(c: Record<string, unknown>, supabase: ReturnType<typeof createAdminClient>): Company {
+  const logoStoragePath = c.logo_storage_path as string | null;
+  const logoUrl = logoStoragePath
+    ? `${supabase.storage.from(COMPANY_LOGO_BUCKET).getPublicUrl(logoStoragePath).data.publicUrl}?v=${encodeURIComponent(c.updated_at as string)}`
+    : null;
+  return {
     id: c.id as string,
     name: c.name as string,
     address: c.address as string | null,
@@ -157,31 +158,72 @@ export async function listCompanies(): Promise<Company[]> {
     state: c.state as string | null,
     website: c.website as string | null,
     notes: c.notes as string | null,
+    logoUrl,
     createdAt: c.created_at as string,
-  }));
+  };
+}
+
+export async function listCompanies(): Promise<Company[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("crm_companies")
+    .select(COMPANY_COLUMNS)
+    .eq("user_id", OWNER_USER_ID)
+    .order("name", { ascending: true });
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((c) => mapCompany(c, supabase));
 }
 
 export async function getCompany(id: string): Promise<Company | null> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("crm_companies")
-    .select("id, name, address, city, state, website, notes, created_at")
+    .select(COMPANY_COLUMNS)
     .eq("id", id)
     .eq("user_id", OWNER_USER_ID)
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) return null;
 
-  return {
-    id: data.id as string,
-    name: data.name as string,
-    address: data.address as string | null,
-    city: data.city as string | null,
-    state: data.state as string | null,
-    website: data.website as string | null,
-    notes: data.notes as string | null,
-    createdAt: data.created_at as string,
-  };
+  return mapCompany(data, supabase);
+}
+
+/** Uploads (or replaces) a client's logo. Always stored at the same path per company and upserted, so a
+ * re-upload overwrites the old image in place rather than accumulating orphaned files; updated_at changing is
+ * what busts the public URL's cache (see mapCompany). */
+export async function uploadCompanyLogo(companyId: string, file: File): Promise<void> {
+  if (!file.type.startsWith("image/")) throw new Error("Please upload an image file.");
+  const supabase = createAdminClient();
+  const storagePath = `${companyId}/logo`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(COMPANY_LOGO_BUCKET)
+    .upload(storagePath, file, { contentType: file.type, upsert: true });
+  if (uploadError) throw new Error(uploadError.message);
+
+  const { error } = await supabase
+    .from("crm_companies")
+    .update({
+      logo_storage_path: storagePath,
+      logo_content_type: file.type,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", companyId)
+    .eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteCompanyLogo(companyId: string): Promise<void> {
+  const supabase = createAdminClient();
+  await supabase.storage.from(COMPANY_LOGO_BUCKET).remove([`${companyId}/logo`]);
+
+  const { error } = await supabase
+    .from("crm_companies")
+    .update({ logo_storage_path: null, logo_content_type: null, updated_at: new Date().toISOString() })
+    .eq("id", companyId)
+    .eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
 }
 
 export async function createCompany(input: CompanyInput): Promise<string> {

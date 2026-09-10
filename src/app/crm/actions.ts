@@ -13,6 +13,7 @@ import {
   createEmployeeWithDetails,
   createOpportunity,
   deleteCompany,
+  deleteCompanyLogo,
   deleteContact,
   deleteContract,
   deleteContractFile,
@@ -36,6 +37,7 @@ import {
   updateEmployee,
   updateOpportunity,
   updateOpportunityStage,
+  uploadCompanyLogo,
   uploadContractFile,
   uploadOpportunityFile,
 } from "@/lib/crmDal";
@@ -113,6 +115,32 @@ export async function deleteCompanyAction(id: string): Promise<void> {
   await deleteCompany(id);
   revalidatePath("/crm");
   revalidatePath("/crm/companies");
+}
+
+export async function uploadCompanyLogoAction(companyId: string, formData: FormData): Promise<{ error?: string }> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Please choose an image." };
+  }
+  try {
+    await uploadCompanyLogo(companyId, file);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to upload logo." };
+  }
+  revalidatePath("/crm");
+  revalidatePath("/crm/companies");
+  return {};
+}
+
+export async function deleteCompanyLogoAction(companyId: string): Promise<{ error?: string }> {
+  try {
+    await deleteCompanyLogo(companyId);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to remove logo." };
+  }
+  revalidatePath("/crm");
+  revalidatePath("/crm/companies");
+  return {};
 }
 
 export async function saveContactAction(id: string | null, input: ContactInput): Promise<string> {

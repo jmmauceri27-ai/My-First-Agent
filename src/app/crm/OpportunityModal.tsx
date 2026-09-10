@@ -71,7 +71,20 @@ export default function OpportunityModal({
       website: null,
       notes: null,
     });
-    setLocalCompanies((prev) => [...prev, { id, name: newCompanyName.trim(), address: null, city: null, state: null, website: null, notes: null, createdAt: new Date().toISOString() }]);
+    setLocalCompanies((prev) => [
+      ...prev,
+      {
+        id,
+        name: newCompanyName.trim(),
+        address: null,
+        city: null,
+        state: null,
+        website: null,
+        notes: null,
+        logoUrl: null,
+        createdAt: new Date().toISOString(),
+      },
+    ]);
     setCompanyId(id);
     setNewCompanyName("");
     setAddingCompany(false);

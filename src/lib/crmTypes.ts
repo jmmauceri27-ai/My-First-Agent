@@ -20,6 +20,8 @@ export interface Company {
   state: string | null;
   website: string | null;
   notes: string | null;
+  /** Public URL for the client's logo, ready to use as an <img> src, or null if none is set. */
+  logoUrl: string | null;
   createdAt: string;
 }
 

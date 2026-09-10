@@ -31,13 +31,23 @@ export default function CompaniesClient({ companies }: { companies: Company[] })
               onClick={() => setEditingCompany(c)}
               className="flex items-center justify-between gap-4 px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-900/50"
             >
-              <div>
-                <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{c.name}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {[c.city, c.state].filter(Boolean).join(", ") || c.website || c.address || "No details"}
-                </p>
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900">
+                  {c.logoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={c.logoUrl} alt="" className="h-full w-full object-contain" />
+                  ) : (
+                    <span className="text-xs font-semibold text-slate-400">{c.name.charAt(0).toUpperCase()}</span>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">{c.name}</p>
+                  <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                    {[c.city, c.state].filter(Boolean).join(", ") || c.website || c.address || "No details"}
+                  </p>
+                </div>
               </div>
-              {c.website && <span className="text-xs text-brand-600 dark:text-brand-400">{c.website}</span>}
+              {c.website && <span className="shrink-0 text-xs text-brand-600 dark:text-brand-400">{c.website}</span>}
             </button>
           ))}
         </Card>

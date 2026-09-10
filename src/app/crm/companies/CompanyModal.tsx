@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import type { Company } from "@/lib/crmTypes";
-import { deleteCompanyAction, saveCompanyAction } from "../actions";
+import { deleteCompanyAction, deleteCompanyLogoAction, saveCompanyAction, uploadCompanyLogoAction } from "../actions";
 
 export default function CompanyModal({ company, onClose }: { company: Company | null; onClose: () => void }) {
   const router = useRouter();
@@ -19,6 +19,50 @@ export default function CompanyModal({ company, onClose }: { company: Company | 
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const [logoUrl, setLogoUrl] = useState(company?.logoUrl ?? null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
+
+  async function handleUploadLogo() {
+    if (!company) return;
+    const file = logoInputRef.current?.files?.[0];
+    if (!file) return;
+    setLogoError(null);
+    setUploadingLogo(true);
+    try {
+      const formData = new FormData();
+      formData.set("file", file);
+      const result = await uploadCompanyLogoAction(company.id, formData);
+      if (result.error) {
+        setLogoError(result.error);
+        return;
+      }
+      setLogoUrl(URL.createObjectURL(file));
+      router.refresh();
+    } finally {
+      setUploadingLogo(false);
+      if (logoInputRef.current) logoInputRef.current.value = "";
+    }
+  }
+
+  async function handleRemoveLogo() {
+    if (!company) return;
+    setLogoError(null);
+    setUploadingLogo(true);
+    try {
+      const result = await deleteCompanyLogoAction(company.id);
+      if (result.error) {
+        setLogoError(result.error);
+        return;
+      }
+      setLogoUrl(null);
+      router.refresh();
+    } finally {
+      setUploadingLogo(false);
+    }
+  }
 
   async function handleSave() {
     setError(null);
@@ -63,6 +107,44 @@ export default function CompanyModal({ company, onClose }: { company: Company | 
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">
           {company ? "Edit company" : "New company"}
         </h2>
+
+        {company && (
+          <div className="mt-4 flex items-center gap-4">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900">
+              {logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={logoUrl} alt={`${company.name} logo`} className="h-full w-full object-contain" />
+              ) : (
+                <span className="text-xs text-slate-400">No logo</span>
+              )}
+            </div>
+            <div className="flex flex-col gap-1">
+              <div className="flex gap-2">
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleUploadLogo}
+                  className="hidden"
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => logoInputRef.current?.click()}
+                  disabled={uploadingLogo}
+                >
+                  {uploadingLogo ? "Uploading…" : logoUrl ? "Replace logo" : "Upload logo"}
+                </Button>
+                {logoUrl && (
+                  <Button type="button" variant="ghost" onClick={handleRemoveLogo} disabled={uploadingLogo}>
+                    Remove
+                  </Button>
+                )}
+              </div>
+              {logoError && <p className="text-xs text-critical">{logoError}</p>}
+            </div>
+          </div>
+        )}
 
         <div className="mt-4 flex flex-col gap-4">
           <label className="flex flex-col gap-1 text-sm">

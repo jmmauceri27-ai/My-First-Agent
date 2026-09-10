@@ -102,6 +102,7 @@ export default function UploadSitesModal({
         state: null,
         website: null,
         notes: null,
+        logoUrl: null,
         createdAt: new Date().toISOString(),
       },
     ]);
