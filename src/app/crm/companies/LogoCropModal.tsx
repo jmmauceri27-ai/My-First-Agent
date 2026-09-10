@@ -1,21 +1,31 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import ReactCrop, { centerCrop, type Crop, type PixelCrop } from "react-image-crop";
+import ReactCrop, { centerCrop, makeAspectCrop, type Crop, type PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 
-/** Draws the selected crop region onto a canvas at the image's native resolution and reads it back out as a
- * PNG blob -- react-image-crop only tracks the selection rectangle, it doesn't produce pixels itself. */
+/** Draws the selected (always square, since aspect is locked to 1) region onto a canvas at the image's native
+ * resolution, clips it to the circle inscribed in that square, and reads it back out as a PNG blob -- logos
+ * display as circles, so the crop itself should produce a circle, not a square react-image-crop merely frames
+ * with a round overlay. */
 function getCroppedBlob(image: HTMLImageElement, crop: PixelCrop): Promise<Blob> {
   const scaleX = image.naturalWidth / image.width;
   const scaleY = image.naturalHeight / image.height;
   const canvas = document.createElement("canvas");
-  canvas.width = Math.max(1, Math.round(crop.width * scaleX));
-  canvas.height = Math.max(1, Math.round(crop.height * scaleY));
+  const width = Math.max(1, Math.round(crop.width * scaleX));
+  const height = Math.max(1, Math.round(crop.height * scaleY));
+  canvas.width = width;
+  canvas.height = height;
   const ctx = canvas.getContext("2d");
   if (!ctx) return Promise.reject(new Error("Canvas is not supported in this browser."));
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(width / 2, height / 2, Math.min(width, height) / 2, 0, Math.PI * 2);
+  ctx.closePath();
+  ctx.clip();
 
   ctx.drawImage(
     image,
@@ -25,9 +35,10 @@ function getCroppedBlob(image: HTMLImageElement, crop: PixelCrop): Promise<Blob>
     crop.height * scaleY,
     0,
     0,
-    canvas.width,
-    canvas.height,
+    width,
+    height,
   );
+  ctx.restore();
 
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Failed to crop image."))), "image/png");
@@ -54,7 +65,7 @@ export default function LogoCropModal({
 
   function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
     const { width, height } = e.currentTarget;
-    setCrop(centerCrop({ unit: "%", width: 90, height: 90, x: 5, y: 5 }, width, height));
+    setCrop(centerCrop(makeAspectCrop({ unit: "%", width: 90 }, 1, width, height), width, height));
   }
 
   async function handleApply() {
@@ -82,11 +93,17 @@ export default function LogoCropModal({
       >
         <div>
           <h2 className="text-lg font-bold text-slate-50">Crop logo</h2>
-          <p className="mt-1 text-xs text-slate-400">Drag the handles to select the area you want to keep.</p>
+          <p className="mt-1 text-xs text-slate-400">Drag the circle to select the area you want to keep.</p>
         </div>
 
         <div className="flex justify-center rounded-lg bg-black/20 p-2">
-          <ReactCrop crop={crop} onChange={(_, percentCrop) => setCrop(percentCrop)} onComplete={setCompletedCrop}>
+          <ReactCrop
+            crop={crop}
+            onChange={(_, percentCrop) => setCrop(percentCrop)}
+            onComplete={setCompletedCrop}
+            aspect={1}
+            circularCrop
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img ref={imgRef} src={imageUrl} alt="" onLoad={onImageLoad} className="max-h-[60vh]" />
           </ReactCrop>
