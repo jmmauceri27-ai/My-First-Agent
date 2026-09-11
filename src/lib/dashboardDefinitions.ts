@@ -1,14 +1,8 @@
 import type { DashboardConfig } from "./types";
 
-/** Fixed set of business categories dashboards are grouped into on the Dashboards sidebar. */
-export const DASHBOARD_CATEGORIES = [
-  "Sourcing & Coverage",
-  "Agreement Value & Financials",
-  "Client-Focused",
-  "Vendor Performance",
-  "Assignments & Operations",
-  "Executive / High-Level Rollups",
-] as const;
+/** Dashboards are grouped to match the site's own sections, not a separate business taxonomy -- so a
+ * dashboard about agreements lives under "Agreements", one about vendor sourcing under "Vendors", etc. */
+export const DASHBOARD_CATEGORIES = ["Pipeline", "Agreements", "Contacts", "Sites", "Clients", "Vendors", "Employees"] as const;
 
 export type DashboardCategory = (typeof DASHBOARD_CATEGORIES)[number];
 
@@ -24,7 +18,7 @@ export interface DashboardDefinition {
 export const DASHBOARD_DEFINITIONS: DashboardDefinition[] = [
   {
     id: "sourcing-status-by-state",
-    area: "Sourcing & Coverage",
+    area: "Vendors",
     config: {
       name: "Sourcing Status by State",
       // Live "Trade" dropdown scopes every card below to one trade at a time (e.g. Snow Removal);
@@ -59,7 +53,7 @@ export const DASHBOARD_DEFINITIONS: DashboardDefinition[] = [
   },
   {
     id: "contract-value-by-state",
-    area: "Agreement Value & Financials",
+    area: "Agreements",
     config: {
       name: "Total Agreement Value by State",
       // Live "Trade" dropdown scopes both cards below to one trade at a time (e.g. Snow Removal);

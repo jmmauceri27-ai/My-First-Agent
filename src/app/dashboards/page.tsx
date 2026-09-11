@@ -11,7 +11,7 @@ import ExpensesClient from "./ExpensesClient";
 /** The Rate Schedule and Monthly Expenses views are hand-built pages (chart + per-site/trade breakdown table),
  * not config-driven dashboards -- they're pinned into this area as extra picker tabs rather than modeled as a
  * DashboardDefinition. */
-const RATE_SCHEDULE_AREA = "Agreement Value & Financials";
+const RATE_SCHEDULE_AREA = "Sites";
 const RATE_SCHEDULE_ID = "rate-schedule";
 const EXPENSE_SCHEDULE_ID = "expense-schedule";
 
