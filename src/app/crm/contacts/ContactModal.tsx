@@ -1,20 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
-import type { Company, Contact } from "@/lib/crmTypes";
+import type { Company, Contact, FieldClass } from "@/lib/crmTypes";
 import { deleteContactAction, saveContactAction } from "../actions";
+import {
+  assignFieldToRecordAction,
+  getFieldValuesForRecordAction,
+  listAssignedFieldIdsAction,
+  saveFieldValuesForRecordAction,
+  unassignFieldFromRecordAction,
+} from "../fields/actions";
+import DynamicFieldsSection from "../fields/DynamicFieldsSection";
 
 export default function ContactModal({
   contact,
   companies,
+  fieldClasses,
   onClose,
 }: {
   contact: Contact | null;
   companies: Company[];
+  fieldClasses: FieldClass[];
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -28,6 +38,38 @@ export default function ContactModal({
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+  const [assignedFieldIds, setAssignedFieldIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!contact) return;
+    getFieldValuesForRecordAction(contact.id).then((values) => {
+      const asStrings: Record<string, string> = {};
+      for (const [fieldId, value] of Object.entries(values)) {
+        if (value != null) asStrings[fieldId] = value;
+      }
+      setFieldValues(asStrings);
+    });
+    listAssignedFieldIdsAction(contact.id).then(setAssignedFieldIds);
+  }, [contact]);
+
+  async function handleAssignField(fieldId: string) {
+    if (!contact) return;
+    setAssignedFieldIds((prev) => [...prev, fieldId]);
+    await assignFieldToRecordAction(contact.id, fieldId);
+  }
+
+  async function handleUnassignField(fieldId: string) {
+    if (!contact) return;
+    setAssignedFieldIds((prev) => prev.filter((id) => id !== fieldId));
+    setFieldValues((prev) => {
+      const next = { ...prev };
+      delete next[fieldId];
+      return next;
+    });
+    await unassignFieldFromRecordAction(contact.id, fieldId);
+  }
+
   async function handleSave() {
     setError(null);
     if (!name.trim()) {
@@ -36,7 +78,7 @@ export default function ContactModal({
     }
     setSaving(true);
     try {
-      await saveContactAction(contact?.id ?? null, {
+      const contactId = await saveContactAction(contact?.id ?? null, {
         name: name.trim(),
         companyId: companyId || null,
         email: email.trim() || null,
@@ -44,6 +86,10 @@ export default function ContactModal({
         title: title.trim() || null,
         notes: notes.trim() || null,
       });
+      await saveFieldValuesForRecordAction(
+        contactId,
+        Object.entries(fieldValues).map(([fieldId, value]) => ({ fieldId, value: value || null })),
+      );
       router.refresh();
       onClose();
     } catch (e) {
@@ -106,6 +152,18 @@ export default function ContactModal({
             <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputClass} />
           </label>
+        </div>
+
+        <div className="mt-4">
+          <DynamicFieldsSection
+            classes={fieldClasses}
+            values={fieldValues}
+            assignedFieldIds={assignedFieldIds}
+            onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}
+            onAssign={handleAssignField}
+            onUnassign={handleUnassignField}
+            canManageCustomFields={!!contact}
+          />
         </div>
 
         {error && <p className="mt-3 text-sm text-critical">{error}</p>}

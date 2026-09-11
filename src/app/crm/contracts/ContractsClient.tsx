@@ -5,7 +5,7 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { formatCurrency } from "@/lib/siteMapColor";
 import { contractStatus, formatContractDate } from "@/lib/contractStatus";
-import type { Company, Contract } from "@/lib/crmTypes";
+import type { Company, Contract, FieldClass } from "@/lib/crmTypes";
 import ContractModal from "./ContractModal";
 import ContractsTimeline from "./ContractsTimeline";
 
@@ -57,7 +57,15 @@ function ContractRow({ contract: c, onSelect }: { contract: Contract; onSelect: 
   );
 }
 
-export default function ContractsClient({ contracts, companies }: { contracts: Contract[]; companies: Company[] }) {
+export default function ContractsClient({
+  contracts,
+  companies,
+  fieldClasses,
+}: {
+  contracts: Contract[];
+  companies: Company[];
+  fieldClasses: FieldClass[];
+}) {
   const [editingContract, setEditingContract] = useState<Contract | null>(null);
   const [creating, setCreating] = useState(false);
   const [view, setView] = useState<View>("list");
@@ -129,6 +137,7 @@ export default function ContractsClient({ contracts, companies }: { contracts: C
         <ContractModal
           contract={editingContract}
           companies={companies}
+          fieldClasses={fieldClasses}
           onClose={() => {
             setEditingContract(null);
             setCreating(false);

@@ -15,7 +15,7 @@ import Button from "@/components/ui/Button";
 import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
 import type { DatasetRecord } from "@/lib/types";
 import { OPPORTUNITY_STAGES } from "@/lib/crmTypes";
-import type { Company, Contact, Employee, Opportunity, OpportunityStage } from "@/lib/crmTypes";
+import type { Company, Contact, Employee, FieldClass, Opportunity, OpportunityStage } from "@/lib/crmTypes";
 import type { FileExtensionFixResult } from "@/lib/crmDal";
 import { exportPipelineToExcelAction, fixMissingFileExtensionsAction, moveOpportunityStageAction } from "./actions";
 import KanbanColumn from "./KanbanColumn";
@@ -55,11 +55,13 @@ export default function KanbanBoard({
   companies,
   contacts,
   employees,
+  fieldClasses,
 }: {
   opportunities: Opportunity[];
   companies: Company[];
   contacts: Contact[];
   employees: Employee[];
+  fieldClasses: FieldClass[];
 }) {
   const router = useRouter();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
@@ -214,6 +216,7 @@ export default function KanbanBoard({
           companies={companies}
           contacts={contacts}
           employees={employees}
+          fieldClasses={fieldClasses}
           defaultStage={creatingInStage}
           onClose={() => setCreatingInStage(null)}
         />

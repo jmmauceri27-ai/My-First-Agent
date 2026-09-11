@@ -13,9 +13,11 @@ import SiteTradeAssignmentsEditor, {
 } from "@/components/SiteTradeAssignmentsEditor";
 import SiteMeasurementsEditor from "@/components/SiteMeasurementsEditor";
 import { matchTrade } from "@/lib/trades";
-import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
+import type { Company, Contract, FieldClass, Opportunity } from "@/lib/crmTypes";
 import type { Site, SiteInput, SiteMeasurements, Vendor } from "@/lib/networkTypes";
 import { saveCompanyAction } from "@/app/crm/actions";
+import { saveFieldValuesForRecordAction } from "@/app/crm/fields/actions";
+import DynamicFieldsSection from "@/app/crm/fields/DynamicFieldsSection";
 import { deleteSiteAction, saveSiteAction, saveSiteTradeAssignmentsAction } from "./actions";
 
 export default function SiteModal({
@@ -24,6 +26,7 @@ export default function SiteModal({
   vendors,
   opportunities,
   contracts,
+  fieldClasses,
   defaultCompanyId = null,
   defaultOpportunityId = null,
   onClose,
@@ -34,6 +37,7 @@ export default function SiteModal({
   vendors: Vendor[];
   opportunities: Opportunity[];
   contracts: Contract[];
+  fieldClasses: FieldClass[];
   defaultCompanyId?: string | null;
   defaultOpportunityId?: string | null;
   onClose: () => void;
@@ -67,6 +71,8 @@ export default function SiteModal({
   const [localCompanies, setLocalCompanies] = useState(companies);
   const [addingCompany, setAddingCompany] = useState(false);
   const [newCompanyName, setNewCompanyName] = useState("");
+
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
 
   const opportunitiesForCompany = useMemo(
     () => (companyId ? opportunities.filter((o) => o.companyId === companyId) : opportunities),
@@ -145,6 +151,10 @@ export default function SiteModal({
         setError(assignmentsResult.error);
         return;
       }
+      await saveFieldValuesForRecordAction(
+        result.id,
+        Object.entries(fieldValues).map(([fieldId, value]) => ({ fieldId, value: value || null })),
+      );
       router.refresh();
       onSaved?.(result.id);
       onClose();
@@ -306,6 +316,16 @@ export default function SiteModal({
             <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputClass} />
           </label>
+
+          <DynamicFieldsSection
+            classes={fieldClasses}
+            values={fieldValues}
+            assignedFieldIds={[]}
+            onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}
+            onAssign={() => {}}
+            onUnassign={() => {}}
+            canManageCustomFields={false}
+          />
         </div>
 
         <div className="mt-6 border-t border-purple-400/10 pt-4">

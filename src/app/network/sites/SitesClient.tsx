@@ -26,7 +26,7 @@ import type { Trade } from "@/lib/trades";
 import { MONTHS, sumRateSchedule } from "@/lib/rateSchedule";
 import type { DatasetRecord } from "@/lib/types";
 import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
-import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
+import type { Company, Contract, FieldClass, Opportunity } from "@/lib/crmTypes";
 import type { Site, SiteFilterTemplate, SiteFilters, Vendor } from "@/lib/networkTypes";
 import SiteModal from "../SiteModal";
 import UploadSitesModal from "../UploadSitesModal";
@@ -228,6 +228,7 @@ export default function SitesClient({
   opportunities,
   contracts,
   filterTemplates,
+  fieldClasses,
 }: {
   sites: Site[];
   companies: Company[];
@@ -235,6 +236,7 @@ export default function SitesClient({
   opportunities: Opportunity[];
   contracts: Contract[];
   filterTemplates: SiteFilterTemplate[];
+  fieldClasses: FieldClass[];
 }) {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
@@ -1359,6 +1361,7 @@ export default function SitesClient({
           vendors={vendors}
           opportunities={opportunities}
           contracts={contracts}
+          fieldClasses={fieldClasses}
           onClose={() => setCreating(false)}
           onSaved={(id) => router.push(`/network/sites/${id}`)}
         />

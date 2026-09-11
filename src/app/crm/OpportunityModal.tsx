@@ -6,7 +6,15 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import { OPPORTUNITY_STAGES } from "@/lib/crmTypes";
-import type { Company, Contact, Employee, Opportunity, OpportunityInput, OpportunityStage } from "@/lib/crmTypes";
+import type {
+  Company,
+  Contact,
+  Employee,
+  FieldClass,
+  Opportunity,
+  OpportunityInput,
+  OpportunityStage,
+} from "@/lib/crmTypes";
 import {
   deleteEmployeeAction,
   deleteOpportunityAction,
@@ -14,12 +22,15 @@ import {
   saveEmployeeAction,
   saveOpportunityAction,
 } from "./actions";
+import { saveFieldValuesForRecordAction } from "./fields/actions";
+import DynamicFieldsSection from "./fields/DynamicFieldsSection";
 
 export default function OpportunityModal({
   opportunity,
   companies,
   contacts,
   employees,
+  fieldClasses,
   defaultStage,
   onClose,
 }: {
@@ -27,6 +38,7 @@ export default function OpportunityModal({
   companies: Company[];
   contacts: Contact[];
   employees: Employee[];
+  fieldClasses: FieldClass[];
   defaultStage: OpportunityStage;
   onClose: () => void;
 }) {
@@ -56,6 +68,15 @@ export default function OpportunityModal({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+
+  // "Submission Due Date" already has its own dedicated input below (backed by expectedCloseDate/the real
+  // column) -- excluded here so the Fields-driven section doesn't render it a second time.
+  const dynamicFieldClasses = fieldClasses.map((c) => ({
+    ...c,
+    fields: c.fields.filter((f) => f.name !== "submission_due_date"),
+  }));
 
   function toggleContact(id: string) {
     setContactIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
@@ -142,7 +163,11 @@ export default function OpportunityModal({
         contactIds,
         salesManagerId: salesManagerId || null,
       };
-      await saveOpportunityAction(opportunity?.id ?? null, input);
+      const opportunityId = await saveOpportunityAction(opportunity?.id ?? null, input);
+      await saveFieldValuesForRecordAction(
+        opportunityId,
+        Object.entries(fieldValues).map(([fieldId, value]) => ({ fieldId, value: value || null })),
+      );
       router.refresh();
       onClose();
     } catch (e) {
@@ -342,6 +367,18 @@ export default function OpportunityModal({
               className={inputClass}
             />
           </label>
+        </div>
+
+        <div className="mt-4">
+          <DynamicFieldsSection
+            classes={dynamicFieldClasses}
+            values={fieldValues}
+            assignedFieldIds={[]}
+            onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}
+            onAssign={() => {}}
+            onUnassign={() => {}}
+            canManageCustomFields={false}
+          />
         </div>
 
         {error && <p className="mt-3 text-sm text-critical">{error}</p>}

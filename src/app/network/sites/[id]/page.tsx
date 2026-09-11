@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { notFound } from "next/navigation";
 import { listCompanies, listContracts, listOpportunities } from "@/lib/crmDal";
+import { listFieldClasses } from "@/lib/fieldsDal";
 import { getSite, listVendors } from "@/lib/networkDal";
 import SiteDetailClient from "./SiteDetailClient";
 
@@ -10,11 +11,12 @@ export default async function SiteDetailPage({ params }: { params: Promise<{ id:
   const site = await getSite(id);
   if (!site) notFound();
 
-  const [companies, vendors, opportunities, contracts] = await Promise.all([
+  const [companies, vendors, opportunities, contracts, fieldClasses] = await Promise.all([
     listCompanies(),
     listVendors(),
     listOpportunities(),
     listContracts(),
+    listFieldClasses("Site"),
   ]);
 
   return (
@@ -24,6 +26,7 @@ export default async function SiteDetailPage({ params }: { params: Promise<{ id:
       vendors={vendors}
       opportunities={opportunities}
       contracts={contracts}
+      fieldClasses={fieldClasses}
     />
   );
 }

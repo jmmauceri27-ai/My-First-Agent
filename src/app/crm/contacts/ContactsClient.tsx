@@ -3,10 +3,18 @@
 import { useState } from "react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
-import type { Company, Contact } from "@/lib/crmTypes";
+import type { Company, Contact, FieldClass } from "@/lib/crmTypes";
 import ContactModal from "./ContactModal";
 
-export default function ContactsClient({ contacts, companies }: { contacts: Contact[]; companies: Company[] }) {
+export default function ContactsClient({
+  contacts,
+  companies,
+  fieldClasses,
+}: {
+  contacts: Contact[];
+  companies: Company[];
+  fieldClasses: FieldClass[];
+}) {
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [creating, setCreating] = useState(false);
 
@@ -54,6 +62,7 @@ export default function ContactsClient({ contacts, companies }: { contacts: Cont
         <ContactModal
           contact={editingContact}
           companies={companies}
+          fieldClasses={fieldClasses}
           onClose={() => {
             setEditingContact(null);
             setCreating(false);

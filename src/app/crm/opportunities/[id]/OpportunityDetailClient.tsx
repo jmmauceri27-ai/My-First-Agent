@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
@@ -8,7 +8,16 @@ import Card from "@/components/ui/Card";
 import FilesCard from "@/components/FilesCard";
 import { inputClass } from "@/components/ui/formClasses";
 import { OPPORTUNITY_STAGES } from "@/lib/crmTypes";
-import type { Company, Contact, Employee, Opportunity, OpportunityFile, OpportunityInput, OpportunityStage } from "@/lib/crmTypes";
+import type {
+  Company,
+  Contact,
+  Employee,
+  FieldClass,
+  Opportunity,
+  OpportunityFile,
+  OpportunityInput,
+  OpportunityStage,
+} from "@/lib/crmTypes";
 import type { Site } from "@/lib/networkTypes";
 import {
   deleteEmployeeAction,
@@ -20,6 +29,14 @@ import {
   saveOpportunityAction,
   uploadOpportunityFileAction,
 } from "../../actions";
+import {
+  assignFieldToRecordAction,
+  getFieldValuesForRecordAction,
+  listAssignedFieldIdsAction,
+  saveFieldValuesForRecordAction,
+  unassignFieldFromRecordAction,
+} from "../../fields/actions";
+import DynamicFieldsSection from "../../fields/DynamicFieldsSection";
 import SitesCard from "./SitesCard";
 
 export default function OpportunityDetailClient({
@@ -29,6 +46,7 @@ export default function OpportunityDetailClient({
   employees,
   files,
   sites,
+  fieldClasses,
 }: {
   opportunity: Opportunity;
   companies: Company[];
@@ -36,6 +54,7 @@ export default function OpportunityDetailClient({
   employees: Employee[];
   files: OpportunityFile[];
   sites: Site[];
+  fieldClasses: FieldClass[];
 }) {
   const router = useRouter();
   const [name, setName] = useState(opportunity.name);
@@ -57,6 +76,42 @@ export default function OpportunityDetailClient({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+  const [assignedFieldIds, setAssignedFieldIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    getFieldValuesForRecordAction(opportunity.id).then((values) => {
+      const asStrings: Record<string, string> = {};
+      for (const [fieldId, value] of Object.entries(values)) {
+        if (value != null) asStrings[fieldId] = value;
+      }
+      setFieldValues(asStrings);
+    });
+    listAssignedFieldIdsAction(opportunity.id).then(setAssignedFieldIds);
+  }, [opportunity.id]);
+
+  // "Submission Due Date" already has its own dedicated input below (backed by expectedCloseDate/the real
+  // column) -- excluded here so the Fields-driven section doesn't render it a second time.
+  const dynamicFieldClasses = fieldClasses.map((c) => ({
+    ...c,
+    fields: c.fields.filter((f) => f.name !== "submission_due_date"),
+  }));
+
+  async function handleAssignField(fieldId: string) {
+    setAssignedFieldIds((prev) => [...prev, fieldId]);
+    await assignFieldToRecordAction(opportunity.id, fieldId);
+  }
+
+  async function handleUnassignField(fieldId: string) {
+    setAssignedFieldIds((prev) => prev.filter((id) => id !== fieldId));
+    setFieldValues((prev) => {
+      const next = { ...prev };
+      delete next[fieldId];
+      return next;
+    });
+    await unassignFieldFromRecordAction(opportunity.id, fieldId);
+  }
 
   function toggleContact(id: string) {
     setContactIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
@@ -115,6 +170,10 @@ export default function OpportunityDetailClient({
         salesManagerId: salesManagerId || null,
       };
       await saveOpportunityAction(opportunity.id, input);
+      await saveFieldValuesForRecordAction(
+        opportunity.id,
+        Object.entries(fieldValues).map(([fieldId, value]) => ({ fieldId, value: value || null })),
+      );
       router.push("/crm");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save opportunity.");
@@ -307,6 +366,17 @@ export default function OpportunityDetailClient({
               <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>
               <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} className={inputClass} />
             </label>
+          </div>
+
+          <div className="mt-4">
+            <DynamicFieldsSection
+              classes={dynamicFieldClasses}
+              values={fieldValues}
+              assignedFieldIds={assignedFieldIds}
+              onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}
+              onAssign={handleAssignField}
+              onUnassign={handleUnassignField}
+            />
           </div>
 
           {error && <p className="mt-3 text-sm text-critical">{error}</p>}

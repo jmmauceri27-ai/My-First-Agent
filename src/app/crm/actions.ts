@@ -79,13 +79,16 @@ export async function fixMissingFileExtensionsAction(): Promise<
   }
 }
 
-export async function saveOpportunityAction(id: string | null, input: OpportunityInput): Promise<void> {
+export async function saveOpportunityAction(id: string | null, input: OpportunityInput): Promise<string> {
+  let opportunityId: string;
   if (id) {
     await updateOpportunity(id, input);
+    opportunityId = id;
   } else {
-    await createOpportunity(input);
+    opportunityId = await createOpportunity(input);
   }
   revalidatePath("/crm");
+  return opportunityId;
 }
 
 export async function moveOpportunityStageAction(id: string, stage: OpportunityStage): Promise<void> {

@@ -318,7 +318,7 @@ export interface ClientRateOverrideInput {
 // scoped to one object type. A record's actual values live separately in crm_field_values, keyed by
 // (fieldId, recordId) -- see fieldsDal.ts.
 
-export const FIELD_OBJECT_TYPES = ["Company", "Contact", "Opportunity", "Contract"] as const;
+export const FIELD_OBJECT_TYPES = ["Company", "Contact", "Opportunity", "Contract", "Site"] as const;
 
 export type FieldObjectType = (typeof FIELD_OBJECT_TYPES)[number];
 
@@ -354,6 +354,9 @@ export interface CrmField {
   fieldType: string;
   /** Only set when fieldType is "Dropdown" -- the fixed list of choices. */
   options: string[] | null;
+  /** Standard fields render on every record of the object type, like Company's fields do today. Custom
+   * fields only render on a record once attached to it -- see crm_field_assignments in fieldsDal.ts. */
+  isStandard: boolean;
   position: number;
   createdAt: string;
   updatedAt: string;
@@ -365,6 +368,7 @@ export interface CrmFieldInput {
   label: string;
   fieldType: string;
   options: string[] | null;
+  isStandard: boolean;
 }
 
 /** One record's stored value for one field. value is always a string on the wire -- Number/Date/Checkbox

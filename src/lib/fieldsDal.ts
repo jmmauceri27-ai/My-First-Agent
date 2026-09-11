@@ -17,7 +17,8 @@ function mapFieldClass(c: Record<string, unknown>): Omit<FieldClass, "fields"> {
   };
 }
 
-const FIELD_COLUMNS = "id, object_type, class_id, name, label, field_type, options, position, created_at, updated_at";
+const FIELD_COLUMNS =
+  "id, object_type, class_id, name, label, field_type, options, is_standard, position, created_at, updated_at";
 
 function mapField(f: Record<string, unknown>): CrmField {
   return {
@@ -28,6 +29,7 @@ function mapField(f: Record<string, unknown>): CrmField {
     label: f.label as string,
     fieldType: f.field_type as string,
     options: (f.options as string[] | null) ?? null,
+    isStandard: f.is_standard as boolean,
     position: f.position as number,
     createdAt: f.created_at as string,
     updatedAt: f.updated_at as string,
@@ -138,6 +140,7 @@ export async function createField(input: CrmFieldInput): Promise<string> {
       label: input.label,
       field_type: input.fieldType,
       options: input.options,
+      is_standard: input.isStandard,
       position: nextPosition,
     })
     .select("id")
@@ -160,6 +163,7 @@ export async function updateField(id: string, input: CrmFieldInput): Promise<voi
       label: input.label,
       field_type: input.fieldType,
       options: input.options,
+      is_standard: input.isStandard,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
@@ -244,4 +248,42 @@ export async function saveFieldValuesForRecord(
       .in("field_id", toDelete);
     if (error) throw new Error(error.message);
   }
+}
+
+// ---------- Custom field assignments ----------
+// A custom field (isStandard: false) only shows up on a record once it has a row here -- e.g. attaching
+// "Trigger" to one Snow contract without it appearing on every other contract.
+
+/** The ids of every custom field currently attached to `recordId`. */
+export async function listAssignedFieldIds(recordId: string): Promise<string[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("crm_field_assignments")
+    .select("field_id")
+    .eq("user_id", OWNER_USER_ID)
+    .eq("record_id", recordId);
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => row.field_id as string);
+}
+
+export async function assignFieldToRecord(recordId: string, fieldId: string): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("crm_field_assignments")
+    .upsert({ user_id: OWNER_USER_ID, field_id: fieldId, record_id: recordId }, { onConflict: "field_id,record_id" });
+  if (error) throw new Error(error.message);
+}
+
+/** Detaching a field from a record also clears any value stored for it there, since deleting the value's
+ * only way in (the record's form) will be gone once unassigned. */
+export async function unassignFieldFromRecord(recordId: string, fieldId: string): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("crm_field_assignments")
+    .delete()
+    .eq("user_id", OWNER_USER_ID)
+    .eq("record_id", recordId)
+    .eq("field_id", fieldId);
+  if (error) throw new Error(error.message);
+  await saveFieldValuesForRecord(recordId, [{ fieldId, value: null }]);
 }

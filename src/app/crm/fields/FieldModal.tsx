@@ -27,6 +27,7 @@ export default function FieldModal({
   const [fieldType, setFieldType] = useState(field?.fieldType ?? "Text");
   const [selectedClassId, setSelectedClassId] = useState(field?.classId ?? classId);
   const [optionsText, setOptionsText] = useState((field?.options ?? []).join("\n"));
+  const [isStandard, setIsStandard] = useState(field?.isStandard ?? false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +62,7 @@ export default function FieldModal({
         label: label.trim(),
         fieldType,
         options,
+        isStandard,
       };
       const result = field ? await updateFieldAction(field.id, input) : await createFieldAction(input);
       if (result.error) {
@@ -147,6 +149,39 @@ export default function FieldModal({
               />
             </label>
           )}
+
+          <div className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-slate-700 dark:text-slate-300">Applies to</span>
+            <div className="flex gap-1 rounded-lg border border-purple-400/20 p-1">
+              <button
+                type="button"
+                onClick={() => setIsStandard(false)}
+                className={`flex-1 rounded-md px-3 py-1.5 text-sm font-semibold transition-all ${
+                  !isStandard
+                    ? "bg-brand-600 text-white"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-50"
+                }`}
+              >
+                Custom — added per record
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsStandard(true)}
+                className={`flex-1 rounded-md px-3 py-1.5 text-sm font-semibold transition-all ${
+                  isStandard
+                    ? "bg-brand-600 text-white"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-50"
+                }`}
+              >
+                Standard — every record
+              </button>
+            </div>
+            <span className="text-xs text-slate-600 dark:text-slate-500">
+              {isStandard
+                ? "Shows on every record of this type automatically."
+                : "Hidden by default -- attach it to individual records from their edit screen."}
+            </span>
+          </div>
         </div>
 
         {error && <p className="mt-3 text-sm text-critical">{error}</p>}

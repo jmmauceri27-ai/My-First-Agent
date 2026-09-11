@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
@@ -17,8 +17,16 @@ import SiteMeasurementsEditor from "@/components/SiteMeasurementsEditor";
 import { formatCurrency, parseCurrencyInput } from "@/lib/siteMapColor";
 import { MONTHS } from "@/lib/rateSchedule";
 import { matchTrade } from "@/lib/trades";
-import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
+import type { Company, Contract, FieldClass, Opportunity } from "@/lib/crmTypes";
 import type { Site, SiteInput, SiteMeasurements, Vendor } from "@/lib/networkTypes";
+import {
+  assignFieldToRecordAction,
+  getFieldValuesForRecordAction,
+  listAssignedFieldIdsAction,
+  saveFieldValuesForRecordAction,
+  unassignFieldFromRecordAction,
+} from "@/app/crm/fields/actions";
+import DynamicFieldsSection from "@/app/crm/fields/DynamicFieldsSection";
 import { deleteSiteAction, saveSiteAction, saveSiteTradeAssignmentsAction } from "../../actions";
 
 export default function SiteDetailClient({
@@ -27,12 +35,14 @@ export default function SiteDetailClient({
   vendors,
   opportunities,
   contracts,
+  fieldClasses,
 }: {
   site: Site;
   companies: Company[];
   vendors: Vendor[];
   opportunities: Opportunity[];
   contracts: Contract[];
+  fieldClasses: FieldClass[];
 }) {
   const router = useRouter();
   const [siteCode, setSiteCode] = useState(site.siteCode ?? "");
@@ -58,6 +68,35 @@ export default function SiteDetailClient({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+  const [assignedFieldIds, setAssignedFieldIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    getFieldValuesForRecordAction(site.id).then((values) => {
+      const asStrings: Record<string, string> = {};
+      for (const [fieldId, value] of Object.entries(values)) {
+        if (value != null) asStrings[fieldId] = value;
+      }
+      setFieldValues(asStrings);
+    });
+    listAssignedFieldIdsAction(site.id).then(setAssignedFieldIds);
+  }, [site.id]);
+
+  async function handleAssignField(fieldId: string) {
+    setAssignedFieldIds((prev) => [...prev, fieldId]);
+    await assignFieldToRecordAction(site.id, fieldId);
+  }
+
+  async function handleUnassignField(fieldId: string) {
+    setAssignedFieldIds((prev) => prev.filter((id) => id !== fieldId));
+    setFieldValues((prev) => {
+      const next = { ...prev };
+      delete next[fieldId];
+      return next;
+    });
+    await unassignFieldFromRecordAction(site.id, fieldId);
+  }
 
   const opportunitiesForCompany = useMemo(
     () => (companyId ? opportunities.filter((o) => o.companyId === companyId) : opportunities),
@@ -129,6 +168,10 @@ export default function SiteDetailClient({
         setError(assignmentsResult.error);
         return;
       }
+      await saveFieldValuesForRecordAction(
+        site.id,
+        Object.entries(fieldValues).map(([fieldId, value]) => ({ fieldId, value: value || null })),
+      );
       router.push("/network/sites");
     } finally {
       setSaving(false);
@@ -275,6 +318,17 @@ export default function SiteDetailClient({
               <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>
               <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputClass} />
             </label>
+          </div>
+
+          <div className="mt-4">
+            <DynamicFieldsSection
+              classes={fieldClasses}
+              values={fieldValues}
+              assignedFieldIds={assignedFieldIds}
+              onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}
+              onAssign={handleAssignField}
+              onUnassign={handleUnassignField}
+            />
           </div>
 
           {error && <p className="mt-3 text-sm text-critical">{error}</p>}

@@ -8,7 +8,7 @@ import FilesCard from "@/components/FilesCard";
 import { inputClass } from "@/components/ui/formClasses";
 import { RATE_FREQUENCIES } from "@/lib/crmTypes";
 import { BILLING_TYPE_OPTIONS } from "@/lib/billingTypes";
-import type { Company, Contract, ContractFile, ContractInput } from "@/lib/crmTypes";
+import type { Company, Contract, ContractFile, ContractInput, FieldClass } from "@/lib/crmTypes";
 import {
   deleteContractAction,
   deleteContractFileAction,
@@ -18,14 +18,24 @@ import {
   saveContractAction,
   uploadContractFileAction,
 } from "../actions";
+import {
+  assignFieldToRecordAction,
+  getFieldValuesForRecordAction,
+  listAssignedFieldIdsAction,
+  saveFieldValuesForRecordAction,
+  unassignFieldFromRecordAction,
+} from "../fields/actions";
+import DynamicFieldsSection from "../fields/DynamicFieldsSection";
 
 export default function ContractModal({
   contract,
   companies,
+  fieldClasses,
   onClose,
 }: {
   contract: Contract | null;
   companies: Company[];
+  fieldClasses: FieldClass[];
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -61,6 +71,38 @@ export default function ContractModal({
     listContractFilesAction(contract.id).then(setFiles);
   }
 
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+  const [assignedFieldIds, setAssignedFieldIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!contract) return;
+    getFieldValuesForRecordAction(contract.id).then((values) => {
+      const asStrings: Record<string, string> = {};
+      for (const [fieldId, value] of Object.entries(values)) {
+        if (value != null) asStrings[fieldId] = value;
+      }
+      setFieldValues(asStrings);
+    });
+    listAssignedFieldIdsAction(contract.id).then(setAssignedFieldIds);
+  }, [contract]);
+
+  async function handleAssignField(fieldId: string) {
+    if (!contract) return;
+    setAssignedFieldIds((prev) => [...prev, fieldId]);
+    await assignFieldToRecordAction(contract.id, fieldId);
+  }
+
+  async function handleUnassignField(fieldId: string) {
+    if (!contract) return;
+    setAssignedFieldIds((prev) => prev.filter((id) => id !== fieldId));
+    setFieldValues((prev) => {
+      const next = { ...prev };
+      delete next[fieldId];
+      return next;
+    });
+    await unassignFieldFromRecordAction(contract.id, fieldId);
+  }
+
   async function handleSave() {
     setError(null);
     if (!name.trim()) {
@@ -81,7 +123,11 @@ export default function ContractModal({
         endDate: endDate || null,
         notes: notes.trim() || null,
       };
-      await saveContractAction(contract?.id ?? null, input);
+      const contractId = await saveContractAction(contract?.id ?? null, input);
+      await saveFieldValuesForRecordAction(
+        contractId,
+        Object.entries(fieldValues).map(([fieldId, value]) => ({ fieldId, value: value || null })),
+      );
       router.refresh();
       onClose();
     } catch (e) {
@@ -208,6 +254,18 @@ export default function ContractModal({
             <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputClass} />
           </label>
+        </div>
+
+        <div className="mt-4">
+          <DynamicFieldsSection
+            classes={fieldClasses}
+            values={fieldValues}
+            assignedFieldIds={assignedFieldIds}
+            onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}
+            onAssign={handleAssignField}
+            onUnassign={handleUnassignField}
+            canManageCustomFields={!!contract}
+          />
         </div>
 
         {contract && (
