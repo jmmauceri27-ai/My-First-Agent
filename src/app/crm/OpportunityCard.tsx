@@ -51,7 +51,7 @@ export default function OpportunityCard({
       )}
       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
         {opportunity.amount !== null && (
-          <span className="rounded-full bg-brand-500/25 px-2 py-0.5 font-semibold text-brand-700 dark:text-brand-300">
+          <span className="rounded-full bg-brand-500/25 px-2 py-0.5 font-semibold text-brand-700 dark:text-white">
             {formatAmount(opportunity.amount)}
           </span>
         )}
