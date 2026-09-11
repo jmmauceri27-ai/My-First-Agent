@@ -20,7 +20,10 @@ import type { FileExtensionFixResult } from "@/lib/crmDal";
 import { exportPipelineToExcelAction, fixMissingFileExtensionsAction, moveOpportunityStageAction } from "./actions";
 import KanbanColumn from "./KanbanColumn";
 import OpportunityCard from "./OpportunityCard";
+import OpportunityListView from "./OpportunityListView";
 import OpportunityModal from "./OpportunityModal";
+
+type View = "board" | "list";
 
 const PIPELINE_EXPORT_COLUMNS = [
   "Opportunity",
@@ -66,6 +69,7 @@ export default function KanbanBoard({
   const router = useRouter();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
+  const [view, setView] = useState<View>("board");
   const [optimisticStage, setOptimisticStage] = useState<Record<string, OpportunityStage>>({});
   const [activeId, setActiveId] = useState<string | null>(null);
   const [creatingInStage, setCreatingInStage] = useState<OpportunityStage | null>(null);
@@ -152,14 +156,41 @@ export default function KanbanBoard({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex justify-end gap-2">
-        <Button variant="secondary" onClick={handleFixFileNames} disabled={fixingFiles}>
-          {fixingFiles ? "Fixing…" : "Fix file names"}
-        </Button>
-        <Button variant="secondary" onClick={handleExport} disabled={opportunities.length === 0 || exporting}>
-          {exporting ? "Downloading…" : "Download pipeline (.xlsx)"}
-        </Button>
-        <Button onClick={() => setCreatingInStage(OPPORTUNITY_STAGES[0])}>+ New opportunity</Button>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex gap-1 rounded-lg border border-purple-400/20 p-1">
+          <button
+            type="button"
+            onClick={() => setView("board")}
+            className={`rounded-md px-3 py-1.5 text-sm font-semibold transition-all ${
+              view === "board"
+                ? "bg-brand-600 text-white"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-50"
+            }`}
+          >
+            Board
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("list")}
+            className={`rounded-md px-3 py-1.5 text-sm font-semibold transition-all ${
+              view === "list"
+                ? "bg-brand-600 text-white"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-50"
+            }`}
+          >
+            List
+          </button>
+        </div>
+
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={handleFixFileNames} disabled={fixingFiles}>
+            {fixingFiles ? "Fixing…" : "Fix file names"}
+          </Button>
+          <Button variant="secondary" onClick={handleExport} disabled={opportunities.length === 0 || exporting}>
+            {exporting ? "Downloading…" : "Download pipeline (.xlsx)"}
+          </Button>
+          <Button onClick={() => setCreatingInStage(OPPORTUNITY_STAGES[0])}>+ New opportunity</Button>
+        </div>
       </div>
 
       {fixError && <p className="text-sm text-critical">{fixError}</p>}
@@ -193,22 +224,26 @@ export default function KanbanBoard({
         </div>
       )}
 
-      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        <div className="flex gap-4 overflow-x-auto pb-2">
-          {OPPORTUNITY_STAGES.map((stage) => (
-            <KanbanColumn
-              key={stage}
-              stage={stage}
-              opportunities={grouped[stage]}
-              onCardClick={(o) => router.push(`/crm/opportunities/${o.id}`)}
-            />
-          ))}
-        </div>
+      {view === "board" ? (
+        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+          <div className="flex gap-4 overflow-x-auto pb-2">
+            {OPPORTUNITY_STAGES.map((stage) => (
+              <KanbanColumn
+                key={stage}
+                stage={stage}
+                opportunities={grouped[stage]}
+                onCardClick={(o) => router.push(`/crm/opportunities/${o.id}`)}
+              />
+            ))}
+          </div>
 
-        <DragOverlay>
-          {activeOpportunity ? <OpportunityCard opportunity={activeOpportunity} onClick={() => {}} /> : null}
-        </DragOverlay>
-      </DndContext>
+          <DragOverlay>
+            {activeOpportunity ? <OpportunityCard opportunity={activeOpportunity} onClick={() => {}} /> : null}
+          </DragOverlay>
+        </DndContext>
+      ) : (
+        <OpportunityListView opportunities={opportunities} />
+      )}
 
       {creatingInStage && (
         <OpportunityModal
