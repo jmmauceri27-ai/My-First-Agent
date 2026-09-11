@@ -25,7 +25,7 @@ const AREAS: Area[] = [
     icon: "💼",
     subLinks: [
       { href: "/crm", label: "Pipeline" },
-      { href: "/crm/contracts", label: "Contracts" },
+      { href: "/crm/contracts", label: "Agreements" },
       { href: "/crm/companies", label: "Companies" },
       { href: "/crm/contacts", label: "Contacts" },
       { href: "/crm/fields", label: "Fields" },

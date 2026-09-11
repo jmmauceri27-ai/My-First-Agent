@@ -90,9 +90,9 @@ export default function QuoteCalculator({
           </select>
         </label>
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-slate-700 dark:text-slate-300">Contract (optional, for its own rate card)</span>
+          <span className="font-medium text-slate-700 dark:text-slate-300">Agreement (optional, for its own rate card)</span>
           <select value={contractId} onChange={(e) => setContractId(e.target.value)} className={inputClass}>
-            <option value="">No contract</option>
+            <option value="">No agreement</option>
             {contractsForClient.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -130,7 +130,7 @@ export default function QuoteCalculator({
           <Card className="flex flex-1 flex-col divide-y divide-purple-400/10 overflow-hidden">
             <p className="bg-purple-500/5 px-4 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
               {usingContractRateCard
-                ? `Using ${contracts.find((c) => c.id === contractId)?.name ?? "this contract"}'s rate card for ${trade}`
+                ? `Using ${contracts.find((c) => c.id === contractId)?.name ?? "this agreement"}'s rate card for ${trade}`
                 : `Using the generic rate card for ${trade}`}
             </p>
             {itemsByCategory.map(([category, items]) => (

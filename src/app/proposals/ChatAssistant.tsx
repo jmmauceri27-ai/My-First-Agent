@@ -120,13 +120,13 @@ export default function ChatAssistant({
             </select>
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-300">Contract (optional, for its own rate card)</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Agreement (optional, for its own rate card)</span>
             <select
               value={contractId}
               onChange={(e) => setContractId(e.target.value)}
               className={`${inputClass} min-w-56`}
             >
-              <option value="">No contract selected</option>
+              <option value="">No agreement selected</option>
               {contractsForClient.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}

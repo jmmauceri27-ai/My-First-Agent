@@ -106,12 +106,12 @@ export default function ContractsClient({
             Timeline
           </button>
         </div>
-        <Button onClick={() => setCreating(true)}>+ New contract</Button>
+        <Button onClick={() => setCreating(true)}>+ New agreement</Button>
       </div>
 
       {contracts.length === 0 ? (
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          No contracts yet. Add your existing signed contracts here — how long they run, their rates, site counts,
+          No agreements yet. Add your existing signed agreements here — how long they run, their rates, site counts,
           and type of work.
         </p>
       ) : view === "list" ? (

@@ -41,7 +41,7 @@ export const DASHBOARD_SOURCES: DashboardSourceDef[] = [
   },
   {
     key: "contracts",
-    label: "Contracts",
+    label: "Agreements",
     domain: "CRM",
     columns: [
       { key: "name", label: "Name", type: "string" },
@@ -85,7 +85,7 @@ export const DASHBOARD_SOURCES: DashboardSourceDef[] = [
       { key: "name", label: "Name", type: "string" },
       { key: "companyName", label: "Client", type: "string" },
       { key: "opportunityName", label: "Opportunity", type: "string" },
-      { key: "contractName", label: "Contract", type: "string" },
+      { key: "contractName", label: "Agreement", type: "string" },
       { key: "siteCode", label: "Site ID", type: "string" },
       { key: "city", label: "City", type: "string" },
       { key: "state", label: "State", type: "string" },
@@ -119,7 +119,7 @@ export const DASHBOARD_SOURCES: DashboardSourceDef[] = [
       { key: "vendorName", label: "Vendor", type: "string" },
       { key: "subVendorName", label: "Sub-Vendor", type: "string" },
       { key: "sourcingStatus", label: "Sourcing status", type: "string" },
-      { key: "contractValue", label: "Contract value", type: "number" },
+      { key: "contractValue", label: "Agreement value", type: "number" },
       { key: "subPrice", label: "Sub price", type: "number" },
       { key: "subVendorPrice", label: "Sub-Vendor price", type: "number" },
       { key: "margin", label: "Margin", type: "number" },

@@ -19,8 +19,8 @@ const NONE = "";
 const OPTIONAL_FIELDS = [
   ["vendorName", "Vendor Name column"],
   ["subVendorName", "Sub-Vendor Name column"],
-  ["contractName", "Contract Name column"],
-  ["contractValue", "Contract Value column"],
+  ["contractName", "Agreement Name column"],
+  ["contractValue", "Agreement Value column"],
   ["annualRateTotal", "Annual Rate Total column"],
   ["subPrice", "Sub Price column"],
   ["subVendorPrice", "Sub-Vendor Price column"],
@@ -32,8 +32,8 @@ const TRADE_EXPORT_COLUMNS = [
   "Site Name",
   "Vendor Name",
   "Sub-Vendor Name",
-  "Contract Name",
-  "Contract Value",
+  "Agreement Name",
+  "Agreement Value",
   "Annual Rate Total",
   "Sub Price",
   "Sub-Vendor Price",
@@ -53,8 +53,8 @@ function buildTradeExportRows(sites: Site[], trade: string): DatasetRecord[] {
         "Site Name": s.name,
         "Vendor Name": a?.vendorName ?? "",
         "Sub-Vendor Name": a?.subVendorName ?? "",
-        "Contract Name": a?.contractName ?? "",
-        "Contract Value": a?.contractValue ?? null,
+        "Agreement Name": a?.contractName ?? "",
+        "Agreement Value": a?.contractValue ?? null,
         "Annual Rate Total": a?.annualRateTotal ?? null,
         "Sub Price": a?.subPrice ?? null,
         "Sub-Vendor Price": a?.subVendorPrice ?? null,
@@ -140,11 +140,11 @@ export default function UpdateSiteTradeAssignmentsModal({
       setMapping({
         matchCode: parsed.columns.find((c) => /site.?id/i.test(c)) ?? NONE,
         matchId: parsed.columns.find((c) => /^record ?id$/i.test(c) || /^id$/i.test(c)) ?? NONE,
-        matchName: parsed.columns.find((c) => /name/i.test(c) && !/vendor/i.test(c) && !/contract/i.test(c)) ?? NONE,
+        matchName: parsed.columns.find((c) => /name/i.test(c) && !/vendor/i.test(c) && !/agreement/i.test(c)) ?? NONE,
         vendorName: parsed.columns.find((c) => /^vendor/i.test(c)) ?? NONE,
         subVendorName: parsed.columns.find((c) => /sub.?vendor/i.test(c) && /name/i.test(c)) ?? NONE,
-        contractName: parsed.columns.find((c) => /contract/i.test(c) && /name/i.test(c)) ?? NONE,
-        contractValue: parsed.columns.find((c) => /contract/i.test(c) && !/name/i.test(c)) ?? NONE,
+        contractName: parsed.columns.find((c) => /agreement/i.test(c) && /name/i.test(c)) ?? NONE,
+        contractValue: parsed.columns.find((c) => /agreement/i.test(c) && !/name/i.test(c)) ?? NONE,
         annualRateTotal: parsed.columns.find((c) => /annual.?rate.?total/i.test(c)) ?? NONE,
         subPrice: parsed.columns.find((c) => /^sub.?price/i.test(c)) ?? NONE,
         subVendorPrice: parsed.columns.find((c) => /sub.?vendor.?price/i.test(c)) ?? NONE,
@@ -265,8 +265,8 @@ export default function UpdateSiteTradeAssignmentsModal({
           )}
           {unmatchedContractNames.length > 0 && (
             <p className="mt-2 text-xs text-critical">
-              {unmatchedContractNames.length} contract name{unmatchedContractNames.length === 1 ? "" : "s"} didn&rsquo;t
-              match any existing contract (that field was left as-is on those rows):{" "}
+              {unmatchedContractNames.length} agreement name{unmatchedContractNames.length === 1 ? "" : "s"} didn&rsquo;t
+              match any existing agreement (that field was left as-is on those rows):{" "}
               {unmatchedContractNames.slice(0, 10).join(", ")}
               {unmatchedContractNames.length > 10 ? `, +${unmatchedContractNames.length - 10} more` : ""}
             </p>
@@ -285,7 +285,7 @@ export default function UpdateSiteTradeAssignmentsModal({
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Update trade assignments</h2>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
           Bulk-update one Trade&rsquo;s Vendor/Sub-Vendor/pricing on existing sites from a sheet -- scoped to a single
-          Trade you pick below, so e.g. updating Land contract values never touches a site&rsquo;s Snow Removal
+          Trade you pick below, so e.g. updating Land agreement values never touches a site&rsquo;s Snow Removal
           assignment.
         </p>
 
@@ -313,7 +313,7 @@ export default function UpdateSiteTradeAssignmentsModal({
               {downloading ? "Preparing…" : `Download current ${trade} values (${tradeSiteCount} site${tradeSiteCount === 1 ? "" : "s"})`}
             </Button>
             <p className="text-xs text-slate-600 dark:text-slate-500">
-              Only sites with {trade} are included, and only that trade&rsquo;s Vendor/Sub-Vendor/Contract/pricing --
+              Only sites with {trade} are included, and only that trade&rsquo;s Vendor/Sub-Vendor/Agreement/pricing --
               no other trade&rsquo;s data. Edit this file and re-upload it below. Annual Rate Total here is the
               standalone flat figure, separate from the month-by-month Rate Schedule (bulk-edit that instead from
               Update &gt; Rate schedule).
@@ -427,7 +427,7 @@ export default function UpdateSiteTradeAssignmentsModal({
                 ))}
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-500">
-                Vendor/Sub-Vendor/Contract Name columns are matched by exact name (case-insensitive). A row whose
+                Vendor/Sub-Vendor/Agreement Name columns are matched by exact name (case-insensitive). A row whose
                 value doesn&rsquo;t match leaves that site&rsquo;s current value alone and is reported after import.
               </p>
             </div>

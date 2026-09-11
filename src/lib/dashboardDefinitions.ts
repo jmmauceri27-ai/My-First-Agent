@@ -3,7 +3,7 @@ import type { DashboardConfig } from "./types";
 /** Fixed set of business categories dashboards are grouped into on the Dashboards sidebar. */
 export const DASHBOARD_CATEGORIES = [
   "Sourcing & Coverage",
-  "Contract Value & Financials",
+  "Agreement Value & Financials",
   "Client-Focused",
   "Vendor Performance",
   "Assignments & Operations",
@@ -59,23 +59,23 @@ export const DASHBOARD_DEFINITIONS: DashboardDefinition[] = [
   },
   {
     id: "contract-value-by-state",
-    area: "Contract Value & Financials",
+    area: "Agreement Value & Financials",
     config: {
-      name: "Total Contract Value by State",
+      name: "Total Agreement Value by State",
       // Live "Trade" dropdown scopes both cards below to one trade at a time (e.g. Snow Removal);
       // left on "All" it covers every trade's site+trade assignments together.
       filterColumns: ["trade"],
       cards: [
         {
           type: "kpi",
-          title: "Total Contract Value",
+          title: "Total Agreement Value",
           source: "siteTradeAssignments",
           agg: "sum",
           column: "contractValue",
         },
         {
           type: "chart",
-          title: "Total Contract Value by State",
+          title: "Total Agreement Value by State",
           source: "siteTradeAssignments",
           chartType: "bar",
           x: "state",

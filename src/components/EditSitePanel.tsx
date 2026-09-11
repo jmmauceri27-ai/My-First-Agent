@@ -157,7 +157,7 @@ export default function EditSitePanel({
             <input
               value={newKey}
               onChange={(e) => setNewKey(e.target.value)}
-              placeholder="Field name (e.g. Contract Value)"
+              placeholder="Field name (e.g. Agreement Value)"
               className={`${inputClass} min-w-[140px] flex-1`}
             />
             <input

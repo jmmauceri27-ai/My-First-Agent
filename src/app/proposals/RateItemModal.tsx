@@ -98,9 +98,9 @@ export default function RateItemModal({
 
         <div className="mt-4 flex flex-col gap-4">
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-300">Contract (optional)</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Agreement (optional)</span>
             <select value={contractId} onChange={(e) => setContractId(e.target.value)} className={inputClass} autoFocus>
-              <option value="">Generic (no contract)</option>
+              <option value="">Generic (no agreement)</option>
               {contracts.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}

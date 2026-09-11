@@ -272,9 +272,9 @@ export default function SiteDetailClient({
             </div>
 
             <div className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-700 dark:text-slate-300">Vendor & Contract assignments</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Vendor & Agreement assignments</span>
               <p className="-mt-0.5 text-xs text-slate-600 dark:text-slate-500">
-                A site often uses a different vendor -- and can be covered under a different signed contract -- per
+                A site often uses a different vendor -- and can be covered under a different signed agreement -- per
                 trade, e.g. one for Land, another for Snow Removal.
               </p>
               <SiteTradeAssignmentsEditor
@@ -387,7 +387,7 @@ export default function SiteDetailClient({
                         <div>
                           <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{trade}</p>
                           <p className="text-xs text-slate-600 dark:text-slate-500">
-                            {billingType ?? "No billing type (set on the Contract)"}
+                            {billingType ?? "No billing type (set on the Agreement)"}
                           </p>
                         </div>
                         <label className="flex flex-col gap-1 text-xs">
@@ -556,7 +556,7 @@ export default function SiteDetailClient({
             </div>
 
             <div className="mt-2 border-t border-purple-400/10 pt-3">
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Vendors & Contracts by trade</p>
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Vendors & Agreements by trade</p>
               {site.tradeAssignments.length === 0 ? (
                 <p className="mt-1 text-xs text-slate-600 dark:text-slate-500">No vendor assignments yet.</p>
               ) : (
@@ -584,7 +584,7 @@ export default function SiteDetailClient({
                       )}
                       {a.contractId && (
                         <p className="text-xs text-slate-500 dark:text-slate-400">
-                          Contract:{" "}
+                          Agreement:{" "}
                           <Link href="/crm/contracts" className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
                             {a.contractName}
                           </Link>

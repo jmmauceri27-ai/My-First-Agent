@@ -5,7 +5,7 @@ export const OPPORTUNITY_STAGES = [
   "Pricing/Negotiation",
   "Awarded",
   "Onboarding",
-  "Active Contract",
+  "Active Agreement",
   "Renewal",
   "Lost",
 ] as const;
@@ -321,6 +321,10 @@ export interface ClientRateOverrideInput {
 export const FIELD_OBJECT_TYPES = ["Company", "Contact", "Opportunity", "Contract", "Site"] as const;
 
 export type FieldObjectType = (typeof FIELD_OBJECT_TYPES)[number];
+
+/** "Contract" stays the underlying object_type value stored on every crm_fields/crm_field_classes row --
+ * only how it's displayed to the user changes, so existing Fields data never needs to be migrated. */
+export const FIELD_OBJECT_TYPE_LABELS: Record<string, string> = { Contract: "Agreement" };
 
 export const FIELD_TYPES = ["Text", "Number", "Date", "Dropdown", "Checkbox"] as const;
 

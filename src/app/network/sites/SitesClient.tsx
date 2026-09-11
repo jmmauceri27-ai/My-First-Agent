@@ -63,7 +63,7 @@ const SITE_EXPORT_COLUMNS = [
   "Vendor",
   "Sub-Vendor",
   "Opportunity",
-  "Contract",
+  "Agreement",
   "Billing Type",
   "Trade",
   "Address",
@@ -72,7 +72,7 @@ const SITE_EXPORT_COLUMNS = [
   "Zip",
   "Latitude",
   "Longitude",
-  "Contract Value",
+  "Agreement Value",
   "Rate Schedule",
   "Annual Rate Total",
   "Sub Price",
@@ -116,7 +116,7 @@ function siteToExportRow(s: Site): DatasetRecord {
       .map((a) => `${a.trade}: ${a.subVendorName}`)
       .join("; "),
     Opportunity: s.opportunityName ?? "",
-    Contract: s.tradeAssignments
+    Agreement: s.tradeAssignments
       .filter((a) => a.contractName)
       .map((a) => `${a.trade}: ${a.contractName}`)
       .join("; "),
@@ -131,7 +131,7 @@ function siteToExportRow(s: Site): DatasetRecord {
     Zip: s.zip ?? "",
     Latitude: s.lat,
     Longitude: s.lng,
-    "Contract Value": sumOrNull(s.tradeAssignments.map((a) => a.contractValue)),
+    "Agreement Value": sumOrNull(s.tradeAssignments.map((a) => a.contractValue)),
     "Rate Schedule": scheduleExportSummary(s.tradeAssignments, (a) => a.rateSchedule),
     "Annual Rate Total": sumOrNull(s.tradeAssignments.map((a) => a.annualRateTotal)),
     "Sub Price": sumOrNull(s.tradeAssignments.map((a) => a.subPrice)),
@@ -462,7 +462,7 @@ export default function SitesClient({
     if (selectedIds.size === 0 || bulkRemoveTrades.length === 0) return;
     if (
       !window.confirm(
-        `Remove ${bulkRemoveTrades.join(", ")} from ${selectedIds.size} site${selectedIds.size === 1 ? "" : "s"}? This also deletes that trade's Vendor/Sub-Vendor/Contract/pricing on those sites.`,
+        `Remove ${bulkRemoveTrades.join(", ")} from ${selectedIds.size} site${selectedIds.size === 1 ? "" : "s"}? This also deletes that trade's Vendor/Sub-Vendor/Agreement/pricing on those sites.`,
       )
     ) {
       return;
@@ -1002,7 +1002,7 @@ export default function SitesClient({
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-xs text-slate-500 dark:text-slate-400">Assign/unassign contract for one trade:</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Assign/unassign agreement for one trade:</span>
             <select
               value={bulkContractTrade}
               onChange={(e) => setBulkContractTrade(e.target.value)}
@@ -1020,7 +1020,7 @@ export default function SitesClient({
               onChange={(e) => setBulkContractId(e.target.value)}
               className={`${inputClass} w-48`}
             >
-              <option value="">Contract…</option>
+              <option value="">Agreement…</option>
               {contracts.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -1039,7 +1039,7 @@ export default function SitesClient({
               onClick={handleBulkUnassignContract}
               disabled={!bulkContractTrade || unassigningContract}
             >
-              {unassigningContract ? "Unassigning…" : "Unassign contract from selected"}
+              {unassigningContract ? "Unassigning…" : "Unassign agreement from selected"}
             </Button>
             {bulkContractError && <span className="text-xs text-critical">{bulkContractError}</span>}
           </div>
@@ -1163,13 +1163,13 @@ export default function SitesClient({
           </FilterGroup>
 
           <FilterGroup title="Trade & Assignment">
-            <FilterField label="Contract">
+            <FilterField label="Agreement">
               <select
                 value={contractFilter}
                 onChange={(e) => setContractFilter(e.target.value)}
                 className={`${inputClass} w-full`}
               >
-                <option value="">All contracts</option>
+                <option value="">All agreements</option>
                 {contracts.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}

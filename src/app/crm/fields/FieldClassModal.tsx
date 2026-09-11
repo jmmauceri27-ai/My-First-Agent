@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
+import { FIELD_OBJECT_TYPE_LABELS } from "@/lib/crmTypes";
 import type { FieldClass } from "@/lib/crmTypes";
 import { createFieldClassAction, deleteFieldClassAction, updateFieldClassAction } from "./actions";
 
@@ -68,7 +69,7 @@ export default function FieldClassModal({
           {fieldClass ? "Edit class" : "New class"}
         </h2>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-          {`A class groups related fields together on ${objectType} records -- e.g. "Contact Info".`}
+          {`A class groups related fields together on ${FIELD_OBJECT_TYPE_LABELS[objectType] ?? objectType} records -- e.g. "Contact Info".`}
         </p>
 
         <label className="mt-4 flex flex-col gap-1 text-sm">

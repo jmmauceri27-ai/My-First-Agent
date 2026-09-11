@@ -73,7 +73,7 @@ export default function ContractsTimeline({
   }, [contracts, today]);
 
   if (rows.length === 0) {
-    return <p className="text-sm text-slate-500 dark:text-slate-400">No contracts have a start date set yet, so there&rsquo;s nothing to plot.</p>;
+    return <p className="text-sm text-slate-500 dark:text-slate-400">No agreements have a start date set yet, so there&rsquo;s nothing to plot.</p>;
   }
 
   return (
@@ -178,7 +178,7 @@ export default function ContractsTimeline({
 
       {undated > 0 && (
         <p className="mt-3 text-xs text-slate-600 dark:text-slate-500">
-          {undated} contract{undated === 1 ? "" : "s"} without a start date {undated === 1 ? "isn't" : "aren't"} shown
+          {undated} agreement{undated === 1 ? "" : "s"} without a start date {undated === 1 ? "isn't" : "aren't"} shown
           here.
         </p>
       )}

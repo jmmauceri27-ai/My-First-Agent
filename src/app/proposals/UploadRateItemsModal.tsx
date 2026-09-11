@@ -241,9 +241,9 @@ export default function UploadRateItemsModal({
         </p>
 
         <label className="mt-4 flex flex-col gap-1 text-sm">
-          <span className="font-medium text-slate-700 dark:text-slate-300">Contract (optional)</span>
+          <span className="font-medium text-slate-700 dark:text-slate-300">Agreement (optional)</span>
           <select value={contractId} onChange={(e) => setContractId(e.target.value)} className={inputClass}>
-            <option value="">Generic (no contract)</option>
+            <option value="">Generic (no agreement)</option>
             {contracts.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -252,7 +252,7 @@ export default function UploadRateItemsModal({
             ))}
           </select>
           <span className="text-xs text-slate-600 dark:text-slate-500">
-            Applies to every row in this file -- leave as Generic for the default catalog, or pick a contract to
+            Applies to every row in this file -- leave as Generic for the default catalog, or pick an agreement to
             import its own negotiated rate card (e.g. an MSA rate sheet). It&rsquo;ll be used instead of the
             generic rate for any trade it covers.
           </span>

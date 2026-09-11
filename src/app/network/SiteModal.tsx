@@ -267,9 +267,9 @@ export default function SiteModal({
           </label>
 
           <div className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-300">Vendor & Contract assignments</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Vendor & Agreement assignments</span>
             <p className="-mt-0.5 text-xs text-slate-600 dark:text-slate-500">
-              A site often uses a different vendor -- and can be covered under a different signed contract -- per
+              A site often uses a different vendor -- and can be covered under a different signed agreement -- per
               trade, e.g. one for Land, another for Snow Removal.
             </p>
             <SiteTradeAssignmentsEditor

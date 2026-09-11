@@ -166,7 +166,7 @@ export default function SiteTradeAssignmentsEditor({
                 </select>
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-700 dark:text-slate-300">Contract</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Agreement</span>
                 <select
                   value={draft.contractId}
                   onChange={(e) => updateTrade(trade, { contractId: e.target.value })}
@@ -189,7 +189,7 @@ export default function SiteTradeAssignmentsEditor({
 
             <div className="mt-2 grid grid-cols-3 gap-3">
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-700 dark:text-slate-300">Contract value</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Agreement value</span>
                 <input
                   value={draft.contractValue}
                   onChange={(e) => updateTrade(trade, { contractValue: e.target.value })}

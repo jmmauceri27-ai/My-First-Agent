@@ -99,14 +99,14 @@ export default function ClientDetailClient({
 
         <Card className="flex flex-col p-5">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Contracts</h2>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Agreements</h2>
             <Link href="/crm/contracts" className="text-xs font-medium text-brand-600 dark:text-brand-400 hover:underline">
               View all →
             </Link>
           </div>
           <div className="mt-3 flex flex-col divide-y divide-purple-400/10">
             {contracts.length === 0 ? (
-              <p className="py-2 text-xs text-slate-500 dark:text-slate-400">No contracts yet.</p>
+              <p className="py-2 text-xs text-slate-500 dark:text-slate-400">No agreements yet.</p>
             ) : (
               contracts.map((c) => (
                 <div key={c.id} className="py-2">

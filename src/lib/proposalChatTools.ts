@@ -26,14 +26,14 @@ export const PROPOSAL_CHAT_TOOLS: Anthropic.Tool[] = [
   {
     name: "list_rate_items",
     description:
-      "Lists the real, priced line items for one trade -- labor, equipment, materials, and flat-rate service tasks -- each with its exact rateItemId, category, pricing basis, rate tier, and rate. Always call this before pricing a trade so you use real item ids and rates, never invented ones. Pass contractId when a contract is selected: if that contract has its own negotiated rate items for the trade (e.g. from an MSA rate card), you'll get exactly those instead of the generic catalog -- a contract's rate card fully replaces the generic one for that trade. A rate card ties to a contract, not directly to a client, since one client can have several contracts with different rates.",
+      "Lists the real, priced line items for one trade -- labor, equipment, materials, and flat-rate service tasks -- each with its exact rateItemId, category, pricing basis, rate tier, and rate. Always call this before pricing a trade so you use real item ids and rates, never invented ones. Pass contractId when an agreement is selected: if that agreement has its own negotiated rate items for the trade (e.g. from an MSA rate card), you'll get exactly those instead of the generic catalog -- an agreement's rate card fully replaces the generic one for that trade. A rate card ties to an agreement, not directly to a client, since one client can have several agreements with different rates.",
     input_schema: {
       type: "object",
       properties: {
         trade: { type: "string", description: "Exact trade name, from list_trades." },
         contractId: {
           type: "string",
-          description: "The selected contract's contractId, if any -- see description above.",
+          description: "The selected agreement's contractId, if any -- see description above.",
         },
       },
       required: ["trade"],
@@ -42,7 +42,7 @@ export const PROPOSAL_CHAT_TOOLS: Anthropic.Tool[] = [
   {
     name: "compute_trade_price",
     description:
-      "Prices one trade's selected line items (rateItemId + quantity pairs) using the real rate card, and applies the client's blanket override automatically when companyId is given (a company-level discount/markup, separate from any contract-specific rate card). Returns each line's extended price, the subtotal, the override adjustment, and the trade total. This is the ONLY way to get a trade's price -- never calculate it yourself.",
+      "Prices one trade's selected line items (rateItemId + quantity pairs) using the real rate card, and applies the client's blanket override automatically when companyId is given (a company-level discount/markup, separate from any agreement-specific rate card). Returns each line's extended price, the subtotal, the override adjustment, and the trade total. This is the ONLY way to get a trade's price -- never calculate it yourself.",
     input_schema: {
       type: "object",
       properties: {

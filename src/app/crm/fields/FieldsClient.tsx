@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
-import { FIELD_OBJECT_TYPES } from "@/lib/crmTypes";
+import { FIELD_OBJECT_TYPE_LABELS, FIELD_OBJECT_TYPES } from "@/lib/crmTypes";
 import type { CrmField, FieldClass } from "@/lib/crmTypes";
 import FieldClassModal from "./FieldClassModal";
 import FieldModal from "./FieldModal";
@@ -40,7 +40,7 @@ export default function FieldsClient({ classes }: { classes: FieldClass[] }) {
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-50"
               }`}
             >
-              {t}
+              {FIELD_OBJECT_TYPE_LABELS[t] ?? t}
             </button>
           ))}
         </div>

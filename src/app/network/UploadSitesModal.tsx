@@ -361,7 +361,7 @@ export default function UploadSitesModal({
                 <TradeSelect value={trades} onChange={setTrades} placeholder="(none)" />
               </label>
               <p className="text-xs text-slate-600 dark:text-slate-500">
-                Vendor and Contract assignments (and pricing) are per-trade -- add those from each site&rsquo;s detail
+                Vendor and Agreement assignments (and pricing) are per-trade -- add those from each site&rsquo;s detail
                 page after importing.
               </p>
             </div>

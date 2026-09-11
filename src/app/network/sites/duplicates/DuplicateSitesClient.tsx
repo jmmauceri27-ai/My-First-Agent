@@ -213,7 +213,7 @@ function GroupCard({ group, onMerged }: { group: Site[]; onMerged: () => void })
               format={(v, siteId) => siteById(group, siteId)?.tradeAssignments.find((a) => a.trade === t.trade)?.subVendorName ?? v}
             />
             <FieldRow
-              label="Contract"
+              label="Agreement"
               fieldKey={`trade:${t.trade}:contractId`}
               resolution={t.contractId}
               selected={selections[`trade:${t.trade}:contractId`]}
@@ -221,7 +221,7 @@ function GroupCard({ group, onMerged }: { group: Site[]; onMerged: () => void })
               format={(v, siteId) => siteById(group, siteId)?.tradeAssignments.find((a) => a.trade === t.trade)?.contractName ?? v}
             />
             <FieldRow
-              label="Contract Value"
+              label="Agreement Value"
               fieldKey={`trade:${t.trade}:contractValue`}
               resolution={t.contractValue}
               selected={selections[`trade:${t.trade}:contractValue`]}

@@ -31,7 +31,7 @@ export default function RateRulesClient({
   const [editingOverride, setEditingOverride] = useState<ClientRateOverride | null>(null);
   const [creatingOverride, setCreatingOverride] = useState(false);
 
-  const GENERIC_LABEL = "Generic (no contract)";
+  const GENERIC_LABEL = "Generic (no agreement)";
 
   const byTrade = useMemo(() => {
     const trades = new Map<string, Map<string, RateItem[]>>();

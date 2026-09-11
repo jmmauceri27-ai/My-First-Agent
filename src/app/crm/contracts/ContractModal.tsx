@@ -106,7 +106,7 @@ export default function ContractModal({
   async function handleSave() {
     setError(null);
     if (!name.trim()) {
-      setError("Please enter a contract name.");
+      setError("Please enter an agreement name.");
       return;
     }
     setSaving(true);
@@ -131,7 +131,7 @@ export default function ContractModal({
       router.refresh();
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to save contract.");
+      setError(e instanceof Error ? e.message : "Failed to save agreement.");
     } finally {
       setSaving(false);
     }
@@ -152,11 +152,11 @@ export default function ContractModal({
   return (
     <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <Card className="max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">{contract ? "Edit contract" : "New contract"}</h2>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">{contract ? "Edit agreement" : "New agreement"}</h2>
 
         <div className="mt-4 flex flex-col gap-4">
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-300">Contract name</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Agreement name</span>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -231,7 +231,7 @@ export default function ContractModal({
                 </option>
               ))}
             </select>
-            <span className="text-xs text-slate-600 dark:text-slate-500">Applies to every site/trade linked to this contract.</span>
+            <span className="text-xs text-slate-600 dark:text-slate-500">Applies to every site/trade linked to this agreement.</span>
           </label>
 
           <div className="grid grid-cols-2 gap-3">

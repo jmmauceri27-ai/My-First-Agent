@@ -13,7 +13,7 @@ export default async function ContractsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">💼 CRM · Contracts</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">💼 CRM · Agreements</h1>
       <ContractsClient contracts={contracts} companies={companies} fieldClasses={fieldClasses} />
     </div>
   );
