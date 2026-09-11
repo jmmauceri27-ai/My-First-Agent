@@ -1,6 +1,5 @@
 import "server-only";
 import { randomUUID } from "crypto";
-import { getFieldIdByName, saveFieldValuesForRecord } from "./fieldsDal";
 import { createAdminClient, OWNER_USER_ID } from "./supabase/admin";
 import type {
   ClientRateOverride,
@@ -774,16 +773,6 @@ async function setOpportunityContacts(opportunityId: string, contactIds: string[
   }
 }
 
-/** "Submission Due Date" is a real column (expected_close_date) that Kanban, the detail page, and the
- * dashboard on-time-rate KPI all read directly -- but it's also registered as a Field under a Class in the
- * Fields/Classes system (see migration 051), so it needs to stay mirrored into crm_field_values on every
- * save. A no-op if that field isn't registered (e.g. the migration hasn't been run yet). */
-async function syncSubmissionDueDateField(opportunityId: string, expectedCloseDate: string | null): Promise<void> {
-  const fieldId = await getFieldIdByName("Opportunity", "submission_due_date");
-  if (!fieldId) return;
-  await saveFieldValuesForRecord(opportunityId, [{ fieldId, value: expectedCloseDate }]);
-}
-
 export async function createOpportunity(input: OpportunityInput): Promise<string> {
   const supabase = createAdminClient();
   const position = await nextPositionForStage(input.stage);
@@ -809,7 +798,6 @@ export async function createOpportunity(input: OpportunityInput): Promise<string
 
   const opportunityId = data.id as string;
   await setOpportunityContacts(opportunityId, input.contactIds);
-  await syncSubmissionDueDateField(opportunityId, input.expectedCloseDate);
   return opportunityId;
 }
 
@@ -834,7 +822,6 @@ export async function updateOpportunity(id: string, input: OpportunityInput): Pr
   if (error) throw new Error(error.message);
 
   await setOpportunityContacts(id, input.contactIds);
-  await syncSubmissionDueDateField(id, input.expectedCloseDate);
 }
 
 /** Moves a card to a (possibly new) stage, appending it to the end of that column. */

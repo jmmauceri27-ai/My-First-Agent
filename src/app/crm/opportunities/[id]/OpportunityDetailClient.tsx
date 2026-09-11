@@ -91,13 +91,6 @@ export default function OpportunityDetailClient({
     listAssignedFieldIdsAction(opportunity.id).then(setAssignedFieldIds);
   }, [opportunity.id]);
 
-  // "Submission Due Date" already has its own dedicated input below (backed by expectedCloseDate/the real
-  // column) -- excluded here so the Fields-driven section doesn't render it a second time.
-  const dynamicFieldClasses = fieldClasses.map((c) => ({
-    ...c,
-    fields: c.fields.filter((f) => f.name !== "submission_due_date"),
-  }));
-
   async function handleAssignField(fieldId: string) {
     setAssignedFieldIds((prev) => [...prev, fieldId]);
     await assignFieldToRecordAction(opportunity.id, fieldId);
@@ -370,7 +363,7 @@ export default function OpportunityDetailClient({
 
           <div className="mt-4">
             <DynamicFieldsSection
-              classes={dynamicFieldClasses}
+              classes={fieldClasses}
               values={fieldValues}
               assignedFieldIds={assignedFieldIds}
               onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}

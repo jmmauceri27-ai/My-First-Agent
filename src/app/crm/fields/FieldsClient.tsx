@@ -73,18 +73,7 @@ export default function FieldsClient({ classes }: { classes: FieldClass[] }) {
                     className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-purple-500/5"
                   >
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{f.label}</p>
-                        <span
-                          className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-                            f.isStandard
-                              ? "bg-brand-600/10 text-brand-600 dark:text-brand-400"
-                              : "bg-purple-500/10 text-slate-600 dark:text-slate-400"
-                          }`}
-                        >
-                          {f.isStandard ? "Standard" : "Custom"}
-                        </span>
-                      </div>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{f.label}</p>
                       <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                         {f.fieldType}
                         {f.fieldType === "Dropdown" && f.options ? ` -- ${f.options.join(", ")}` : ""}

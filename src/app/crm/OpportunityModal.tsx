@@ -71,13 +71,6 @@ export default function OpportunityModal({
 
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
 
-  // "Submission Due Date" already has its own dedicated input below (backed by expectedCloseDate/the real
-  // column) -- excluded here so the Fields-driven section doesn't render it a second time.
-  const dynamicFieldClasses = fieldClasses.map((c) => ({
-    ...c,
-    fields: c.fields.filter((f) => f.name !== "submission_due_date"),
-  }));
-
   function toggleContact(id: string) {
     setContactIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
   }
@@ -371,7 +364,7 @@ export default function OpportunityModal({
 
         <div className="mt-4">
           <DynamicFieldsSection
-            classes={dynamicFieldClasses}
+            classes={fieldClasses}
             values={fieldValues}
             assignedFieldIds={[]}
             onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}

@@ -179,21 +179,6 @@ export async function deleteField(id: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
-/** The id of the field named `name` for `objectType`, or null if no such field is registered yet -- used to
- * mirror a built-in column's value into crm_field_values without hardcoding a field id. */
-export async function getFieldIdByName(objectType: string, name: string): Promise<string | null> {
-  const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("crm_fields")
-    .select("id")
-    .eq("user_id", OWNER_USER_ID)
-    .eq("object_type", objectType)
-    .eq("name", name)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  return (data?.id as string | undefined) ?? null;
-}
-
 // ---------- Field Values ----------
 
 /** This record's stored value for every field it has one for, keyed by fieldId. Fields with no value saved
