@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
+import TradeSelect from "@/components/TradeSelect";
 import { OPPORTUNITY_STAGES } from "@/lib/crmTypes";
-import { TRADE_OPTIONS } from "@/lib/trades";
 import type {
   Company,
   Contact,
@@ -51,7 +51,7 @@ export default function OpportunityModal({
   const [siteCount, setSiteCount] = useState(
     opportunity?.siteCount != null ? String(opportunity.siteCount) : "",
   );
-  const [workType, setWorkType] = useState(opportunity?.workType ?? "");
+  const [trades, setTrades] = useState<string[]>(opportunity?.trades ?? []);
   const [expectedCloseDate, setExpectedCloseDate] = useState(opportunity?.expectedCloseDate ?? "");
   const [notes, setNotes] = useState(opportunity?.notes ?? "");
   const [contactIds, setContactIds] = useState<string[]>(opportunity?.contactIds ?? []);
@@ -151,7 +151,7 @@ export default function OpportunityModal({
         stage,
         amount: amount.trim() ? Number(amount) : null,
         siteCount: siteCount.trim() ? Number(siteCount) : null,
-        workType: workType.trim() || null,
+        trades,
         expectedCloseDate: expectedCloseDate || null,
         notes: notes.trim() || null,
         contactIds,
@@ -320,17 +320,10 @@ export default function OpportunityModal({
             </label>
           </div>
 
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-300">Trade</span>
-            <select value={workType} onChange={(e) => setWorkType(e.target.value)} className={inputClass}>
-              <option value="">(none)</option>
-              {TRADE_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-slate-700 dark:text-slate-300">Trades</span>
+            <TradeSelect value={trades} onChange={setTrades} />
+          </div>
 
           <div className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-slate-700 dark:text-slate-300">Contacts involved</span>

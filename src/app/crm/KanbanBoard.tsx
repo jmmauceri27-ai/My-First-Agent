@@ -47,7 +47,7 @@ function opportunityToExportRow(o: Opportunity): DatasetRecord {
     Stage: o.stage,
     Amount: o.amount,
     "Site Count": o.siteCount,
-    "Work Type": o.workType ?? "",
+    "Work Type": o.trades.join(", "),
     "Submission Due Date": o.expectedCloseDate ?? "",
     "Sales Manager": o.salesManagerName ?? "",
     Notes: o.notes ?? "",

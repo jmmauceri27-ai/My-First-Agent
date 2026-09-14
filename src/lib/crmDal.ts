@@ -743,7 +743,7 @@ export async function getContractFileDownloadUrl(id: string): Promise<string> {
 // ---------- Opportunities ----------
 
 const OPPORTUNITY_COLUMNS =
-  "id, tracking_number, name, company_id, stage, amount, site_count, work_type, expected_close_date, notes, sales_manager_id, position, created_at, updated_at, crm_companies(name, logo_storage_path, updated_at), crm_employees(name), crm_opportunity_contacts(contact_id)";
+  "id, tracking_number, name, company_id, stage, amount, site_count, trades, expected_close_date, notes, sales_manager_id, position, created_at, updated_at, crm_companies(name, logo_storage_path, updated_at), crm_employees(name), crm_opportunity_contacts(contact_id)";
 
 function mapOpportunity(o: Record<string, unknown>, supabase: ReturnType<typeof createAdminClient>): Opportunity {
   const company = o.crm_companies as unknown as {
@@ -763,7 +763,7 @@ function mapOpportunity(o: Record<string, unknown>, supabase: ReturnType<typeof 
     stage: o.stage as OpportunityStage,
     amount: o.amount as number | null,
     siteCount: o.site_count as number | null,
-    workType: o.work_type as string | null,
+    trades: (o.trades as string[] | null) ?? [],
     expectedCloseDate: o.expected_close_date as string | null,
     notes: o.notes as string | null,
     contactIds: contactRows.map((r) => r.contact_id),
@@ -858,7 +858,7 @@ export async function createOpportunity(input: OpportunityInput): Promise<string
       stage: input.stage,
       amount: input.amount,
       site_count: input.siteCount,
-      work_type: input.workType,
+      trades: input.trades,
       expected_close_date: input.expectedCloseDate,
       notes: input.notes,
       sales_manager_id: input.salesManagerId,
@@ -883,7 +883,7 @@ export async function updateOpportunity(id: string, input: OpportunityInput): Pr
       stage: input.stage,
       amount: input.amount,
       site_count: input.siteCount,
-      work_type: input.workType,
+      trades: input.trades,
       expected_close_date: input.expectedCloseDate,
       notes: input.notes,
       sales_manager_id: input.salesManagerId,

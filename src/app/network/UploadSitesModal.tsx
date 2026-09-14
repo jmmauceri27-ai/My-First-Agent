@@ -6,7 +6,6 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import TradeSelect from "@/components/TradeSelect";
-import { matchTrade } from "@/lib/trades";
 import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
 import { buildTemplateXlsxAction } from "@/lib/sheetActions";
 import type { Company, Opportunity } from "@/lib/crmTypes";
@@ -342,8 +341,9 @@ export default function UploadSitesModal({
                     const nextId = e.target.value;
                     setOpportunityId(nextId);
                     const opportunity = opportunitiesForCompany.find((o) => o.id === nextId);
-                    const matched = matchTrade(opportunity?.workType);
-                    if (matched && trades.length === 0) setTrades([matched]);
+                    if (trades.length === 0 && opportunity && opportunity.trades.length > 0) {
+                      setTrades(opportunity.trades);
+                    }
                   }}
                   className={inputClass}
                 >

@@ -72,7 +72,7 @@ export interface Opportunity {
   stage: OpportunityStage;
   amount: number | null;
   siteCount: number | null;
-  workType: string | null;
+  trades: string[];
   expectedCloseDate: string | null;
   notes: string | null;
   contactIds: string[];
@@ -89,7 +89,7 @@ export interface OpportunityInput {
   stage: OpportunityStage;
   amount: number | null;
   siteCount: number | null;
-  workType: string | null;
+  trades: string[];
   expectedCloseDate: string | null;
   notes: string | null;
   contactIds: string[];

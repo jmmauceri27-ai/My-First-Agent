@@ -16,7 +16,7 @@ export async function getSourceRows(source: DashboardSourceKey): Promise<Dataset
         stage: o.stage,
         amount: o.amount,
         siteCount: o.siteCount,
-        workType: o.workType,
+        trades: o.trades.join(", "),
         expectedCloseDate: o.expectedCloseDate,
         salesManagerName: o.salesManagerName,
         createdAt: o.createdAt,

@@ -61,7 +61,9 @@ export default function OpportunityCard({
           </span>
         )}
       </div>
-      {opportunity.workType && <p className="mt-1.5 truncate text-xs text-slate-700 dark:text-slate-300">{opportunity.workType}</p>}
+      {opportunity.trades.length > 0 && (
+        <p className="mt-1.5 truncate text-xs text-slate-700 dark:text-slate-300">{opportunity.trades.join(", ")}</p>
+      )}
       {opportunity.salesManagerName && (
         <p className="mt-1.5 truncate text-xs text-slate-500 dark:text-slate-400">👤 {opportunity.salesManagerName}</p>
       )}

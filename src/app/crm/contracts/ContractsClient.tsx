@@ -90,7 +90,7 @@ export default function ContractsClient({
       companyId: source.companyId,
       opportunityId: source.id,
       name: source.name,
-      workType: source.workType,
+      workType: source.trades[0] ?? null,
       siteCount: source.siteCount,
       rateAmount: source.amount,
     };

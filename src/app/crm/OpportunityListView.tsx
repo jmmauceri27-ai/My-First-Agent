@@ -14,7 +14,7 @@ type SortField =
   | "stage"
   | "amount"
   | "siteCount"
-  | "workType"
+  | "trades"
   | "expectedCloseDate"
   | "salesManagerName";
 
@@ -27,7 +27,7 @@ const COLUMNS: { field: SortField; label: string; align?: "right" }[] = [
   { field: "stage", label: "Stage" },
   { field: "amount", label: "Value", align: "right" },
   { field: "siteCount", label: "Site Count", align: "right" },
-  { field: "workType", label: "Trade" },
+  { field: "trades", label: "Trade" },
   { field: "expectedCloseDate", label: "Submission Due Date" },
   { field: "salesManagerName", label: "Sales Manager" },
 ];
@@ -51,6 +51,14 @@ function compareOpportunities(a: Opportunity, b: Opportunity, field: SortField):
     if (a.expectedCloseDate == null) return 1;
     if (b.expectedCloseDate == null) return -1;
     return new Date(a.expectedCloseDate).getTime() - new Date(b.expectedCloseDate).getTime();
+  }
+  if (field === "trades") {
+    const av = a.trades.join(", ");
+    const bv = b.trades.join(", ");
+    if (!av && !bv) return 0;
+    if (!av) return 1;
+    if (!bv) return -1;
+    return av.toLowerCase().localeCompare(bv.toLowerCase());
   }
   const av = a[field];
   const bv = b[field];
@@ -122,7 +130,7 @@ export default function OpportunityListView({ opportunities }: { opportunities: 
               <td className="py-2 pr-3 text-right tabular-nums text-slate-700 dark:text-slate-300">
                 {o.siteCount ?? "—"}
               </td>
-              <td className="py-2 pr-3 text-slate-700 dark:text-slate-300">{o.workType ?? "—"}</td>
+              <td className="py-2 pr-3 text-slate-700 dark:text-slate-300">{o.trades.length > 0 ? o.trades.join(", ") : "—"}</td>
               <td className="py-2 pr-3 tabular-nums text-slate-700 dark:text-slate-300">
                 {formatContractDate(o.expectedCloseDate)}
               </td>

@@ -12,7 +12,6 @@ import SiteTradeAssignmentsEditor, {
   type AssignmentDraft,
 } from "@/components/SiteTradeAssignmentsEditor";
 import SiteMeasurementsEditor from "@/components/SiteMeasurementsEditor";
-import { matchTrade } from "@/lib/trades";
 import type { Company, Contract, FieldClass, Opportunity } from "@/lib/crmTypes";
 import type { Site, SiteInput, SiteMeasurements, Vendor } from "@/lib/networkTypes";
 import { saveCompanyAction } from "@/app/crm/actions";
@@ -247,8 +246,9 @@ export default function SiteModal({
                 const nextId = e.target.value;
                 setOpportunityId(nextId);
                 const opportunity = opportunities.find((o) => o.id === nextId);
-                const matched = matchTrade(opportunity?.workType);
-                if (matched && trades.length === 0) setTrades([matched]);
+                if (trades.length === 0 && opportunity && opportunity.trades.length > 0) {
+                  setTrades(opportunity.trades);
+                }
               }}
               className={inputClass}
             >
