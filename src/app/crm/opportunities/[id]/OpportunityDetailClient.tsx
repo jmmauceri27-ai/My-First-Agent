@@ -8,6 +8,7 @@ import Card from "@/components/ui/Card";
 import FilesCard from "@/components/FilesCard";
 import { inputClass } from "@/components/ui/formClasses";
 import { OPPORTUNITY_STAGES } from "@/lib/crmTypes";
+import { TRADE_OPTIONS } from "@/lib/trades";
 import type {
   Company,
   Contact,
@@ -350,12 +351,14 @@ export default function OpportunityDetailClient({
 
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium text-slate-700 dark:text-slate-300">Trade</span>
-              <input
-                value={workType}
-                onChange={(e) => setWorkType(e.target.value)}
-                placeholder="e.g. HVAC installation, roofing, electrical"
-                className={inputClass}
-              />
+              <select value={workType} onChange={(e) => setWorkType(e.target.value)} className={inputClass}>
+                <option value="">(none)</option>
+                {TRADE_OPTIONS.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
             </label>
 
             <div className="flex flex-col gap-1 text-sm">

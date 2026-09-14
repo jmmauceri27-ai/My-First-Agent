@@ -8,6 +8,7 @@ import FilesCard from "@/components/FilesCard";
 import { inputClass } from "@/components/ui/formClasses";
 import { RATE_FREQUENCIES } from "@/lib/crmTypes";
 import { BILLING_TYPE_OPTIONS } from "@/lib/billingTypes";
+import { TRADE_OPTIONS } from "@/lib/trades";
 import type { Company, Contract, ContractFile, ContractInput, FieldClass, Opportunity } from "@/lib/crmTypes";
 import {
   deleteContractAction,
@@ -216,12 +217,14 @@ export default function ContractModal({
 
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-slate-700 dark:text-slate-300">Trade</span>
-            <input
-              value={workType}
-              onChange={(e) => setWorkType(e.target.value)}
-              placeholder="e.g. Snow removal, landscaping"
-              className={inputClass}
-            />
+            <select value={workType} onChange={(e) => setWorkType(e.target.value)} className={inputClass}>
+              <option value="">(none)</option>
+              {TRADE_OPTIONS.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
           </label>
 
           <div className="grid grid-cols-2 gap-3">
