@@ -13,7 +13,10 @@ export default async function CrmPage() {
     listFieldClasses("Opportunity"),
     listConvertedOpportunityIds(),
   ]);
-  const pipelineOpportunities = opportunities.filter((o) => !convertedIds.has(o.id));
+  // A converted opportunity drops off the pipeline once it's moved past Won -- but a Won opportunity is
+  // always converted now (moving to Won auto-creates its agreement), so Won itself is an exception: it
+  // stays visible here, otherwise the Won column would always be empty.
+  const pipelineOpportunities = opportunities.filter((o) => o.stage === "Won" || !convertedIds.has(o.id));
 
   return (
     <div className="flex flex-col gap-6">
