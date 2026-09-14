@@ -5,8 +5,7 @@ export const OPPORTUNITY_STAGES = [
   "Pricing/Negotiation",
   "Awarded",
   "Onboarding",
-  "Active Agreement",
-  "Renewal",
+  "Won",
   "Lost",
 ] as const;
 
