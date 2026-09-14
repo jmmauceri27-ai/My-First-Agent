@@ -4,7 +4,12 @@ import { listCompanies, listContracts, listOpportunities } from "@/lib/crmDal";
 import { listFieldClasses } from "@/lib/fieldsDal";
 import ContractsClient from "./ContractsClient";
 
-export default async function ContractsPage() {
+export default async function ContractsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ open?: string; convertFrom?: string }>;
+}) {
+  const { open, convertFrom } = await searchParams;
   const [contracts, companies, opportunities, fieldClasses] = await Promise.all([
     listContracts(),
     listCompanies(),
@@ -15,7 +20,14 @@ export default async function ContractsPage() {
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">💼 CRM · Agreements</h1>
-      <ContractsClient contracts={contracts} companies={companies} opportunities={opportunities} fieldClasses={fieldClasses} />
+      <ContractsClient
+        contracts={contracts}
+        companies={companies}
+        opportunities={opportunities}
+        fieldClasses={fieldClasses}
+        openContractId={open ?? null}
+        convertFromOpportunityId={convertFrom ?? null}
+      />
     </div>
   );
 }

@@ -553,6 +553,22 @@ export async function listContracts(): Promise<Contract[]> {
   return (data ?? []).map((c) => mapContract(c, supabase));
 }
 
+/** The agreement (if any) already converted from this opportunity -- used to swap "Convert to Agreement"
+ * for a "View agreement" link once one exists, so clicking convert again can't create a duplicate. */
+export async function getContractForOpportunity(opportunityId: string): Promise<Contract | null> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("crm_contracts")
+    .select(CONTRACT_COLUMNS)
+    .eq("user_id", OWNER_USER_ID)
+    .eq("opportunity_id", opportunityId)
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  return mapContract(data, supabase);
+}
+
 export async function createContract(input: ContractInput): Promise<string> {
   const supabase = createAdminClient();
   const trackingNumber = await resolveContractTrackingNumber(null, input.opportunityId);

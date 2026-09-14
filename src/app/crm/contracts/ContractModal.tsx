@@ -32,21 +32,29 @@ export default function ContractModal({
   companies,
   opportunities,
   fieldClasses,
+  prefill,
   onClose,
 }: {
   contract: Contract | null;
   companies: Company[];
   opportunities: Opportunity[];
   fieldClasses: FieldClass[];
+  /** Prefills a blank creation form (e.g. from an opportunity's "Convert to Agreement" button) -- ignored
+   * when editing an existing contract. */
+  prefill?: Partial<ContractInput> | null;
   onClose: () => void;
 }) {
   const router = useRouter();
-  const [name, setName] = useState(contract?.name ?? "");
-  const [companyId, setCompanyId] = useState(contract?.companyId ?? "");
-  const [opportunityId, setOpportunityId] = useState(contract?.opportunityId ?? "");
-  const [workType, setWorkType] = useState(contract?.workType ?? "");
-  const [siteCount, setSiteCount] = useState(contract?.siteCount != null ? String(contract.siteCount) : "");
-  const [rateAmount, setRateAmount] = useState(contract?.rateAmount != null ? String(contract.rateAmount) : "");
+  const [name, setName] = useState(contract?.name ?? prefill?.name ?? "");
+  const [companyId, setCompanyId] = useState(contract?.companyId ?? prefill?.companyId ?? "");
+  const [opportunityId, setOpportunityId] = useState(contract?.opportunityId ?? prefill?.opportunityId ?? "");
+  const [workType, setWorkType] = useState(contract?.workType ?? prefill?.workType ?? "");
+  const [siteCount, setSiteCount] = useState(
+    (contract?.siteCount ?? prefill?.siteCount) != null ? String(contract?.siteCount ?? prefill?.siteCount) : "",
+  );
+  const [rateAmount, setRateAmount] = useState(
+    (contract?.rateAmount ?? prefill?.rateAmount) != null ? String(contract?.rateAmount ?? prefill?.rateAmount) : "",
+  );
   const [rateFrequency, setRateFrequency] = useState(contract?.rateFrequency ?? "");
   const [billingType, setBillingType] = useState(contract?.billingType ?? "");
   const [startDate, setStartDate] = useState(contract?.startDate ?? "");

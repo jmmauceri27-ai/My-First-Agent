@@ -1,7 +1,14 @@
 export const dynamic = "force-dynamic";
 
 import { notFound } from "next/navigation";
-import { getOpportunity, listCompanies, listContacts, listEmployees, listOpportunityFiles } from "@/lib/crmDal";
+import {
+  getContractForOpportunity,
+  getOpportunity,
+  listCompanies,
+  listContacts,
+  listEmployees,
+  listOpportunityFiles,
+} from "@/lib/crmDal";
 import { listFieldClasses } from "@/lib/fieldsDal";
 import { listSitesForOpportunity } from "@/lib/networkDal";
 import OpportunityDetailClient from "./OpportunityDetailClient";
@@ -11,13 +18,14 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
   const opportunity = await getOpportunity(id);
   if (!opportunity) notFound();
 
-  const [companies, contacts, employees, files, sites, fieldClasses] = await Promise.all([
+  const [companies, contacts, employees, files, sites, fieldClasses, linkedContract] = await Promise.all([
     listCompanies(),
     listContacts(),
     listEmployees(),
     listOpportunityFiles(id),
     listSitesForOpportunity(id),
     listFieldClasses("Opportunity"),
+    getContractForOpportunity(id),
   ]);
 
   return (
@@ -29,6 +37,7 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
       files={files}
       sites={sites}
       fieldClasses={fieldClasses}
+      linkedContract={linkedContract}
     />
   );
 }

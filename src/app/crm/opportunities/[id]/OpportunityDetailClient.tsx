@@ -11,6 +11,7 @@ import { OPPORTUNITY_STAGES } from "@/lib/crmTypes";
 import type {
   Company,
   Contact,
+  Contract,
   Employee,
   FieldClass,
   Opportunity,
@@ -47,6 +48,7 @@ export default function OpportunityDetailClient({
   files,
   sites,
   fieldClasses,
+  linkedContract,
 }: {
   opportunity: Opportunity;
   companies: Company[];
@@ -55,6 +57,7 @@ export default function OpportunityDetailClient({
   files: OpportunityFile[];
   sites: Site[];
   fieldClasses: FieldClass[];
+  linkedContract: Contract | null;
 }) {
   const router = useRouter();
   const [name, setName] = useState(opportunity.name);
@@ -191,23 +194,40 @@ export default function OpportunityDetailClient({
         <Link href="/crm" className="text-sm font-medium text-brand-600 hover:underline dark:text-brand-400">
           ← Back to pipeline
         </Link>
-        <div className="mt-2 flex items-center gap-3">
-          {opportunity.companyLogoUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={opportunity.companyLogoUrl}
-              alt=""
-              className="h-10 w-10 shrink-0 rounded-full border border-slate-200 bg-slate-50 object-contain dark:border-slate-800 dark:bg-slate-900"
-            />
-          )}
-          <div>
-            <span className="rounded-full bg-purple-500/10 px-2 py-0.5 font-mono text-xs text-slate-500 dark:text-slate-400">
-              {opportunity.trackingNumber}
-            </span>
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">
-              {opportunity.name}
-            </h1>
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            {opportunity.companyLogoUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={opportunity.companyLogoUrl}
+                alt=""
+                className="h-10 w-10 shrink-0 rounded-full border border-slate-200 bg-slate-50 object-contain dark:border-slate-800 dark:bg-slate-900"
+              />
+            )}
+            <div>
+              <span className="rounded-full bg-purple-500/10 px-2 py-0.5 font-mono text-xs text-slate-500 dark:text-slate-400">
+                {opportunity.trackingNumber}
+              </span>
+              <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">
+                {opportunity.name}
+              </h1>
+            </div>
           </div>
+          {linkedContract ? (
+            <Button
+              variant="secondary"
+              onClick={() => router.push(`/crm/contracts?open=${linkedContract.id}`)}
+            >
+              View agreement →
+            </Button>
+          ) : (
+            <Button
+              variant="secondary"
+              onClick={() => router.push(`/crm/contracts?convertFrom=${opportunity.id}`)}
+            >
+              Convert to Agreement
+            </Button>
+          )}
         </div>
       </div>
 

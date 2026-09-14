@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { formatCurrency } from "@/lib/siteMapColor";
 import { contractStatus, formatContractDate } from "@/lib/contractStatus";
-import type { Company, Contract, FieldClass, Opportunity } from "@/lib/crmTypes";
+import type { Company, Contract, ContractInput, FieldClass, Opportunity } from "@/lib/crmTypes";
 import ContractModal from "./ContractModal";
 import ContractsTimeline from "./ContractsTimeline";
 
@@ -65,15 +66,45 @@ export default function ContractsClient({
   companies,
   opportunities,
   fieldClasses,
+  openContractId,
+  convertFromOpportunityId,
 }: {
   contracts: Contract[];
   companies: Company[];
   opportunities: Opportunity[];
   fieldClasses: FieldClass[];
+  openContractId: string | null;
+  convertFromOpportunityId: string | null;
 }) {
-  const [editingContract, setEditingContract] = useState<Contract | null>(null);
-  const [creating, setCreating] = useState(false);
+  const router = useRouter();
+  // Lazy initializers so these only ever resolve from the URL params this page loaded with, once -- not an
+  // effect, since there's no external system to synchronize with, just an initial state derivation.
+  const [editingContract, setEditingContract] = useState<Contract | null>(() =>
+    openContractId ? (contracts.find((c) => c.id === openContractId) ?? null) : null,
+  );
+  const [prefill, setPrefill] = useState<Partial<ContractInput> | null>(() => {
+    if (openContractId || !convertFromOpportunityId) return null;
+    const source = opportunities.find((o) => o.id === convertFromOpportunityId);
+    if (!source) return null;
+    return {
+      companyId: source.companyId,
+      opportunityId: source.id,
+      name: source.name,
+      workType: source.workType,
+      siteCount: source.siteCount,
+      rateAmount: source.amount,
+    };
+  });
+  const [creating, setCreating] = useState(() => prefill != null);
   const [view, setView] = useState<View>("list");
+
+  useEffect(() => {
+    if (openContractId || convertFromOpportunityId) {
+      router.replace("/crm/contracts");
+    }
+    // Only meant to fire once, to clean up the URL this page loaded with.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const byTrade = useMemo(() => {
     const groups = new Map<string, Contract[]>();
@@ -144,9 +175,11 @@ export default function ContractsClient({
           companies={companies}
           opportunities={opportunities}
           fieldClasses={fieldClasses}
+          prefill={editingContract ? null : prefill}
           onClose={() => {
             setEditingContract(null);
             setCreating(false);
+            setPrefill(null);
           }}
         />
       )}
