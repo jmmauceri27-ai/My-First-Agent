@@ -68,8 +68,8 @@ export const DASHBOARD_DEFINITIONS: DashboardDefinition[] = [
           type: "gauge",
           title: "Win Rate",
           source: "opportunities",
-          matchFilters: [{ column: "stage", op: "eq", value: "Awarded" }],
-          baseFilters: [{ column: "stage", op: "in", value: "Awarded,Lost" }],
+          matchFilters: [{ column: "stage", op: "eq", value: "Won" }],
+          baseFilters: [{ column: "stage", op: "in", value: "Won,Lost" }],
         },
         {
           type: "funnel",
