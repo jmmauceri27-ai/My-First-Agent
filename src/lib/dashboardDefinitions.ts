@@ -127,7 +127,7 @@ export const DASHBOARD_DEFINITIONS: DashboardDefinition[] = [
           title: "Pipeline by Deal Size",
           source: "opportunities",
           x: "dealSizeBucket",
-          xOrder: ["Small (< $10K)", "Medium ($10K–$50K)", "Large ($50K+)", "Unspecified"],
+          xOrder: ["Small (< $100K)", "Medium ($100K–$1M)", "Large ($1M–$5M)", "Extra Large ($5M+)", "Unspecified"],
           y: "amount",
           agg: "sum",
           valueFormat: "currency",

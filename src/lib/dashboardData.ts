@@ -7,9 +7,10 @@ import type { DatasetRecord } from "./types";
 /** Buckets an opportunity's amount into a fixed set of ranges, for the "Deal size" dashboard filter/breakdown. */
 function dealSizeBucket(amount: number | null): string {
   if (amount === null) return "Unspecified";
-  if (amount < 10_000) return "Small (< $10K)";
-  if (amount < 50_000) return "Medium ($10K–$50K)";
-  return "Large ($50K+)";
+  if (amount < 100_000) return "Small (< $100K)";
+  if (amount < 1_000_000) return "Medium ($100K–$1M)";
+  if (amount < 5_000_000) return "Large ($1M–$5M)";
+  return "Extra Large ($5M+)";
 }
 
 /** Flattens each fixed dashboard source's CRM/Network entities into flat rows for kpi.ts's generic aggregations. */
