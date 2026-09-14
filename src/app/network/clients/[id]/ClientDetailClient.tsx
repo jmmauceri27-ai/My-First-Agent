@@ -35,7 +35,17 @@ export default function ClientDetailClient({
           <Link href="/network/clients" className="text-sm font-medium text-brand-600 dark:text-brand-400 hover:underline">
             ← Back to Clients
           </Link>
-          <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">{company.name}</h1>
+          <div className="mt-2 flex items-center gap-3">
+            {company.logoUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={company.logoUrl}
+                alt=""
+                className="h-10 w-10 shrink-0 rounded-full border border-slate-200 bg-slate-50 object-contain dark:border-slate-800 dark:bg-slate-900"
+              />
+            )}
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">{company.name}</h1>
+          </div>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             {[company.address, company.city, company.state].filter(Boolean).join(", ") || "No address on file"}
           </p>
