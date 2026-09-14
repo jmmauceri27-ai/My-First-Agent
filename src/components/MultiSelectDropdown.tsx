@@ -40,16 +40,24 @@ export default function MultiSelectDropdown({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // A selected value that isn't in the fixed options list (e.g. leftover freeform text from before this
+  // field became a picker) would otherwise be stuck forever -- no checkbox exists to uncheck it. Synthesize
+  // one so it still shows up (marked as "not in list") and can be removed.
+  const extraOptions = values
+    .filter((v) => !options.some((o) => o.value === v))
+    .map((v) => ({ value: v, label: v, isExtra: true }));
+  const allOptions = [...options.map((o) => ({ ...o, isExtra: false })), ...extraOptions];
+
   const visibleOptions =
     query.trim() === ""
-      ? options
-      : options.filter((o) => o.label.toLowerCase().includes(query.trim().toLowerCase()));
+      ? allOptions
+      : allOptions.filter((o) => o.label.toLowerCase().includes(query.trim().toLowerCase()));
 
   function toggle(value: string) {
     onChange(values.includes(value) ? values.filter((v) => v !== value) : [...values, value]);
   }
 
-  const labelByValue = new Map(options.map((o) => [o.value, o.label]));
+  const labelByValue = new Map(allOptions.map((o) => [o.value, o.label]));
   const summary =
     values.length === 0
       ? placeholder
@@ -72,7 +80,7 @@ export default function MultiSelectDropdown({
       </button>
       {open && (
         <div className="absolute z-[2000] mt-1 w-56 rounded-lg border border-purple-200 bg-white p-2 shadow-xl dark:border-purple-400/40 dark:bg-[#3c2b6b] dark:shadow-black/50">
-          {options.length > 5 && (
+          {allOptions.length > 5 && (
             <input
               autoFocus
               value={query}
@@ -84,13 +92,14 @@ export default function MultiSelectDropdown({
           <div className="max-h-56 overflow-y-auto">
             {visibleOptions.length === 0 ? (
               <p className="px-2 py-1.5 text-sm text-slate-500 dark:text-slate-400">
-                {options.length === 0 ? "No options." : "No matches."}
+                {allOptions.length === 0 ? "No options." : "No matches."}
               </p>
             ) : (
               visibleOptions.map((o) => (
                 <label
                   key={o.value}
                   className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-900 dark:text-slate-100 hover:bg-purple-500/10"
+                  title={o.isExtra ? "Not in the standard list -- uncheck to remove it" : undefined}
                 >
                   <input
                     type="checkbox"
@@ -98,7 +107,10 @@ export default function MultiSelectDropdown({
                     onChange={() => toggle(o.value)}
                     className="rounded border-slate-500 text-brand-500 focus:ring-2 focus:ring-brand-500/40"
                   />
-                  <span className="truncate">{o.label}</span>
+                  <span className={`truncate ${o.isExtra ? "italic text-slate-500 dark:text-slate-400" : ""}`}>
+                    {o.label}
+                    {o.isExtra && " (not in list)"}
+                  </span>
                 </label>
               ))
             )}
