@@ -59,7 +59,7 @@ export const DASHBOARD_SOURCES: DashboardSourceDef[] = [
   },
   {
     key: "companies",
-    label: "Companies",
+    label: "Clients",
     domain: "CRM",
     columns: [
       { key: "name", label: "Name", type: "string" },

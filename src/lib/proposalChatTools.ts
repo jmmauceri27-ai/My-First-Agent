@@ -42,7 +42,7 @@ export const PROPOSAL_CHAT_TOOLS: Anthropic.Tool[] = [
   {
     name: "compute_trade_price",
     description:
-      "Prices one trade's selected line items (rateItemId + quantity pairs) using the real rate card, and applies the client's blanket override automatically when companyId is given (a company-level discount/markup, separate from any agreement-specific rate card). Returns each line's extended price, the subtotal, the override adjustment, and the trade total. This is the ONLY way to get a trade's price -- never calculate it yourself.",
+      "Prices one trade's selected line items (rateItemId + quantity pairs) using the real rate card, and applies the client's blanket override automatically when companyId is given (a client-level discount/markup, separate from any agreement-specific rate card). Returns each line's extended price, the subtotal, the override adjustment, and the trade total. This is the ONLY way to get a trade's price -- never calculate it yourself.",
     input_schema: {
       type: "object",
       properties: {

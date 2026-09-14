@@ -196,13 +196,13 @@ export default function OpportunityModal({
           </label>
 
           <div className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-300">Company</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Client</span>
             {addingCompany ? (
               <div className="flex gap-2">
                 <input
                   value={newCompanyName}
                   onChange={(e) => setNewCompanyName(e.target.value)}
-                  placeholder="New company name"
+                  placeholder="New client name"
                   className={inputClass}
                 />
                 <Button type="button" variant="secondary" onClick={handleAddCompany}>

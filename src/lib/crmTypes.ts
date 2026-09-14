@@ -333,9 +333,9 @@ export const FIELD_OBJECT_TYPES = ["Company", "Contact", "Opportunity", "Contrac
 
 export type FieldObjectType = (typeof FIELD_OBJECT_TYPES)[number];
 
-/** "Contract" stays the underlying object_type value stored on every crm_fields/crm_field_classes row --
- * only how it's displayed to the user changes, so existing Fields data never needs to be migrated. */
-export const FIELD_OBJECT_TYPE_LABELS: Record<string, string> = { Contract: "Agreement" };
+/** "Contract"/"Company" stay the underlying object_type values stored on every crm_fields/crm_field_classes
+ * row -- only how they're displayed to the user changes, so existing Fields data never needs to be migrated. */
+export const FIELD_OBJECT_TYPE_LABELS: Record<string, string> = { Contract: "Agreement", Company: "Client" };
 
 export const FIELD_TYPES = ["Text", "Number", "Date", "Dropdown", "Checkbox"] as const;
 

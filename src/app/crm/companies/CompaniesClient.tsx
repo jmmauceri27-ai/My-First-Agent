@@ -22,13 +22,13 @@ export default function CompaniesClient({
     <div className="flex flex-col gap-4">
       <div className="flex justify-end gap-2">
         <Button variant="secondary" onClick={() => setUploading(true)}>
-          Upload companies
+          Upload clients
         </Button>
-        <Button onClick={() => setCreating(true)}>+ New company</Button>
+        <Button onClick={() => setCreating(true)}>+ New client</Button>
       </div>
 
       {companies.length === 0 ? (
-        <p className="text-sm text-slate-500 dark:text-slate-400">No companies yet.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">No clients yet.</p>
       ) : (
         <Card className="flex flex-col divide-y divide-slate-100 overflow-hidden dark:divide-slate-900">
           {companies.map((c) => (

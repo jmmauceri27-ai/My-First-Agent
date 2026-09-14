@@ -26,7 +26,7 @@ const AREAS: Area[] = [
     subLinks: [
       { href: "/crm", label: "Pipeline" },
       { href: "/crm/contracts", label: "Agreements" },
-      { href: "/crm/companies", label: "Companies" },
+      { href: "/crm/companies", label: "Clients" },
       { href: "/crm/contacts", label: "Contacts" },
       { href: "/crm/fields", label: "Fields" },
     ],

@@ -130,7 +130,7 @@ export default function CompanyModal({
   async function handleSave() {
     setError(null);
     if (!name.trim()) {
-      setError("Please enter a company name.");
+      setError("Please enter a client name.");
       return;
     }
     setSaving(true);
@@ -150,7 +150,7 @@ export default function CompanyModal({
       router.refresh();
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to save company.");
+      setError(e instanceof Error ? e.message : "Failed to save client.");
     } finally {
       setSaving(false);
     }
@@ -176,7 +176,7 @@ export default function CompanyModal({
           onClick={(e) => e.stopPropagation()}
         >
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">
-            {company ? "Edit company" : "New company"}
+            {company ? "Edit client" : "New client"}
           </h2>
 
           {company && (

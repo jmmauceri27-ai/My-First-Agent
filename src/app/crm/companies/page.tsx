@@ -9,7 +9,7 @@ export default async function CompaniesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">💼 CRM · Companies</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">💼 CRM · Clients</h1>
       <CompaniesClient companies={companies} fieldClasses={fieldClasses} />
     </div>
   );

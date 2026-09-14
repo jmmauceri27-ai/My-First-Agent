@@ -124,7 +124,7 @@ export default function ContactModal({
             <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} autoFocus />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-300">Company</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Client</span>
             <select value={companyId} onChange={(e) => setCompanyId(e.target.value)} className={inputClass}>
               <option value="">(none)</option>
               {companies.map((c) => (
