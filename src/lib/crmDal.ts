@@ -595,6 +595,31 @@ export async function createContract(input: ContractInput): Promise<string> {
   return data.id as string;
 }
 
+/** Once an opportunity's stage becomes "Won" it's already an active agreement, so this creates one
+ * automatically -- pre-filled exactly like the manual "Convert to Agreement" flow (rate/billing/dates left
+ * blank for the user to fill in afterward) -- unless it already has one, so re-saving a Won opportunity or
+ * dragging it within the same stage can never create a duplicate. */
+async function maybeAutoCreateAgreement(opportunityId: string, stage: OpportunityStage): Promise<void> {
+  if (stage !== "Won") return;
+  const existing = await getContractForOpportunity(opportunityId);
+  if (existing) return;
+  const opportunity = await getOpportunity(opportunityId);
+  if (!opportunity) return;
+  await createContract({
+    companyId: opportunity.companyId,
+    opportunityId: opportunity.id,
+    name: opportunity.name,
+    workType: opportunity.trades[0] ?? null,
+    siteCount: opportunity.siteCount,
+    rateAmount: opportunity.amount,
+    rateFrequency: null,
+    billingType: null,
+    startDate: null,
+    endDate: null,
+    notes: null,
+  });
+}
+
 export async function updateContract(id: string, input: ContractInput): Promise<void> {
   const supabase = createAdminClient();
   const { data: existing, error: fetchError } = await supabase
@@ -870,6 +895,7 @@ export async function createOpportunity(input: OpportunityInput): Promise<string
 
   const opportunityId = data.id as string;
   await setOpportunityContacts(opportunityId, input.contactIds);
+  await maybeAutoCreateAgreement(opportunityId, input.stage);
   return opportunityId;
 }
 
@@ -894,6 +920,7 @@ export async function updateOpportunity(id: string, input: OpportunityInput): Pr
   if (error) throw new Error(error.message);
 
   await setOpportunityContacts(id, input.contactIds);
+  await maybeAutoCreateAgreement(id, input.stage);
 }
 
 /** Moves a card to a (possibly new) stage, appending it to the end of that column. */
@@ -906,6 +933,7 @@ export async function updateOpportunityStage(id: string, stage: OpportunityStage
     .eq("id", id)
     .eq("user_id", OWNER_USER_ID);
   if (error) throw new Error(error.message);
+  await maybeAutoCreateAgreement(id, stage);
 }
 
 export async function deleteOpportunity(id: string): Promise<void> {
