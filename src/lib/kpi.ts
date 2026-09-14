@@ -28,6 +28,7 @@ export const FILTER_OPS: { value: FilterCondition["op"]; label: string }[] = [
   { value: "lt", label: "< less than" },
   { value: "lte", label: "≤ less or equal" },
   { value: "contains", label: "contains" },
+  { value: "in", label: "in list" },
 ];
 
 function round2(n: number): number {
@@ -51,6 +52,11 @@ function matchesFilter(row: DatasetRecord, filter: FilterCondition): boolean {
       return String(raw) !== filter.value;
     case "contains":
       return String(raw).toLowerCase().includes(filter.value.toLowerCase());
+    case "in":
+      return filter.value
+        .split(",")
+        .map((v) => v.trim().toLowerCase())
+        .includes(String(raw).toLowerCase());
     case "gt":
     case "gte":
     case "lt":
@@ -271,6 +277,44 @@ export function computeMultiValueChartData(
   }
 
   return points.sort((a, b) => b.value - a.value);
+}
+
+/** Like computeChartData, but for a funnel -- categories always render in the given fixed `order` (e.g. the
+ * pipeline's stage sequence) rather than being sorted by value, and a category with no matching rows still
+ * appears, at 0, so the funnel's shape is comparable across filters. */
+export function computeOrderedChartData(
+  rows: DatasetRecord[],
+  x: string,
+  order: string[],
+  y: string | undefined,
+  agg: ChartAgg,
+  filters?: FilterCondition[],
+): ChartPoint[] {
+  const working = applyFilters(rows, filters);
+  const groups = new Map<string, number[]>(order.map((key) => [key, []]));
+
+  for (const row of working) {
+    const key = String(row[x] ?? "(blank)");
+    const bucket = groups.get(key);
+    if (!bucket) continue;
+    const num = y ? Number(row[y]) : 1;
+    if (y && Number.isNaN(num)) continue;
+    bucket.push(num);
+  }
+
+  return order.map((key) => ({ key, value: round2(aggregateValues(groups.get(key) ?? [], agg)) }));
+}
+
+/** Percent of `baseFilters`-matching rows (default: every row) that also match `matchFilters` -- e.g. win
+ * rate = Awarded rows / (Awarded+Lost) rows, unlike computeKpi's pct_match which always divides by every row. */
+export function computeGaugePercent(
+  rows: DatasetRecord[],
+  matchFilters: FilterCondition[],
+  baseFilters?: FilterCondition[],
+): number {
+  const base = applyFilters(rows, baseFilters);
+  if (base.length === 0) return 0;
+  return round2((applyFilters(base, matchFilters).length / base.length) * 100);
 }
 
 export interface AgingResult {

@@ -67,6 +67,11 @@ export default function DashboardViewClient({ config }: { config: DashboardConfi
   const effectiveCards: DashboardCard[] = config.cards.map((card) => {
     const extraFilters = activeFiltersFor(card.source);
     if (extraFilters.length === 0) return card;
+    // A gauge has no `filters` of its own -- its numerator/denominator are scoped by matchFilters/baseFilters
+    // instead, so a global drill-down narrows both by folding into baseFilters (the denominator's scope).
+    if (card.type === "gauge") {
+      return { ...card, baseFilters: [...(card.baseFilters ?? []), ...extraFilters] };
+    }
     return { ...card, filters: [...(card.filters ?? []), ...extraFilters] };
   });
 

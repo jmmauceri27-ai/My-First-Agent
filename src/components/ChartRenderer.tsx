@@ -29,11 +29,13 @@ export default function ChartRenderer({
   chartType,
   data,
   seriesKeys,
+  height = 260,
 }: {
   chartType: ChartType;
   data: ChartPoint[] | GroupedChartPoint[];
   /** When set, renders one bar per series (side-by-side per x-group) instead of a single-series bar per x-group. */
   seriesKeys?: string[];
+  height?: number;
 }) {
   const isDark = useIsDarkMode();
   const colors = isDark ? CHART_COLORS_DARK : CHART_COLORS_LIGHT;
@@ -48,7 +50,7 @@ export default function ChartRenderer({
 
   if (chartType === "bar" && seriesKeys && seriesKeys.length > 0) {
     return (
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={height}>
         <BarChart data={data as GroupedChartPoint[]}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} className={gridClass} />
           <XAxis dataKey="key" tick={tickStyle} interval={0} angle={-30} textAnchor="end" height={60} />
@@ -80,7 +82,7 @@ export default function ChartRenderer({
   }
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
+    <ResponsiveContainer width="100%" height={height}>
       {chartType === "bar" ? (
         <BarChart data={data as ChartPoint[]}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} className={gridClass} />
