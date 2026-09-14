@@ -95,7 +95,7 @@ export default function DashboardCardsView({
           varied widgets (funnel, leaderboard, gauge, chart, ...) side by side instead of one full-width
           section per type stacked underneath each other. */}
       {otherCards.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {otherCards.map((card, i) => {
             const accent = CHART_COLORS_LIGHT[i % CHART_COLORS_LIGHT.length];
             const rows = rowsBySource[card.source] ?? [];

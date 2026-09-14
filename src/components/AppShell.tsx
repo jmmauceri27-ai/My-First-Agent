@@ -11,7 +11,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const showNav = pathname !== "/login";
   const isNetworkMapRoute = pathname === "/network" || pathname === "/network/sites";
   const isSiteDetailRoute = (pathname ?? "").startsWith("/network/sites/");
-  const isWide = pathname === "/crm" || isNetworkMapRoute || isSiteDetailRoute;
+  const isWide = pathname === "/crm" || pathname === "/dashboards" || isNetworkMapRoute || isSiteDetailRoute;
   const isFullBleed = isNetworkMapRoute;
 
   return (
