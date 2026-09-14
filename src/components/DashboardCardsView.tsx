@@ -1,4 +1,11 @@
-import { computeAging, computeChartData, computeGroupedChartData, computeKpi, computeScorecard } from "@/lib/kpi";
+import {
+  computeAging,
+  computeChartData,
+  computeGroupedChartData,
+  computeKpi,
+  computeMultiValueChartData,
+  computeScorecard,
+} from "@/lib/kpi";
 import type { AgingCard, ChartCard, DashboardCard, DatasetRecord, KpiCard, ScorecardCard } from "@/lib/types";
 import type { DashboardSourceKey } from "@/lib/dashboardSources";
 import { CHART_COLORS_LIGHT } from "@/lib/chartPalette";
@@ -147,7 +154,12 @@ export default function DashboardCardsView({
             const grouped = card.series
               ? computeGroupedChartData(rows, card.x, card.series, card.y, card.agg, card.filters)
               : null;
-            const data = grouped ? grouped.data : computeChartData(rows, card.x, card.y, card.agg, card.filters);
+            const computed = grouped
+              ? grouped.data
+              : card.xMulti
+                ? computeMultiValueChartData(rows, card.x, card.y, card.agg, card.filters)
+                : computeChartData(rows, card.x, card.y, card.agg, card.filters);
+            const data = card.limit ? computed.slice(0, card.limit) : computed;
             return (
               <Card key={i} className="p-4">
                 <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-slate-50">

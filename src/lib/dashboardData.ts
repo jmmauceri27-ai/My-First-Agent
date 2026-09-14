@@ -4,6 +4,14 @@ import { listSites, listVendors } from "./networkDal";
 import type { DashboardSourceKey } from "./dashboardSources";
 import type { DatasetRecord } from "./types";
 
+/** Buckets an opportunity's amount into a fixed set of ranges, for the "Deal size" dashboard filter/breakdown. */
+function dealSizeBucket(amount: number | null): string {
+  if (amount === null) return "Unspecified";
+  if (amount < 10_000) return "Small (< $10K)";
+  if (amount < 50_000) return "Medium ($10K–$50K)";
+  return "Large ($50K+)";
+}
+
 /** Flattens each fixed dashboard source's CRM/Network entities into flat rows for kpi.ts's generic aggregations. */
 export async function getSourceRows(source: DashboardSourceKey): Promise<DatasetRecord[]> {
   switch (source) {
@@ -17,6 +25,7 @@ export async function getSourceRows(source: DashboardSourceKey): Promise<Dataset
         amount: o.amount,
         siteCount: o.siteCount,
         trades: o.trades.join(", "),
+        dealSizeBucket: dealSizeBucket(o.amount),
         expectedCloseDate: o.expectedCloseDate,
         salesManagerName: o.salesManagerName,
         createdAt: o.createdAt,

@@ -38,11 +38,16 @@ export interface ChartCard {
   source: DashboardSourceKey;
   chartType: ChartType;
   x: string;
+  /** True when the x column holds a comma-joined list (e.g. "trades") -- each row is credited to every
+   * token instead of being grouped under the whole joined string as one bucket. Not combinable with `series`. */
+  xMulti?: boolean;
   /** Optional column that further breaks each x-group into side-by-side series (e.g. "sourcingStatus" -> Sourced/Unsourced bars per state). */
   series?: string;
   y?: string;
   agg: ChartAgg;
   filters?: FilterCondition[];
+  /** Caps the chart to its top N groups by value (data is already sorted descending) -- e.g. "Top 8 opportunities by value" instead of every row. */
+  limit?: number;
 }
 
 export interface AgingBucketDef {
@@ -102,9 +107,19 @@ export const DEFAULT_AGING_BUCKETS: AgingBucketDef[] = [
   { label: "61+ days", minDays: 61, maxDays: null },
 ];
 
+export interface FilterColumnDef {
+  column: string;
+  /** Dropdown label; defaults to the column key. */
+  label?: string;
+  /** True when the column holds a comma-joined list (e.g. "trades") -- dropdown options are the individual
+   * tokens rather than whole joined combos, and matching a token uses "contains" instead of exact "eq". */
+  multi?: boolean;
+}
+
 export interface DashboardConfig {
   name: string;
   cards: DashboardCard[];
-  /** Columns exposed as live filter dropdowns on the Dashboards viewer. */
-  filterColumns?: string[];
+  /** Columns exposed as live filter dropdowns on the Dashboards viewer. A bare string is shorthand for
+   * `{ column }` (single-value, exact match). */
+  filterColumns?: (string | FilterColumnDef)[];
 }

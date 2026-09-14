@@ -236,6 +236,43 @@ export function computeGroupedChartData(
   return { data: points, seriesKeys };
 }
 
+/** Like computeChartData, but for an x column holding a comma-joined list (e.g. "Snow Removal, HVAC") --
+ * each row is credited to every token it contains instead of being grouped under the whole joined string. */
+export function computeMultiValueChartData(
+  rows: DatasetRecord[],
+  x: string,
+  y: string | undefined,
+  agg: ChartAgg,
+  filters?: FilterCondition[],
+): ChartPoint[] {
+  const working = applyFilters(rows, filters);
+  const groups = new Map<string, number[]>();
+
+  for (const row of working) {
+    const raw = row[x];
+    const tokens =
+      raw === null || raw === undefined || raw === ""
+        ? []
+        : String(raw)
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean);
+    const num = y ? Number(row[y]) : 1;
+    if (y && Number.isNaN(num)) continue;
+    for (const token of tokens.length ? tokens : ["(blank)"]) {
+      if (!groups.has(token)) groups.set(token, []);
+      groups.get(token)!.push(num);
+    }
+  }
+
+  const points: ChartPoint[] = [];
+  for (const [key, values] of groups) {
+    points.push({ key, value: round2(aggregateValues(values, agg)) });
+  }
+
+  return points.sort((a, b) => b.value - a.value);
+}
+
 export interface AgingResult {
   label: string;
   count: number;
@@ -377,6 +414,22 @@ export function getDistinctValues(rows: DatasetRecord[], column: string): string
     const raw = row[column];
     if (raw === null || raw === undefined || raw === "") continue;
     values.add(String(raw));
+  }
+  return Array.from(values).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+}
+
+/** Like getDistinctValues, but for a column holding a comma-joined list (e.g. "Snow Removal, HVAC") --
+ * splits each value into its individual tokens before deduping, so the dropdown offers one option per
+ * token instead of one per whole combination. */
+export function getDistinctMultiValues(rows: DatasetRecord[], column: string): string[] {
+  const values = new Set<string>();
+  for (const row of rows) {
+    const raw = row[column];
+    if (raw === null || raw === undefined || raw === "") continue;
+    for (const part of String(raw).split(",")) {
+      const trimmed = part.trim();
+      if (trimmed) values.add(trimmed);
+    }
   }
   return Array.from(values).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 }

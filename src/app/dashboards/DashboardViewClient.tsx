@@ -5,11 +5,11 @@ import DashboardCardsView from "@/components/DashboardCardsView";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
-import { applyFilters, getDistinctValues } from "@/lib/kpi";
+import { applyFilters, getDistinctMultiValues, getDistinctValues } from "@/lib/kpi";
 import { getDashboardSource } from "@/lib/dashboardSources";
 import type { DashboardSourceKey } from "@/lib/dashboardSources";
 import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
-import type { DashboardCard, DashboardConfig, DatasetRecord } from "@/lib/types";
+import type { DashboardCard, DashboardConfig, DatasetRecord, FilterColumnDef } from "@/lib/types";
 import { exportDashboardDataAction, fetchSourceRowsAction } from "./actions";
 
 export default function DashboardViewClient({ config }: { config: DashboardConfig }) {
@@ -33,7 +33,10 @@ export default function DashboardViewClient({ config }: { config: DashboardConfi
     };
   }, [config]);
 
-  const filterColumns = config.filterColumns ?? [];
+  const filterDefs: FilterColumnDef[] = (config.filterColumns ?? []).map((f) =>
+    typeof f === "string" ? { column: f, label: f, multi: false } : { label: f.column, ...f },
+  );
+  const multiByColumn = new Map(filterDefs.map((f) => [f.column, f.multi ?? false]));
 
   function sourceHasColumn(source: DashboardSourceKey, column: string): boolean {
     return getDashboardSource(source).columns.some((c) => c.key === column);
@@ -42,14 +45,21 @@ export default function DashboardViewClient({ config }: { config: DashboardConfi
   function activeFiltersFor(source: DashboardSourceKey) {
     return Object.entries(globalFilters)
       .filter(([column, value]) => value && sourceHasColumn(source, column))
-      .map(([column, value]) => ({ column, op: "eq" as const, value }));
+      .map(([column, value]) => ({
+        column,
+        op: multiByColumn.get(column) ? ("contains" as const) : ("eq" as const),
+        value,
+      }));
   }
 
-  function optionsFor(column: string): string[] {
+  function optionsFor(column: string, multi: boolean): string[] {
     const values = new Set<string>();
     for (const source of Object.keys(rowsBySource) as DashboardSourceKey[]) {
       if (!sourceHasColumn(source, column)) continue;
-      for (const v of getDistinctValues(rowsBySource[source] ?? [], column)) values.add(v);
+      const rows = rowsBySource[source] ?? [];
+      for (const v of multi ? getDistinctMultiValues(rows, column) : getDistinctValues(rows, column)) {
+        values.add(v);
+      }
     }
     return Array.from(values).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   }
@@ -83,18 +93,18 @@ export default function DashboardViewClient({ config }: { config: DashboardConfi
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        {filterColumns.length > 0 ? (
+        {filterDefs.length > 0 ? (
           <Card className="flex flex-wrap gap-4 p-4">
-            {filterColumns.map((column) => (
-              <label key={column} className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-700 dark:text-slate-300">{column}</span>
+            {filterDefs.map((def) => (
+              <label key={def.column} className="flex flex-col gap-1 text-sm">
+                <span className="font-medium text-slate-700 dark:text-slate-300">{def.label}</span>
                 <select
-                  value={globalFilters[column] ?? ""}
-                  onChange={(e) => setGlobalFilters((prev) => ({ ...prev, [column]: e.target.value }))}
+                  value={globalFilters[def.column] ?? ""}
+                  onChange={(e) => setGlobalFilters((prev) => ({ ...prev, [def.column]: e.target.value }))}
                   className={inputClass}
                 >
                   <option value="">All</option>
-                  {optionsFor(column).map((v) => (
+                  {optionsFor(def.column, def.multi ?? false).map((v) => (
                     <option key={v} value={v}>
                       {v}
                     </option>

@@ -17,6 +17,107 @@ export interface DashboardDefinition {
 
 export const DASHBOARD_DEFINITIONS: DashboardDefinition[] = [
   {
+    id: "pipeline-overview",
+    area: "Pipeline",
+    config: {
+      name: "Pipeline Overview",
+      // Live Client/Trade/Deal size dropdowns scope every card below to a drill-down slice of the pipeline;
+      // left on "All" they cover every open opportunity together. "Lost" opportunities are excluded from
+      // every card here since this dashboard tracks the *open* pipeline, not historical win/loss.
+      filterColumns: [
+        { column: "companyName", label: "Client" },
+        { column: "trades", label: "Trade", multi: true },
+        { column: "dealSizeBucket", label: "Deal size" },
+      ],
+      cards: [
+        {
+          type: "kpi",
+          title: "Open Pipeline Value",
+          source: "opportunities",
+          agg: "sum",
+          column: "amount",
+          filters: [{ column: "stage", op: "neq", value: "Lost" }],
+        },
+        {
+          type: "kpi",
+          title: "Open Opportunities",
+          source: "opportunities",
+          agg: "count_rows",
+          filters: [{ column: "stage", op: "neq", value: "Lost" }],
+        },
+        {
+          type: "kpi",
+          title: "Average Deal Value",
+          source: "opportunities",
+          agg: "avg",
+          column: "amount",
+          filters: [{ column: "stage", op: "neq", value: "Lost" }],
+        },
+        {
+          type: "kpi",
+          title: "Sites in Pipeline",
+          source: "opportunities",
+          agg: "sum",
+          column: "siteCount",
+          filters: [{ column: "stage", op: "neq", value: "Lost" }],
+        },
+        {
+          type: "chart",
+          title: "Pipeline Value by Stage",
+          source: "opportunities",
+          chartType: "bar",
+          x: "stage",
+          y: "amount",
+          agg: "sum",
+          filters: [{ column: "stage", op: "neq", value: "Lost" }],
+        },
+        {
+          type: "chart",
+          title: "Pipeline Value by Client",
+          source: "opportunities",
+          chartType: "bar",
+          x: "companyName",
+          y: "amount",
+          agg: "sum",
+          limit: 10,
+          filters: [{ column: "stage", op: "neq", value: "Lost" }],
+        },
+        {
+          type: "chart",
+          title: "Pipeline Value by Trade",
+          source: "opportunities",
+          chartType: "bar",
+          x: "trades",
+          xMulti: true,
+          y: "amount",
+          agg: "sum",
+          filters: [{ column: "stage", op: "neq", value: "Lost" }],
+        },
+        {
+          type: "chart",
+          title: "Pipeline Value by Deal Size",
+          source: "opportunities",
+          chartType: "bar",
+          x: "dealSizeBucket",
+          y: "amount",
+          agg: "sum",
+          filters: [{ column: "stage", op: "neq", value: "Lost" }],
+        },
+        {
+          type: "chart",
+          title: "Top Opportunities by Value",
+          source: "opportunities",
+          chartType: "bar",
+          x: "name",
+          y: "amount",
+          agg: "sum",
+          limit: 8,
+          filters: [{ column: "stage", op: "neq", value: "Lost" }],
+        },
+      ],
+    },
+  },
+  {
     id: "sourcing-status-by-state",
     area: "Vendors",
     config: {
