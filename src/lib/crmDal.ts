@@ -491,7 +491,7 @@ export async function bulkCreateEmployees(rows: EmployeeImportRow[]): Promise<{ 
 // pipeline): a validity window, rate, site count, and type of work.
 
 const CONTRACT_COLUMNS =
-  "id, company_id, name, work_type, site_count, rate_amount, rate_frequency, billing_type, start_date, end_date, notes, created_at, updated_at, crm_companies(name, logo_storage_path, updated_at)";
+  "id, company_id, opportunity_id, tracking_number, name, work_type, site_count, rate_amount, rate_frequency, billing_type, start_date, end_date, notes, created_at, updated_at, crm_companies(name, logo_storage_path, updated_at), crm_opportunities(name)";
 
 function mapContract(c: Record<string, unknown>, supabase: ReturnType<typeof createAdminClient>): Contract {
   const company = c.crm_companies as unknown as {
@@ -499,11 +499,15 @@ function mapContract(c: Record<string, unknown>, supabase: ReturnType<typeof cre
     logo_storage_path: string | null;
     updated_at: string;
   } | null;
+  const opportunity = c.crm_opportunities as unknown as { name: string } | null;
   return {
     id: c.id as string,
     companyId: c.company_id as string | null,
     companyName: company?.name ?? null,
     companyLogoUrl: buildLogoUrl(supabase, company?.logo_storage_path, company?.updated_at),
+    opportunityId: c.opportunity_id as string | null,
+    opportunityName: opportunity?.name ?? null,
+    trackingNumber: c.tracking_number as string | null,
     name: c.name as string,
     workType: c.work_type as string | null,
     siteCount: c.site_count as number | null,
@@ -516,6 +520,25 @@ function mapContract(c: Record<string, unknown>, supabase: ReturnType<typeof cre
     createdAt: c.created_at as string,
     updatedAt: c.updated_at as string,
   };
+}
+
+/** Resolves what a contract's tracking_number should be on save: permanent once set, so an already-tagged
+ * contract keeps its number even if its source opportunity link later changes or is cleared. Only looks up
+ * a new one from opportunityId when the contract doesn't have one yet. */
+async function resolveContractTrackingNumber(
+  existingTrackingNumber: string | null,
+  opportunityId: string | null,
+): Promise<string | null> {
+  if (existingTrackingNumber) return existingTrackingNumber;
+  if (!opportunityId) return null;
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("crm_opportunities")
+    .select("tracking_number")
+    .eq("id", opportunityId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data?.tracking_number as string | undefined) ?? null;
 }
 
 export async function listContracts(): Promise<Contract[]> {
@@ -532,11 +555,14 @@ export async function listContracts(): Promise<Contract[]> {
 
 export async function createContract(input: ContractInput): Promise<string> {
   const supabase = createAdminClient();
+  const trackingNumber = await resolveContractTrackingNumber(null, input.opportunityId);
   const { data, error } = await supabase
     .from("crm_contracts")
     .insert({
       user_id: OWNER_USER_ID,
       company_id: input.companyId,
+      opportunity_id: input.opportunityId,
+      tracking_number: trackingNumber,
       name: input.name,
       work_type: input.workType,
       site_count: input.siteCount,
@@ -555,10 +581,24 @@ export async function createContract(input: ContractInput): Promise<string> {
 
 export async function updateContract(id: string, input: ContractInput): Promise<void> {
   const supabase = createAdminClient();
+  const { data: existing, error: fetchError } = await supabase
+    .from("crm_contracts")
+    .select("tracking_number")
+    .eq("id", id)
+    .eq("user_id", OWNER_USER_ID)
+    .maybeSingle();
+  if (fetchError) throw new Error(fetchError.message);
+  const trackingNumber = await resolveContractTrackingNumber(
+    (existing?.tracking_number as string | null) ?? null,
+    input.opportunityId,
+  );
+
   const { error } = await supabase
     .from("crm_contracts")
     .update({
       company_id: input.companyId,
+      opportunity_id: input.opportunityId,
+      tracking_number: trackingNumber,
       name: input.name,
       work_type: input.workType,
       site_count: input.siteCount,
@@ -687,7 +727,7 @@ export async function getContractFileDownloadUrl(id: string): Promise<string> {
 // ---------- Opportunities ----------
 
 const OPPORTUNITY_COLUMNS =
-  "id, name, company_id, stage, amount, site_count, work_type, expected_close_date, notes, sales_manager_id, position, created_at, updated_at, crm_companies(name, logo_storage_path, updated_at), crm_employees(name), crm_opportunity_contacts(contact_id)";
+  "id, tracking_number, name, company_id, stage, amount, site_count, work_type, expected_close_date, notes, sales_manager_id, position, created_at, updated_at, crm_companies(name, logo_storage_path, updated_at), crm_employees(name), crm_opportunity_contacts(contact_id)";
 
 function mapOpportunity(o: Record<string, unknown>, supabase: ReturnType<typeof createAdminClient>): Opportunity {
   const company = o.crm_companies as unknown as {
@@ -699,6 +739,7 @@ function mapOpportunity(o: Record<string, unknown>, supabase: ReturnType<typeof 
   const contactRows = (o.crm_opportunity_contacts ?? []) as unknown as { contact_id: string }[];
   return {
     id: o.id as string,
+    trackingNumber: o.tracking_number as string,
     name: o.name as string,
     companyId: o.company_id as string | null,
     companyName: company?.name ?? null,

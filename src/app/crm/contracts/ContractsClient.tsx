@@ -5,7 +5,7 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { formatCurrency } from "@/lib/siteMapColor";
 import { contractStatus, formatContractDate } from "@/lib/contractStatus";
-import type { Company, Contract, FieldClass } from "@/lib/crmTypes";
+import type { Company, Contract, FieldClass, Opportunity } from "@/lib/crmTypes";
 import ContractModal from "./ContractModal";
 import ContractsTimeline from "./ContractsTimeline";
 
@@ -31,6 +31,9 @@ function ContractRow({ contract: c, onSelect }: { contract: Contract; onSelect: 
         )}
         <div className="min-w-0">
           <div className="flex items-center gap-2">
+            {c.trackingNumber && (
+              <span className="shrink-0 font-mono text-xs text-slate-500 dark:text-slate-400">{c.trackingNumber}</span>
+            )}
             <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">{c.name}</p>
             <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${status.badgeClassName}`}>
               {status.label}
@@ -60,10 +63,12 @@ function ContractRow({ contract: c, onSelect }: { contract: Contract; onSelect: 
 export default function ContractsClient({
   contracts,
   companies,
+  opportunities,
   fieldClasses,
 }: {
   contracts: Contract[];
   companies: Company[];
+  opportunities: Opportunity[];
   fieldClasses: FieldClass[];
 }) {
   const [editingContract, setEditingContract] = useState<Contract | null>(null);
@@ -137,6 +142,7 @@ export default function ContractsClient({
         <ContractModal
           contract={editingContract}
           companies={companies}
+          opportunities={opportunities}
           fieldClasses={fieldClasses}
           onClose={() => {
             setEditingContract(null);

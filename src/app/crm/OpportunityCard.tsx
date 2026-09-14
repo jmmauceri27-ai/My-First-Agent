@@ -35,6 +35,7 @@ export default function OpportunityCard({
         isDragging ? "opacity-40" : ""
       }`}
     >
+      <p className="font-mono text-[10px] text-slate-500 dark:text-slate-400">{opportunity.trackingNumber}</p>
       <p className="font-semibold text-slate-900 dark:text-slate-50">{opportunity.name}</p>
       {opportunity.companyName && (
         <p className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300">

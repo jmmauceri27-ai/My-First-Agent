@@ -8,6 +8,7 @@ import type { Opportunity } from "@/lib/crmTypes";
 import { formatCurrency } from "@/lib/siteMapColor";
 
 type SortField =
+  | "trackingNumber"
   | "name"
   | "companyName"
   | "stage"
@@ -20,6 +21,7 @@ type SortField =
 type SortDirection = "asc" | "desc";
 
 const COLUMNS: { field: SortField; label: string; align?: "right" }[] = [
+  { field: "trackingNumber", label: "Tracking #" },
   { field: "name", label: "Opportunity" },
   { field: "companyName", label: "Client" },
   { field: "stage", label: "Stage" },
@@ -110,6 +112,7 @@ export default function OpportunityListView({ opportunities }: { opportunities: 
               onClick={() => router.push(`/crm/opportunities/${o.id}`)}
               className="cursor-pointer border-b border-purple-400/5 hover:bg-purple-500/5"
             >
+              <td className="py-2 pr-3 font-mono text-xs text-slate-500 dark:text-slate-400">{o.trackingNumber}</td>
               <td className="py-2 pr-3 font-medium text-slate-900 dark:text-slate-50">{o.name}</td>
               <td className="py-2 pr-3 text-slate-700 dark:text-slate-300">{o.companyName ?? "—"}</td>
               <td className="py-2 pr-3 text-slate-700 dark:text-slate-300">{o.stage}</td>

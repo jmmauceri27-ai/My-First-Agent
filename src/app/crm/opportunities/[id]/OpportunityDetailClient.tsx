@@ -200,9 +200,14 @@ export default function OpportunityDetailClient({
               className="h-10 w-10 shrink-0 rounded-full border border-slate-200 bg-slate-50 object-contain dark:border-slate-800 dark:bg-slate-900"
             />
           )}
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">
-            {opportunity.name}
-          </h1>
+          <div>
+            <span className="rounded-full bg-purple-500/10 px-2 py-0.5 font-mono text-xs text-slate-500 dark:text-slate-400">
+              {opportunity.trackingNumber}
+            </span>
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">
+              {opportunity.name}
+            </h1>
+          </div>
         </div>
       </div>
 

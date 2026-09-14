@@ -27,6 +27,7 @@ export const DASHBOARD_SOURCES: DashboardSourceDef[] = [
     label: "Opportunities",
     domain: "CRM",
     columns: [
+      { key: "trackingNumber", label: "Tracking #", type: "string" },
       { key: "name", label: "Name", type: "string" },
       { key: "companyName", label: "Client", type: "string" },
       { key: "stage", label: "Stage", type: "string" },
@@ -44,6 +45,7 @@ export const DASHBOARD_SOURCES: DashboardSourceDef[] = [
     label: "Agreements",
     domain: "CRM",
     columns: [
+      { key: "trackingNumber", label: "Tracking #", type: "string" },
       { key: "name", label: "Name", type: "string" },
       { key: "companyName", label: "Client", type: "string" },
       { key: "workType", label: "Work type", type: "string" },

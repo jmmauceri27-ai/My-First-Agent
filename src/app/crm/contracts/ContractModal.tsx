@@ -8,7 +8,7 @@ import FilesCard from "@/components/FilesCard";
 import { inputClass } from "@/components/ui/formClasses";
 import { RATE_FREQUENCIES } from "@/lib/crmTypes";
 import { BILLING_TYPE_OPTIONS } from "@/lib/billingTypes";
-import type { Company, Contract, ContractFile, ContractInput, FieldClass } from "@/lib/crmTypes";
+import type { Company, Contract, ContractFile, ContractInput, FieldClass, Opportunity } from "@/lib/crmTypes";
 import {
   deleteContractAction,
   deleteContractFileAction,
@@ -30,17 +30,20 @@ import DynamicFieldsSection from "../fields/DynamicFieldsSection";
 export default function ContractModal({
   contract,
   companies,
+  opportunities,
   fieldClasses,
   onClose,
 }: {
   contract: Contract | null;
   companies: Company[];
+  opportunities: Opportunity[];
   fieldClasses: FieldClass[];
   onClose: () => void;
 }) {
   const router = useRouter();
   const [name, setName] = useState(contract?.name ?? "");
   const [companyId, setCompanyId] = useState(contract?.companyId ?? "");
+  const [opportunityId, setOpportunityId] = useState(contract?.opportunityId ?? "");
   const [workType, setWorkType] = useState(contract?.workType ?? "");
   const [siteCount, setSiteCount] = useState(contract?.siteCount != null ? String(contract.siteCount) : "");
   const [rateAmount, setRateAmount] = useState(contract?.rateAmount != null ? String(contract.rateAmount) : "");
@@ -113,6 +116,7 @@ export default function ContractModal({
     try {
       const input: ContractInput = {
         companyId: companyId || null,
+        opportunityId: opportunityId || null,
         name: name.trim(),
         workType: workType.trim() || null,
         siteCount: siteCount.trim() ? Number(siteCount) : null,
@@ -152,7 +156,14 @@ export default function ContractModal({
   return (
     <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <Card className="max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">{contract ? "Edit agreement" : "New agreement"}</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">{contract ? "Edit agreement" : "New agreement"}</h2>
+          {contract?.trackingNumber && (
+            <span className="rounded-full bg-purple-500/10 px-2 py-0.5 font-mono text-xs text-slate-600 dark:text-slate-400">
+              {contract.trackingNumber}
+            </span>
+          )}
+        </div>
 
         <div className="mt-4 flex flex-col gap-4">
           <label className="flex flex-col gap-1 text-sm">
@@ -176,6 +187,23 @@ export default function ContractModal({
                 </option>
               ))}
             </select>
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-slate-700 dark:text-slate-300">Source opportunity (optional)</span>
+            <select value={opportunityId} onChange={(e) => setOpportunityId(e.target.value)} className={inputClass}>
+              <option value="">(none)</option>
+              {opportunities.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.trackingNumber} — {o.name}
+                </option>
+              ))}
+            </select>
+            <span className="text-xs text-slate-600 dark:text-slate-500">
+              {contract?.trackingNumber
+                ? "This agreement already carries a permanent tracking number and won't change even if you edit this."
+                : "Picking one links this agreement to that opportunity's tracking number, permanently."}
+            </span>
           </label>
 
           <label className="flex flex-col gap-1 text-sm">

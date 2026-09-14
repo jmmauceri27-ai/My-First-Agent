@@ -62,6 +62,9 @@ export interface EmployeeInput {
 
 export interface Opportunity {
   id: string;
+  /** Permanent tracking id (e.g. "T-0001"), assigned once at creation and never reassigned -- carries
+   * forward onto a Contract created from this opportunity. */
+  trackingNumber: string;
   name: string;
   companyId: string | null;
   companyName: string | null;
@@ -155,6 +158,13 @@ export interface Contract {
   companyId: string | null;
   companyName: string | null;
   companyLogoUrl: string | null;
+  /** The Opportunity this contract was created from, if any -- optional, since a contract can be entered
+   * directly with no tracked opportunity behind it. */
+  opportunityId: string | null;
+  opportunityName: string | null;
+  /** Copied from the source opportunity's tracking number the first time one is linked, then permanent --
+   * it doesn't change even if opportunityId is later changed or cleared. Null if never linked to one. */
+  trackingNumber: string | null;
   name: string;
   workType: string | null;
   siteCount: number | null;
@@ -171,6 +181,7 @@ export interface Contract {
 
 export interface ContractInput {
   companyId: string | null;
+  opportunityId: string | null;
   name: string;
   workType: string | null;
   siteCount: number | null;

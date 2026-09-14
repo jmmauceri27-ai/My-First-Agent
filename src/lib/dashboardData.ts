@@ -10,6 +10,7 @@ export async function getSourceRows(source: DashboardSourceKey): Promise<Dataset
     case "opportunities": {
       const opportunities = await listOpportunities();
       return opportunities.map((o) => ({
+        trackingNumber: o.trackingNumber,
         name: o.name,
         companyName: o.companyName,
         stage: o.stage,
@@ -26,6 +27,7 @@ export async function getSourceRows(source: DashboardSourceKey): Promise<Dataset
     case "contracts": {
       const contracts = await listContracts();
       return contracts.map((c) => ({
+        trackingNumber: c.trackingNumber,
         name: c.name,
         companyName: c.companyName,
         workType: c.workType,

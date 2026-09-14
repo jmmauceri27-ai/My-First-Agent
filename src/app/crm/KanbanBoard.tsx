@@ -26,6 +26,7 @@ import OpportunityModal from "./OpportunityModal";
 type View = "board" | "list";
 
 const PIPELINE_EXPORT_COLUMNS = [
+  "Tracking #",
   "Opportunity",
   "Client",
   "Stage",
@@ -40,6 +41,7 @@ const PIPELINE_EXPORT_COLUMNS = [
 
 function opportunityToExportRow(o: Opportunity): DatasetRecord {
   return {
+    "Tracking #": o.trackingNumber,
     Opportunity: o.name,
     Client: o.companyName ?? "",
     Stage: o.stage,
@@ -115,6 +117,7 @@ export default function KanbanBoard({
       const sortedByStage = OPPORTUNITY_STAGES.flatMap((s) => grouped[s]);
       const rows = sortedByStage.map(opportunityToExportRow);
       const totalsRow: DatasetRecord = {
+        "Tracking #": "",
         Opportunity: "TOTAL",
         Client: "",
         Stage: "",
