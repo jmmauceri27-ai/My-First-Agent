@@ -9,7 +9,12 @@ import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import type { Site, SiteImportRow } from "@/lib/networkTypes";
 import type { MapPin } from "@/components/SiteMap";
-import { bulkCreateSitesForOpportunityAction, deleteSiteAction, parseSiteSheetAction } from "../../../network/actions";
+import {
+  bulkCreateSitesForOpportunityAction,
+  bulkDeleteSitesAction,
+  deleteSiteAction,
+  parseSiteSheetAction,
+} from "../../../network/actions";
 
 const SiteMap = dynamic(() => import("@/components/SiteMap"), { ssr: false });
 
@@ -46,6 +51,9 @@ export default function SitesCard({
   const [importError, setImportError] = useState<string | null>(null);
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [bulkDeleteError, setBulkDeleteError] = useState<string | null>(null);
 
   async function handleUpload() {
     const file = fileInputRef.current?.files?.[0];
@@ -126,6 +134,40 @@ export default function SitesCard({
       router.refresh();
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  function toggleSelected(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    setSelectedIds((prev) => (prev.size === sites.length ? new Set() : new Set(sites.map((s) => s.id))));
+  }
+
+  async function handleBulkDelete() {
+    if (selectedIds.size === 0) return;
+    const count = selectedIds.size;
+    if (!window.confirm(`Remove ${count} site${count === 1 ? "" : "s"} from this opportunity? This can't be undone.`)) {
+      return;
+    }
+    setBulkDeleteError(null);
+    setBulkDeleting(true);
+    try {
+      const result = await bulkDeleteSitesAction(Array.from(selectedIds));
+      if (result.error) {
+        setBulkDeleteError(result.error);
+        return;
+      }
+      setSelectedIds(new Set());
+      router.refresh();
+    } finally {
+      setBulkDeleting(false);
     }
   }
 
@@ -220,12 +262,41 @@ export default function SitesCard({
               <SiteMap pins={pins} onPinClick={(id) => router.push(`/network/sites/${id}`)} />
             </div>
           )}
+          <div className="flex items-center justify-between gap-2">
+            <label className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+              <input
+                type="checkbox"
+                checked={selectedIds.size > 0 && selectedIds.size === sites.length}
+                onChange={toggleSelectAll}
+                className="accent-brand-600"
+              />
+              Select all
+            </label>
+            {selectedIds.size > 0 && (
+              <button
+                onClick={handleBulkDelete}
+                disabled={bulkDeleting}
+                className="shrink-0 text-xs font-semibold text-critical hover:underline"
+              >
+                {bulkDeleting ? "Removing…" : `Remove ${selectedIds.size} selected`}
+              </button>
+            )}
+          </div>
+          {bulkDeleteError && <p className="text-xs text-critical">{bulkDeleteError}</p>}
           <div className="flex flex-col divide-y divide-purple-400/10">
             {sites.map((s) => (
               <div key={s.id} className="flex items-center justify-between gap-2 py-2">
-                <Link href={`/network/sites/${s.id}`} className="min-w-0 truncate text-sm text-slate-900 dark:text-slate-50 hover:text-brand-600 dark:hover:text-brand-400 hover:underline">
-                  {s.name}
-                </Link>
+                <label className="flex min-w-0 items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(s.id)}
+                    onChange={() => toggleSelected(s.id)}
+                    className="shrink-0 accent-brand-600"
+                  />
+                  <Link href={`/network/sites/${s.id}`} className="min-w-0 truncate text-sm text-slate-900 dark:text-slate-50 hover:text-brand-600 dark:hover:text-brand-400 hover:underline">
+                    {s.name}
+                  </Link>
+                </label>
                 <button
                   onClick={() => handleDelete(s.id)}
                   disabled={deletingId === s.id}
