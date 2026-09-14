@@ -787,6 +787,21 @@ export async function listOpportunities(): Promise<Opportunity[]> {
   return (data ?? []).map((o) => mapOpportunity(o, supabase));
 }
 
+/** Ids of every Opportunity already converted to an Agreement (i.e. some Contract's opportunity_id points at
+ * it) -- used to drop converted opportunities off the Pipeline board/list once they've moved downstream,
+ * without touching listOpportunities() itself, which other screens (Sites, Contracts' source picker, client
+ * and employee history, dashboards) still need to see in full. */
+export async function listConvertedOpportunityIds(): Promise<Set<string>> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("crm_contracts")
+    .select("opportunity_id")
+    .eq("user_id", OWNER_USER_ID)
+    .not("opportunity_id", "is", null);
+  if (error) throw new Error(error.message);
+  return new Set((data ?? []).map((r) => r.opportunity_id as string));
+}
+
 export async function getOpportunity(id: string): Promise<Opportunity | null> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
