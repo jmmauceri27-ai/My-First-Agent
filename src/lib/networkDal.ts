@@ -167,11 +167,12 @@ function mapAssignment(a: Record<string, unknown>): SiteTradeAssignment {
   };
 }
 
-const SITE_COLUMNS = `id, company_id, opportunity_id, site_code, name, address, city, state, zip, lat, lng, trades, measurements, counts, last_season_snowfall, notes, created_at, updated_at, crm_companies(name), crm_opportunities(name), site_trade_assignments(${ASSIGNMENT_COLUMNS})`;
+const SITE_COLUMNS = `id, company_id, opportunity_id, contract_id, site_code, name, address, city, state, zip, lat, lng, trades, measurements, counts, last_season_snowfall, notes, created_at, updated_at, crm_companies(name), crm_opportunities(name), crm_contracts(name), site_trade_assignments(${ASSIGNMENT_COLUMNS})`;
 
 function mapSite(s: Record<string, unknown>): Site {
   const company = s.crm_companies as unknown as { name: string } | null;
   const opportunity = s.crm_opportunities as unknown as { name: string } | null;
+  const contract = s.crm_contracts as unknown as { name: string } | null;
   const assignments = (s.site_trade_assignments as Record<string, unknown>[] | null) ?? [];
   return {
     id: s.id as string,
@@ -179,6 +180,8 @@ function mapSite(s: Record<string, unknown>): Site {
     companyName: company?.name ?? null,
     opportunityId: s.opportunity_id as string | null,
     opportunityName: opportunity?.name ?? null,
+    contractId: s.contract_id as string | null,
+    contractName: contract?.name ?? null,
     siteCode: s.site_code as string | null,
     name: s.name as string,
     address: s.address as string | null,
@@ -357,6 +360,21 @@ export async function listSitesForOpportunity(opportunityId: string): Promise<Si
   return (data ?? []).map(mapSite);
 }
 
+/** Sites directly linked to this Agreement (its own "Sites" section) -- doesn't include sites only reachable
+ * through a per-trade assignment (see syncContractSiteCount's note); those are managed from the site's own
+ * detail page instead. */
+export async function listSitesForContract(contractId: string): Promise<Site[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("sites")
+    .select(SITE_COLUMNS)
+    .eq("contract_id", contractId)
+    .eq("user_id", OWNER_USER_ID)
+    .order("name", { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(mapSite);
+}
+
 async function syncOpportunitySiteCount(opportunityId: string): Promise<void> {
   const supabase = createAdminClient();
   const { count, error: countError } = await supabase
@@ -374,16 +392,23 @@ async function syncOpportunitySiteCount(opportunityId: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
-/** Contract is per-trade, so site_count is the number of *distinct sites* with at least one trade assignment under this contract -- not the number of trade-assignment rows (a site can have two trades under the same contract). */
+/** A site can relate to a Contract two ways: directly (site.contract_id, the Agreement's own "Sites"
+ * section) or per-trade (site_trade_assignments.contract_id, set from a site's own detail page when
+ * assigning a vendor for one trade). site_count is the number of *distinct sites* covered by either --
+ * not the number of trade-assignment rows (a site can have two trades under the same contract). */
 async function syncContractSiteCount(contractId: string): Promise<void> {
   const supabase = createAdminClient();
-  const { data, error: fetchError } = await supabase
-    .from("site_trade_assignments")
-    .select("site_id")
-    .eq("contract_id", contractId)
-    .eq("user_id", OWNER_USER_ID);
-  if (fetchError) throw new Error(fetchError.message);
-  const siteCount = new Set((data ?? []).map((a) => a.site_id as string)).size;
+  const [{ data: directSites, error: directError }, { data: assignments, error: assignmentError }] = await Promise.all([
+    supabase.from("sites").select("id").eq("contract_id", contractId).eq("user_id", OWNER_USER_ID),
+    supabase.from("site_trade_assignments").select("site_id").eq("contract_id", contractId).eq("user_id", OWNER_USER_ID),
+  ]);
+  if (directError) throw new Error(directError.message);
+  if (assignmentError) throw new Error(assignmentError.message);
+
+  const siteCount = new Set([
+    ...(directSites ?? []).map((s) => s.id as string),
+    ...(assignments ?? []).map((a) => a.site_id as string),
+  ]).size;
 
   const { error } = await supabase
     .from("crm_contracts")
@@ -397,6 +422,7 @@ function siteRow(input: SiteInput) {
   return {
     company_id: input.companyId,
     opportunity_id: input.opportunityId,
+    contract_id: input.contractId,
     site_code: input.siteCode,
     name: input.name,
     address: input.address,
@@ -423,6 +449,7 @@ export async function createSite(input: SiteInput): Promise<string> {
   if (error) throw new Error(error.message);
 
   if (input.opportunityId) await syncOpportunitySiteCount(input.opportunityId);
+  if (input.contractId) await syncContractSiteCount(input.contractId);
   return data.id as string;
 }
 
@@ -430,7 +457,7 @@ export async function updateSite(id: string, input: SiteInput): Promise<void> {
   const supabase = createAdminClient();
   const { data: existing, error: fetchError } = await supabase
     .from("sites")
-    .select("opportunity_id")
+    .select("opportunity_id, contract_id")
     .eq("id", id)
     .eq("user_id", OWNER_USER_ID)
     .maybeSingle();
@@ -448,17 +475,26 @@ export async function updateSite(id: string, input: SiteInput): Promise<void> {
     await syncOpportunitySiteCount(previousOpportunityId);
   }
   if (input.opportunityId) await syncOpportunitySiteCount(input.opportunityId);
+
+  const previousContractId = existing?.contract_id as string | null | undefined;
+  if (previousContractId && previousContractId !== input.contractId) {
+    await syncContractSiteCount(previousContractId);
+  }
+  if (input.contractId) await syncContractSiteCount(input.contractId);
 }
 
-/** Contract ids covered by a site's trade assignments -- used to know which Contracts need site_count resynced when the site (and its assignments, via cascade) is deleted. */
+/** Contract ids covered by a set of sites -- both directly (site.contract_id) and via their trade assignments
+ * -- used to know which Contracts need site_count resynced when those sites (and their assignments, via
+ * cascade) are deleted. */
 async function contractIdsForSites(supabase: ReturnType<typeof createAdminClient>, siteIds: string[]): Promise<string[]> {
-  const { data, error } = await supabase
-    .from("site_trade_assignments")
-    .select("contract_id")
-    .in("site_id", siteIds)
-    .eq("user_id", OWNER_USER_ID);
-  if (error) throw new Error(error.message);
-  return Array.from(new Set((data ?? []).map((a) => a.contract_id as string | null).filter((id): id is string => !!id)));
+  const [{ data: siteRows, error: siteError }, { data: assignmentRows, error: assignmentError }] = await Promise.all([
+    supabase.from("sites").select("contract_id").in("id", siteIds).eq("user_id", OWNER_USER_ID),
+    supabase.from("site_trade_assignments").select("contract_id").in("site_id", siteIds).eq("user_id", OWNER_USER_ID),
+  ]);
+  if (siteError) throw new Error(siteError.message);
+  if (assignmentError) throw new Error(assignmentError.message);
+  const ids = [...(siteRows ?? []), ...(assignmentRows ?? [])].map((r) => r.contract_id as string | null);
+  return Array.from(new Set(ids.filter((id): id is string => !!id)));
 }
 
 export async function deleteSite(id: string): Promise<void> {
@@ -515,6 +551,7 @@ export async function bulkCreateSites(links: SiteBulkLinks, rows: SiteImportRow[
     user_id: OWNER_USER_ID,
     company_id: row.companyId !== undefined ? row.companyId : links.companyId,
     opportunity_id: links.opportunityId,
+    contract_id: links.contractId,
     site_code: row.siteCode,
     name: row.name,
     address: row.address,
@@ -536,6 +573,7 @@ export async function bulkCreateSites(links: SiteBulkLinks, rows: SiteImportRow[
   }
 
   if (links.opportunityId) await syncOpportunitySiteCount(links.opportunityId);
+  if (links.contractId) await syncContractSiteCount(links.contractId);
   return { inserted: batch.length };
 }
 
@@ -555,7 +593,27 @@ export async function bulkCreateSitesForOpportunity(
   if (error) throw new Error(error.message);
 
   const trades = (opportunity?.trades as string[] | null) ?? [];
-  return bulkCreateSites({ companyId, opportunityId, trades }, rows);
+  return bulkCreateSites({ companyId, opportunityId, contractId: null, trades }, rows);
+}
+
+/** Bulk-imports uploaded sheet rows as new sites, scoped to one Agreement (and its company). Trades default
+ * to the Agreement's own Trade selection. Appends -- does not replace existing sites. */
+export async function bulkCreateSitesForContract(
+  contractId: string,
+  companyId: string | null,
+  rows: SiteImportRow[],
+): Promise<{ inserted: number }> {
+  const supabase = createAdminClient();
+  const { data: contract, error } = await supabase
+    .from("crm_contracts")
+    .select("trades")
+    .eq("id", contractId)
+    .eq("user_id", OWNER_USER_ID)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+
+  const trades = (contract?.trades as string[] | null) ?? [];
+  return bulkCreateSites({ companyId, opportunityId: null, contractId, trades }, rows);
 }
 
 /** Adds the given trades to every listed site's existing Trade selection (union, not replace). */

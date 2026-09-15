@@ -183,6 +183,7 @@ export default function UploadSitesModal({
         {
           companyId: companyId || null,
           opportunityId: opportunityId || null,
+          contractId: null,
           trades,
         },
         rows,

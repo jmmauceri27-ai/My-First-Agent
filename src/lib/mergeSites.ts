@@ -36,6 +36,7 @@ export interface SiteMergeFields {
   name: FieldResolution<string>;
   companyId: FieldResolution<string>;
   opportunityId: FieldResolution<string>;
+  contractId: FieldResolution<string>;
   address: FieldResolution<string>;
   city: FieldResolution<string>;
   state: FieldResolution<string>;
@@ -78,6 +79,7 @@ export function buildMergePlan(group: Site[]): SiteMergePlan {
     name: field((s) => s.name),
     companyId: field((s) => s.companyId),
     opportunityId: field((s) => s.opportunityId),
+    contractId: field((s) => s.contractId),
     address: field((s) => s.address),
     city: field((s) => s.city),
     state: field((s) => s.state),
@@ -164,6 +166,7 @@ export function applyMergeSelections(
     name: pick(f.name, "name", selections) ?? "",
     companyId: pick(f.companyId, "companyId", selections),
     opportunityId: pick(f.opportunityId, "opportunityId", selections),
+    contractId: pick(f.contractId, "contractId", selections),
     siteCode: plan.siteCode || null,
     address: pick(f.address, "address", selections),
     city: pick(f.city, "city", selections),

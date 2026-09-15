@@ -96,7 +96,6 @@ export interface OpportunityInput {
   companyId: string | null;
   stage: OpportunityStage;
   amount: number | null;
-  siteCount: number | null;
   trades: string[];
   expectedCloseDate: string | null;
   notes: string | null;
@@ -197,7 +196,6 @@ export interface ContractInput {
   opportunityId: string | null;
   name: string;
   trades: string[];
-  siteCount: number | null;
   rateAmount: number | null;
   rateFrequency: string | null;
   billingType: string | null;

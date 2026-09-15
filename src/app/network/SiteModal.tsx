@@ -123,6 +123,9 @@ export default function SiteModal({
       const input: SiteInput = {
         companyId: companyId || null,
         opportunityId: opportunityId || null,
+        // Not editable from this form -- managed from the Agreement's own Sites section instead, so
+        // preserve whatever this site already had rather than accidentally clearing it on every save.
+        contractId: site?.contractId ?? null,
         siteCode: siteCode.trim() || null,
         name: name.trim(),
         address: address.trim() || null,

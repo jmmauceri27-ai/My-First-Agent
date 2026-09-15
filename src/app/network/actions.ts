@@ -9,6 +9,7 @@ import {
   bulkAssignTrades,
   bulkAssignVendorForTrade,
   bulkCreateSites,
+  bulkCreateSitesForContract,
   bulkCreateSitesForOpportunity,
   bulkCreateVendors,
   bulkDeleteSites,
@@ -34,6 +35,7 @@ import {
   listSiteFilterTemplates,
   listSites,
   listSitesForCompany,
+  listSitesForContract,
   listSitesForOpportunity,
   listVendors,
   mergeSites,
@@ -170,6 +172,10 @@ export async function listSitesForOpportunityAction(opportunityId: string): Prom
   return listSitesForOpportunity(opportunityId);
 }
 
+export async function listSitesForContractAction(contractId: string): Promise<Site[]> {
+  return listSitesForContract(contractId);
+}
+
 export async function saveSiteAction(id: string | null, input: SiteInput): Promise<{ id?: string; error?: string }> {
   try {
     if (id) {
@@ -235,6 +241,21 @@ export async function bulkCreateSitesForOpportunityAction(
   try {
     const result = await bulkCreateSitesForOpportunity(opportunityId, companyId, rows);
     revalidatePath(`/crm/opportunities/${opportunityId}`);
+    revalidatePath("/network/sites");
+    return result;
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to import sites." };
+  }
+}
+
+export async function bulkCreateSitesForContractAction(
+  contractId: string,
+  companyId: string | null,
+  rows: SiteImportRow[],
+): Promise<{ inserted?: number; error?: string }> {
+  try {
+    const result = await bulkCreateSitesForContract(contractId, companyId, rows);
+    revalidatePath(`/crm/contracts?open=${contractId}`);
     revalidatePath("/network/sites");
     return result;
   } catch (e) {

@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import FilesCard from "@/components/FilesCard";
+import SitesCard from "@/components/SitesCard";
 import { inputClass } from "@/components/ui/formClasses";
 import { RATE_FREQUENCIES } from "@/lib/crmTypes";
 import { BILLING_TYPE_OPTIONS } from "@/lib/billingTypes";
 import TradeSelect from "@/components/TradeSelect";
 import type { Company, Contact, Contract, ContractFile, ContractInput, FieldClass, Opportunity } from "@/lib/crmTypes";
+import type { Site } from "@/lib/networkTypes";
 import {
   deleteContractAction,
   deleteContractFileAction,
@@ -19,6 +21,7 @@ import {
   saveContractAction,
   uploadContractFileAction,
 } from "../actions";
+import { listSitesForContractAction } from "../../network/actions";
 import {
   assignFieldToRecordAction,
   getFieldValuesForRecordAction,
@@ -52,9 +55,6 @@ export default function ContractModal({
   const [companyId, setCompanyId] = useState(contract?.companyId ?? prefill?.companyId ?? "");
   const [opportunityId, setOpportunityId] = useState(contract?.opportunityId ?? prefill?.opportunityId ?? "");
   const [trades, setTrades] = useState<string[]>(contract?.trades ?? prefill?.trades ?? []);
-  const [siteCount, setSiteCount] = useState(
-    (contract?.siteCount ?? prefill?.siteCount) != null ? String(contract?.siteCount ?? prefill?.siteCount) : "",
-  );
   const [rateAmount, setRateAmount] = useState(
     (contract?.rateAmount ?? prefill?.rateAmount) != null ? String(contract?.rateAmount ?? prefill?.rateAmount) : "",
   );
@@ -85,6 +85,19 @@ export default function ContractModal({
     if (!contract) return;
     listContractFilesAction(contract.id).then(setFiles);
   }
+
+  const [sites, setSites] = useState<Site[]>([]);
+
+  useEffect(() => {
+    if (!contract) return;
+    let cancelled = false;
+    listSitesForContractAction(contract.id).then((result) => {
+      if (!cancelled) setSites(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [contract]);
 
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const [assignedFieldIds, setAssignedFieldIds] = useState<string[]>([]);
@@ -135,7 +148,6 @@ export default function ContractModal({
         opportunityId: opportunityId || null,
         name: name.trim(),
         trades,
-        siteCount: siteCount.trim() ? Number(siteCount) : null,
         rateAmount: rateAmount.trim() ? Number(rateAmount) : null,
         rateFrequency: rateFrequency || null,
         billingType: billingType || null,
@@ -229,15 +241,12 @@ export default function ContractModal({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <label className="flex flex-col gap-1 text-sm">
+            <div className="flex flex-col gap-1 text-sm">
               <span className="font-medium text-slate-700 dark:text-slate-300"># of sites</span>
-              <input
-                type="number"
-                value={siteCount}
-                onChange={(e) => setSiteCount(e.target.value)}
-                className={inputClass}
-              />
-            </label>
+              <span className="rounded-md border border-transparent px-3 py-2 text-slate-600 dark:text-slate-400">
+                {contract?.siteCount ?? 0} (from linked sites)
+              </span>
+            </div>
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium text-slate-700 dark:text-slate-300">Rate ($)</span>
               <input
@@ -329,6 +338,17 @@ export default function ContractModal({
             canManageCustomFields={!!contract}
           />
         </div>
+
+        {contract && (
+          <div className="mt-4">
+            <SitesCard
+              contractId={contract.id}
+              companyId={contract.companyId}
+              sites={sites}
+              parentLabel="agreement"
+            />
+          </div>
+        )}
 
         {contract && (
           <div className="mt-4">

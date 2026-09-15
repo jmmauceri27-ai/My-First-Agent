@@ -10,11 +10,12 @@ import { inputClass } from "@/components/ui/formClasses";
 import type { Site, SiteImportRow } from "@/lib/networkTypes";
 import type { MapPin } from "@/components/SiteMap";
 import {
+  bulkCreateSitesForContractAction,
   bulkCreateSitesForOpportunityAction,
   bulkDeleteSitesAction,
   deleteSiteAction,
   parseSiteSheetAction,
-} from "../../../network/actions";
+} from "@/app/network/actions";
 
 const SiteMap = dynamic(() => import("@/components/SiteMap"), { ssr: false });
 
@@ -22,14 +23,20 @@ type ParsedRow = Record<string, string | number | boolean | null>;
 
 const NONE = "";
 
+/** Shared by an Opportunity's and a Contract's "Sites" section -- pass exactly one of opportunityId/contractId
+ * to say which record new uploads link to. */
 export default function SitesCard({
   opportunityId,
+  contractId,
   companyId,
   sites,
+  parentLabel = "record",
 }: {
-  opportunityId: string;
+  opportunityId?: string | null;
+  contractId?: string | null;
   companyId: string | null;
   sites: Site[];
+  parentLabel?: string;
 }) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -115,7 +122,9 @@ export default function SitesCard({
           siteCode: null,
         };
       });
-      const result = await bulkCreateSitesForOpportunityAction(opportunityId, companyId, rows);
+      const result = contractId
+        ? await bulkCreateSitesForContractAction(contractId, companyId, rows)
+        : await bulkCreateSitesForOpportunityAction(opportunityId as string, companyId, rows);
       if (result.error) {
         setImportError(result.error);
         return;
@@ -153,7 +162,7 @@ export default function SitesCard({
   async function handleBulkDelete() {
     if (selectedIds.size === 0) return;
     const count = selectedIds.size;
-    if (!window.confirm(`Remove ${count} site${count === 1 ? "" : "s"} from this opportunity? This can't be undone.`)) {
+    if (!window.confirm(`Remove ${count} site${count === 1 ? "" : "s"} from this ${parentLabel}? This can't be undone.`)) {
       return;
     }
     setBulkDeleteError(null);
@@ -181,7 +190,7 @@ export default function SitesCard({
         <div>
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Sites</h2>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Upload the properties covered by this RFP — adds to Network → Sites, linked back to this opportunity.
+            Upload the properties covered by this {parentLabel} — adds to Network → Sites, linked back to this {parentLabel}.
           </p>
         </div>
       </div>
@@ -311,7 +320,7 @@ export default function SitesCard({
       )}
 
       {sites.length === 0 && !parsedRows && (
-        <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">No sites uploaded yet for this opportunity.</p>
+        <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">No sites uploaded yet for this {parentLabel}.</p>
       )}
     </Card>
   );

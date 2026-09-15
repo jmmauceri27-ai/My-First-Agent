@@ -633,6 +633,24 @@ async function setContractContacts(contractId: string, contactIds: string[]): Pr
   }
 }
 
+/** When a contract is created from an opportunity, every site already linked to that opportunity carries
+ * over to the new agreement automatically -- this is what makes "Convert to Agreement" (and the auto-created
+ * Won agreement) show the right Sites section and count from the moment it's created, with no manual re-upload. */
+async function carryOverOpportunitySites(opportunityId: string, contractId: string): Promise<void> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("sites")
+    .update({ contract_id: contractId })
+    .eq("opportunity_id", opportunityId)
+    .select("id");
+  if (error) throw new Error(error.message);
+  const { error: countError } = await supabase
+    .from("crm_contracts")
+    .update({ site_count: data?.length ?? 0 })
+    .eq("id", contractId);
+  if (countError) throw new Error(countError.message);
+}
+
 export async function createContract(input: ContractInput): Promise<string> {
   const supabase = createAdminClient();
   const trackingNumber = await resolveContractTrackingNumber(null, input.opportunityId);
@@ -645,7 +663,6 @@ export async function createContract(input: ContractInput): Promise<string> {
       tracking_number: trackingNumber,
       name: input.name,
       trades: input.trades,
-      site_count: input.siteCount,
       rate_amount: input.rateAmount,
       rate_frequency: input.rateFrequency,
       billing_type: input.billingType,
@@ -658,6 +675,9 @@ export async function createContract(input: ContractInput): Promise<string> {
   if (error) throw new Error(error.message);
   const contractId = data.id as string;
   await setContractContacts(contractId, input.contactIds);
+  if (input.opportunityId) {
+    await carryOverOpportunitySites(input.opportunityId, contractId);
+  }
   return contractId;
 }
 
@@ -676,7 +696,6 @@ async function maybeAutoCreateAgreement(opportunityId: string, stage: Opportunit
     opportunityId: opportunity.id,
     name: opportunity.name,
     trades: opportunity.trades,
-    siteCount: opportunity.siteCount,
     rateAmount: opportunity.amount,
     rateFrequency: null,
     billingType: null,
@@ -709,7 +728,6 @@ export async function updateContract(id: string, input: ContractInput): Promise<
       tracking_number: trackingNumber,
       name: input.name,
       trades: input.trades,
-      site_count: input.siteCount,
       rate_amount: input.rateAmount,
       rate_frequency: input.rateFrequency,
       billing_type: input.billingType,
@@ -950,7 +968,6 @@ export async function createOpportunity(input: OpportunityInput): Promise<string
       company_id: input.companyId,
       stage: input.stage,
       amount: input.amount,
-      site_count: input.siteCount,
       trades: input.trades,
       expected_close_date: input.expectedCloseDate,
       notes: input.notes,
@@ -976,7 +993,6 @@ export async function updateOpportunity(id: string, input: OpportunityInput): Pr
       company_id: input.companyId,
       stage: input.stage,
       amount: input.amount,
-      site_count: input.siteCount,
       trades: input.trades,
       expected_close_date: input.expectedCloseDate,
       notes: input.notes,

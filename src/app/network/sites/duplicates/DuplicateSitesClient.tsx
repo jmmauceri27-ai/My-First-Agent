@@ -159,6 +159,14 @@ function GroupCard({ group, onMerged }: { group: Site[]; onMerged: () => void })
           onSelect={select}
           format={(v, siteId) => siteById(group, siteId)?.opportunityName ?? v}
         />
+        <FieldRow
+          label="Agreement"
+          fieldKey="contractId"
+          resolution={plan.fields.contractId}
+          selected={selections.contractId}
+          onSelect={select}
+          format={(v, siteId) => siteById(group, siteId)?.contractName ?? v}
+        />
         <FieldRow label="Address" fieldKey="address" resolution={plan.fields.address} selected={selections.address} onSelect={select} format={(v) => v} />
         <FieldRow label="City" fieldKey="city" resolution={plan.fields.city} selected={selections.city} onSelect={select} format={(v) => v} />
         <FieldRow label="State" fieldKey="state" resolution={plan.fields.state} selected={selections.state} onSelect={select} format={(v) => v} />

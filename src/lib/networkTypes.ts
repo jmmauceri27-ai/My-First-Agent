@@ -56,6 +56,10 @@ export interface Site {
   companyName: string | null;
   opportunityId: string | null;
   opportunityName: string | null;
+  /** The Agreement this site is billed under, if any -- separate from opportunityId, since a site can be
+   * tracked against an opportunity long before (or without) an agreement existing yet. */
+  contractId: string | null;
+  contractName: string | null;
   /** A user-entered identifier/code (e.g. from your own facility system) -- separate from `id`, the database's own record id. */
   siteCode: string | null;
   name: string;
@@ -83,6 +87,7 @@ export interface Site {
 export interface SiteInput {
   companyId: string | null;
   opportunityId: string | null;
+  contractId: string | null;
   siteCode: string | null;
   name: string;
   address: string | null;
@@ -167,6 +172,7 @@ export interface SiteImportRow {
 export interface SiteBulkLinks {
   companyId: string | null;
   opportunityId: string | null;
+  contractId: string | null;
   trades: string[];
 }
 
