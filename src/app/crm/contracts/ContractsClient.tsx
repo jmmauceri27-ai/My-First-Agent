@@ -4,60 +4,20 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
-import { formatCurrency } from "@/lib/siteMapColor";
-import { contractStatus, formatContractDate } from "@/lib/contractStatus";
+import { inputClass } from "@/components/ui/formClasses";
+import SearchableSelect from "@/components/SearchableSelect";
+import TradeSelect from "@/components/TradeSelect";
 import type { Company, Contract, ContractInput, FieldClass, Opportunity } from "@/lib/crmTypes";
 import ContractModal from "./ContractModal";
 import ContractsTimeline from "./ContractsTimeline";
 
 type View = "list" | "timeline";
-
-const UNSPECIFIED_TRADE = "Unspecified";
+type SortBy = "name" | "expiration";
 
 function ContractRow({ contract: c, onSelect }: { contract: Contract; onSelect: (c: Contract) => void }) {
-  const status = contractStatus(c.endDate);
   return (
-    <button
-      onClick={() => onSelect(c)}
-      className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-left hover:bg-purple-500/5"
-    >
-      <div className="flex min-w-0 items-center gap-3">
-        {c.companyLogoUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={c.companyLogoUrl}
-            alt=""
-            className="h-8 w-8 shrink-0 rounded-full border border-purple-400/20 object-contain"
-          />
-        )}
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            {c.trackingNumber && (
-              <span className="shrink-0 font-mono text-xs text-slate-500 dark:text-slate-400">{c.trackingNumber}</span>
-            )}
-            <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">{c.name}</p>
-            <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${status.badgeClassName}`}>
-              {status.label}
-            </span>
-          </div>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-            {[c.companyName, c.trades.length > 0 ? c.trades.join(", ") : null].filter(Boolean).join(" · ") ||
-              "No details"}
-          </p>
-        </div>
-      </div>
-      <div className="flex shrink-0 flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
-        {c.siteCount != null && <span>{c.siteCount} sites</span>}
-        {c.rateAmount != null && (
-          <span className="tabular-nums">
-            {formatCurrency(c.rateAmount)}
-            {c.rateFrequency ? ` / ${c.rateFrequency}` : ""}
-          </span>
-        )}
-        <span className="tabular-nums">
-          {formatContractDate(c.startDate)} – {formatContractDate(c.endDate)}
-        </span>
-      </div>
+    <button onClick={() => onSelect(c)} className="block w-full px-4 py-3 text-left hover:bg-purple-500/5">
+      <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{c.name}</p>
     </button>
   );
 }
@@ -98,6 +58,9 @@ export default function ContractsClient({
   });
   const [creating, setCreating] = useState(() => prefill != null);
   const [view, setView] = useState<View>("list");
+  const [clientFilter, setClientFilter] = useState("");
+  const [tradeFilter, setTradeFilter] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState<SortBy>("name");
 
   useEffect(() => {
     if (openContractId || convertFromOpportunityId) {
@@ -107,22 +70,40 @@ export default function ContractsClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const byTrade = useMemo(() => {
-    const groups = new Map<string, Contract[]>();
+  const clientOptions = useMemo(() => {
+    const byId = new Map<string, string>();
     for (const c of contracts) {
-      // A multi-trade agreement shows up under every one of its trade sections, not just the first --
-      // matching how Sites' map/legend credit each of a site's trades rather than picking one.
-      const contractTrades = c.trades.length > 0 ? c.trades : [UNSPECIFIED_TRADE];
-      for (const trade of contractTrades) {
-        groups.set(trade, [...(groups.get(trade) ?? []), c]);
-      }
+      if (c.companyId && c.companyName) byId.set(c.companyId, c.companyName);
     }
-    return Array.from(groups.entries()).sort(([a], [b]) => {
-      if (a === UNSPECIFIED_TRADE) return 1;
-      if (b === UNSPECIFIED_TRADE) return -1;
-      return a.localeCompare(b);
-    });
+    return Array.from(byId.entries())
+      .map(([id, name]) => ({ value: id, label: name }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   }, [contracts]);
+
+  const filtered = useMemo(
+    () =>
+      contracts.filter(
+        (c) =>
+          (!clientFilter || c.companyId === clientFilter) &&
+          (tradeFilter.length === 0 || c.trades.some((t) => tradeFilter.includes(t))),
+      ),
+    [contracts, clientFilter, tradeFilter],
+  );
+
+  const sorted = useMemo(() => {
+    const list = [...filtered];
+    if (sortBy === "expiration") {
+      list.sort((a, b) => {
+        if (a.endDate == null && b.endDate == null) return 0;
+        if (a.endDate == null) return 1;
+        if (b.endDate == null) return -1;
+        return new Date(a.endDate).getTime() - new Date(b.endDate).getTime();
+      });
+    } else {
+      list.sort((a, b) => a.name.localeCompare(b.name));
+    }
+    return list;
+  }, [filtered, sortBy]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -156,19 +137,35 @@ export default function ContractsClient({
           and type of work.
         </p>
       ) : view === "list" ? (
-        <div className="flex flex-col gap-6">
-          {byTrade.map(([trade, list]) => (
-            <div key={trade} className="flex flex-col gap-2">
-              <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {trade} <span className="font-normal text-slate-600 dark:text-slate-500">({list.length})</span>
-              </h2>
-              <Card className="flex flex-col divide-y divide-purple-400/10 overflow-hidden">
-                {list.map((c) => (
-                  <ContractRow key={c.id} contract={c} onSelect={setEditingContract} />
-                ))}
-              </Card>
+        <div className="flex flex-col gap-4">
+          <Card className="flex flex-wrap gap-4 p-4">
+            {/* A plain div, not a <label> -- see SearchableSelect's own note on why. */}
+            <div className="flex flex-col gap-1 text-sm">
+              <span className="font-medium text-slate-700 dark:text-slate-300">Client</span>
+              <SearchableSelect options={clientOptions} value={clientFilter} onChange={setClientFilter} className="w-52" />
             </div>
-          ))}
+            <div className="flex flex-col gap-1 text-sm">
+              <span className="font-medium text-slate-700 dark:text-slate-300">Trade</span>
+              <TradeSelect value={tradeFilter} onChange={setTradeFilter} className="w-52" placeholder="All trades" />
+            </div>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium text-slate-700 dark:text-slate-300">Sort by</span>
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortBy)} className={inputClass}>
+                <option value="name">Name (A–Z)</option>
+                <option value="expiration">Expiration date (soonest first)</option>
+              </select>
+            </label>
+          </Card>
+
+          {sorted.length === 0 ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400">No agreements match these filters.</p>
+          ) : (
+            <Card className="flex flex-col divide-y divide-purple-400/10 overflow-hidden">
+              {sorted.map((c) => (
+                <ContractRow key={c.id} contract={c} onSelect={setEditingContract} />
+              ))}
+            </Card>
+          )}
         </div>
       ) : (
         <ContractsTimeline contracts={contracts} onSelect={setEditingContract} />

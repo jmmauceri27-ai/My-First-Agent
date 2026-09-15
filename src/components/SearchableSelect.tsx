@@ -10,7 +10,12 @@ export interface SearchableSelectOption {
 
 /** A closed-by-default dropdown (styled like a normal select) that opens a searchable list for a single
  * choice -- like MultiSelectDropdown, but picking an option selects it and closes immediately instead of
- * toggling a checkbox. `placeholder` doubles as the "clear" option at the top of the list. */
+ * toggling a checkbox. `placeholder` doubles as the "clear" option at the top of the list.
+ *
+ * Wrap this in a plain <div>, never a <label>, when pairing it with a field caption -- a <label> around
+ * multiple nested buttons (the toggle plus each list item) makes the browser forward a click on any of them
+ * into a synthetic click on the label's first control, reopening the dropdown right after an option closes
+ * it. Same caution applies to MultiSelectDropdown/TradeSelect. */
 export default function SearchableSelect({
   options,
   value,
