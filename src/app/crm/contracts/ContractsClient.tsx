@@ -7,6 +7,8 @@ import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import SearchableSelect from "@/components/SearchableSelect";
 import TradeSelect from "@/components/TradeSelect";
+import { formatCurrency } from "@/lib/siteMapColor";
+import { contractStatus, formatContractDate } from "@/lib/contractStatus";
 import type { Company, Contract, ContractInput, FieldClass, Opportunity } from "@/lib/crmTypes";
 import ContractModal from "./ContractModal";
 import ContractsTimeline from "./ContractsTimeline";
@@ -15,9 +17,49 @@ type View = "list" | "timeline";
 type SortBy = "name" | "expiration";
 
 function ContractRow({ contract: c, onSelect }: { contract: Contract; onSelect: (c: Contract) => void }) {
+  const status = contractStatus(c.endDate);
   return (
-    <button onClick={() => onSelect(c)} className="block w-full px-4 py-3 text-left hover:bg-purple-500/5">
-      <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{c.name}</p>
+    <button
+      onClick={() => onSelect(c)}
+      className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-left hover:bg-purple-500/5"
+    >
+      <div className="flex min-w-0 items-center gap-3">
+        {c.companyLogoUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={c.companyLogoUrl}
+            alt=""
+            className="h-8 w-8 shrink-0 rounded-full border border-purple-400/20 object-contain"
+          />
+        )}
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            {c.trackingNumber && (
+              <span className="shrink-0 font-mono text-xs text-slate-500 dark:text-slate-400">{c.trackingNumber}</span>
+            )}
+            <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">{c.name}</p>
+            <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${status.badgeClassName}`}>
+              {status.label}
+            </span>
+          </div>
+          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+            {[c.companyName, c.trades.length > 0 ? c.trades.join(", ") : null].filter(Boolean).join(" · ") ||
+              "No details"}
+          </p>
+        </div>
+      </div>
+      <div className="flex shrink-0 flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+        {c.siteCount != null && <span>{c.siteCount} sites</span>}
+        {c.rateAmount != null && (
+          <span className="tabular-nums">
+            {formatCurrency(c.rateAmount)}
+            {c.rateFrequency ? ` / ${c.rateFrequency}` : ""}
+          </span>
+        )}
+        <span className="tabular-nums">
+          {formatContractDate(c.startDate)} – {formatContractDate(c.endDate)}
+        </span>
+      </div>
     </button>
   );
 }
