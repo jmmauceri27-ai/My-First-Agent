@@ -9,7 +9,7 @@ import SearchableSelect from "@/components/SearchableSelect";
 import TradeSelect from "@/components/TradeSelect";
 import { formatCurrency } from "@/lib/siteMapColor";
 import { contractStatus, formatContractDate } from "@/lib/contractStatus";
-import type { Company, Contract, ContractInput, FieldClass, Opportunity } from "@/lib/crmTypes";
+import type { Company, Contact, Contract, ContractInput, FieldClass, Opportunity } from "@/lib/crmTypes";
 import ContractModal from "./ContractModal";
 import ContractsTimeline from "./ContractsTimeline";
 
@@ -68,6 +68,7 @@ export default function ContractsClient({
   contracts,
   companies,
   opportunities,
+  contacts,
   fieldClasses,
   openContractId,
   convertFromOpportunityId,
@@ -75,6 +76,7 @@ export default function ContractsClient({
   contracts: Contract[];
   companies: Company[];
   opportunities: Opportunity[];
+  contacts: Contact[];
   fieldClasses: FieldClass[];
   openContractId: string | null;
   convertFromOpportunityId: string | null;
@@ -96,6 +98,7 @@ export default function ContractsClient({
       trades: source.trades,
       siteCount: source.siteCount,
       rateAmount: source.amount,
+      contactIds: source.contactIds,
     };
   });
   const [creating, setCreating] = useState(() => prefill != null);
@@ -218,6 +221,7 @@ export default function ContractsClient({
           contract={editingContract}
           companies={companies}
           opportunities={opportunities}
+          contacts={contacts}
           fieldClasses={fieldClasses}
           prefill={editingContract ? null : prefill}
           onClose={() => {

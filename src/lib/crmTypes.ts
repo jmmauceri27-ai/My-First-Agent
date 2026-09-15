@@ -174,6 +174,7 @@ export interface Contract {
   startDate: string | null;
   endDate: string | null;
   notes: string | null;
+  contactIds: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -190,6 +191,7 @@ export interface ContractInput {
   startDate: string | null;
   endDate: string | null;
   notes: string | null;
+  contactIds: string[];
 }
 
 export interface ContractFile {

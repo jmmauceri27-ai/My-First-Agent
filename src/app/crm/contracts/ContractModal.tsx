@@ -9,7 +9,7 @@ import { inputClass } from "@/components/ui/formClasses";
 import { RATE_FREQUENCIES } from "@/lib/crmTypes";
 import { BILLING_TYPE_OPTIONS } from "@/lib/billingTypes";
 import TradeSelect from "@/components/TradeSelect";
-import type { Company, Contract, ContractFile, ContractInput, FieldClass, Opportunity } from "@/lib/crmTypes";
+import type { Company, Contact, Contract, ContractFile, ContractInput, FieldClass, Opportunity } from "@/lib/crmTypes";
 import {
   deleteContractAction,
   deleteContractFileAction,
@@ -32,6 +32,7 @@ export default function ContractModal({
   contract,
   companies,
   opportunities,
+  contacts,
   fieldClasses,
   prefill,
   onClose,
@@ -39,6 +40,7 @@ export default function ContractModal({
   contract: Contract | null;
   companies: Company[];
   opportunities: Opportunity[];
+  contacts: Contact[];
   fieldClasses: FieldClass[];
   /** Prefills a blank creation form (e.g. from an opportunity's "Convert to Agreement" button) -- ignored
    * when editing an existing contract. */
@@ -61,6 +63,7 @@ export default function ContractModal({
   const [startDate, setStartDate] = useState(contract?.startDate ?? "");
   const [endDate, setEndDate] = useState(contract?.endDate ?? "");
   const [notes, setNotes] = useState(contract?.notes ?? "");
+  const [contactIds, setContactIds] = useState<string[]>(contract?.contactIds ?? prefill?.contactIds ?? []);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -115,6 +118,10 @@ export default function ContractModal({
     await unassignFieldFromRecordAction(contract.id, fieldId);
   }
 
+  function toggleContact(id: string) {
+    setContactIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
+  }
+
   async function handleSave() {
     setError(null);
     if (!name.trim()) {
@@ -135,6 +142,7 @@ export default function ContractModal({
         startDate: startDate || null,
         endDate: endDate || null,
         notes: notes.trim() || null,
+        contactIds,
       };
       const contractId = await saveContractAction(contract?.id ?? null, input);
       await saveFieldValuesForRecordAction(
@@ -286,6 +294,28 @@ export default function ContractModal({
             <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputClass} />
           </label>
+
+          <div className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-slate-700 dark:text-slate-300">Contacts involved</span>
+            <div className="flex max-h-32 flex-col gap-1 overflow-y-auto rounded-lg border border-slate-300 p-2 dark:border-slate-700">
+              {contacts.length === 0 ? (
+                <span className="text-xs text-slate-500 dark:text-slate-400">No contacts yet — add some on the Contacts page.</span>
+              ) : (
+                contacts.map((c) => (
+                  <label key={c.id} className="flex items-center gap-1.5 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={contactIds.includes(c.id)}
+                      onChange={() => toggleContact(c.id)}
+                      className="accent-brand-600"
+                    />
+                    {c.name}
+                    {c.companyName && <span className="text-xs text-slate-500 dark:text-slate-400">({c.companyName})</span>}
+                  </label>
+                ))
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="mt-4">

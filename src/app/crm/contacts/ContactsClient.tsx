@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
@@ -15,7 +16,6 @@ export default function ContactsClient({
   companies: Company[];
   fieldClasses: FieldClass[];
 }) {
-  const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [creating, setCreating] = useState(false);
 
   return (
@@ -29,9 +29,9 @@ export default function ContactsClient({
       ) : (
         <Card className="flex flex-col divide-y divide-slate-100 overflow-hidden dark:divide-slate-900">
           {contacts.map((c) => (
-            <button
+            <Link
               key={c.id}
-              onClick={() => setEditingContact(c)}
+              href={`/crm/contacts/${c.id}`}
               className="flex items-center justify-between gap-4 px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-900/50"
             >
               <div className="flex min-w-0 items-center gap-3">
@@ -53,20 +53,17 @@ export default function ContactsClient({
                   </p>
                 </div>
               </div>
-            </button>
+            </Link>
           ))}
         </Card>
       )}
 
-      {(editingContact || creating) && (
+      {creating && (
         <ContactModal
-          contact={editingContact}
+          contact={null}
           companies={companies}
           fieldClasses={fieldClasses}
-          onClose={() => {
-            setEditingContact(null);
-            setCreating(false);
-          }}
+          onClose={() => setCreating(false)}
         />
       )}
     </div>

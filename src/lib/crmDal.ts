@@ -333,6 +333,38 @@ export async function listContacts(): Promise<Contact[]> {
   });
 }
 
+export async function getContact(id: string): Promise<Contact | null> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("crm_contacts")
+    .select(
+      "id, company_id, name, email, phone, title, notes, created_at, crm_companies(name, logo_storage_path, updated_at)",
+    )
+    .eq("id", id)
+    .eq("user_id", OWNER_USER_ID)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+
+  const company = data.crm_companies as unknown as {
+    name: string;
+    logo_storage_path: string | null;
+    updated_at: string;
+  } | null;
+  return {
+    id: data.id as string,
+    companyId: data.company_id as string | null,
+    companyName: company?.name ?? null,
+    companyLogoUrl: buildLogoUrl(supabase, company?.logo_storage_path, company?.updated_at),
+    name: data.name as string,
+    email: data.email as string | null,
+    phone: data.phone as string | null,
+    title: data.title as string | null,
+    notes: data.notes as string | null,
+    createdAt: data.created_at as string,
+  };
+}
+
 export async function createContact(input: ContactInput): Promise<string> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
@@ -491,7 +523,7 @@ export async function bulkCreateEmployees(rows: EmployeeImportRow[]): Promise<{ 
 // pipeline): a validity window, rate, site count, and type of work.
 
 const CONTRACT_COLUMNS =
-  "id, company_id, opportunity_id, tracking_number, name, trades, site_count, rate_amount, rate_frequency, billing_type, start_date, end_date, notes, created_at, updated_at, crm_companies(name, logo_storage_path, updated_at), crm_opportunities(name)";
+  "id, company_id, opportunity_id, tracking_number, name, trades, site_count, rate_amount, rate_frequency, billing_type, start_date, end_date, notes, created_at, updated_at, crm_companies(name, logo_storage_path, updated_at), crm_opportunities(name), crm_contract_contacts(contact_id)";
 
 function mapContract(c: Record<string, unknown>, supabase: ReturnType<typeof createAdminClient>): Contract {
   const company = c.crm_companies as unknown as {
@@ -500,6 +532,7 @@ function mapContract(c: Record<string, unknown>, supabase: ReturnType<typeof cre
     updated_at: string;
   } | null;
   const opportunity = c.crm_opportunities as unknown as { name: string } | null;
+  const contactRows = (c.crm_contract_contacts ?? []) as unknown as { contact_id: string }[];
   return {
     id: c.id as string,
     companyId: c.company_id as string | null,
@@ -517,6 +550,7 @@ function mapContract(c: Record<string, unknown>, supabase: ReturnType<typeof cre
     startDate: c.start_date as string | null,
     endDate: c.end_date as string | null,
     notes: c.notes as string | null,
+    contactIds: contactRows.map((r) => r.contact_id),
     createdAt: c.created_at as string,
     updatedAt: c.updated_at as string,
   };
@@ -569,6 +603,23 @@ export async function getContractForOpportunity(opportunityId: string): Promise<
   return mapContract(data, supabase);
 }
 
+/** Mirrors setOpportunityContacts: replaces the full set of Contacts tied to this agreement in one go. */
+async function setContractContacts(contractId: string, contactIds: string[]): Promise<void> {
+  const supabase = createAdminClient();
+  const { error: deleteError } = await supabase
+    .from("crm_contract_contacts")
+    .delete()
+    .eq("contract_id", contractId);
+  if (deleteError) throw new Error(deleteError.message);
+
+  if (contactIds.length > 0) {
+    const { error: insertError } = await supabase
+      .from("crm_contract_contacts")
+      .insert(contactIds.map((contactId) => ({ contract_id: contractId, contact_id: contactId })));
+    if (insertError) throw new Error(insertError.message);
+  }
+}
+
 export async function createContract(input: ContractInput): Promise<string> {
   const supabase = createAdminClient();
   const trackingNumber = await resolveContractTrackingNumber(null, input.opportunityId);
@@ -592,7 +643,9 @@ export async function createContract(input: ContractInput): Promise<string> {
     .select("id")
     .single();
   if (error) throw new Error(error.message);
-  return data.id as string;
+  const contractId = data.id as string;
+  await setContractContacts(contractId, input.contactIds);
+  return contractId;
 }
 
 /** Once an opportunity's stage becomes "Won" it's already an active agreement, so this creates one
@@ -617,6 +670,7 @@ async function maybeAutoCreateAgreement(opportunityId: string, stage: Opportunit
     startDate: null,
     endDate: null,
     notes: null,
+    contactIds: opportunity.contactIds,
   });
 }
 
@@ -654,6 +708,7 @@ export async function updateContract(id: string, input: ContractInput): Promise<
     .eq("id", id)
     .eq("user_id", OWNER_USER_ID);
   if (error) throw new Error(error.message);
+  await setContractContacts(id, input.contactIds);
 }
 
 export async function deleteContract(id: string): Promise<void> {

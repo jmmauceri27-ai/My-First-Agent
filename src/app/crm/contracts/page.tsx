@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import { listCompanies, listContracts, listOpportunities } from "@/lib/crmDal";
+import { listCompanies, listContacts, listContracts, listOpportunities } from "@/lib/crmDal";
 import { listFieldClasses } from "@/lib/fieldsDal";
 import ContractsClient from "./ContractsClient";
 
@@ -10,10 +10,11 @@ export default async function ContractsPage({
   searchParams: Promise<{ open?: string; convertFrom?: string }>;
 }) {
   const { open, convertFrom } = await searchParams;
-  const [contracts, companies, opportunities, fieldClasses] = await Promise.all([
+  const [contracts, companies, opportunities, contacts, fieldClasses] = await Promise.all([
     listContracts(),
     listCompanies(),
     listOpportunities(),
+    listContacts(),
     listFieldClasses(),
   ]);
 
@@ -24,6 +25,7 @@ export default async function ContractsPage({
         contracts={contracts}
         companies={companies}
         opportunities={opportunities}
+        contacts={contacts}
         fieldClasses={fieldClasses}
         openContractId={open ?? null}
         convertFromOpportunityId={convertFrom ?? null}
