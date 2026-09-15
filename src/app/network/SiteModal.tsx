@@ -12,6 +12,7 @@ import SiteTradeAssignmentsEditor, {
   type AssignmentDraft,
 } from "@/components/SiteTradeAssignmentsEditor";
 import SiteMeasurementsEditor from "@/components/SiteMeasurementsEditor";
+import { VENDOR_ASSIGNMENT_TRADES } from "@/lib/trades";
 import type { Company, Contract, FieldClass, Opportunity } from "@/lib/crmTypes";
 import type { Site, SiteInput, SiteMeasurements, Vendor } from "@/lib/networkTypes";
 import { saveCompanyAction } from "@/app/crm/actions";
@@ -83,6 +84,11 @@ export default function SiteModal({
     [contracts, companyId],
   );
 
+  const assignmentTrades = useMemo(
+    () => trades.filter((t) => VENDOR_ASSIGNMENT_TRADES.includes(t as (typeof VENDOR_ASSIGNMENT_TRADES)[number])),
+    [trades],
+  );
+
   async function handleAddCompany() {
     if (!newCompanyName.trim()) return;
     const id = await saveCompanyAction(null, {
@@ -137,7 +143,8 @@ export default function SiteModal({
         trades,
         measurements,
         counts,
-        lastSeasonSnowfall: lastSeasonSnowfall.trim() ? Number(lastSeasonSnowfall) : null,
+        lastSeasonSnowfall:
+          trades.includes("Snow Removal") && lastSeasonSnowfall.trim() ? Number(lastSeasonSnowfall) : null,
         notes: notes.trim() || null,
       };
       const result = await saveSiteAction(site?.id ?? null, input);
@@ -147,7 +154,7 @@ export default function SiteModal({
       }
       const assignmentsResult = await saveSiteTradeAssignmentsAction(
         result.id,
-        draftsToAssignmentInputs(trades, assignmentDrafts),
+        draftsToAssignmentInputs(assignmentTrades, assignmentDrafts),
       );
       if (assignmentsResult.error) {
         setError(assignmentsResult.error);
@@ -269,20 +276,22 @@ export default function SiteModal({
             <TradeSelect value={trades} onChange={setTrades} />
           </label>
 
-          <div className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-300">Vendor & Agreement assignments</span>
-            <p className="-mt-0.5 text-xs text-slate-600 dark:text-slate-500">
-              A site often uses a different vendor -- and can be covered under a different signed agreement -- per
-              trade, e.g. one for Land, another for Snow Removal.
-            </p>
-            <SiteTradeAssignmentsEditor
-              trades={trades}
-              vendors={vendors}
-              contracts={contractsForCompany}
-              value={assignmentDrafts}
-              onChange={setAssignmentDrafts}
-            />
-          </div>
+          {assignmentTrades.length > 0 && (
+            <div className="flex flex-col gap-1 text-sm">
+              <span className="font-medium text-slate-700 dark:text-slate-300">Vendor & Agreement assignments</span>
+              <p className="-mt-0.5 text-xs text-slate-600 dark:text-slate-500">
+                A site often uses a different vendor -- and can be covered under a different signed agreement -- per
+                trade, e.g. one for Land, another for Snow Removal.
+              </p>
+              <SiteTradeAssignmentsEditor
+                trades={assignmentTrades}
+                vendors={vendors}
+                contracts={contractsForCompany}
+                value={assignmentDrafts}
+                onChange={setAssignmentDrafts}
+              />
+            </div>
+          )}
 
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-slate-700 dark:text-slate-300">Address</span>
@@ -340,18 +349,20 @@ export default function SiteModal({
           />
         </div>
 
-        <div className="mt-6 border-t border-purple-400/10 pt-4">
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Last Season Snowfall</span>
-          <label className="mt-2 flex flex-col gap-1 text-sm">
-            <span className="text-slate-500 dark:text-slate-400">Total snowfall (in.)</span>
-            <input
-              type="number"
-              value={lastSeasonSnowfall}
-              onChange={(e) => setLastSeasonSnowfall(e.target.value)}
-              className={`${inputClass} max-w-[10rem]`}
-            />
-          </label>
-        </div>
+        {trades.includes("Snow Removal") && (
+          <div className="mt-6 border-t border-purple-400/10 pt-4">
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Last Season Snowfall</span>
+            <label className="mt-2 flex flex-col gap-1 text-sm">
+              <span className="text-slate-500 dark:text-slate-400">Total snowfall (in.)</span>
+              <input
+                type="number"
+                value={lastSeasonSnowfall}
+                onChange={(e) => setLastSeasonSnowfall(e.target.value)}
+                className={`${inputClass} max-w-[10rem]`}
+              />
+            </label>
+          </div>
+        )}
 
         {error && <p className="mt-3 text-sm text-critical">{error}</p>}
 

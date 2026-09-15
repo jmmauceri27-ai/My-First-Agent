@@ -16,6 +16,11 @@ export const TRADE_OPTIONS = [
 
 export type Trade = (typeof TRADE_OPTIONS)[number];
 
+/** Trades that get their own Vendor/Sub-Vendor assignment, Rate Schedule, and Expense Schedule sections on a
+ * Site -- the rest are tracked (which sites need that trade) without per-trade vendor/pricing detail, so
+ * adding e.g. Janitorial or HVAC to a site's trade list doesn't clutter it with irrelevant assignment forms. */
+export const VENDOR_ASSIGNMENT_TRADES: Trade[] = ["Land", "Snow Removal"];
+
 /** Fixed color per Trade, used for map pins and legends -- Fire & Life Safety is red, Snow Removal is blue, Land is green, per the user's request. */
 export const TRADE_COLORS: Record<Trade, string> = {
   Land: "#22c55e",

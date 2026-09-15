@@ -16,6 +16,7 @@ import SiteTradeAssignmentsEditor, {
 import SiteMeasurementsEditor from "@/components/SiteMeasurementsEditor";
 import { formatCurrency, parseCurrencyInput } from "@/lib/siteMapColor";
 import { MONTHS } from "@/lib/rateSchedule";
+import { VENDOR_ASSIGNMENT_TRADES } from "@/lib/trades";
 import type { Company, Contract, FieldClass, Opportunity } from "@/lib/crmTypes";
 import type { Site, SiteInput, SiteMeasurements, Vendor } from "@/lib/networkTypes";
 import {
@@ -107,6 +108,19 @@ export default function SiteDetailClient({
     [contracts, companyId],
   );
 
+  const assignmentTrades = useMemo(
+    () => trades.filter((t) => VENDOR_ASSIGNMENT_TRADES.includes(t as (typeof VENDOR_ASSIGNMENT_TRADES)[number])),
+    [trades],
+  );
+
+  const visibleTradeAssignments = useMemo(
+    () =>
+      site.tradeAssignments.filter((a) =>
+        VENDOR_ASSIGNMENT_TRADES.includes(a.trade as (typeof VENDOR_ASSIGNMENT_TRADES)[number]),
+      ),
+    [site.tradeAssignments],
+  );
+
   function updateAssignmentDraft(trade: string, patch: Partial<AssignmentDraft>) {
     setAssignmentDrafts((prev) => ({ ...prev, [trade]: { ...(prev[trade] ?? emptyDraft()), ...patch } }));
   }
@@ -154,7 +168,8 @@ export default function SiteDetailClient({
         trades,
         measurements,
         counts,
-        lastSeasonSnowfall: lastSeasonSnowfall.trim() ? Number(lastSeasonSnowfall) : null,
+        lastSeasonSnowfall:
+          trades.includes("Snow Removal") && lastSeasonSnowfall.trim() ? Number(lastSeasonSnowfall) : null,
         notes: notes.trim() || null,
       };
       const result = await saveSiteAction(site.id, input);
@@ -164,7 +179,7 @@ export default function SiteDetailClient({
       }
       const assignmentsResult = await saveSiteTradeAssignmentsAction(
         site.id,
-        draftsToAssignmentInputs(trades, assignmentDrafts),
+        draftsToAssignmentInputs(assignmentTrades, assignmentDrafts),
       );
       if (assignmentsResult.error) {
         setError(assignmentsResult.error);
@@ -274,20 +289,22 @@ export default function SiteDetailClient({
               </label>
             </div>
 
-            <div className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-700 dark:text-slate-300">Vendor & Agreement assignments</span>
-              <p className="-mt-0.5 text-xs text-slate-600 dark:text-slate-500">
-                A site often uses a different vendor -- and can be covered under a different signed agreement -- per
-                trade, e.g. one for Land, another for Snow Removal.
-              </p>
-              <SiteTradeAssignmentsEditor
-                trades={trades}
-                vendors={vendors}
-                contracts={contractsForCompany}
-                value={assignmentDrafts}
-                onChange={setAssignmentDrafts}
-              />
-            </div>
+            {assignmentTrades.length > 0 && (
+              <div className="flex flex-col gap-1 text-sm">
+                <span className="font-medium text-slate-700 dark:text-slate-300">Vendor & Agreement assignments</span>
+                <p className="-mt-0.5 text-xs text-slate-600 dark:text-slate-500">
+                  A site often uses a different vendor -- and can be covered under a different signed agreement --
+                  per trade, e.g. one for Land, another for Snow Removal.
+                </p>
+                <SiteTradeAssignmentsEditor
+                  trades={assignmentTrades}
+                  vendors={vendors}
+                  contracts={contractsForCompany}
+                  value={assignmentDrafts}
+                  onChange={setAssignmentDrafts}
+                />
+              </div>
+            )}
 
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium text-slate-700 dark:text-slate-300">Address</span>
@@ -356,31 +373,31 @@ export default function SiteDetailClient({
             />
           </Card>
 
-          <Card className="p-5">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Last Season Snowfall</h2>
-            <label className="mt-3 flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-700 dark:text-slate-300">Total snowfall (in.)</span>
-              <input
-                type="number"
-                value={lastSeasonSnowfall}
-                onChange={(e) => setLastSeasonSnowfall(e.target.value)}
-                className={`${inputClass} max-w-[10rem]`}
-              />
-            </label>
-          </Card>
+          {trades.includes("Snow Removal") && (
+            <Card className="p-5">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Last Season Snowfall</h2>
+              <label className="mt-3 flex flex-col gap-1 text-sm">
+                <span className="font-medium text-slate-700 dark:text-slate-300">Total snowfall (in.)</span>
+                <input
+                  type="number"
+                  value={lastSeasonSnowfall}
+                  onChange={(e) => setLastSeasonSnowfall(e.target.value)}
+                  className={`${inputClass} max-w-[10rem]`}
+                />
+              </label>
+            </Card>
+          )}
 
-          <Card className="p-5">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Rate Schedule</h2>
-            <p className="-mt-0.5 text-xs text-slate-600 dark:text-slate-500">
-              Annual Rate Total is a flat yearly figure you set directly. The monthly breakdown below (which
-              months this trade gets paid, and how much) is tracked separately and isn&rsquo;t derived from it --
-              the two aren&rsquo;t kept in sync.
-            </p>
-            {trades.length === 0 ? (
-              <p className="mt-2 text-xs text-slate-600 dark:text-slate-500">No trades assigned yet.</p>
-            ) : (
+          {assignmentTrades.length > 0 && (
+            <Card className="p-5">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Rate Schedule</h2>
+              <p className="-mt-0.5 text-xs text-slate-600 dark:text-slate-500">
+                Annual Rate Total is a flat yearly figure you set directly. The monthly breakdown below (which
+                months this trade gets paid, and how much) is tracked separately and isn&rsquo;t derived from it --
+                the two aren&rsquo;t kept in sync.
+              </p>
               <div className="mt-3 flex flex-col gap-4">
-                {trades.map((trade) => {
+                {assignmentTrades.map((trade) => {
                   const draft = assignmentDrafts[trade] ?? emptyDraft();
                   const billingType = contractsForCompany.find((c) => c.id === draft.contractId)?.billingType ?? null;
                   const monthlyTotal = scheduleTotal(draft.rateSchedule);
@@ -437,20 +454,18 @@ export default function SiteDetailClient({
                   );
                 })}
               </div>
-            )}
-          </Card>
+            </Card>
+          )}
 
-          <Card className="p-5">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Expense Schedule</h2>
-            <p className="-mt-0.5 text-xs text-slate-600 dark:text-slate-500">
-              Which months the Vendor and Sub-Vendor are paid for this trade, and how much. Repeats every year
-              until changed; tracked separately from Sub Price/Sub-Vendor Price above.
-            </p>
-            {trades.length === 0 ? (
-              <p className="mt-2 text-xs text-slate-600 dark:text-slate-500">No trades assigned yet.</p>
-            ) : (
+          {assignmentTrades.length > 0 && (
+            <Card className="p-5">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Expense Schedule</h2>
+              <p className="-mt-0.5 text-xs text-slate-600 dark:text-slate-500">
+                Which months the Vendor and Sub-Vendor are paid for this trade, and how much. Repeats every year
+                until changed; tracked separately from Sub Price/Sub-Vendor Price above.
+              </p>
               <div className="mt-3 flex flex-col gap-4">
-                {trades.map((trade) => {
+                {assignmentTrades.map((trade) => {
                   const draft = assignmentDrafts[trade] ?? emptyDraft();
                   const vendorName = vendors.find((v) => v.id === draft.vendorId)?.name ?? null;
                   const subVendorName = vendors.find((v) => v.id === draft.subVendorId)?.name ?? null;
@@ -527,8 +542,8 @@ export default function SiteDetailClient({
                   );
                 })}
               </div>
-            )}
-          </Card>
+            </Card>
+          )}
 
           <Card className="flex flex-col gap-3 p-5">
             <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Connections</h2>
@@ -560,11 +575,11 @@ export default function SiteDetailClient({
 
             <div className="mt-2 border-t border-purple-400/10 pt-3">
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Vendors & Agreements by trade</p>
-              {site.tradeAssignments.length === 0 ? (
+              {visibleTradeAssignments.length === 0 ? (
                 <p className="mt-1 text-xs text-slate-600 dark:text-slate-500">No vendor assignments yet.</p>
               ) : (
                 <div className="mt-2 flex flex-col gap-2">
-                  {site.tradeAssignments.map((a) => (
+                  {visibleTradeAssignments.map((a) => (
                     <div key={a.id} className="text-sm">
                       <p className="text-slate-700 dark:text-slate-300">{a.trade}</p>
                       {a.vendorId ? (
