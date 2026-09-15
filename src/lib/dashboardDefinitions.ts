@@ -171,34 +171,6 @@ export const DASHBOARD_DEFINITIONS: DashboardDefinition[] = [
       ],
     },
   },
-  {
-    id: "contract-value-by-state",
-    area: "Agreements",
-    config: {
-      name: "Total Agreement Value by State",
-      // Live "Trade" dropdown scopes both cards below to one trade at a time (e.g. Snow Removal);
-      // left on "All" it covers every trade's site+trade assignments together.
-      filterColumns: ["trade"],
-      cards: [
-        {
-          type: "kpi",
-          title: "Total Agreement Value",
-          source: "siteTradeAssignments",
-          agg: "sum",
-          column: "contractValue",
-        },
-        {
-          type: "chart",
-          title: "Total Agreement Value by State",
-          source: "siteTradeAssignments",
-          chartType: "bar",
-          x: "state",
-          y: "contractValue",
-          agg: "sum",
-        },
-      ],
-    },
-  },
 ];
 
 export function getDashboardDefinition(id: string): DashboardDefinition | undefined {
