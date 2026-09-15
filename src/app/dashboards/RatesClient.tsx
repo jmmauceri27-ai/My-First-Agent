@@ -22,6 +22,7 @@ interface ScheduleRow {
 export default function RatesClient({ sites }: { sites: Site[] }) {
   const [tradeFilter, setTradeFilter] = useState("");
   const [clientFilter, setClientFilter] = useState("");
+  const [siteFilter, setSiteFilter] = useState("");
 
   const allRows: ScheduleRow[] = useMemo(
     () =>
@@ -52,13 +53,22 @@ export default function RatesClient({ sites }: { sites: Site[] }) {
       ),
     [allRows],
   );
+  const siteOptions = useMemo(() => {
+    const byId = new Map(allRows.map((r) => [r.siteId, r.siteName]));
+    return Array.from(byId.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [allRows]);
 
   const rows = useMemo(
     () =>
       allRows.filter(
-        (r) => (!tradeFilter || r.trade === tradeFilter) && (!clientFilter || r.companyName === clientFilter),
+        (r) =>
+          (!tradeFilter || r.trade === tradeFilter) &&
+          (!clientFilter || r.companyName === clientFilter) &&
+          (!siteFilter || r.siteId === siteFilter),
       ),
-    [allRows, tradeFilter, clientFilter],
+    [allRows, tradeFilter, clientFilter, siteFilter],
   );
 
   const monthlyTotals = useMemo(
@@ -94,6 +104,17 @@ export default function RatesClient({ sites }: { sites: Site[] }) {
               {clientOptions.map((c) => (
                 <option key={c} value={c}>
                   {c}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-slate-700 dark:text-slate-300">Site</span>
+            <select value={siteFilter} onChange={(e) => setSiteFilter(e.target.value)} className={inputClass}>
+              <option value="">All</option>
+              {siteOptions.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
                 </option>
               ))}
             </select>
