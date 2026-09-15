@@ -48,6 +48,9 @@ export default function OpportunityModal({
   const [companyId, setCompanyId] = useState(opportunity?.companyId ?? "");
   const [stage, setStage] = useState<OpportunityStage>(opportunity?.stage ?? defaultStage);
   const [amount, setAmount] = useState(opportunity?.amount != null ? String(opportunity.amount) : "");
+  const [siteCount, setSiteCount] = useState(
+    opportunity?.siteCount != null ? String(opportunity.siteCount) : "",
+  );
   const [trades, setTrades] = useState<string[]>(opportunity?.trades ?? []);
   const [expectedCloseDate, setExpectedCloseDate] = useState(opportunity?.expectedCloseDate ?? "");
   const [notes, setNotes] = useState(opportunity?.notes ?? "");
@@ -147,6 +150,7 @@ export default function OpportunityModal({
         companyId: companyId || null,
         stage,
         amount: amount.trim() ? Number(amount) : null,
+        siteCount: siteCount.trim() ? Number(siteCount) : null,
         trades,
         expectedCloseDate: expectedCloseDate || null,
         notes: notes.trim() || null,
@@ -296,12 +300,15 @@ export default function OpportunityModal({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1 text-sm">
+            <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium text-slate-700 dark:text-slate-300"># of sites</span>
-              <span className="rounded-md border border-transparent px-3 py-2 text-slate-600 dark:text-slate-400">
-                {opportunity?.siteCount ?? 0} (from linked sites)
-              </span>
-            </div>
+              <input
+                type="number"
+                value={siteCount}
+                onChange={(e) => setSiteCount(e.target.value)}
+                className={inputClass}
+              />
+            </label>
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium text-slate-700 dark:text-slate-300">Submission due date</span>
               <input

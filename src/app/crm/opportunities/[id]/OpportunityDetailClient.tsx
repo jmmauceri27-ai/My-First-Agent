@@ -20,7 +20,6 @@ import type {
   OpportunityInput,
   OpportunityStage,
 } from "@/lib/crmTypes";
-import type { Site } from "@/lib/networkTypes";
 import {
   deleteEmployeeAction,
   deleteOpportunityAction,
@@ -39,7 +38,6 @@ import {
   unassignFieldFromRecordAction,
 } from "../../fields/actions";
 import DynamicFieldsSection from "../../fields/DynamicFieldsSection";
-import SitesCard from "@/components/SitesCard";
 
 export default function OpportunityDetailClient({
   opportunity,
@@ -47,7 +45,6 @@ export default function OpportunityDetailClient({
   contacts,
   employees,
   files,
-  sites,
   fieldClasses,
   linkedContract,
 }: {
@@ -56,7 +53,6 @@ export default function OpportunityDetailClient({
   contacts: Contact[];
   employees: Employee[];
   files: OpportunityFile[];
-  sites: Site[];
   fieldClasses: FieldClass[];
   linkedContract: Contract | null;
 }) {
@@ -65,6 +61,7 @@ export default function OpportunityDetailClient({
   const [companyId, setCompanyId] = useState(opportunity.companyId ?? "");
   const [stage, setStage] = useState<OpportunityStage>(opportunity.stage);
   const [amount, setAmount] = useState(opportunity.amount != null ? String(opportunity.amount) : "");
+  const [siteCount, setSiteCount] = useState(opportunity.siteCount != null ? String(opportunity.siteCount) : "");
   const [trades, setTrades] = useState<string[]>(opportunity.trades ?? []);
   const [expectedCloseDate, setExpectedCloseDate] = useState(opportunity.expectedCloseDate ?? "");
   const [notes, setNotes] = useState(opportunity.notes ?? "");
@@ -158,6 +155,7 @@ export default function OpportunityDetailClient({
         companyId: companyId || null,
         stage,
         amount: amount.trim() ? Number(amount) : null,
+        siteCount: siteCount.trim() ? Number(siteCount) : null,
         trades,
         expectedCloseDate: expectedCloseDate || null,
         notes: notes.trim() || null,
@@ -320,13 +318,15 @@ export default function OpportunityDetailClient({
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="flex flex-col gap-1 text-sm">
+              <label className="flex flex-col gap-1 text-sm">
                 <span className="font-medium text-slate-700 dark:text-slate-300"># of sites</span>
-                <div className={`${inputClass} flex items-center bg-slate-100 dark:bg-slate-900`}>
-                  {opportunity.siteCount ?? 0}
-                  <span className="ml-1.5 text-xs text-slate-500 dark:text-slate-400">(from linked sites, see below)</span>
-                </div>
-              </div>
+                <input
+                  type="number"
+                  value={siteCount}
+                  onChange={(e) => setSiteCount(e.target.value)}
+                  className={inputClass}
+                />
+              </label>
               <label className="flex flex-col gap-1 text-sm">
                 <span className="font-medium text-slate-700 dark:text-slate-300">Submission due date</span>
                 <input
@@ -408,13 +408,6 @@ export default function OpportunityDetailClient({
             onDelete={(id) => deleteOpportunityFileAction(id, opportunity.id)}
             onRename={(id, fileName) => renameOpportunityFileAction(id, opportunity.id, fileName)}
             onChange={() => router.refresh()}
-          />
-
-          <SitesCard
-            opportunityId={opportunity.id}
-            companyId={opportunity.companyId}
-            sites={sites}
-            parentLabel="opportunity"
           />
         </div>
       </div>

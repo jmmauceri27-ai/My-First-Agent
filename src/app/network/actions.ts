@@ -10,7 +10,6 @@ import {
   bulkAssignVendorForTrade,
   bulkCreateSites,
   bulkCreateSitesForContract,
-  bulkCreateSitesForOpportunity,
   bulkCreateVendors,
   bulkDeleteSites,
   bulkUnassignContractForTrade,
@@ -36,7 +35,6 @@ import {
   listSites,
   listSitesForCompany,
   listSitesForContract,
-  listSitesForOpportunity,
   listVendors,
   mergeSites,
   saveSiteTradeAssignments,
@@ -168,10 +166,6 @@ export async function saveSiteTradeAssignmentsAction(
   return {};
 }
 
-export async function listSitesForOpportunityAction(opportunityId: string): Promise<Site[]> {
-  return listSitesForOpportunity(opportunityId);
-}
-
 export async function listSitesForContractAction(contractId: string): Promise<Site[]> {
   return listSitesForContract(contractId);
 }
@@ -230,21 +224,6 @@ export async function parseSiteSheetAction(
     return { rows, columns: Object.keys(rows[0]) };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to parse file." };
-  }
-}
-
-export async function bulkCreateSitesForOpportunityAction(
-  opportunityId: string,
-  companyId: string | null,
-  rows: SiteImportRow[],
-): Promise<{ inserted?: number; error?: string }> {
-  try {
-    const result = await bulkCreateSitesForOpportunity(opportunityId, companyId, rows);
-    revalidatePath(`/crm/opportunities/${opportunityId}`);
-    revalidatePath("/network/sites");
-    return result;
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : "Failed to import sites." };
   }
 }
 

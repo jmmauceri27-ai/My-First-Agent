@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import FilesCard from "@/components/FilesCard";
-import SitesCard from "@/components/SitesCard";
+import SitesCard from "./SitesCard";
 import { inputClass } from "@/components/ui/formClasses";
 import { RATE_FREQUENCIES } from "@/lib/crmTypes";
 import { BILLING_TYPE_OPTIONS } from "@/lib/billingTypes";
@@ -341,12 +341,7 @@ export default function ContractModal({
 
         {contract && (
           <div className="mt-4">
-            <SitesCard
-              contractId={contract.id}
-              companyId={contract.companyId}
-              sites={sites}
-              parentLabel="agreement"
-            />
+            <SitesCard contractId={contract.id} companyId={contract.companyId} sites={sites} />
           </div>
         )}
 

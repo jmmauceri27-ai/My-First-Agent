@@ -10,7 +10,6 @@ import {
   listOpportunityFiles,
 } from "@/lib/crmDal";
 import { listFieldClasses } from "@/lib/fieldsDal";
-import { listSitesForOpportunity } from "@/lib/networkDal";
 import OpportunityDetailClient from "./OpportunityDetailClient";
 
 export default async function OpportunityDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -18,12 +17,11 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
   const opportunity = await getOpportunity(id);
   if (!opportunity) notFound();
 
-  const [companies, contacts, employees, files, sites, fieldClasses, linkedContract] = await Promise.all([
+  const [companies, contacts, employees, files, fieldClasses, linkedContract] = await Promise.all([
     listCompanies(),
     listContacts(),
     listEmployees(),
     listOpportunityFiles(id),
-    listSitesForOpportunity(id),
     listFieldClasses(),
     getContractForOpportunity(id),
   ]);
@@ -35,7 +33,6 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
       contacts={contacts}
       employees={employees}
       files={files}
-      sites={sites}
       fieldClasses={fieldClasses}
       linkedContract={linkedContract}
     />

@@ -96,6 +96,9 @@ export interface OpportunityInput {
   companyId: string | null;
   stage: OpportunityStage;
   amount: number | null;
+  /** A plain manual estimate -- an opportunity doesn't get real linked Site records (no locations to
+   * upload at the bidding stage), so this is just a number the user types in themselves. */
+  siteCount: number | null;
   trades: string[];
   expectedCloseDate: string | null;
   notes: string | null;

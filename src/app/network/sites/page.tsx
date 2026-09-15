@@ -6,7 +6,7 @@ import { listSiteFilterTemplates, listSites, listVendors } from "@/lib/networkDa
 import SitesClient from "./SitesClient";
 
 export default async function SitesPage() {
-  const [sites, companies, vendors, opportunities, contracts, filterTemplates, fieldClasses] = await Promise.all([
+  const [allSites, companies, vendors, opportunities, contracts, filterTemplates, fieldClasses] = await Promise.all([
     listSites(),
     listCompanies(),
     listVendors(),
@@ -15,6 +15,10 @@ export default async function SitesPage() {
     listSiteFilterTemplates(),
     listFieldClasses(),
   ]);
+
+  // Only sites under a signed Agreement belong here -- an Opportunity's site count is just a manual
+  // estimate (see OpportunityModal), with no real located Site records behind it until it converts.
+  const sites = allSites.filter((s) => s.contractId != null);
 
   return (
     <SitesClient
