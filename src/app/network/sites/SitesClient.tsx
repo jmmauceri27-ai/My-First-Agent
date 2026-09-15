@@ -338,7 +338,12 @@ export default function SitesClient({
       if (companyFilters.length > 0 && !companyFilters.includes(s.companyId ?? "")) return false;
       if (vendorFilter && !s.tradeAssignments.some((a) => a.vendorId === vendorFilter)) return false;
       if (subVendorFilter && !s.tradeAssignments.some((a) => a.subVendorId === subVendorFilter)) return false;
-      if (contractFilter && !s.tradeAssignments.some((a) => a.contractId === contractFilter)) return false;
+      if (
+        contractFilter &&
+        s.contractId !== contractFilter &&
+        !s.tradeAssignments.some((a) => a.contractId === contractFilter)
+      )
+        return false;
       if (tradeFilter.length > 0 && !s.trades.some((t) => tradeFilter.includes(t))) return false;
       if (assignmentTrade && assignmentVendorStatus) {
         const hasVendor = s.tradeAssignments.some((a) => a.trade === assignmentTrade && a.vendorId);
