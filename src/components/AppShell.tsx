@@ -20,7 +20,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {showNav && (
         <header className="flex shrink-0 items-center border-b border-purple-500/15 bg-white/85 px-4 py-2 backdrop-blur-md dark:bg-[#0a070f]/85">
-          <Link href="/" className="flex items-center">
+          <Link href="/crm" className="flex items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/dvm-logo.png" alt="DVM Facility Services" className="h-7 w-auto" />
           </Link>

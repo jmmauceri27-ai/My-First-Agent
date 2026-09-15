@@ -18,7 +18,6 @@ interface Area {
 }
 
 const AREAS: Area[] = [
-  { href: "/", label: "Overview", icon: "🏠" },
   {
     href: "/crm",
     label: "CRM",
@@ -62,7 +61,7 @@ export default function Sidebar() {
   return (
     <aside className="z-20 flex h-full w-16 shrink-0 flex-col items-center gap-1 border-r border-purple-500/15 bg-white py-3 dark:bg-[#0a070f]">
       {AREAS.map((area) => {
-        const active = area.href === "/" ? pathname === area.href : pathname.startsWith(area.href);
+        const active = pathname.startsWith(area.href);
         return (
           <div key={area.href} className="group relative w-full px-2">
             <Link
