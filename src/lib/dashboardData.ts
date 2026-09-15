@@ -40,7 +40,7 @@ export async function getSourceRows(source: DashboardSourceKey): Promise<Dataset
         trackingNumber: c.trackingNumber,
         name: c.name,
         companyName: c.companyName,
-        workType: c.workType,
+        trades: c.trades.join(", "),
         siteCount: c.siteCount,
         rateAmount: c.rateAmount,
         rateFrequency: c.rateFrequency,

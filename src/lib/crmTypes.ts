@@ -165,7 +165,7 @@ export interface Contract {
    * it doesn't change even if opportunityId is later changed or cleared. Null if never linked to one. */
   trackingNumber: string | null;
   name: string;
-  workType: string | null;
+  trades: string[];
   siteCount: number | null;
   rateAmount: number | null;
   rateFrequency: string | null;
@@ -182,7 +182,7 @@ export interface ContractInput {
   companyId: string | null;
   opportunityId: string | null;
   name: string;
-  workType: string | null;
+  trades: string[];
   siteCount: number | null;
   rateAmount: number | null;
   rateFrequency: string | null;

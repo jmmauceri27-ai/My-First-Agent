@@ -491,7 +491,7 @@ export async function bulkCreateEmployees(rows: EmployeeImportRow[]): Promise<{ 
 // pipeline): a validity window, rate, site count, and type of work.
 
 const CONTRACT_COLUMNS =
-  "id, company_id, opportunity_id, tracking_number, name, work_type, site_count, rate_amount, rate_frequency, billing_type, start_date, end_date, notes, created_at, updated_at, crm_companies(name, logo_storage_path, updated_at), crm_opportunities(name)";
+  "id, company_id, opportunity_id, tracking_number, name, trades, site_count, rate_amount, rate_frequency, billing_type, start_date, end_date, notes, created_at, updated_at, crm_companies(name, logo_storage_path, updated_at), crm_opportunities(name)";
 
 function mapContract(c: Record<string, unknown>, supabase: ReturnType<typeof createAdminClient>): Contract {
   const company = c.crm_companies as unknown as {
@@ -509,7 +509,7 @@ function mapContract(c: Record<string, unknown>, supabase: ReturnType<typeof cre
     opportunityName: opportunity?.name ?? null,
     trackingNumber: c.tracking_number as string | null,
     name: c.name as string,
-    workType: c.work_type as string | null,
+    trades: (c.trades as string[] | null) ?? [],
     siteCount: c.site_count as number | null,
     rateAmount: c.rate_amount as number | null,
     rateFrequency: c.rate_frequency as string | null,
@@ -580,7 +580,7 @@ export async function createContract(input: ContractInput): Promise<string> {
       opportunity_id: input.opportunityId,
       tracking_number: trackingNumber,
       name: input.name,
-      work_type: input.workType,
+      trades: input.trades,
       site_count: input.siteCount,
       rate_amount: input.rateAmount,
       rate_frequency: input.rateFrequency,
@@ -609,7 +609,7 @@ async function maybeAutoCreateAgreement(opportunityId: string, stage: Opportunit
     companyId: opportunity.companyId,
     opportunityId: opportunity.id,
     name: opportunity.name,
-    workType: opportunity.trades[0] ?? null,
+    trades: opportunity.trades,
     siteCount: opportunity.siteCount,
     rateAmount: opportunity.amount,
     rateFrequency: null,
@@ -641,7 +641,7 @@ export async function updateContract(id: string, input: ContractInput): Promise<
       opportunity_id: input.opportunityId,
       tracking_number: trackingNumber,
       name: input.name,
-      work_type: input.workType,
+      trades: input.trades,
       site_count: input.siteCount,
       rate_amount: input.rateAmount,
       rate_frequency: input.rateFrequency,

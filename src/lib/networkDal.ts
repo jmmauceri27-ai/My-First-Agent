@@ -21,7 +21,6 @@ import type {
   VendorInput,
   VendorTradeAssignment,
 } from "./networkTypes";
-import { matchTrade } from "./trades";
 
 // ---------- Vendors ----------
 
@@ -540,7 +539,7 @@ export async function bulkCreateSites(links: SiteBulkLinks, rows: SiteImportRow[
   return { inserted: batch.length };
 }
 
-/** Bulk-imports uploaded sheet rows as new sites, scoped to one opportunity (and its company). Trades default to the opportunity's own "Trade" field, when it matches one of the fixed options. Appends -- does not replace existing sites. */
+/** Bulk-imports uploaded sheet rows as new sites, scoped to one opportunity (and its company). Trades default to the opportunity's own Trade selection. Appends -- does not replace existing sites. */
 export async function bulkCreateSitesForOpportunity(
   opportunityId: string,
   companyId: string | null,
@@ -549,14 +548,14 @@ export async function bulkCreateSitesForOpportunity(
   const supabase = createAdminClient();
   const { data: opportunity, error } = await supabase
     .from("crm_opportunities")
-    .select("work_type")
+    .select("trades")
     .eq("id", opportunityId)
     .eq("user_id", OWNER_USER_ID)
     .maybeSingle();
   if (error) throw new Error(error.message);
 
-  const matched = matchTrade(opportunity?.work_type as string | null);
-  return bulkCreateSites({ companyId, opportunityId, trades: matched ? [matched] : [] }, rows);
+  const trades = (opportunity?.trades as string[] | null) ?? [];
+  return bulkCreateSites({ companyId, opportunityId, trades }, rows);
 }
 
 /** Adds the given trades to every listed site's existing Trade selection (union, not replace). */

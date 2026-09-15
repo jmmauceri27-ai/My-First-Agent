@@ -8,7 +8,7 @@ import FilesCard from "@/components/FilesCard";
 import { inputClass } from "@/components/ui/formClasses";
 import { RATE_FREQUENCIES } from "@/lib/crmTypes";
 import { BILLING_TYPE_OPTIONS } from "@/lib/billingTypes";
-import { TRADE_OPTIONS } from "@/lib/trades";
+import TradeSelect from "@/components/TradeSelect";
 import type { Company, Contract, ContractFile, ContractInput, FieldClass, Opportunity } from "@/lib/crmTypes";
 import {
   deleteContractAction,
@@ -49,7 +49,7 @@ export default function ContractModal({
   const [name, setName] = useState(contract?.name ?? prefill?.name ?? "");
   const [companyId, setCompanyId] = useState(contract?.companyId ?? prefill?.companyId ?? "");
   const [opportunityId, setOpportunityId] = useState(contract?.opportunityId ?? prefill?.opportunityId ?? "");
-  const [workType, setWorkType] = useState(contract?.workType ?? prefill?.workType ?? "");
+  const [trades, setTrades] = useState<string[]>(contract?.trades ?? prefill?.trades ?? []);
   const [siteCount, setSiteCount] = useState(
     (contract?.siteCount ?? prefill?.siteCount) != null ? String(contract?.siteCount ?? prefill?.siteCount) : "",
   );
@@ -127,7 +127,7 @@ export default function ContractModal({
         companyId: companyId || null,
         opportunityId: opportunityId || null,
         name: name.trim(),
-        workType: workType.trim() || null,
+        trades,
         siteCount: siteCount.trim() ? Number(siteCount) : null,
         rateAmount: rateAmount.trim() ? Number(rateAmount) : null,
         rateFrequency: rateFrequency || null,
@@ -215,17 +215,10 @@ export default function ContractModal({
             </span>
           </label>
 
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-300">Trade</span>
-            <select value={workType} onChange={(e) => setWorkType(e.target.value)} className={inputClass}>
-              <option value="">(none)</option>
-              {TRADE_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-slate-700 dark:text-slate-300">Trades</span>
+            <TradeSelect value={trades} onChange={setTrades} />
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1 text-sm">

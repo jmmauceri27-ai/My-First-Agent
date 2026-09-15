@@ -121,7 +121,9 @@ export default function ClientDetailClient({
               contracts.map((c) => (
                 <div key={c.id} className="py-2">
                   <p className="text-sm font-medium text-slate-900 dark:text-slate-50">{c.name}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{c.workType ?? "No work type set"}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {c.trades.length > 0 ? c.trades.join(", ") : "No trade set"}
+                  </p>
                 </div>
               ))
             )}

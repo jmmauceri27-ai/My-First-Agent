@@ -41,7 +41,8 @@ function ContractRow({ contract: c, onSelect }: { contract: Contract; onSelect: 
             </span>
           </div>
           <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-            {[c.companyName, c.workType].filter(Boolean).join(" · ") || "No details"}
+            {[c.companyName, c.trades.length > 0 ? c.trades.join(", ") : null].filter(Boolean).join(" · ") ||
+              "No details"}
           </p>
         </div>
       </div>
@@ -90,7 +91,7 @@ export default function ContractsClient({
       companyId: source.companyId,
       opportunityId: source.id,
       name: source.name,
-      workType: source.trades[0] ?? null,
+      trades: source.trades,
       siteCount: source.siteCount,
       rateAmount: source.amount,
     };
@@ -109,8 +110,12 @@ export default function ContractsClient({
   const byTrade = useMemo(() => {
     const groups = new Map<string, Contract[]>();
     for (const c of contracts) {
-      const trade = c.workType?.trim() || UNSPECIFIED_TRADE;
-      groups.set(trade, [...(groups.get(trade) ?? []), c]);
+      // A multi-trade agreement shows up under every one of its trade sections, not just the first --
+      // matching how Sites' map/legend credit each of a site's trades rather than picking one.
+      const contractTrades = c.trades.length > 0 ? c.trades : [UNSPECIFIED_TRADE];
+      for (const trade of contractTrades) {
+        groups.set(trade, [...(groups.get(trade) ?? []), c]);
+      }
     }
     return Array.from(groups.entries()).sort(([a], [b]) => {
       if (a === UNSPECIFIED_TRADE) return 1;

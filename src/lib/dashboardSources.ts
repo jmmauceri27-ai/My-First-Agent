@@ -49,7 +49,7 @@ export const DASHBOARD_SOURCES: DashboardSourceDef[] = [
       { key: "trackingNumber", label: "Tracking #", type: "string" },
       { key: "name", label: "Name", type: "string" },
       { key: "companyName", label: "Client", type: "string" },
-      { key: "workType", label: "Work type", type: "string" },
+      { key: "trades", label: "Trade", type: "string" },
       { key: "siteCount", label: "Site count", type: "number" },
       { key: "rateAmount", label: "Rate amount", type: "number" },
       { key: "rateFrequency", label: "Rate frequency", type: "string" },
