@@ -1,21 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
-import { FIELD_OBJECT_TYPE_LABELS, FIELD_OBJECT_TYPES } from "@/lib/crmTypes";
 import type { CrmField, FieldClass } from "@/lib/crmTypes";
 import FieldClassModal from "./FieldClassModal";
 import FieldModal from "./FieldModal";
 
 export default function FieldsClient({ classes }: { classes: FieldClass[] }) {
-  const [objectType, setObjectType] = useState<string>(FIELD_OBJECT_TYPES[0]);
   const [editingClass, setEditingClass] = useState<FieldClass | null>(null);
   const [creatingClass, setCreatingClass] = useState(false);
   const [editingField, setEditingField] = useState<CrmField | null>(null);
   const [creatingFieldInClass, setCreatingFieldInClass] = useState<string | null>(null);
-
-  const classesForType = useMemo(() => classes.filter((c) => c.objectType === objectType), [classes, objectType]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -23,37 +19,22 @@ export default function FieldsClient({ classes }: { classes: FieldClass[] }) {
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Fields</h2>
         <p className="text-xs text-slate-500 dark:text-slate-400">
           Custom fields for your CRM records, organized into classes -- e.g. the field &ldquo;Phone
-          Number&rdquo; in the class &ldquo;Contact Info&rdquo;.
+          Number&rdquo; in the class &ldquo;Contact Info&rdquo;. Every class and field is available anywhere
+          -- opportunities, agreements, sites, clients, and contacts alike.
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex gap-1 rounded-lg border border-purple-400/20 p-1">
-          {FIELD_OBJECT_TYPES.map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setObjectType(t)}
-              className={`rounded-md px-3 py-1.5 text-sm font-semibold transition-all ${
-                objectType === t
-                  ? "bg-brand-600 text-white"
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-50"
-              }`}
-            >
-              {FIELD_OBJECT_TYPE_LABELS[t] ?? t}
-            </button>
-          ))}
-        </div>
+      <div className="flex justify-end">
         <Button onClick={() => setCreatingClass(true)}>+ New class</Button>
       </div>
 
-      {classesForType.length === 0 ? (
+      {classes.length === 0 ? (
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          No classes yet for {objectType}. Add one to start grouping fields (e.g. &ldquo;Contact Info&rdquo;).
+          No classes yet. Add one to start grouping fields (e.g. &ldquo;Contact Info&rdquo;).
         </p>
       ) : (
         <div className="flex flex-col gap-4">
-          {classesForType.map((c) => (
+          {classes.map((c) => (
             <div key={c.id} className="flex flex-col gap-2">
               <button
                 type="button"
@@ -97,7 +78,6 @@ export default function FieldsClient({ classes }: { classes: FieldClass[] }) {
       {(editingClass || creatingClass) && (
         <FieldClassModal
           fieldClass={editingClass}
-          objectType={objectType}
           onClose={() => {
             setEditingClass(null);
             setCreatingClass(false);
@@ -108,9 +88,8 @@ export default function FieldsClient({ classes }: { classes: FieldClass[] }) {
       {(editingField || creatingFieldInClass) && (
         <FieldModal
           field={editingField}
-          objectType={objectType}
           classId={editingField?.classId ?? creatingFieldInClass ?? ""}
-          classes={classesForType}
+          classes={classes}
           onClose={() => {
             setEditingField(null);
             setCreatingFieldInClass(null);

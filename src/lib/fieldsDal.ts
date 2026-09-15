@@ -4,12 +4,11 @@ import type { CrmField, CrmFieldInput, FieldClass, FieldClassInput } from "./crm
 
 // ---------- Field Classes ----------
 
-const FIELD_CLASS_COLUMNS = "id, object_type, name, position, created_at, updated_at";
+const FIELD_CLASS_COLUMNS = "id, name, position, created_at, updated_at";
 
 function mapFieldClass(c: Record<string, unknown>): Omit<FieldClass, "fields"> {
   return {
     id: c.id as string,
-    objectType: c.object_type as string,
     name: c.name as string,
     position: c.position as number,
     createdAt: c.created_at as string,
@@ -18,12 +17,11 @@ function mapFieldClass(c: Record<string, unknown>): Omit<FieldClass, "fields"> {
 }
 
 const FIELD_COLUMNS =
-  "id, object_type, class_id, name, label, field_type, options, is_standard, position, created_at, updated_at";
+  "id, class_id, name, label, field_type, options, is_standard, position, created_at, updated_at";
 
 function mapField(f: Record<string, unknown>): CrmField {
   return {
     id: f.id as string,
-    objectType: f.object_type as string,
     classId: f.class_id as string,
     name: f.name as string,
     label: f.label as string,
@@ -36,21 +34,20 @@ function mapField(f: Record<string, unknown>): CrmField {
   };
 }
 
-/** Every class for `objectType`, each with its fields nested and both ordered by position. */
-export async function listFieldClasses(objectType: string): Promise<FieldClass[]> {
+/** Every class, each with its fields nested and both ordered by position -- classes/fields aren't scoped to
+ * a record type, so this is the full set usable anywhere. */
+export async function listFieldClasses(): Promise<FieldClass[]> {
   const supabase = createAdminClient();
   const [{ data: classRows, error: classError }, { data: fieldRows, error: fieldError }] = await Promise.all([
     supabase
       .from("crm_field_classes")
       .select(FIELD_CLASS_COLUMNS)
       .eq("user_id", OWNER_USER_ID)
-      .eq("object_type", objectType)
       .order("position", { ascending: true }),
     supabase
       .from("crm_fields")
       .select(FIELD_COLUMNS)
       .eq("user_id", OWNER_USER_ID)
-      .eq("object_type", objectType)
       .order("position", { ascending: true }),
   ]);
   if (classError) throw new Error(classError.message);
@@ -75,14 +72,13 @@ export async function createFieldClass(input: FieldClassInput): Promise<string> 
     .from("crm_field_classes")
     .select("position")
     .eq("user_id", OWNER_USER_ID)
-    .eq("object_type", input.objectType)
     .order("position", { ascending: false })
     .limit(1);
   const nextPosition = existing && existing.length > 0 ? (existing[0].position as number) + 1 : 0;
 
   const { data, error } = await supabase
     .from("crm_field_classes")
-    .insert({ user_id: OWNER_USER_ID, object_type: input.objectType, name: input.name, position: nextPosition })
+    .insert({ user_id: OWNER_USER_ID, name: input.name, position: nextPosition })
     .select("id")
     .single();
   if (error) throw new Error(error.message);
@@ -125,7 +121,6 @@ export async function createField(input: CrmFieldInput): Promise<string> {
     .from("crm_fields")
     .select("position")
     .eq("user_id", OWNER_USER_ID)
-    .eq("object_type", input.objectType)
     .order("position", { ascending: false })
     .limit(1);
   const nextPosition = existing && existing.length > 0 ? (existing[0].position as number) + 1 : 0;
@@ -134,7 +129,6 @@ export async function createField(input: CrmFieldInput): Promise<string> {
     .from("crm_fields")
     .insert({
       user_id: OWNER_USER_ID,
-      object_type: input.objectType,
       class_id: input.classId,
       name: slugify(input.label),
       label: input.label,
@@ -147,7 +141,7 @@ export async function createField(input: CrmFieldInput): Promise<string> {
     .single();
   if (error) {
     if (error.code === "23505") {
-      throw new Error("A field with a similar name already exists for this object type -- try a different label.");
+      throw new Error("A field with a similar name already exists -- try a different label.");
     }
     throw new Error(error.message);
   }

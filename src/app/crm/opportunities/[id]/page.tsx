@@ -24,7 +24,7 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
     listEmployees(),
     listOpportunityFiles(id),
     listSitesForOpportunity(id),
-    listFieldClasses("Opportunity"),
+    listFieldClasses(),
     getContractForOpportunity(id),
   ]);
 

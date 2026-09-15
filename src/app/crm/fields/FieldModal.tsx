@@ -11,13 +11,11 @@ import { createFieldAction, deleteFieldAction, updateFieldAction } from "./actio
 
 export default function FieldModal({
   field,
-  objectType,
   classId,
   classes,
   onClose,
 }: {
   field: CrmField | null;
-  objectType: string;
   classId: string;
   classes: FieldClass[];
   onClose: () => void;
@@ -56,7 +54,6 @@ export default function FieldModal({
     setSaving(true);
     try {
       const input: CrmFieldInput = {
-        objectType,
         classId: selectedClassId,
         label: label.trim(),
         fieldType,

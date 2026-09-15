@@ -324,26 +324,19 @@ export interface ClientRateOverrideInput {
 }
 
 // ---------- CRM Fields (custom properties) ----------
-// A Class is a named section (e.g. "Contact Info") holding one or more Fields (e.g. "Phone Number"), each
-// scoped to one object type. A record's actual values live separately in crm_field_values, keyed by
+// A Class is a named section (e.g. "Contact Info") holding one or more Fields (e.g. "Phone Number"). Classes
+// and Fields aren't scoped to any one record type -- the same class/field is usable on any CRM/Network
+// record (opportunity, agreement, site, client, contact); a record just opts a field in via
+// crm_field_assignments. A record's actual values live separately in crm_field_values, keyed by
 // (fieldId, recordId) -- see fieldsDal.ts.
-
-export const FIELD_OBJECT_TYPES = ["Company", "Contact", "Opportunity", "Contract", "Site"] as const;
-
-export type FieldObjectType = (typeof FIELD_OBJECT_TYPES)[number];
-
-/** "Contract"/"Company" stay the underlying object_type values stored on every crm_fields/crm_field_classes
- * row -- only how they're displayed to the user changes, so existing Fields data never needs to be migrated. */
-export const FIELD_OBJECT_TYPE_LABELS: Record<string, string> = { Contract: "Agreement", Company: "Client" };
 
 export const FIELD_TYPES = ["Text", "Number", "Date", "Dropdown", "Checkbox"] as const;
 
 export type FieldType = (typeof FIELD_TYPES)[number];
 
-/** A named section (e.g. "Contact Info") that groups related Fields together, scoped to one object type. */
+/** A named section (e.g. "Contact Info") that groups related Fields together. */
 export interface FieldClass {
   id: string;
-  objectType: string;
   name: string;
   position: number;
   fields: CrmField[];
@@ -352,7 +345,6 @@ export interface FieldClass {
 }
 
 export interface FieldClassInput {
-  objectType: string;
   name: string;
 }
 
@@ -360,16 +352,15 @@ export interface FieldClassInput {
  * not Field, to avoid colliding with the FieldChoice/FieldResolution "field" concept used in mergeSites.ts. */
 export interface CrmField {
   id: string;
-  objectType: string;
   classId: string;
-  /** Stable internal key, slugified from the label at creation (e.g. "phone_number"). Unique per object type. */
+  /** Stable internal key, slugified from the label at creation (e.g. "phone_number"). Globally unique. */
   name: string;
   label: string;
   fieldType: string;
   /** Only set when fieldType is "Dropdown" -- the fixed list of choices. */
   options: string[] | null;
-  /** Standard fields render on every record of the object type, like Company's fields do today. Custom
-   * fields only render on a record once attached to it -- see crm_field_assignments in fieldsDal.ts. */
+  /** Standard fields render on every record, like Company's fields do today. Custom fields only render on a
+   * record once attached to it -- see crm_field_assignments in fieldsDal.ts. */
   isStandard: boolean;
   position: number;
   createdAt: string;
@@ -377,7 +368,6 @@ export interface CrmField {
 }
 
 export interface CrmFieldInput {
-  objectType: string;
   classId: string;
   label: string;
   fieldType: string;

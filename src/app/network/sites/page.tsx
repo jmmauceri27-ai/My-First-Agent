@@ -13,7 +13,7 @@ export default async function SitesPage() {
     listOpportunities(),
     listContracts(),
     listSiteFilterTemplates(),
-    listFieldClasses("Site"),
+    listFieldClasses(),
   ]);
 
   return (

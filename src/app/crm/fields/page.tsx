@@ -1,12 +1,10 @@
 export const dynamic = "force-dynamic";
 
 import { listFieldClasses } from "@/lib/fieldsDal";
-import { FIELD_OBJECT_TYPES } from "@/lib/crmTypes";
 import FieldsClient from "./FieldsClient";
 
 export default async function FieldsPage() {
-  const classesByType = await Promise.all(FIELD_OBJECT_TYPES.map((t) => listFieldClasses(t)));
-  const classes = classesByType.flat();
+  const classes = await listFieldClasses();
 
   return (
     <div className="flex flex-col gap-6">

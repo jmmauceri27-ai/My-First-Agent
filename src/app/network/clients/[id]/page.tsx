@@ -16,7 +16,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
     listOpportunities(),
     listContracts(),
     listSitesForCompany(id),
-    listFieldClasses("Company"),
+    listFieldClasses(),
   ]);
 
   return (

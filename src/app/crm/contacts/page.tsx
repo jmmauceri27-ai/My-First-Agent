@@ -8,7 +8,7 @@ export default async function ContactsPage() {
   const [contacts, companies, fieldClasses] = await Promise.all([
     listContacts(),
     listCompanies(),
-    listFieldClasses("Contact"),
+    listFieldClasses(),
   ]);
 
   return (

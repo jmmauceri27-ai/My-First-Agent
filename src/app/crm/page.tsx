@@ -10,7 +10,7 @@ export default async function CrmPage() {
     listCompanies(),
     listContacts(),
     listEmployees(),
-    listFieldClasses("Opportunity"),
+    listFieldClasses(),
     listConvertedOpportunityIds(),
   ]);
   // A converted opportunity drops off the pipeline once it's moved past Won -- but a Won opportunity is

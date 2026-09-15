@@ -5,7 +5,7 @@ import { listFieldClasses } from "@/lib/fieldsDal";
 import CompaniesClient from "./CompaniesClient";
 
 export default async function CompaniesPage() {
-  const [companies, fieldClasses] = await Promise.all([listCompanies(), listFieldClasses("Company")]);
+  const [companies, fieldClasses] = await Promise.all([listCompanies(), listFieldClasses()]);
 
   return (
     <div className="flex flex-col gap-6">

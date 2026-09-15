@@ -14,7 +14,7 @@ export default async function ContractsPage({
     listContracts(),
     listCompanies(),
     listOpportunities(),
-    listFieldClasses("Contract"),
+    listFieldClasses(),
   ]);
 
   return (
