@@ -301,68 +301,72 @@ export async function bulkCreateCompanies(rows: CompanyImportRow[]): Promise<{ i
 
 // ---------- Contacts ----------
 
+const CONTACT_COLUMNS =
+  "id, company_id, name, email, phone, title, notes, can_approve_work, approval_limit, region, created_at, crm_companies(name, logo_storage_path, updated_at), crm_contact_sites(site_id)";
+
+function mapContactRecord(c: Record<string, unknown>, supabase: ReturnType<typeof createAdminClient>): Contact {
+  const company = c.crm_companies as unknown as {
+    name: string;
+    logo_storage_path: string | null;
+    updated_at: string;
+  } | null;
+  const siteRows = (c.crm_contact_sites ?? []) as unknown as { site_id: string }[];
+  return {
+    id: c.id as string,
+    companyId: c.company_id as string | null,
+    companyName: company?.name ?? null,
+    companyLogoUrl: buildLogoUrl(supabase, company?.logo_storage_path, company?.updated_at),
+    name: c.name as string,
+    email: c.email as string | null,
+    phone: c.phone as string | null,
+    title: c.title as string | null,
+    notes: c.notes as string | null,
+    canApproveWork: c.can_approve_work as boolean,
+    approvalLimit: c.approval_limit as number | null,
+    region: c.region as string | null,
+    siteIds: siteRows.map((r) => r.site_id),
+    createdAt: c.created_at as string,
+  };
+}
+
 export async function listContacts(): Promise<Contact[]> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("crm_contacts")
-    .select(
-      "id, company_id, name, email, phone, title, notes, created_at, crm_companies(name, logo_storage_path, updated_at)",
-    )
+    .select(CONTACT_COLUMNS)
     .eq("user_id", OWNER_USER_ID)
     .order("name", { ascending: true });
   if (error) throw new Error(error.message);
 
-  return (data ?? []).map((c) => {
-    const company = c.crm_companies as unknown as {
-      name: string;
-      logo_storage_path: string | null;
-      updated_at: string;
-    } | null;
-    return {
-      id: c.id as string,
-      companyId: c.company_id as string | null,
-      companyName: company?.name ?? null,
-      companyLogoUrl: buildLogoUrl(supabase, company?.logo_storage_path, company?.updated_at),
-      name: c.name as string,
-      email: c.email as string | null,
-      phone: c.phone as string | null,
-      title: c.title as string | null,
-      notes: c.notes as string | null,
-      createdAt: c.created_at as string,
-    };
-  });
+  return (data ?? []).map((c) => mapContactRecord(c, supabase));
 }
 
 export async function getContact(id: string): Promise<Contact | null> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("crm_contacts")
-    .select(
-      "id, company_id, name, email, phone, title, notes, created_at, crm_companies(name, logo_storage_path, updated_at)",
-    )
+    .select(CONTACT_COLUMNS)
     .eq("id", id)
     .eq("user_id", OWNER_USER_ID)
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) return null;
+  return mapContactRecord(data, supabase);
+}
 
-  const company = data.crm_companies as unknown as {
-    name: string;
-    logo_storage_path: string | null;
-    updated_at: string;
-  } | null;
-  return {
-    id: data.id as string,
-    companyId: data.company_id as string | null,
-    companyName: company?.name ?? null,
-    companyLogoUrl: buildLogoUrl(supabase, company?.logo_storage_path, company?.updated_at),
-    name: data.name as string,
-    email: data.email as string | null,
-    phone: data.phone as string | null,
-    title: data.title as string | null,
-    notes: data.notes as string | null,
-    createdAt: data.created_at as string,
-  };
+/** Mirrors setOpportunityContacts/setContractContacts: replaces the full set of Sites this contact is
+ * responsible for in one go. */
+async function setContactSites(contactId: string, siteIds: string[]): Promise<void> {
+  const supabase = createAdminClient();
+  const { error: deleteError } = await supabase.from("crm_contact_sites").delete().eq("contact_id", contactId);
+  if (deleteError) throw new Error(deleteError.message);
+
+  if (siteIds.length > 0) {
+    const { error: insertError } = await supabase
+      .from("crm_contact_sites")
+      .insert(siteIds.map((siteId) => ({ contact_id: contactId, site_id: siteId })));
+    if (insertError) throw new Error(insertError.message);
+  }
 }
 
 export async function createContact(input: ContactInput): Promise<string> {
@@ -377,11 +381,16 @@ export async function createContact(input: ContactInput): Promise<string> {
       phone: input.phone,
       title: input.title,
       notes: input.notes,
+      can_approve_work: input.canApproveWork,
+      approval_limit: input.approvalLimit,
+      region: input.region,
     })
     .select("id")
     .single();
   if (error) throw new Error(error.message);
-  return data.id as string;
+  const contactId = data.id as string;
+  await setContactSites(contactId, input.siteIds);
+  return contactId;
 }
 
 export async function updateContact(id: string, input: ContactInput): Promise<void> {
@@ -395,11 +404,15 @@ export async function updateContact(id: string, input: ContactInput): Promise<vo
       phone: input.phone,
       title: input.title,
       notes: input.notes,
+      can_approve_work: input.canApproveWork,
+      approval_limit: input.approvalLimit,
+      region: input.region,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
     .eq("user_id", OWNER_USER_ID);
   if (error) throw new Error(error.message);
+  await setContactSites(id, input.siteIds);
 }
 
 export async function deleteContact(id: string): Promise<void> {

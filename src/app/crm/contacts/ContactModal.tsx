@@ -6,6 +6,7 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import type { Company, Contact, FieldClass } from "@/lib/crmTypes";
+import type { Site } from "@/lib/networkTypes";
 import { deleteContactAction, saveContactAction } from "../actions";
 import {
   assignFieldToRecordAction,
@@ -19,11 +20,13 @@ import DynamicFieldsSection from "../fields/DynamicFieldsSection";
 export default function ContactModal({
   contact,
   companies,
+  sites,
   fieldClasses,
   onClose,
 }: {
   contact: Contact | null;
   companies: Company[];
+  sites: Site[];
   fieldClasses: FieldClass[];
   onClose: () => void;
 }) {
@@ -34,6 +37,12 @@ export default function ContactModal({
   const [phone, setPhone] = useState(contact?.phone ?? "");
   const [title, setTitle] = useState(contact?.title ?? "");
   const [notes, setNotes] = useState(contact?.notes ?? "");
+  const [canApproveWork, setCanApproveWork] = useState(contact?.canApproveWork ?? false);
+  const [approvalLimit, setApprovalLimit] = useState(
+    contact?.approvalLimit != null ? String(contact.approvalLimit) : "",
+  );
+  const [region, setRegion] = useState(contact?.region ?? "");
+  const [siteIds, setSiteIds] = useState<string[]>(contact?.siteIds ?? []);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +79,10 @@ export default function ContactModal({
     await unassignFieldFromRecordAction(contact.id, fieldId);
   }
 
+  function toggleSite(id: string) {
+    setSiteIds((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
+  }
+
   async function handleSave() {
     setError(null);
     if (!name.trim()) {
@@ -85,6 +98,10 @@ export default function ContactModal({
         phone: phone.trim() || null,
         title: title.trim() || null,
         notes: notes.trim() || null,
+        canApproveWork,
+        approvalLimit: approvalLimit.trim() ? Number(approvalLimit) : null,
+        region: region.trim() || null,
+        siteIds,
       });
       await saveFieldValuesForRecordAction(
         contactId,
@@ -152,6 +169,57 @@ export default function ContactModal({
             <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputClass} />
           </label>
+
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-slate-700 dark:text-slate-300">Region / territory</span>
+            <input value={region} onChange={(e) => setRegion(e.target.value)} className={inputClass} placeholder="e.g. Northeast" />
+          </label>
+
+          <div className="flex flex-col gap-2 rounded-lg border border-slate-300 p-3 dark:border-slate-700">
+            <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+              <input
+                type="checkbox"
+                checked={canApproveWork}
+                onChange={(e) => setCanApproveWork(e.target.checked)}
+                className="accent-brand-600"
+              />
+              Can approve work
+            </label>
+            {canApproveWork && (
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium text-slate-700 dark:text-slate-300">Approval limit ($)</span>
+                <input
+                  type="number"
+                  value={approvalLimit}
+                  onChange={(e) => setApprovalLimit(e.target.value)}
+                  className={inputClass}
+                  placeholder="Leave blank for no set limit"
+                />
+              </label>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-slate-700 dark:text-slate-300">Sites responsible for</span>
+            <div className="flex max-h-32 flex-col gap-1 overflow-y-auto rounded-lg border border-slate-300 p-2 dark:border-slate-700">
+              {sites.length === 0 ? (
+                <span className="text-xs text-slate-500 dark:text-slate-400">No sites yet — add some on the Sites page.</span>
+              ) : (
+                sites.map((s) => (
+                  <label key={s.id} className="flex items-center gap-1.5 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={siteIds.includes(s.id)}
+                      onChange={() => toggleSite(s.id)}
+                      className="accent-brand-600"
+                    />
+                    {s.name}
+                    {s.companyName && <span className="text-xs text-slate-500 dark:text-slate-400">({s.companyName})</span>}
+                  </label>
+                ))
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="mt-4">

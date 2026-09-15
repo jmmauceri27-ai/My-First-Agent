@@ -34,6 +34,15 @@ export interface Contact {
   phone: string | null;
   title: string | null;
   notes: string | null;
+  /** Whether this contact can approve work on their own, up to approvalLimit (if set) -- null limit with
+   * canApproveWork true means no set ceiling. */
+  canApproveWork: boolean;
+  approvalLimit: number | null;
+  /** Free-text region/territory label, e.g. "Northeast" -- there's no fixed list since it varies per client. */
+  region: string | null;
+  /** Sites this contact is responsible for -- many-to-many, since a site can have more than one responsible
+   * contact (e.g. primary + backup). */
+  siteIds: string[];
   createdAt: string;
 }
 
@@ -140,6 +149,10 @@ export interface ContactInput {
   phone: string | null;
   title: string | null;
   notes: string | null;
+  canApproveWork: boolean;
+  approvalLimit: number | null;
+  region: string | null;
+  siteIds: string[];
 }
 
 export const RATE_FREQUENCIES = [
