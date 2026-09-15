@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
+import SearchableSelect from "@/components/SearchableSelect";
 import { formatCurrency } from "@/lib/siteMapColor";
 import { MONTHS, sumRateSchedule } from "@/lib/rateSchedule";
 import { CHART_COLORS_DARK } from "@/lib/chartPalette";
@@ -108,17 +109,18 @@ export default function RatesClient({ sites }: { sites: Site[] }) {
               ))}
             </select>
           </label>
-          <label className="flex flex-col gap-1 text-sm">
+          {/* A plain div, not a <label> -- wrapping multiple nested buttons (toggle + list items) in a
+              <label> makes the browser forward a click on any of them into a synthetic click on the
+              label's first control, which reopens the dropdown right after an option closes it. */}
+          <div className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-slate-700 dark:text-slate-300">Site</span>
-            <select value={siteFilter} onChange={(e) => setSiteFilter(e.target.value)} className={inputClass}>
-              <option value="">All</option>
-              {siteOptions.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </label>
+            <SearchableSelect
+              options={siteOptions.map((s) => ({ value: s.id, label: s.name }))}
+              value={siteFilter}
+              onChange={setSiteFilter}
+              className="w-56"
+            />
+          </div>
         </Card>
       )}
 
