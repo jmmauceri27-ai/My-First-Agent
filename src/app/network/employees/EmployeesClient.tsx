@@ -6,13 +6,13 @@ import { useState } from "react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { DEPARTMENTS } from "@/lib/crmTypes";
-import type { Employee } from "@/lib/crmTypes";
+import type { Employee, FieldClass } from "@/lib/crmTypes";
 import EmployeeModal from "./EmployeeModal";
 import UploadEmployeesModal from "./UploadEmployeesModal";
 
 const UNASSIGNED = "Unassigned";
 
-export default function EmployeesClient({ employees }: { employees: Employee[] }) {
+export default function EmployeesClient({ employees, fieldClasses }: { employees: Employee[]; fieldClasses: FieldClass[] }) {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -68,7 +68,11 @@ export default function EmployeesClient({ employees }: { employees: Employee[] }
       )}
 
       {creating && (
-        <EmployeeModal onClose={() => setCreating(false)} onSaved={(id) => router.push(`/network/employees/${id}`)} />
+        <EmployeeModal
+          fieldClasses={fieldClasses}
+          onClose={() => setCreating(false)}
+          onSaved={(id) => router.push(`/network/employees/${id}`)}
+        />
       )}
 
       {uploading && <UploadEmployeesModal onClose={() => setUploading(false)} />}

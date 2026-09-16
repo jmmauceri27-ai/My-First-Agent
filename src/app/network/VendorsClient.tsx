@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import type { MapPin } from "@/components/SiteMap";
+import type { FieldClass } from "@/lib/crmTypes";
 import type { Vendor } from "@/lib/networkTypes";
 import VendorModal from "./VendorModal";
 import UploadVendorsModal from "./UploadVendorsModal";
 
 const SiteMap = dynamic(() => import("@/components/SiteMap"), { ssr: false });
 
-export default function VendorsClient({ vendors }: { vendors: Vendor[] }) {
+export default function VendorsClient({ vendors, fieldClasses }: { vendors: Vendor[]; fieldClasses: FieldClass[] }) {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -77,6 +78,7 @@ export default function VendorsClient({ vendors }: { vendors: Vendor[] }) {
       {creating && (
         <VendorModal
           vendor={null}
+          fieldClasses={fieldClasses}
           onClose={() => setCreating(false)}
           onSaved={(id) => router.push(`/network/vendors/${id}`)}
         />

@@ -5,15 +5,20 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
+import type { FieldClass } from "@/lib/crmTypes";
 import type { Vendor, VendorInput } from "@/lib/networkTypes";
+import { saveFieldValuesForRecordAction } from "@/app/crm/fields/actions";
+import DynamicFieldsSection from "@/app/crm/fields/DynamicFieldsSection";
 import { deleteVendorAction, saveVendorAction } from "./actions";
 
 export default function VendorModal({
   vendor,
+  fieldClasses,
   onClose,
   onSaved,
 }: {
   vendor: Vendor | null;
+  fieldClasses: FieldClass[];
   onClose: () => void;
   onSaved?: (id: string) => void;
 }) {
@@ -33,6 +38,7 @@ export default function VendorModal({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
 
   async function handleSave() {
     setError(null);
@@ -61,6 +67,10 @@ export default function VendorModal({
         setError(result.error ?? "Failed to save vendor.");
         return;
       }
+      await saveFieldValuesForRecordAction(
+        result.id,
+        Object.entries(fieldValues).map(([fieldId, value]) => ({ fieldId, value: value || null })),
+      );
       router.refresh();
       onSaved?.(result.id);
       onClose();
@@ -159,6 +169,18 @@ export default function VendorModal({
             <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputClass} />
           </label>
+        </div>
+
+        <div className="mt-4">
+          <DynamicFieldsSection
+            classes={fieldClasses}
+            values={fieldValues}
+            assignedFieldIds={[]}
+            onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}
+            onAssign={() => {}}
+            onUnassign={() => {}}
+            canManageCustomFields={false}
+          />
         </div>
 
         {error && <p className="mt-3 text-sm text-critical">{error}</p>}

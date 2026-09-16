@@ -6,10 +6,20 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import { DEPARTMENTS } from "@/lib/crmTypes";
-import type { EmployeeInput } from "@/lib/crmTypes";
+import type { EmployeeInput, FieldClass } from "@/lib/crmTypes";
 import { createEmployeeWithDetailsAction } from "@/app/crm/actions";
+import { saveFieldValuesForRecordAction } from "@/app/crm/fields/actions";
+import DynamicFieldsSection from "@/app/crm/fields/DynamicFieldsSection";
 
-export default function EmployeeModal({ onClose, onSaved }: { onClose: () => void; onSaved?: (id: string) => void }) {
+export default function EmployeeModal({
+  fieldClasses,
+  onClose,
+  onSaved,
+}: {
+  fieldClasses: FieldClass[];
+  onClose: () => void;
+  onSaved?: (id: string) => void;
+}) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -18,6 +28,7 @@ export default function EmployeeModal({ onClose, onSaved }: { onClose: () => voi
   const [department, setDepartment] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
 
   async function handleSave() {
     setError(null);
@@ -39,6 +50,10 @@ export default function EmployeeModal({ onClose, onSaved }: { onClose: () => voi
         setError(result.error ?? "Failed to save employee.");
         return;
       }
+      await saveFieldValuesForRecordAction(
+        result.id,
+        Object.entries(fieldValues).map(([fieldId, value]) => ({ fieldId, value: value || null })),
+      );
       router.refresh();
       onSaved?.(result.id);
       onClose();
@@ -82,6 +97,18 @@ export default function EmployeeModal({ onClose, onSaved }: { onClose: () => voi
               <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} />
             </label>
           </div>
+        </div>
+
+        <div className="mt-4">
+          <DynamicFieldsSection
+            classes={fieldClasses}
+            values={fieldValues}
+            assignedFieldIds={[]}
+            onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}
+            onAssign={() => {}}
+            onUnassign={() => {}}
+            canManageCustomFields={false}
+          />
         </div>
 
         {error && <p className="mt-3 text-sm text-critical">{error}</p>}

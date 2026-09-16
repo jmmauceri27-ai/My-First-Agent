@@ -2,22 +2,33 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import { computeSiteMargin, formatCurrency } from "@/lib/siteMapColor";
+import type { FieldClass } from "@/lib/crmTypes";
 import type { Vendor, VendorInput, VendorTradeAssignment } from "@/lib/networkTypes";
+import {
+  assignFieldToRecordAction,
+  getFieldValuesForRecordAction,
+  listAssignedFieldIdsAction,
+  saveFieldValuesForRecordAction,
+  unassignFieldFromRecordAction,
+} from "@/app/crm/fields/actions";
+import DynamicFieldsSection from "@/app/crm/fields/DynamicFieldsSection";
 import { deleteVendorAction, saveVendorAction } from "../../actions";
 
 export default function VendorDetailClient({
   vendor,
   assignmentsAsVendor,
   assignmentsAsSubVendor,
+  fieldClasses,
 }: {
   vendor: Vendor;
   assignmentsAsVendor: VendorTradeAssignment[];
   assignmentsAsSubVendor: VendorTradeAssignment[];
+  fieldClasses: FieldClass[];
 }) {
   const router = useRouter();
   const [name, setName] = useState(vendor.name);
@@ -35,6 +46,35 @@ export default function VendorDetailClient({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+  const [assignedFieldIds, setAssignedFieldIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    getFieldValuesForRecordAction(vendor.id).then((values) => {
+      const asStrings: Record<string, string> = {};
+      for (const [fieldId, value] of Object.entries(values)) {
+        if (value != null) asStrings[fieldId] = value;
+      }
+      setFieldValues(asStrings);
+    });
+    listAssignedFieldIdsAction(vendor.id).then(setAssignedFieldIds);
+  }, [vendor.id]);
+
+  async function handleAssignField(fieldId: string) {
+    setAssignedFieldIds((prev) => [...prev, fieldId]);
+    await assignFieldToRecordAction(vendor.id, fieldId);
+  }
+
+  async function handleUnassignField(fieldId: string) {
+    setAssignedFieldIds((prev) => prev.filter((id) => id !== fieldId));
+    setFieldValues((prev) => {
+      const next = { ...prev };
+      delete next[fieldId];
+      return next;
+    });
+    await unassignFieldFromRecordAction(vendor.id, fieldId);
+  }
 
   async function handleSave() {
     setError(null);
@@ -63,6 +103,10 @@ export default function VendorDetailClient({
         setError(result.error);
         return;
       }
+      await saveFieldValuesForRecordAction(
+        vendor.id,
+        Object.entries(fieldValues).map(([fieldId, value]) => ({ fieldId, value: value || null })),
+      );
       router.push("/network");
     } finally {
       setSaving(false);
@@ -160,6 +204,17 @@ export default function VendorDetailClient({
               <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>
               <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputClass} />
             </label>
+          </div>
+
+          <div className="mt-4">
+            <DynamicFieldsSection
+              classes={fieldClasses}
+              values={fieldValues}
+              assignedFieldIds={assignedFieldIds}
+              onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}
+              onAssign={handleAssignField}
+              onUnassign={handleUnassignField}
+            />
           </div>
 
           {error && <p className="mt-3 text-sm text-critical">{error}</p>}
