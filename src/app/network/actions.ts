@@ -5,6 +5,7 @@ import { buildXlsxBase64 } from "@/lib/exportExcel";
 import { parseBuffer } from "@/lib/parse";
 import type { DatasetRecord } from "@/lib/types";
 import {
+  bulkAssignContactToSites,
   bulkAssignContractForTrade,
   bulkAssignTrades,
   bulkAssignVendorForTrade,
@@ -12,6 +13,7 @@ import {
   bulkCreateSitesForContract,
   bulkCreateVendors,
   bulkDeleteSites,
+  bulkUnassignContactFromSites,
   bulkUnassignContractForTrade,
   bulkUnassignTrades,
   bulkUnassignVendorForTrade,
@@ -328,6 +330,36 @@ export async function bulkUnassignVendorAction(siteIds: string[], trade: string)
     return { error: e instanceof Error ? e.message : "Failed to unassign vendor." };
   }
   revalidatePath("/network/sites");
+  return {};
+}
+
+/** Adds a Contact as responsible for every listed site, on top of whatever sites they're already responsible for. */
+export async function bulkAssignContactToSitesAction(
+  contactId: string,
+  siteIds: string[],
+): Promise<{ error?: string }> {
+  try {
+    await bulkAssignContactToSites(contactId, siteIds);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to assign contact." };
+  }
+  revalidatePath("/network/sites");
+  revalidatePath("/crm/contacts");
+  return {};
+}
+
+/** Removes a Contact's responsibility for every listed site, leaving their other sites untouched. */
+export async function bulkUnassignContactFromSitesAction(
+  contactId: string,
+  siteIds: string[],
+): Promise<{ error?: string }> {
+  try {
+    await bulkUnassignContactFromSites(contactId, siteIds);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to unassign contact." };
+  }
+  revalidatePath("/network/sites");
+  revalidatePath("/crm/contacts");
   return {};
 }
 

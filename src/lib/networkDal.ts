@@ -725,6 +725,32 @@ export async function bulkAssignContractForTrade(siteIds: string[], trade: strin
   ]);
 }
 
+/** Adds a CRM Contact as responsible for each of the given sites, on top of whatever sites they're already
+ * responsible for -- unlike the Contact form's own "Sites responsible for" checklist (which replaces the
+ * whole set), this only adds. Sites already linked to this contact are silently left as-is. crm_contact_sites
+ * belongs to the CRM domain, but this bulk action is driven from the Network Sites screen, so it's queried
+ * directly here rather than importing crmDal (mirrors crmDal's own direct queries into `sites`). */
+export async function bulkAssignContactToSites(contactId: string, siteIds: string[]): Promise<void> {
+  if (siteIds.length === 0) return;
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("crm_contact_sites")
+    .upsert(
+      siteIds.map((siteId) => ({ contact_id: contactId, site_id: siteId })),
+      { onConflict: "contact_id,site_id", ignoreDuplicates: true },
+    );
+  if (error) throw new Error(error.message);
+}
+
+/** Removes a CRM Contact's responsibility for each of the given sites, leaving any other sites they're
+ * responsible for untouched. */
+export async function bulkUnassignContactFromSites(contactId: string, siteIds: string[]): Promise<void> {
+  if (siteIds.length === 0) return;
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("crm_contact_sites").delete().eq("contact_id", contactId).in("site_id", siteIds);
+  if (error) throw new Error(error.message);
+}
+
 /**
  * Assigns a Vendor (and optionally Sub-Vendor) for one trade across many sites at once -- e.g. "these 27
  * sites use Vendor X for Snow Removal only." Adds the trade to each site's Trade selection first (so the

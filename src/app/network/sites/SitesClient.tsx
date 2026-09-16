@@ -26,7 +26,7 @@ import type { Trade } from "@/lib/trades";
 import { MONTHS, sumRateSchedule } from "@/lib/rateSchedule";
 import type { DatasetRecord } from "@/lib/types";
 import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
-import type { Company, Contract, FieldClass, Opportunity } from "@/lib/crmTypes";
+import type { Company, Contact, Contract, FieldClass, Opportunity } from "@/lib/crmTypes";
 import type { Site, SiteFilterTemplate, SiteFilters, Vendor } from "@/lib/networkTypes";
 import SiteModal from "../SiteModal";
 import UploadSitesModal from "../UploadSitesModal";
@@ -36,10 +36,12 @@ import UpdateSiteMeasurementsModal from "../UpdateSiteMeasurementsModal";
 import UpdateSiteRateScheduleModal from "../UpdateSiteRateScheduleModal";
 import UpdateSiteExpenseScheduleModal from "../UpdateSiteExpenseScheduleModal";
 import {
+  bulkAssignContactToSitesAction,
   bulkAssignContractAction,
   bulkAssignTradesAction,
   bulkAssignVendorForTradeAction,
   bulkDeleteSitesAction,
+  bulkUnassignContactFromSitesAction,
   bulkUnassignContractAction,
   bulkUnassignTradesAction,
   bulkUnassignVendorAction,
@@ -227,6 +229,7 @@ export default function SitesClient({
   vendors,
   opportunities,
   contracts,
+  contacts,
   filterTemplates,
   fieldClasses,
 }: {
@@ -235,6 +238,7 @@ export default function SitesClient({
   vendors: Vendor[];
   opportunities: Opportunity[];
   contracts: Contract[];
+  contacts: Contact[];
   filterTemplates: SiteFilterTemplate[];
   fieldClasses: FieldClass[];
 }) {
@@ -290,6 +294,10 @@ export default function SitesClient({
   const [assigningContract, setAssigningContract] = useState(false);
   const [bulkContractError, setBulkContractError] = useState<string | null>(null);
   const [unassigningContract, setUnassigningContract] = useState(false);
+  const [bulkFacilityContactId, setBulkFacilityContactId] = useState("");
+  const [assigningFacilityContact, setAssigningFacilityContact] = useState(false);
+  const [unassigningFacilityContact, setUnassigningFacilityContact] = useState(false);
+  const [bulkFacilityContactError, setBulkFacilityContactError] = useState<string | null>(null);
   const [deletingSites, setDeletingSites] = useState(false);
   const [bulkDeleteError, setBulkDeleteError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -568,6 +576,42 @@ export default function SitesClient({
       router.refresh();
     } finally {
       setUnassigningContract(false);
+    }
+  }
+
+  async function handleBulkAssignFacilityContact() {
+    if (selectedIds.size === 0 || !bulkFacilityContactId) return;
+    setBulkFacilityContactError(null);
+    setAssigningFacilityContact(true);
+    try {
+      const result = await bulkAssignContactToSitesAction(bulkFacilityContactId, Array.from(selectedIds));
+      if (result.error) {
+        setBulkFacilityContactError(result.error);
+        return;
+      }
+      setSelectedIds(new Set());
+      setBulkFacilityContactId("");
+      router.refresh();
+    } finally {
+      setAssigningFacilityContact(false);
+    }
+  }
+
+  async function handleBulkUnassignFacilityContact() {
+    if (selectedIds.size === 0 || !bulkFacilityContactId) return;
+    setBulkFacilityContactError(null);
+    setUnassigningFacilityContact(true);
+    try {
+      const result = await bulkUnassignContactFromSitesAction(bulkFacilityContactId, Array.from(selectedIds));
+      if (result.error) {
+        setBulkFacilityContactError(result.error);
+        return;
+      }
+      setSelectedIds(new Set());
+      setBulkFacilityContactId("");
+      router.refresh();
+    } finally {
+      setUnassigningFacilityContact(false);
     }
   }
 
@@ -941,6 +985,8 @@ export default function SitesClient({
                 setBulkContractTrade("");
                 setBulkContractId("");
                 setBulkContractError(null);
+                setBulkFacilityContactId("");
+                setBulkFacilityContactError(null);
                 setBulkDeleteError(null);
               }}
             >
@@ -1047,6 +1093,38 @@ export default function SitesClient({
               {unassigningContract ? "Unassigning…" : "Unassign agreement from selected"}
             </Button>
             {bulkContractError && <span className="text-xs text-critical">{bulkContractError}</span>}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-xs text-slate-500 dark:text-slate-400">Assign/unassign facility contact:</span>
+            <select
+              value={bulkFacilityContactId}
+              onChange={(e) => setBulkFacilityContactId(e.target.value)}
+              className={`${inputClass} w-56`}
+            >
+              <option value="">Contact…</option>
+              {contacts.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                  {c.companyName ? ` (${c.companyName})` : ""}
+                </option>
+              ))}
+            </select>
+            <Button
+              variant="secondary"
+              onClick={handleBulkAssignFacilityContact}
+              disabled={!bulkFacilityContactId || assigningFacilityContact}
+            >
+              {assigningFacilityContact ? "Assigning…" : "Assign to selected"}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={handleBulkUnassignFacilityContact}
+              disabled={!bulkFacilityContactId || unassigningFacilityContact}
+            >
+              {unassigningFacilityContact ? "Unassigning…" : "Unassign from selected"}
+            </Button>
+            {bulkFacilityContactError && <span className="text-xs text-critical">{bulkFacilityContactError}</span>}
           </div>
         </div>
       )}
