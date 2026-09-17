@@ -17,11 +17,22 @@ type ParsedRow = Record<string, string | number | boolean | null>;
 
 const NONE = "";
 
-const SITE_TEMPLATE_COLUMNS = ["Site ID", "Site Name", "Latitude", "Longitude", "Address", "City", "State", "Zip"];
+const SITE_TEMPLATE_COLUMNS = [
+  "Site ID",
+  "Site Name",
+  "Client",
+  "Latitude",
+  "Longitude",
+  "Address",
+  "City",
+  "State",
+  "Zip",
+];
 
 const SITE_TEMPLATE_EXAMPLE = {
   "Site ID": "TDC0234",
   "Site Name": "Example Site",
+  Client: "TD Bank",
   Latitude: 39.7392,
   Longitude: -104.9903,
   Address: "123 Main St",
