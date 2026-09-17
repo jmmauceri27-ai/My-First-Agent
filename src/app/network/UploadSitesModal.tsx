@@ -8,7 +8,7 @@ import { inputClass } from "@/components/ui/formClasses";
 import TradeSelect from "@/components/TradeSelect";
 import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
 import { buildTemplateXlsxAction } from "@/lib/sheetActions";
-import type { Company, Opportunity } from "@/lib/crmTypes";
+import type { Company, Contract, Opportunity } from "@/lib/crmTypes";
 import type { SiteImportRow } from "@/lib/networkTypes";
 import { saveCompanyAction } from "@/app/crm/actions";
 import { bulkCreateSitesAction, parseSiteSheetAction } from "./actions";
@@ -49,10 +49,12 @@ async function handleDownloadSiteTemplate() {
 export default function UploadSitesModal({
   companies,
   opportunities,
+  contracts,
   onClose,
 }: {
   companies: Company[];
   opportunities: Opportunity[];
+  contracts: Contract[];
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -80,6 +82,7 @@ export default function UploadSitesModal({
   const [newCompanyName, setNewCompanyName] = useState("");
 
   const [opportunityId, setOpportunityId] = useState("");
+  const [contractId, setContractId] = useState("");
   const [trades, setTrades] = useState<string[]>([]);
 
   const [importing, setImporting] = useState(false);
@@ -90,6 +93,11 @@ export default function UploadSitesModal({
   const opportunitiesForCompany = useMemo(
     () => (companyId ? opportunities.filter((o) => o.companyId === companyId) : opportunities),
     [opportunities, companyId],
+  );
+
+  const contractsForCompany = useMemo(
+    () => (companyId ? contracts.filter((c) => c.companyId === companyId) : contracts),
+    [contracts, companyId],
   );
 
   async function handleAddCompany() {
@@ -194,7 +202,7 @@ export default function UploadSitesModal({
         {
           companyId: companyId || null,
           opportunityId: opportunityId || null,
-          contractId: null,
+          contractId: contractId || null,
           trades,
         },
         rows,
@@ -240,7 +248,8 @@ export default function UploadSitesModal({
       <Card className="max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Upload sites</h2>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-          Upload an .xlsx or .csv sheet of sites — every row shares the Client/Opportunity links you pick below.{" "}
+          Upload an .xlsx or .csv sheet of sites — every row shares the Client/Opportunity/Agreement links you pick
+          below.{" "}
           <button type="button" onClick={handleDownloadSiteTemplate} className="text-brand-600 dark:text-brand-400 hover:underline">
             Download example template
           </button>
@@ -328,6 +337,7 @@ export default function UploadSitesModal({
                       onChange={(e) => {
                         setCompanyId(e.target.value);
                         setOpportunityId("");
+                        setContractId("");
                       }}
                       className={inputClass}
                     >
@@ -369,12 +379,38 @@ export default function UploadSitesModal({
               </label>
 
               <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium text-slate-700 dark:text-slate-300">Agreement (optional)</span>
+                <select
+                  value={contractId}
+                  onChange={(e) => {
+                    const nextId = e.target.value;
+                    setContractId(nextId);
+                    const contract = contractsForCompany.find((c) => c.id === nextId);
+                    if (trades.length === 0 && contract && contract.trades.length > 0) {
+                      setTrades(contract.trades);
+                    }
+                  }}
+                  className={inputClass}
+                >
+                  <option value="">(none)</option>
+                  {contractsForCompany.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-xs text-slate-600 dark:text-slate-500">
+                  Picking one links every imported site directly to that Agreement&rsquo;s own Sites section --
+                  otherwise they&rsquo;ll only show up here once linked to one.
+                </span>
+              </label>
+
+              <label className="flex flex-col gap-1 text-sm">
                 <span className="font-medium text-slate-700 dark:text-slate-300">Trade (optional)</span>
                 <TradeSelect value={trades} onChange={setTrades} placeholder="(none)" />
               </label>
               <p className="text-xs text-slate-600 dark:text-slate-500">
-                Vendor and Agreement assignments (and pricing) are per-trade -- add those from each site&rsquo;s detail
-                page after importing.
+                Vendor assignments (and per-trade pricing) are set afterward from each site&rsquo;s detail page.
               </p>
             </div>
 

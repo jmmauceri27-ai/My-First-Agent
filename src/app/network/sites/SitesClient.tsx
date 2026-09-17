@@ -1451,7 +1451,12 @@ export default function SitesClient({
       )}
 
       {uploading && (
-        <UploadSitesModal companies={companies} opportunities={opportunities} onClose={() => setUploading(false)} />
+        <UploadSitesModal
+          companies={companies}
+          opportunities={opportunities}
+          contracts={contracts}
+          onClose={() => setUploading(false)}
+        />
       )}
 
       {updatingSheet && <UpdateSitesModal companies={companies} onClose={() => setUpdatingSheet(false)} />}
