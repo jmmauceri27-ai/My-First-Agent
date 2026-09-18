@@ -26,7 +26,7 @@ export const PROPOSAL_CHAT_TOOLS: Anthropic.Tool[] = [
   {
     name: "list_rate_items",
     description:
-      "Lists the real, priced line items for one trade -- labor, equipment, materials, and flat-rate service tasks -- each with its exact rateItemId, category, pricing basis, rate tier, and rate. Always call this before pricing a trade so you use real item ids and rates, never invented ones. Pass contractId when an agreement is selected: if that agreement has its own negotiated rate items for the trade (e.g. from an MSA rate card), you'll get exactly those instead of the generic catalog -- an agreement's rate card fully replaces the generic one for that trade. A rate card ties to an agreement, not directly to a client, since one client can have several agreements with different rates.",
+      "Lists the real, priced line items for one trade -- labor, equipment, materials, and flat-rate service tasks -- each with its exact rateItemId, category, pricing basis, rate tier, and rate. Always call this before pricing a trade so you use real item ids and rates, never invented ones. Pass contractId when an agreement is selected: if that agreement has its own negotiated rate items for the trade (e.g. from an MSA rate card), you'll get exactly those instead. Also pass companyId when a client is selected: if no agreement rate card applies but that client has their own on-demand rates for the trade (work priced outside any signed agreement), you'll get those instead of the fully generic catalog. Check usingContractRateCard/usingCompanyRateCard in the result to see which one you got.",
     input_schema: {
       type: "object",
       properties: {
@@ -34,6 +34,10 @@ export const PROPOSAL_CHAT_TOOLS: Anthropic.Tool[] = [
         contractId: {
           type: "string",
           description: "The selected agreement's contractId, if any -- see description above.",
+        },
+        companyId: {
+          type: "string",
+          description: "The selected client's companyId, if any -- see description above.",
         },
       },
       required: ["trade"],
@@ -85,10 +89,15 @@ export function runProposalChatTool(name: string, input: unknown, ctx: ProposalT
     }
 
     case "list_rate_items": {
-      const { trade, contractId } = (input ?? {}) as { trade?: string; contractId?: string };
+      const { trade, contractId, companyId } = (input ?? {}) as {
+        trade?: string;
+        contractId?: string;
+        companyId?: string;
+      };
       if (!trade) throw new Error("trade is required.");
-      const resolved = resolveTradeRateItems(ctx.rateItems, trade, contractId ?? null);
+      const resolved = resolveTradeRateItems(ctx.rateItems, trade, contractId ?? null, companyId ?? null);
       const usingContractRateCard = resolved.length > 0 && resolved[0].contractId != null;
+      const usingCompanyRateCard = resolved.length > 0 && !usingContractRateCard && resolved[0].companyId != null;
       const items = resolved.map((r) => ({
         rateItemId: r.id,
         category: r.category,
@@ -99,7 +108,7 @@ export function runProposalChatTool(name: string, input: unknown, ctx: ProposalT
         unitLabel: r.unitLabel,
         notes: r.notes,
       }));
-      return { trade, usingContractRateCard, items };
+      return { trade, usingContractRateCard, usingCompanyRateCard, items };
     }
 
     case "compute_trade_price": {

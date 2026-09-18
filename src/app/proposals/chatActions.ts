@@ -19,7 +19,7 @@ const SYSTEM_PROMPT_INTRO = `You are the Proposal Assistant, an internal tool th
 Ground rules:
 - NEVER invent a price, rate, or line item. Every number in your answer must come from a tool result.
 - Call list_rate_items before pricing a trade -- use the exact rateItemId, name, and rate it returns. Don't guess item names or ids, and don't reuse an id from a different trade.
-- A rate card ties to an Agreement, not directly to a Client -- one client can have several agreements with different rates. When an agreement is selected, pass contractId to list_rate_items -- if that agreement has its own rate card for the trade (e.g. from a negotiated MSA), you'll see its real rates instead of the generic catalog; usingContractRateCard in the result tells you which one you got.
+- Rates are looked up in priority order: an Agreement's own rate card (pass contractId to list_rate_items), then a Client's own on-demand rates for work outside any agreement (pass companyId to list_rate_items), then the fully generic catalog. Always pass whichever of contractId/companyId is currently selected -- usingContractRateCard/usingCompanyRateCard in the result tells you which one you actually got.
 - Call compute_trade_price to price a trade's selected line items (rateItemId + quantity pairs). It applies the client's blanket override automatically when you pass companyId -- a separate, client-level lever from an agreement's rate card.
 - If a proposal spans more than one trade, price each trade separately with compute_trade_price, then combine the trade totals with sum_totals -- never add the numbers yourself.
 - Ask clarifying questions when the scope is ambiguous (which trade, what quantities, which client/agreement) instead of guessing.
@@ -30,11 +30,11 @@ Ground rules:
 function buildSystemPrompt(tradesAvailable: string[], context: ProposalChatContext): string {
   const tradesLine = `\n\nTrades with rate items on file: ${tradesAvailable.length > 0 ? tradesAvailable.join(", ") : "none yet -- tell the user to populate the rate card first."}`;
   const clientLine = context.companyId
-    ? `\n\nClient context: the user is building this proposal for "${context.companyName ?? "this client"}" (companyId: ${context.companyId}). Pass this companyId to compute_trade_price so any client-level override is applied automatically.`
-    : `\n\nNo client is selected right now. If pricing should reflect a client-level override, ask the user to pick one from the Client dropdown above the chat; otherwise proceed without a companyId.`;
+    ? `\n\nClient context: the user is building this proposal for "${context.companyName ?? "this client"}" (companyId: ${context.companyId}). Pass this companyId to compute_trade_price so any client-level override is applied automatically, and to list_rate_items so their own on-demand rates are used when no agreement rate card applies.`
+    : `\n\nNo client is selected right now. If pricing should reflect a client-level override or their own on-demand rates, ask the user to pick one from the Client dropdown above the chat; otherwise proceed without a companyId.`;
   const contractLine = context.contractId
     ? `\n\nAgreement context: this proposal is for the agreement "${context.contractName ?? "this agreement"}" (contractId: ${context.contractId}). Pass this contractId to list_rate_items so you see that agreement's own rate card when it has one.`
-    : `\n\nNo agreement is selected right now. If the user names a specific account/agreement, ask them to pick it from the Agreement dropdown above the chat so its rate card (if any) is used; otherwise proceed with the generic rate card.`;
+    : `\n\nNo agreement is selected right now. If the user names a specific account/agreement, ask them to pick it from the Agreement dropdown above the chat so its rate card (if any) is used; otherwise proceed with the generic rate card -- but still pass companyId to list_rate_items when a client is selected, in case that client has their own on-demand rates for work done outside any agreement.`;
   return SYSTEM_PROMPT_INTRO + tradesLine + clientLine + contractLine;
 }
 

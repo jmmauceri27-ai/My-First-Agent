@@ -37,10 +37,11 @@ export default function QuoteCalculator({
   );
 
   const tradeItems = useMemo(
-    () => (trade ? resolveTradeRateItems(rateItems, trade, contractId || null) : []),
-    [rateItems, trade, contractId],
+    () => (trade ? resolveTradeRateItems(rateItems, trade, contractId || null, companyId || null) : []),
+    [rateItems, trade, contractId, companyId],
   );
   const usingContractRateCard = tradeItems.length > 0 && tradeItems[0].contractId != null;
+  const usingCompanyRateCard = tradeItems.length > 0 && !usingContractRateCard && tradeItems[0].companyId != null;
 
   const itemsByCategory = useMemo(() => {
     const categories = new Map<string, RateItem[]>();
@@ -131,7 +132,9 @@ export default function QuoteCalculator({
             <p className="bg-purple-500/5 px-4 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
               {usingContractRateCard
                 ? `Using ${contracts.find((c) => c.id === contractId)?.name ?? "this agreement"}'s rate card for ${trade}`
-                : `Using the generic rate card for ${trade}`}
+                : usingCompanyRateCard
+                  ? `Using ${companies.find((c) => c.id === companyId)?.name ?? "this client"}'s on-demand rate card for ${trade}`
+                  : `Using the generic rate card for ${trade}`}
             </p>
             {itemsByCategory.map(([category, items]) => (
               <div key={category}>

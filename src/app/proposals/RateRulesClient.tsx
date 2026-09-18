@@ -41,11 +41,9 @@ export default function RateRulesClient({
   const GENERIC_LABEL = "Generic (no agreement)";
 
   function contractLabelFor(item: RateItem): string {
-    return item.contractName
-      ? item.companyName
-        ? `${item.contractName} · ${item.companyName}`
-        : item.contractName
-      : GENERIC_LABEL;
+    if (item.contractName) return item.companyName ? `${item.contractName} · ${item.companyName}` : item.contractName;
+    if (item.companyName) return `${item.companyName} — On-Demand`;
+    return GENERIC_LABEL;
   }
 
   function categorize(items: RateItem[]): [string, RateItem[]][] {
@@ -356,6 +354,7 @@ export default function RateRulesClient({
           {(editingItem || creatingItem) && (
             <RateItemModal
               item={editingItem}
+              companies={companies}
               contracts={contracts}
               onClose={() => {
                 setEditingItem(null);
@@ -364,7 +363,9 @@ export default function RateRulesClient({
             />
           )}
 
-          {uploading && <UploadRateItemsModal contracts={contracts} onClose={() => setUploading(false)} />}
+          {uploading && (
+            <UploadRateItemsModal companies={companies} contracts={contracts} onClose={() => setUploading(false)} />
+          )}
 
           {(editingOverride || creatingOverride) && (
             <ClientRateOverrideModal

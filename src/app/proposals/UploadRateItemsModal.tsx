@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
@@ -8,7 +8,7 @@ import { inputClass } from "@/components/ui/formClasses";
 import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
 import { buildTemplateXlsxAction, parseUploadedSheetAction } from "@/lib/sheetActions";
 import { matchPricingBasis, matchRateItemCategory, matchRateTier } from "@/lib/crmTypes";
-import type { Contract, RateItemImportRow } from "@/lib/crmTypes";
+import type { Company, Contract, RateItemImportRow } from "@/lib/crmTypes";
 import { matchTrade } from "@/lib/trades";
 import { bulkCreateRateItemsAction } from "./actions";
 
@@ -44,14 +44,17 @@ async function handleDownloadTemplate() {
 }
 
 export default function UploadRateItemsModal({
+  companies,
   contracts,
   onClose,
 }: {
+  companies: Company[];
   contracts: Contract[];
   onClose: () => void;
 }) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [companyId, setCompanyId] = useState("");
   const [contractId, setContractId] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -68,6 +71,11 @@ export default function UploadRateItemsModal({
     unitLabel: NONE,
     notes: NONE,
   });
+
+  const contractsForClient = useMemo(
+    () => (companyId ? contracts.filter((c) => c.companyId === companyId) : contracts),
+    [contracts, companyId],
+  );
 
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
@@ -167,6 +175,7 @@ export default function UploadRateItemsModal({
           unitLabel: mapping.unitLabel ? String(row[mapping.unitLabel] ?? "").trim() || null : null,
           notes: mapping.notes ? String(row[mapping.notes] ?? "").trim() || null : null,
           contractId: contractId || null,
+          companyId: companyId || null,
         });
       }
 
@@ -241,20 +250,43 @@ export default function UploadRateItemsModal({
         </p>
 
         <label className="mt-4 flex flex-col gap-1 text-sm">
-          <span className="font-medium text-slate-700 dark:text-slate-300">Agreement (optional)</span>
-          <select value={contractId} onChange={(e) => setContractId(e.target.value)} className={inputClass}>
-            <option value="">Generic (no agreement)</option>
-            {contracts.map((c) => (
+          <span className="font-medium text-slate-700 dark:text-slate-300">Client (optional)</span>
+          <select
+            value={companyId}
+            onChange={(e) => {
+              setCompanyId(e.target.value);
+              setContractId("");
+            }}
+            className={inputClass}
+          >
+            <option value="">Generic (any client)</option>
+            {companies.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
-                {c.companyName ? ` · ${c.companyName}` : ""}
               </option>
             ))}
           </select>
           <span className="text-xs text-slate-600 dark:text-slate-500">
-            Applies to every row in this file -- leave as Generic for the default catalog, or pick an agreement to
-            import its own negotiated rate card (e.g. an MSA rate sheet). It&rsquo;ll be used instead of the
-            generic rate for any trade it covers.
+            Applies to every row in this file -- pick a client to import these as their own on-demand rates, used
+            for work done for them outside any agreement.
+          </span>
+        </label>
+
+        <label className="mt-4 flex flex-col gap-1 text-sm">
+          <span className="font-medium text-slate-700 dark:text-slate-300">Agreement (optional)</span>
+          <select value={contractId} onChange={(e) => setContractId(e.target.value)} className={inputClass}>
+            <option value="">No agreement</option>
+            {contractsForClient.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+                {!companyId && c.companyName ? ` · ${c.companyName}` : ""}
+              </option>
+            ))}
+          </select>
+          <span className="text-xs text-slate-600 dark:text-slate-500">
+            Applies to every row in this file -- leave as No agreement for the default catalog or the client&rsquo;s
+            on-demand rates, or pick an agreement to import its own negotiated rate card (e.g. an MSA rate sheet).
+            It&rsquo;ll be used instead for any trade it covers.
           </span>
         </label>
 

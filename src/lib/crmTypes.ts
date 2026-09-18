@@ -267,7 +267,7 @@ export function matchRateTier(value: string | null | undefined): RateTier | null
   return RATE_TIER_OPTIONS.find((t) => t.toLowerCase() === normalized) ?? null;
 }
 
-/** One priceable line item under a trade -- e.g. "Landscape Laborer" (Labor, Per Hour, Standard tier), "1.5" Valve Replaced" (Service, Flat), or "Gold Mop #2" (Materials, Per Each). A proposal's price for a trade is composed from its rate_items, not a single number. contractId is null for the generic, company-wide catalog, or set when the item comes from one specific contract's own negotiated rate card (e.g. an MSA rate sheet) -- a rate card ties to a Contract, not directly to a Company, since one client can have several contracts each with their own rates; companyName is reachable transitively through the contract. See resolveTradeRateItems in pricingEngine.ts for how generic and contract-specific items are reconciled. */
+/** One priceable line item under a trade -- e.g. "Landscape Laborer" (Labor, Per Hour, Standard tier), "1.5" Valve Replaced" (Service, Flat), or "Gold Mop #2" (Materials, Per Each). A proposal's price for a trade is composed from its rate_items, not a single number. Scoped one of three ways: fully generic (contractId and companyId both null), a specific Client's on-demand rates with no particular agreement (companyId set, contractId null -- e.g. work done for them outside any signed contract), or one specific contract's own negotiated rate card (contractId set, e.g. an MSA rate sheet; companyId is then reachable transitively through the contract and not stored directly). See resolveTradeRateItems in pricingEngine.ts for how the three levels are reconciled. */
 export interface RateItem {
   id: string;
   trade: string;
@@ -282,6 +282,9 @@ export interface RateItem {
   notes: string | null;
   contractId: string | null;
   contractName: string | null;
+  /** Set directly only when contractId is null (a Client's on-demand rates, no specific agreement) -- when
+   * contractId is set, this is that contract's own company instead. */
+  companyId: string | null;
   companyName: string | null;
   createdAt: string;
   updatedAt: string;
@@ -297,11 +300,13 @@ export interface RateItemInput {
   unitLabel: string | null;
   notes: string | null;
   contractId: string | null;
+  /** Ignored (stored as null) when contractId is set -- see RateItem's companyId doc. */
+  companyId: string | null;
 }
 
 /** A single row parsed from an uploaded sheet, mapped onto RateItem's fixed fields, for bulk import. contractId
- * comes from a single picker in the upload modal, not a sheet column -- a whole import batch shares one
- * contract (or none, for the generic catalog). */
+ * and companyId come from single pickers in the upload modal, not sheet columns -- a whole import batch shares
+ * one contract/client (or neither, for the generic catalog). */
 export interface RateItemImportRow {
   trade: string;
   category: string;
@@ -312,6 +317,7 @@ export interface RateItemImportRow {
   unitLabel: string | null;
   notes: string | null;
   contractId: string | null;
+  companyId: string | null;
 }
 
 export const OVERRIDE_TYPE_OPTIONS = ["Discount %", "Markup %"] as const;

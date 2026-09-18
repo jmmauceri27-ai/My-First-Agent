@@ -26,19 +26,28 @@ export interface TradePricingResult {
 }
 
 /**
- * The rate items to price `trade` with for a given contract: that contract's own rate items for the trade if
- * it has any (e.g. a negotiated MSA rate card), otherwise the generic, company-wide catalog for the trade. A
- * rate card ties to a Contract, not directly to a Company, since one client can have several contracts each
- * with their own rates. A contract's rate card fully replaces the generic one for a trade when present -- the
- * two are never merged line by line, since a real rate sheet is a complete, self-contained replacement, not a
+ * The rate items to price `trade` with, in priority order: (1) the selected contract's own rate card, if it
+ * has one (e.g. a negotiated MSA rate sheet); (2) failing that, the selected client's own on-demand rates for
+ * the trade, if any (work done for them outside any signed agreement); (3) failing that, the fully generic,
+ * company-wide catalog for the trade. Each level fully replaces the one below it for a trade when present --
+ * they're never merged line by line, since a real rate sheet is a complete, self-contained replacement, not a
  * partial patch.
  */
-export function resolveTradeRateItems(rateItems: RateItem[], trade: string, contractId: string | null): RateItem[] {
+export function resolveTradeRateItems(
+  rateItems: RateItem[],
+  trade: string,
+  contractId: string | null,
+  companyId: string | null = null,
+): RateItem[] {
   if (contractId) {
     const contractSpecific = rateItems.filter((r) => r.trade === trade && r.contractId === contractId);
     if (contractSpecific.length > 0) return contractSpecific;
   }
-  return rateItems.filter((r) => r.trade === trade && !r.contractId);
+  if (companyId) {
+    const companySpecific = rateItems.filter((r) => r.trade === trade && !r.contractId && r.companyId === companyId);
+    if (companySpecific.length > 0) return companySpecific;
+  }
+  return rateItems.filter((r) => r.trade === trade && !r.contractId && !r.companyId);
 }
 
 /** This client's override for `trade`, if any -- there's at most one per (client, trade), enforced by a unique constraint. */

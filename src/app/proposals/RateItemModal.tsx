@@ -1,25 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import { PRICING_BASIS_OPTIONS, RATE_ITEM_CATEGORIES, RATE_TIER_OPTIONS } from "@/lib/crmTypes";
-import type { Contract, RateItem, RateItemInput } from "@/lib/crmTypes";
+import type { Company, Contract, RateItem, RateItemInput } from "@/lib/crmTypes";
 import { TRADE_OPTIONS } from "@/lib/trades";
 import { deleteRateItemAction, saveRateItemAction } from "./actions";
 
 export default function RateItemModal({
   item,
+  companies,
   contracts,
   onClose,
 }: {
   item: RateItem | null;
+  companies: Company[];
   contracts: Contract[];
   onClose: () => void;
 }) {
   const router = useRouter();
+  const [companyId, setCompanyId] = useState(item?.companyId ?? "");
   const [contractId, setContractId] = useState(item?.contractId ?? "");
   const [trade, setTrade] = useState(item?.trade ?? "");
   const [category, setCategory] = useState(item?.category ?? "");
@@ -32,6 +35,11 @@ export default function RateItemModal({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const contractsForClient = useMemo(
+    () => (companyId ? contracts.filter((c) => c.companyId === companyId) : contracts),
+    [contracts, companyId],
+  );
 
   async function handleSave() {
     setError(null);
@@ -68,6 +76,7 @@ export default function RateItemModal({
         unitLabel: unitLabel.trim() || null,
         notes: notes.trim() || null,
         contractId: contractId || null,
+        companyId: companyId || null,
       };
       await saveRateItemAction(item?.id ?? null, input);
       router.refresh();
@@ -98,19 +107,43 @@ export default function RateItemModal({
 
         <div className="mt-4 flex flex-col gap-4">
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-300">Agreement (optional)</span>
-            <select value={contractId} onChange={(e) => setContractId(e.target.value)} className={inputClass} autoFocus>
-              <option value="">Generic (no agreement)</option>
-              {contracts.map((c) => (
+            <span className="font-medium text-slate-700 dark:text-slate-300">Client (optional)</span>
+            <select
+              value={companyId}
+              onChange={(e) => {
+                setCompanyId(e.target.value);
+                setContractId("");
+              }}
+              className={inputClass}
+              autoFocus
+            >
+              <option value="">Generic (any client)</option>
+              {companies.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
-                  {c.companyName ? ` · ${c.companyName}` : ""}
                 </option>
               ))}
             </select>
             <span className="text-xs text-slate-600 dark:text-slate-500">
-              Leave as Generic for the default catalog, or pick a contract if this rate comes from its own
-              negotiated rate card -- it&rsquo;ll be used instead of the generic rate for this trade.
+              Pick a client to give them their own on-demand rate for this trade -- used when work is done for
+              them outside any agreement. Leave as Generic for the default catalog.
+            </span>
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-slate-700 dark:text-slate-300">Agreement (optional)</span>
+            <select value={contractId} onChange={(e) => setContractId(e.target.value)} className={inputClass}>
+              <option value="">No agreement</option>
+              {contractsForClient.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                  {!companyId && c.companyName ? ` · ${c.companyName}` : ""}
+                </option>
+              ))}
+            </select>
+            <span className="text-xs text-slate-600 dark:text-slate-500">
+              Pick a contract if this rate comes from its own negotiated rate card -- it&rsquo;ll be used instead
+              of the client&rsquo;s on-demand rate or the generic rate for this trade.
             </span>
           </label>
 
