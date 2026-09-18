@@ -87,6 +87,7 @@ export default function ContactDetailClient({
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
+  const [showAllSites, setShowAllSites] = useState(false);
   const responsibleSites = sites.filter((s) => contact.siteIds.includes(s.id));
 
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
@@ -276,26 +277,42 @@ export default function ContactDetailClient({
         </SectionCard>
 
         <SectionCard icon="📍" title="Sites responsible for" color="#f97316">
-          <div className="flex flex-col divide-y divide-purple-400/10">
-            {responsibleSites.length === 0 ? (
-              <p className="py-2 text-xs text-slate-500 dark:text-slate-400">No sites assigned to this contact yet.</p>
-            ) : (
-              responsibleSites.map((s) => (
-                <Link
-                  key={s.id}
-                  href={`/network/sites/${s.id}`}
-                  className="flex items-center justify-between gap-2 py-2 hover:text-brand-600 dark:hover:text-brand-400"
+          {responsibleSites.length === 0 ? (
+            <p className="text-xs text-slate-500 dark:text-slate-400">No sites assigned to this contact yet.</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm text-slate-700 dark:text-slate-300">
+                  {responsibleSites.length} site{responsibleSites.length === 1 ? "" : "s"} assigned
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowAllSites((prev) => !prev)}
+                  className="text-xs font-medium text-brand-600 dark:text-brand-400 hover:underline"
                 >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-50">{s.name}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {[s.city, s.state].filter(Boolean).join(", ") || "No location set"}
-                    </p>
-                  </div>
-                </Link>
-              ))
-            )}
-          </div>
+                  {showAllSites ? "Show less" : "Show all"}
+                </button>
+              </div>
+              {showAllSites && (
+                <div className="flex flex-col divide-y divide-purple-400/10">
+                  {responsibleSites.map((s) => (
+                    <Link
+                      key={s.id}
+                      href={`/network/sites/${s.id}`}
+                      className="flex items-center justify-between gap-2 py-2 hover:text-brand-600 dark:hover:text-brand-400"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-50">{s.name}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          {[s.city, s.state].filter(Boolean).join(", ") || "No location set"}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </SectionCard>
 
         <SectionCard icon="🗒️" title="Activity Log" color="#ec4899" className="lg:col-span-2">
