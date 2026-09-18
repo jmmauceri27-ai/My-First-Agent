@@ -256,15 +256,27 @@ export function matchPricingBasis(value: string | null | undefined): PricingBasi
   return PRICING_BASIS_OPTIONS.find((b) => b.toLowerCase() === normalized) ?? null;
 }
 
-export const RATE_TIER_OPTIONS = ["Standard", "OT", "Premium"] as const;
+export const RATE_TIER_OPTIONS = ["Regular", "Overtime", "Double/Holiday"] as const;
 
 export type RateTier = (typeof RATE_TIER_OPTIONS)[number];
+
+/** Aliases for older sheets/data (e.g. the previous Standard/OT/Premium tier names, or common shorthand) that
+ * should still resolve to one of the current RATE_TIER_OPTIONS. */
+const RATE_TIER_ALIASES: Record<string, RateTier> = {
+  standard: "Regular",
+  ot: "Overtime",
+  premium: "Double/Holiday",
+  double: "Double/Holiday",
+  holiday: "Double/Holiday",
+  "double time": "Double/Holiday",
+  dt: "Double/Holiday",
+};
 
 /** Matches a freeform value (e.g. from an uploaded sheet) against the fixed Rate Tier list, case-insensitively. */
 export function matchRateTier(value: string | null | undefined): RateTier | null {
   if (!value) return null;
   const normalized = value.trim().toLowerCase();
-  return RATE_TIER_OPTIONS.find((t) => t.toLowerCase() === normalized) ?? null;
+  return RATE_TIER_OPTIONS.find((t) => t.toLowerCase() === normalized) ?? RATE_TIER_ALIASES[normalized] ?? null;
 }
 
 /** One priceable line item under a trade -- e.g. "Landscape Laborer" (Labor, Per Hour, Standard tier), "1.5" Valve Replaced" (Service, Flat), or "Gold Mop #2" (Materials, Per Each). A proposal's price for a trade is composed from its rate_items, not a single number. Scoped one of three ways: fully generic (contractId and companyId both null), a specific Client's on-demand rates with no particular agreement (companyId set, contractId null -- e.g. work done for them outside any signed contract), or one specific contract's own negotiated rate card (contractId set, e.g. an MSA rate sheet; companyId is then reachable transitively through the contract and not stored directly). See resolveTradeRateItems in pricingEngine.ts for how the three levels are reconciled. */
@@ -274,7 +286,7 @@ export interface RateItem {
   category: string;
   itemName: string;
   pricingBasis: string;
-  /** Standard/OT/Premium -- meaningful mainly for Labor; other categories are almost always "Standard". */
+  /** Regular/Overtime/Double/Holiday -- meaningful mainly for Labor; other categories are almost always "Regular". */
   rateTier: string;
   rate: number;
   /** Freeform clarification of the unit, e.g. "per 1,000 sq ft/month" -- optional, since pricingBasis usually says enough on its own. */

@@ -32,7 +32,7 @@ const TEMPLATE_EXAMPLE = {
   Category: "Labor",
   "Item Name": "Landscape Laborer",
   "Pricing Basis": "Per Hour",
-  "Rate Tier": "Standard",
+  "Rate Tier": "Regular",
   Rate: 75,
   "Unit Label": "",
   Notes: "",
@@ -163,7 +163,7 @@ export default function UploadRateItemsModal({
         }
 
         const rateTierRaw = mapping.rateTier ? String(row[mapping.rateTier] ?? "").trim() : "";
-        const rateTier = matchRateTier(rateTierRaw) ?? "Standard";
+        const rateTier = matchRateTier(rateTierRaw) ?? "Regular";
 
         rows.push({
           trade,
@@ -340,8 +340,9 @@ export default function UploadRateItemsModal({
                 ))}
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-500">
-                Rate Tier defaults to Standard when left unmapped or a cell doesn&rsquo;t match Standard/OT/Premium.
-                Rows with an unrecognized Trade, Category, or Pricing Basis are skipped and reported after import.
+                Rate Tier defaults to Regular when left unmapped or a cell doesn&rsquo;t match Regular/Overtime/
+                Double/Holiday. Rows with an unrecognized Trade, Category, or Pricing Basis are skipped and
+                reported after import.
               </p>
             </div>
 

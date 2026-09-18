@@ -28,7 +28,7 @@ export default function RateItemModal({
   const [category, setCategory] = useState(item?.category ?? "");
   const [itemName, setItemName] = useState(item?.itemName ?? "");
   const [pricingBasis, setPricingBasis] = useState(item?.pricingBasis ?? "");
-  const [rateTier, setRateTier] = useState(item?.rateTier ?? "Standard");
+  const [rateTier, setRateTier] = useState(item?.rateTier ?? "Regular");
   const [rate, setRate] = useState(item?.rate != null ? String(item.rate) : "");
   const [unitLabel, setUnitLabel] = useState(item?.unitLabel ?? "");
   const [notes, setNotes] = useState(item?.notes ?? "");

@@ -149,7 +149,7 @@ export default function QuoteCalculator({
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
                             {item.itemName}
-                            {item.rateTier !== "Standard" && (
+                            {item.rateTier !== "Regular" && (
                               <span className="ml-2 rounded-full bg-purple-500/15 px-2 py-0.5 text-xs font-medium text-purple-300">
                                 {item.rateTier}
                               </span>
