@@ -248,7 +248,7 @@ export interface ContractFile {
 // specific client get a blanket discount/markup on a trade's computed total. A later step (the pricing
 // engine) composes a trade's price from its rate_items, then applies any client override on top.
 
-export const RATE_ITEM_CATEGORIES = ["Labor", "Equipment", "Materials", "Service"] as const;
+export const RATE_ITEM_CATEGORIES = ["Labor", "Equipment", "Materials", "Service", "Fees"] as const;
 
 export type RateItemCategory = (typeof RATE_ITEM_CATEGORIES)[number];
 
@@ -270,6 +270,8 @@ export const PRICING_BASIS_OPTIONS = [
   "Per Yard",
   "Per Visit",
   "Per Event",
+  "Per Trip",
+  "Per Work Order",
   "Flat Monthly",
   "Flat",
 ] as const;
