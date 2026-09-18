@@ -46,6 +46,30 @@ export interface Contact {
   createdAt: string;
 }
 
+export const CONTACT_ACTIVITY_TYPES = ["Call", "Email", "Meeting"] as const;
+
+export type ContactActivityType = (typeof CONTACT_ACTIVITY_TYPES)[number];
+
+/** One logged interaction with a contact -- a call, an email, or a meeting -- independent of any
+ * Opportunity/Contract, so it's visible from the contact's own page regardless of what it was about. */
+export interface ContactActivity {
+  id: string;
+  contactId: string;
+  type: ContactActivityType;
+  subject: string | null;
+  notes: string | null;
+  occurredAt: string;
+  createdAt: string;
+}
+
+export interface ContactActivityInput {
+  contactId: string;
+  type: ContactActivityType;
+  subject: string | null;
+  notes: string | null;
+  occurredAt: string;
+}
+
 export const DEPARTMENTS = ["Facility Services", "Fire & Life Safety"] as const;
 
 export type Department = (typeof DEPARTMENTS)[number];

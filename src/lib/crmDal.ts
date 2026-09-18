@@ -8,6 +8,8 @@ import type {
   CompanyImportRow,
   CompanyInput,
   Contact,
+  ContactActivity,
+  ContactActivityInput,
   ContactInput,
   Contract,
   ContractFile,
@@ -418,6 +420,57 @@ export async function updateContact(id: string, input: ContactInput): Promise<vo
 export async function deleteContact(id: string): Promise<void> {
   const supabase = createAdminClient();
   const { error } = await supabase.from("crm_contacts").delete().eq("id", id).eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
+}
+
+const CONTACT_ACTIVITY_COLUMNS = "id, contact_id, type, subject, notes, occurred_at, created_at";
+
+function mapContactActivity(a: Record<string, unknown>): ContactActivity {
+  return {
+    id: a.id as string,
+    contactId: a.contact_id as string,
+    type: a.type as ContactActivity["type"],
+    subject: a.subject as string | null,
+    notes: a.notes as string | null,
+    occurredAt: a.occurred_at as string,
+    createdAt: a.created_at as string,
+  };
+}
+
+/** A contact's own call/email/meeting log, most recent first. */
+export async function listActivitiesForContact(contactId: string): Promise<ContactActivity[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("crm_contact_activities")
+    .select(CONTACT_ACTIVITY_COLUMNS)
+    .eq("contact_id", contactId)
+    .eq("user_id", OWNER_USER_ID)
+    .order("occurred_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(mapContactActivity);
+}
+
+export async function createContactActivity(input: ContactActivityInput): Promise<string> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("crm_contact_activities")
+    .insert({
+      user_id: OWNER_USER_ID,
+      contact_id: input.contactId,
+      type: input.type,
+      subject: input.subject,
+      notes: input.notes,
+      occurred_at: input.occurredAt,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return data.id as string;
+}
+
+export async function deleteContactActivity(id: string): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("crm_contact_activities").delete().eq("id", id).eq("user_id", OWNER_USER_ID);
   if (error) throw new Error(error.message);
 }
 

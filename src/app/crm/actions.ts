@@ -8,6 +8,7 @@ import {
   bulkCreateEmployees,
   createCompany,
   createContact,
+  createContactActivity,
   createContract,
   createEmployee,
   createEmployeeWithDetails,
@@ -15,6 +16,7 @@ import {
   deleteCompany,
   deleteCompanyLogo,
   deleteContact,
+  deleteContactActivity,
   deleteContract,
   deleteContractFile,
   deleteEmployee,
@@ -46,6 +48,7 @@ import type {
   CompanyImportRow,
   CompanyInput,
   Contact,
+  ContactActivityInput,
   ContactInput,
   ContractFile,
   ContractInput,
@@ -163,6 +166,17 @@ export async function deleteContactAction(id: string): Promise<void> {
   await deleteContact(id);
   revalidatePath("/crm");
   revalidatePath("/crm/contacts");
+}
+
+export async function saveContactActivityAction(input: ContactActivityInput): Promise<string> {
+  const id = await createContactActivity(input);
+  revalidatePath(`/crm/contacts/${input.contactId}`);
+  return id;
+}
+
+export async function deleteContactActivityAction(id: string, contactId: string): Promise<void> {
+  await deleteContactActivity(id);
+  revalidatePath(`/crm/contacts/${contactId}`);
 }
 
 export async function saveContractAction(id: string | null, input: ContractInput): Promise<string> {
