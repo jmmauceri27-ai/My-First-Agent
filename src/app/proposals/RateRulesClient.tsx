@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { formatCurrency } from "@/lib/siteMapColor";
@@ -10,6 +11,7 @@ import UploadRateItemsModal from "./UploadRateItemsModal";
 import ClientRateOverrideModal from "./ClientRateOverrideModal";
 import QuoteCalculator from "./QuoteCalculator";
 import ChatAssistant from "./ChatAssistant";
+import { deleteRateItemsAction } from "./actions";
 
 type View = "assistant" | "rate-card" | "calculator";
 
@@ -24,6 +26,7 @@ export default function RateRulesClient({
   companies: Company[];
   contracts: Contract[];
 }) {
+  const router = useRouter();
   const [view, setView] = useState<View>("assistant");
   const [groupBy, setGroupBy] = useState<"trade" | "client">("trade");
   const [editingItem, setEditingItem] = useState<RateItem | null>(null);
@@ -31,6 +34,9 @@ export default function RateRulesClient({
   const [uploading, setUploading] = useState(false);
   const [editingOverride, setEditingOverride] = useState<ClientRateOverride | null>(null);
   const [creatingOverride, setCreatingOverride] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [bulkDeleteError, setBulkDeleteError] = useState<string | null>(null);
 
   const GENERIC_LABEL = "Generic (no agreement)";
 
@@ -105,6 +111,36 @@ export default function RateRulesClient({
   function shouldShowGroupLabel(groupCount: number, label: string): boolean {
     if (groupBy === "client") return true;
     return groupCount > 1 || label !== GENERIC_LABEL;
+  }
+
+  function toggleSelected(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    setSelectedIds((prev) => (prev.size === rateItems.length ? new Set() : new Set(rateItems.map((r) => r.id))));
+  }
+
+  async function handleBulkDelete() {
+    if (selectedIds.size === 0) return;
+    const count = selectedIds.size;
+    if (!window.confirm(`Delete ${count} rate item${count === 1 ? "" : "s"}? This can't be undone.`)) return;
+    setBulkDeleteError(null);
+    setBulkDeleting(true);
+    try {
+      await deleteRateItemsAction(Array.from(selectedIds));
+      setSelectedIds(new Set());
+      router.refresh();
+    } catch (e) {
+      setBulkDeleteError(e instanceof Error ? e.message : "Failed to delete rate items.");
+    } finally {
+      setBulkDeleting(false);
+    }
   }
 
   return (
@@ -192,6 +228,30 @@ export default function RateRulesClient({
               <p className="text-sm text-slate-500 dark:text-slate-400">No rate items yet.</p>
             ) : (
               <div className="flex flex-col gap-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <label className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.size > 0 && selectedIds.size === rateItems.length}
+                      onChange={toggleSelectAll}
+                      className="accent-brand-600"
+                    />
+                    Select all {rateItems.length}
+                  </label>
+                  {selectedIds.size > 0 && (
+                    <>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">{selectedIds.size} selected</span>
+                      <Button variant="danger" onClick={handleBulkDelete} disabled={bulkDeleting}>
+                        {bulkDeleting ? "Deleting…" : "Delete selected"}
+                      </Button>
+                      <Button variant="ghost" onClick={() => setSelectedIds(new Set())}>
+                        Clear selection
+                      </Button>
+                    </>
+                  )}
+                  {bulkDeleteError && <span className="text-xs text-critical">{bulkDeleteError}</span>}
+                </div>
+
                 {rateCardGroups.map(({ heading, groups, count }) => (
                   <div key={heading} className="flex flex-col gap-2">
                     <h3 className="text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -211,29 +271,36 @@ export default function RateRulesClient({
                                 </p>
                                 <div className="flex flex-col divide-y divide-purple-400/10">
                                   {items.map((item) => (
-                                    <button
-                                      key={item.id}
-                                      onClick={() => setEditingItem(item)}
-                                      className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-purple-500/5"
-                                    >
-                                      <div className="min-w-0">
-                                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-                                          {item.itemName}
-                                          {item.rateTier !== "Standard" && (
-                                            <span className="ml-2 rounded-full bg-purple-500/15 px-2 py-0.5 text-xs font-medium text-purple-300">
-                                              {item.rateTier}
-                                            </span>
-                                          )}
+                                    <div key={item.id} className="flex items-center gap-2 px-4 py-2.5 hover:bg-purple-500/5">
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedIds.has(item.id)}
+                                        onChange={() => toggleSelected(item.id)}
+                                        className="shrink-0 accent-brand-600"
+                                      />
+                                      <button
+                                        onClick={() => setEditingItem(item)}
+                                        className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-3 text-left"
+                                      >
+                                        <div className="min-w-0">
+                                          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                                            {item.itemName}
+                                            {item.rateTier !== "Standard" && (
+                                              <span className="ml-2 rounded-full bg-purple-500/15 px-2 py-0.5 text-xs font-medium text-purple-300">
+                                                {item.rateTier}
+                                              </span>
+                                            )}
+                                          </p>
+                                          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                                            {item.pricingBasis}
+                                            {item.unitLabel ? ` -- ${item.unitLabel}` : ""}
+                                          </p>
+                                        </div>
+                                        <p className="shrink-0 text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-50">
+                                          {formatCurrency(item.rate)}
                                         </p>
-                                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                                          {item.pricingBasis}
-                                          {item.unitLabel ? ` -- ${item.unitLabel}` : ""}
-                                        </p>
-                                      </div>
-                                      <p className="shrink-0 text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-50">
-                                        {formatCurrency(item.rate)}
-                                      </p>
-                                    </button>
+                                      </button>
+                                    </div>
                                   ))}
                                 </div>
                               </div>

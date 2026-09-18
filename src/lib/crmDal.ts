@@ -1225,6 +1225,14 @@ export async function deleteRateItem(id: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+/** Deletes many rate items at once (e.g. a checked selection on the Rate Card). */
+export async function deleteRateItems(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("rate_items").delete().in("id", ids).eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
+}
+
 export async function bulkCreateRateItems(rows: RateItemImportRow[]): Promise<{ inserted: number }> {
   if (rows.length === 0) return { inserted: 0 };
   const supabase = createAdminClient();

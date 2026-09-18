@@ -7,6 +7,7 @@ import {
   createRateItem,
   deleteClientRateOverride,
   deleteRateItem,
+  deleteRateItems,
   updateClientRateOverride,
   updateRateItem,
 } from "@/lib/crmDal";
@@ -26,6 +27,11 @@ export async function saveRateItemAction(id: string | null, input: RateItemInput
 
 export async function deleteRateItemAction(id: string): Promise<void> {
   await deleteRateItem(id);
+  revalidatePath("/proposals");
+}
+
+export async function deleteRateItemsAction(ids: string[]): Promise<void> {
+  await deleteRateItems(ids);
   revalidatePath("/proposals");
 }
 
