@@ -54,10 +54,11 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-const ACTIVITY_TYPE_META: Record<ContactActivityType, { icon: string; color: string }> = {
-  Call: { icon: "📞", color: "#3b82f6" },
-  Email: { icon: "✉️", color: "#8b5cf6" },
-  Meeting: { icon: "🤝", color: "#0ca30c" },
+const ACTIVITY_TYPE_META: Record<ContactActivityType, { icon: string; color: string; dateLabel: string; emptyMessage: string }> = {
+  Call: { icon: "📞", color: "#3b82f6", dateLabel: "Date", emptyMessage: "No calls logged yet." },
+  Email: { icon: "✉️", color: "#8b5cf6", dateLabel: "Date", emptyMessage: "No emails logged yet." },
+  Meeting: { icon: "🤝", color: "#0ca30c", dateLabel: "Date", emptyMessage: "No meetings logged yet." },
+  Task: { icon: "✅", color: "#f59e0b", dateLabel: "Due date", emptyMessage: "No tasks yet." },
 };
 
 function todayDateInputValue(): string {
@@ -113,13 +114,18 @@ export default function ContactDetailClient({
   }, [fieldClasses, assignedFieldIds, fieldValues]);
 
   const [activities, setActivities] = useState<ContactActivity[]>(initialActivities);
-  const [activityType, setActivityType] = useState<ContactActivityType>("Call");
+  const [selectedActivityType, setSelectedActivityType] = useState<ContactActivityType>("Call");
   const [activityDate, setActivityDate] = useState(todayDateInputValue());
   const [activitySubject, setActivitySubject] = useState("");
   const [activityNotes, setActivityNotes] = useState("");
   const [loggingActivity, setLoggingActivity] = useState(false);
   const [activityError, setActivityError] = useState<string | null>(null);
   const [deletingActivityId, setDeletingActivityId] = useState<string | null>(null);
+
+  const activitiesForSelectedType = useMemo(
+    () => activities.filter((a) => a.type === selectedActivityType),
+    [activities, selectedActivityType],
+  );
 
   async function handleLogActivity() {
     setActivityError(null);
@@ -132,14 +138,22 @@ export default function ContactDetailClient({
       const occurredAt = new Date(activityDate).toISOString();
       const id = await saveContactActivityAction({
         contactId: contact.id,
-        type: activityType,
+        type: selectedActivityType,
         subject: activitySubject.trim() || null,
         notes: activityNotes.trim() || null,
         occurredAt,
       });
       setActivities((prev) =>
         [
-          { id, contactId: contact.id, type: activityType, subject: activitySubject.trim() || null, notes: activityNotes.trim() || null, occurredAt, createdAt: new Date().toISOString() },
+          {
+            id,
+            contactId: contact.id,
+            type: selectedActivityType,
+            subject: activitySubject.trim() || null,
+            notes: activityNotes.trim() || null,
+            occurredAt,
+            createdAt: new Date().toISOString(),
+          },
           ...prev,
         ].sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime()),
       );
@@ -190,150 +204,76 @@ export default function ContactDetailClient({
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
-        <SectionCard icon="👤" title="Contact Info" color="#7c3ce3">
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Title" value={contact.title} />
-            <Field
-              label="Client"
-              value={
-                contact.companyId && (
-                  <Link href={`/network/clients/${contact.companyId}`} className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
-                    {contact.companyName}
-                  </Link>
-                )
-              }
-            />
-            <Field label="Email" value={contact.email} />
-            <Field label="Phone" value={contact.phone} />
-            <Field label="Region" value={contact.region} />
-            <Field
-              label="Approves work"
-              value={
-                contact.canApproveWork
-                  ? `Yes${contact.approvalLimit != null ? ` · up to ${formatCurrency(contact.approvalLimit)}` : ""}`
-                  : null
-              }
-            />
-          </div>
-        </SectionCard>
-
-        <SectionCard icon="📈" title="Opportunities" color="#3b82f6">
-          <div className="flex flex-col divide-y divide-purple-400/10">
-            {opportunities.length === 0 ? (
-              <p className="py-2 text-xs text-slate-500 dark:text-slate-400">
-                No opportunities tied to this contact yet.
-              </p>
-            ) : (
-              opportunities.map((o) => (
-                <Link
-                  key={o.id}
-                  href={`/crm/opportunities/${o.id}`}
-                  className="flex items-center justify-between gap-2 py-2 hover:text-brand-600 dark:hover:text-brand-400"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-50">{o.name}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{o.stage}</p>
-                  </div>
-                  {o.amount != null && (
-                    <span className="shrink-0 text-xs tabular-nums text-slate-500 dark:text-slate-400">
-                      {formatCurrency(o.amount)}
-                    </span>
-                  )}
-                </Link>
-              ))
-            )}
-          </div>
-        </SectionCard>
-
-        <SectionCard icon="📄" title="Agreements" color="#14b8a6">
-          <div className="flex flex-col divide-y divide-purple-400/10">
-            {contracts.length === 0 ? (
-              <p className="py-2 text-xs text-slate-500 dark:text-slate-400">
-                No agreements tied to this contact yet.
-              </p>
-            ) : (
-              contracts.map((c) => (
-                <Link
-                  key={c.id}
-                  href={`/crm/contracts?open=${c.id}`}
-                  className="flex items-center justify-between gap-2 py-2 hover:text-brand-600 dark:hover:text-brand-400"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-50">{c.name}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {c.trades.length > 0 ? c.trades.join(", ") : "No trade set"}
-                    </p>
-                  </div>
-                  {c.rateAmount != null && (
-                    <span className="shrink-0 text-xs tabular-nums text-slate-500 dark:text-slate-400">
-                      {formatCurrency(c.rateAmount)}
-                    </span>
-                  )}
-                </Link>
-              ))
-            )}
-          </div>
-        </SectionCard>
-
-        <SectionCard icon="📍" title="Sites responsible for" color="#f97316">
-          {responsibleSites.length === 0 ? (
-            <p className="text-xs text-slate-500 dark:text-slate-400">No sites assigned to this contact yet.</p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm text-slate-700 dark:text-slate-300">
-                  {responsibleSites.length} site{responsibleSites.length === 1 ? "" : "s"} assigned
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setShowAllSites((prev) => !prev)}
-                  className="text-xs font-medium text-brand-600 dark:text-brand-400 hover:underline"
-                >
-                  {showAllSites ? "Show less" : "Show all"}
-                </button>
-              </div>
-              {showAllSites && (
-                <div className="flex flex-col divide-y divide-purple-400/10">
-                  {responsibleSites.map((s) => (
-                    <Link
-                      key={s.id}
-                      href={`/network/sites/${s.id}`}
-                      className="flex items-center justify-between gap-2 py-2 hover:text-brand-600 dark:hover:text-brand-400"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-50">{s.name}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {[s.city, s.state].filter(Boolean).join(", ") || "No location set"}
-                        </p>
-                      </div>
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(260px,1fr)_minmax(0,1.6fr)_minmax(260px,1fr)]">
+        {/* Left: contact info */}
+        <div className="flex flex-col gap-6">
+          <SectionCard icon="👤" title="Contact Info" color="#7c3ce3">
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Title" value={contact.title} />
+              <Field
+                label="Client"
+                value={
+                  contact.companyId && (
+                    <Link href={`/network/clients/${contact.companyId}`} className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
+                      {contact.companyName}
                     </Link>
-                  ))}
-                </div>
-              )}
+                  )
+                }
+              />
+              <Field label="Email" value={contact.email} />
+              <Field label="Phone" value={contact.phone} />
+              <Field label="Region" value={contact.region} />
+              <Field
+                label="Approves work"
+                value={
+                  contact.canApproveWork
+                    ? `Yes${contact.approvalLimit != null ? ` · up to ${formatCurrency(contact.approvalLimit)}` : ""}`
+                    : null
+                }
+              />
             </div>
-          )}
-        </SectionCard>
+          </SectionCard>
 
-        <SectionCard icon="🗒️" title="Activity Log" color="#ec4899" className="lg:col-span-2">
-          <div className="flex flex-col gap-3 rounded-lg border border-purple-400/20 p-3">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-700 dark:text-slate-300">Type</span>
-                <select
-                  value={activityType}
-                  onChange={(e) => setActivityType(e.target.value as ContactActivityType)}
-                  className={inputClass}
+          {assignedFieldEntries.length > 0 && (
+            <SectionCard icon="🏷️" title="Custom Fields" color="#6366f1">
+              <div className="grid grid-cols-2 gap-3">
+                {assignedFieldEntries.map((f) => (
+                  <Field key={f.label} label={f.label} value={f.value} />
+                ))}
+              </div>
+            </SectionCard>
+          )}
+        </div>
+
+        {/* Middle: activity tabs -- Calls / Emails / Meetings / Tasks, one type visible at a time */}
+        <SectionCard icon="🗒️" title="Activity" color="#ec4899">
+          <div className="flex gap-1 rounded-lg border border-purple-400/20 p-1">
+            {CONTACT_ACTIVITY_TYPES.map((t) => {
+              const meta = ACTIVITY_TYPE_META[t];
+              const count = activities.filter((a) => a.type === t).length;
+              const selected = selectedActivityType === t;
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setSelectedActivityType(t)}
+                  className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1.5 text-sm font-semibold transition-all ${
+                    selected ? "text-white" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-50"
+                  }`}
+                  style={selected ? { backgroundColor: meta.color } : undefined}
                 >
-                  {CONTACT_ACTIVITY_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {ACTIVITY_TYPE_META[t].icon} {t}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  <span>{meta.icon}</span>
+                  {t}s
+                  <span className={selected ? "text-white/80" : "text-slate-400 dark:text-slate-500"}>({count})</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-4 flex flex-col gap-3 rounded-lg border border-purple-400/20 p-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-700 dark:text-slate-300">Date</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">{ACTIVITY_TYPE_META[selectedActivityType].dateLabel}</span>
                 <input type="date" value={activityDate} onChange={(e) => setActivityDate(e.target.value)} className={inputClass} />
               </label>
               <label className="flex flex-col gap-1 text-sm sm:col-span-2">
@@ -357,15 +297,17 @@ export default function ContactDetailClient({
             </label>
             {activityError && <p className="text-xs text-critical">{activityError}</p>}
             <Button onClick={handleLogActivity} disabled={loggingActivity} className="w-fit">
-              {loggingActivity ? "Logging…" : `+ Log ${activityType.toLowerCase()}`}
+              {loggingActivity ? "Logging…" : `+ Log ${selectedActivityType.toLowerCase()}`}
             </Button>
           </div>
 
           <div className="mt-4 flex flex-col divide-y divide-purple-400/10">
-            {activities.length === 0 ? (
-              <p className="py-2 text-xs text-slate-500 dark:text-slate-400">No calls, emails, or meetings logged yet.</p>
+            {activitiesForSelectedType.length === 0 ? (
+              <p className="py-2 text-xs text-slate-500 dark:text-slate-400">
+                {ACTIVITY_TYPE_META[selectedActivityType].emptyMessage}
+              </p>
             ) : (
-              activities.map((a) => {
+              activitiesForSelectedType.map((a) => {
                 const meta = ACTIVITY_TYPE_META[a.type];
                 return (
                   <div key={a.id} className="flex items-start justify-between gap-3 py-3">
@@ -380,7 +322,7 @@ export default function ContactDetailClient({
                         <p className="text-sm font-medium text-slate-900 dark:text-slate-50">
                           {a.subject || a.type}
                           <span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">
-                            {a.type} · {formatActivityDate(a.occurredAt)}
+                            {formatActivityDate(a.occurredAt)}
                           </span>
                         </p>
                         {a.notes && <p className="mt-0.5 whitespace-pre-wrap text-xs text-slate-600 dark:text-slate-400">{a.notes}</p>}
@@ -400,21 +342,111 @@ export default function ContactDetailClient({
           </div>
         </SectionCard>
 
-        <SectionCard icon="📝" title="Notes" color="#78716c">
-          <p className="whitespace-pre-wrap text-sm text-slate-900 dark:text-slate-50">
-            {contact.notes || <span className="text-slate-500 dark:text-slate-500">No notes yet.</span>}
-          </p>
-        </SectionCard>
+        {/* Right: sites, opportunities, notes, agreements */}
+        <div className="flex flex-col gap-6">
+          <SectionCard icon="📍" title="Sites responsible for" color="#f97316">
+            {responsibleSites.length === 0 ? (
+              <p className="text-xs text-slate-500 dark:text-slate-400">No sites assigned to this contact yet.</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm text-slate-700 dark:text-slate-300">
+                    {responsibleSites.length} site{responsibleSites.length === 1 ? "" : "s"} assigned
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowAllSites((prev) => !prev)}
+                    className="text-xs font-medium text-brand-600 dark:text-brand-400 hover:underline"
+                  >
+                    {showAllSites ? "Show less" : "Show all"}
+                  </button>
+                </div>
+                {showAllSites && (
+                  <div className="flex flex-col divide-y divide-purple-400/10">
+                    {responsibleSites.map((s) => (
+                      <Link
+                        key={s.id}
+                        href={`/network/sites/${s.id}`}
+                        className="flex items-center justify-between gap-2 py-2 hover:text-brand-600 dark:hover:text-brand-400"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-50">{s.name}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {[s.city, s.state].filter(Boolean).join(", ") || "No location set"}
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </SectionCard>
 
-        {assignedFieldEntries.length > 0 && (
-          <SectionCard icon="🏷️" title="Custom Fields" color="#6366f1">
-            <div className="grid grid-cols-2 gap-3">
-              {assignedFieldEntries.map((f) => (
-                <Field key={f.label} label={f.label} value={f.value} />
-              ))}
+          <SectionCard icon="📈" title="Opportunities" color="#3b82f6">
+            <div className="flex flex-col divide-y divide-purple-400/10">
+              {opportunities.length === 0 ? (
+                <p className="py-2 text-xs text-slate-500 dark:text-slate-400">
+                  No opportunities tied to this contact yet.
+                </p>
+              ) : (
+                opportunities.map((o) => (
+                  <Link
+                    key={o.id}
+                    href={`/crm/opportunities/${o.id}`}
+                    className="flex items-center justify-between gap-2 py-2 hover:text-brand-600 dark:hover:text-brand-400"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-50">{o.name}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{o.stage}</p>
+                    </div>
+                    {o.amount != null && (
+                      <span className="shrink-0 text-xs tabular-nums text-slate-500 dark:text-slate-400">
+                        {formatCurrency(o.amount)}
+                      </span>
+                    )}
+                  </Link>
+                ))
+              )}
             </div>
           </SectionCard>
-        )}
+
+          <SectionCard icon="📝" title="Notes" color="#78716c">
+            <p className="whitespace-pre-wrap text-sm text-slate-900 dark:text-slate-50">
+              {contact.notes || <span className="text-slate-500 dark:text-slate-500">No notes yet.</span>}
+            </p>
+          </SectionCard>
+
+          <SectionCard icon="📄" title="Agreements" color="#14b8a6">
+            <div className="flex flex-col divide-y divide-purple-400/10">
+              {contracts.length === 0 ? (
+                <p className="py-2 text-xs text-slate-500 dark:text-slate-400">
+                  No agreements tied to this contact yet.
+                </p>
+              ) : (
+                contracts.map((c) => (
+                  <Link
+                    key={c.id}
+                    href={`/crm/contracts?open=${c.id}`}
+                    className="flex items-center justify-between gap-2 py-2 hover:text-brand-600 dark:hover:text-brand-400"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-50">{c.name}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {c.trades.length > 0 ? c.trades.join(", ") : "No trade set"}
+                      </p>
+                    </div>
+                    {c.rateAmount != null && (
+                      <span className="shrink-0 text-xs tabular-nums text-slate-500 dark:text-slate-400">
+                        {formatCurrency(c.rateAmount)}
+                      </span>
+                    )}
+                  </Link>
+                ))
+              )}
+            </div>
+          </SectionCard>
+        </div>
       </div>
 
       {editing && (

@@ -46,11 +46,11 @@ export interface Contact {
   createdAt: string;
 }
 
-export const CONTACT_ACTIVITY_TYPES = ["Call", "Email", "Meeting"] as const;
+export const CONTACT_ACTIVITY_TYPES = ["Call", "Email", "Meeting", "Task"] as const;
 
 export type ContactActivityType = (typeof CONTACT_ACTIVITY_TYPES)[number];
 
-/** One logged interaction with a contact -- a call, an email, or a meeting -- independent of any
+/** One logged interaction (or task) for a contact -- a call, an email, a meeting, or a task -- independent of any
  * Opportunity/Contract, so it's visible from the contact's own page regardless of what it was about. */
 export interface ContactActivity {
   id: string;
