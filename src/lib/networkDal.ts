@@ -201,15 +201,32 @@ function mapSite(s: Record<string, unknown>): Site {
   };
 }
 
+/** Supabase's API layer (PostgREST) caps any single query at 1000 rows regardless of how many actually match,
+ * so a plain select silently truncates once a client (e.g. a large account like Amazon) crosses that many
+ * sites. Page-loops with .range() until a page comes back short of PAGE_SIZE, meaning there's nothing left to
+ * fetch. `build` re-applies the query's filters/order for each page since a Supabase query builder can't be
+ * reused across calls. */
+const SITE_PAGE_SIZE = 1000;
+
+async function fetchAllSitePages(
+  build: (from: number, to: number) => PromiseLike<{ data: Record<string, unknown>[] | null; error: { message: string } | null }>,
+): Promise<Record<string, unknown>[]> {
+  const rows: Record<string, unknown>[] = [];
+  for (let from = 0; ; from += SITE_PAGE_SIZE) {
+    const { data, error } = await build(from, from + SITE_PAGE_SIZE - 1);
+    if (error) throw new Error(error.message);
+    rows.push(...(data ?? []));
+    if (!data || data.length < SITE_PAGE_SIZE) break;
+  }
+  return rows;
+}
+
 export async function listSites(): Promise<Site[]> {
   const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("sites")
-    .select(SITE_COLUMNS)
-    .eq("user_id", OWNER_USER_ID)
-    .order("name", { ascending: true });
-  if (error) throw new Error(error.message);
-  return (data ?? []).map(mapSite);
+  const rows = await fetchAllSitePages((from, to) =>
+    supabase.from("sites").select(SITE_COLUMNS).eq("user_id", OWNER_USER_ID).order("name", { ascending: true }).range(from, to),
+  );
+  return rows.map(mapSite);
 }
 
 /** Groups every site sharing the same (trimmed, case-insensitive) Site ID -- only groups with more than one record, i.e. likely duplicate entries for the same physical site. */
@@ -254,14 +271,16 @@ export async function getSite(id: string): Promise<Site | null> {
 
 export async function listSitesForCompany(companyId: string): Promise<Site[]> {
   const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("sites")
-    .select(SITE_COLUMNS)
-    .eq("company_id", companyId)
-    .eq("user_id", OWNER_USER_ID)
-    .order("name", { ascending: true });
-  if (error) throw new Error(error.message);
-  return (data ?? []).map(mapSite);
+  const rows = await fetchAllSitePages((from, to) =>
+    supabase
+      .from("sites")
+      .select(SITE_COLUMNS)
+      .eq("company_id", companyId)
+      .eq("user_id", OWNER_USER_ID)
+      .order("name", { ascending: true })
+      .range(from, to),
+  );
+  return rows.map(mapSite);
 }
 
 const VENDOR_ASSIGNMENT_COLUMNS = `${ASSIGNMENT_COLUMNS}, sites(name, crm_companies(name))`;
@@ -353,14 +372,16 @@ export async function saveSiteTradeAssignments(siteId: string, assignments: Site
  * detail page instead. */
 export async function listSitesForContract(contractId: string): Promise<Site[]> {
   const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("sites")
-    .select(SITE_COLUMNS)
-    .eq("contract_id", contractId)
-    .eq("user_id", OWNER_USER_ID)
-    .order("name", { ascending: true });
-  if (error) throw new Error(error.message);
-  return (data ?? []).map(mapSite);
+  const rows = await fetchAllSitePages((from, to) =>
+    supabase
+      .from("sites")
+      .select(SITE_COLUMNS)
+      .eq("contract_id", contractId)
+      .eq("user_id", OWNER_USER_ID)
+      .order("name", { ascending: true })
+      .range(from, to),
+  );
+  return rows.map(mapSite);
 }
 
 /** A site can relate to a Contract two ways: directly (site.contract_id, the Agreement's own "Sites"
@@ -369,16 +390,23 @@ export async function listSitesForContract(contractId: string): Promise<Site[]> 
  * not the number of trade-assignment rows (a site can have two trades under the same contract). */
 async function syncContractSiteCount(contractId: string): Promise<void> {
   const supabase = createAdminClient();
-  const [{ data: directSites, error: directError }, { data: assignments, error: assignmentError }] = await Promise.all([
-    supabase.from("sites").select("id").eq("contract_id", contractId).eq("user_id", OWNER_USER_ID),
-    supabase.from("site_trade_assignments").select("site_id").eq("contract_id", contractId).eq("user_id", OWNER_USER_ID),
+  const [directSites, assignments] = await Promise.all([
+    fetchAllSitePages((from, to) =>
+      supabase.from("sites").select("id").eq("contract_id", contractId).eq("user_id", OWNER_USER_ID).range(from, to),
+    ),
+    fetchAllSitePages((from, to) =>
+      supabase
+        .from("site_trade_assignments")
+        .select("site_id")
+        .eq("contract_id", contractId)
+        .eq("user_id", OWNER_USER_ID)
+        .range(from, to),
+    ),
   ]);
-  if (directError) throw new Error(directError.message);
-  if (assignmentError) throw new Error(assignmentError.message);
 
   const siteCount = new Set([
-    ...(directSites ?? []).map((s) => s.id as string),
-    ...(assignments ?? []).map((a) => a.site_id as string),
+    ...directSites.map((s) => s.id as string),
+    ...assignments.map((a) => a.site_id as string),
   ]).size;
 
   const { error } = await supabase
@@ -825,15 +853,16 @@ async function matchSiteIds<T extends SiteMatchKeys>(
   companyId: string | null,
 ): Promise<{ siteIds: (string | null)[]; notFound: string[]; ambiguous: string[] }> {
   const supabase = createAdminClient();
-  let query = supabase.from("sites").select("id, name, site_code").eq("user_id", OWNER_USER_ID);
-  if (companyId) query = query.eq("company_id", companyId);
-  const { data: existing, error: fetchError } = await query;
-  if (fetchError) throw new Error(fetchError.message);
+  const existing = await fetchAllSitePages((from, to) => {
+    let query = supabase.from("sites").select("id, name, site_code").eq("user_id", OWNER_USER_ID);
+    if (companyId) query = query.eq("company_id", companyId);
+    return query.range(from, to);
+  });
 
   const byId = new Map<string, string>();
   const byName = new Map<string, string[]>();
   const byCode = new Map<string, string[]>();
-  for (const s of existing ?? []) {
+  for (const s of existing) {
     const id = s.id as string;
     byId.set(id, id);
     const nameKey = (s.name as string).trim().toLowerCase();
