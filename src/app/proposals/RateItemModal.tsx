@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
-import { PRICING_BASIS_OPTIONS, RATE_ITEM_CATEGORIES, RATE_TIER_OPTIONS } from "@/lib/crmTypes";
+import { ALL_TRADES, PRICING_BASIS_OPTIONS, RATE_ITEM_CATEGORIES, RATE_TIER_OPTIONS } from "@/lib/crmTypes";
 import type { Company, Contract, RateItem, RateItemInput } from "@/lib/crmTypes";
 import { TRADE_OPTIONS } from "@/lib/trades";
 import { deleteRateItemAction, saveRateItemAction } from "./actions";
@@ -152,6 +152,7 @@ export default function RateItemModal({
               <span className="font-medium text-slate-700 dark:text-slate-300">Trade</span>
               <select value={trade} onChange={(e) => setTrade(e.target.value)} className={inputClass}>
                 <option value="">Choose a trade…</option>
+                <option value={ALL_TRADES}>{ALL_TRADES} (applies to every trade)</option>
                 {TRADE_OPTIONS.map((t) => (
                   <option key={t} value={t}>
                     {t}

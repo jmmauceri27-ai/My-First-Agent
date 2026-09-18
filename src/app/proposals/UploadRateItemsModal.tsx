@@ -7,7 +7,7 @@ import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
 import { buildTemplateXlsxAction, parseUploadedSheetAction } from "@/lib/sheetActions";
-import { matchPricingBasis, matchRateItemCategory, matchRateTier } from "@/lib/crmTypes";
+import { ALL_TRADES, matchPricingBasis, matchRateItemCategory, matchRateTier } from "@/lib/crmTypes";
 import type { Company, Contract, RateItemImportRow } from "@/lib/crmTypes";
 import { matchTrade } from "@/lib/trades";
 import { bulkCreateRateItemsAction } from "./actions";
@@ -142,7 +142,7 @@ export default function UploadRateItemsModal({
         const pricingBasisRaw = String(row[mapping.pricingBasis] ?? "").trim();
         const rateValue = Number(row[mapping.rate]);
 
-        const trade = matchTrade(tradeRaw);
+        const trade = /^all trades$/i.test(tradeRaw) ? ALL_TRADES : matchTrade(tradeRaw);
         const category = matchRateItemCategory(categoryRaw);
         const pricingBasis = matchPricingBasis(pricingBasisRaw);
 
@@ -243,7 +243,8 @@ export default function UploadRateItemsModal({
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Upload rate items</h2>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
           Upload an .xlsx or .csv sheet of rate items -- Trade and Category must match the app&rsquo;s fixed lists
-          (e.g. Trade: Land, Snow Removal...; Category: Labor, Equipment, Materials, Service).{" "}
+          (e.g. Trade: Land, Snow Removal, or &ldquo;All Trades&rdquo; for a charge that applies to every trade
+          (e.g. a trip charge); Category: Labor, Equipment, Materials, Service, Fees).{" "}
           <button type="button" onClick={handleDownloadTemplate} className="text-brand-600 dark:text-brand-400 hover:underline">
             Download example template
           </button>

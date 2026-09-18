@@ -5,6 +5,7 @@ import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import { formatCurrency } from "@/lib/siteMapColor";
 import { findOverrideForTrade, priceTradeSelections, resolveTradeRateItems } from "@/lib/pricingEngine";
+import { ALL_TRADES } from "@/lib/crmTypes";
 import type { ClientRateOverride, Company, Contract, RateItem } from "@/lib/crmTypes";
 
 /** Manually exercises the pricing engine against real rate items -- pick a client/contract/trade, enter
@@ -27,7 +28,10 @@ export default function QuoteCalculator({
   const [quantities, setQuantities] = useState<Record<string, string>>({});
 
   const tradesWithItems = useMemo(
-    () => Array.from(new Set(rateItems.map((r) => r.trade))).sort((a, b) => a.localeCompare(b)),
+    () =>
+      Array.from(new Set(rateItems.map((r) => r.trade)))
+        .filter((t) => t !== ALL_TRADES)
+        .sort((a, b) => a.localeCompare(b)),
     [rateItems],
   );
 
@@ -152,6 +156,11 @@ export default function QuoteCalculator({
                             {item.rateTier !== "Regular" && (
                               <span className="ml-2 rounded-full bg-purple-500/15 px-2 py-0.5 text-xs font-medium text-purple-300">
                                 {item.rateTier}
+                              </span>
+                            )}
+                            {item.trade === ALL_TRADES && (
+                              <span className="ml-2 rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-500">
+                                All Trades
                               </span>
                             )}
                           </p>

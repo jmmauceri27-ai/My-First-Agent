@@ -1,3 +1,4 @@
+import { ALL_TRADES } from "./crmTypes";
 import type { ClientRateOverride, RateItem } from "./crmTypes";
 
 /** One rate item chosen for a trade's quote, with how many of it (hours, each, ft, visits...). */
@@ -33,11 +34,11 @@ export interface TradePricingResult {
  * they're never merged line by line, since a real rate sheet is a complete, self-contained replacement, not a
  * partial patch.
  */
-export function resolveTradeRateItems(
+function resolveTradeRateItemsForTrade(
   rateItems: RateItem[],
   trade: string,
   contractId: string | null,
-  companyId: string | null = null,
+  companyId: string | null,
 ): RateItem[] {
   if (contractId) {
     const contractSpecific = rateItems.filter((r) => r.trade === trade && r.contractId === contractId);
@@ -48,6 +49,23 @@ export function resolveTradeRateItems(
     if (companySpecific.length > 0) return companySpecific;
   }
   return rateItems.filter((r) => r.trade === trade && !r.contractId && !r.companyId);
+}
+
+/**
+ * resolveTradeRateItemsForTrade for `trade`, plus (not instead of) whatever resolves for the ALL_TRADES
+ * sentinel through the same contract/company/generic priority -- e.g. a trip charge scoped to ALL_TRADES shows
+ * up as an extra option no matter which real trade is being priced.
+ */
+export function resolveTradeRateItems(
+  rateItems: RateItem[],
+  trade: string,
+  contractId: string | null,
+  companyId: string | null = null,
+): RateItem[] {
+  const specific = resolveTradeRateItemsForTrade(rateItems, trade, contractId, companyId);
+  if (trade === ALL_TRADES) return specific;
+  const universal = resolveTradeRateItemsForTrade(rateItems, ALL_TRADES, contractId, companyId);
+  return [...specific, ...universal];
 }
 
 /** This client's override for `trade`, if any -- there's at most one per (client, trade), enforced by a unique constraint. */
@@ -62,9 +80,11 @@ export function findOverrideForTrade(
 
 /**
  * Composes a trade's price from a set of chosen rate items and quantities -- e.g. 3 hours of Landscape Laborer
- * + 1 Gold Mop #2 + a Dumping Charge -- then applies the client's override (if any) to the subtotal. Pure and
- * deterministic: the numbers always come from `rateItems`/`override`, never invented, so this is safe to call
- * from a chat-driven flow without the AI touching the math itself.
+ * + 1 Gold Mop #2 + a Dumping Charge -- then applies the client's override (if any) to the subtotal. A selected
+ * item scoped to ALL_TRADES (e.g. a trip charge) is accepted alongside `trade`'s own items, matching what
+ * resolveTradeRateItems already offered as choices. Pure and deterministic: the numbers always come from
+ * `rateItems`/`override`, never invented, so this is safe to call from a chat-driven flow without the AI
+ * touching the math itself.
  */
 export function priceTradeSelections(
   trade: string,
@@ -78,7 +98,7 @@ export function priceTradeSelections(
   for (const selection of selections) {
     if (!(selection.quantity > 0)) continue;
     const rateItem = byId.get(selection.rateItemId);
-    if (!rateItem || rateItem.trade !== trade) continue;
+    if (!rateItem || (rateItem.trade !== trade && rateItem.trade !== ALL_TRADES)) continue;
     lines.push({
       rateItem,
       quantity: selection.quantity,

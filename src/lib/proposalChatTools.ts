@@ -1,5 +1,6 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { findOverrideForTrade, priceTradeSelections, resolveTradeRateItems } from "./pricingEngine";
+import { ALL_TRADES } from "./crmTypes";
 import type { ClientRateOverride, RateItem } from "./crmTypes";
 
 export interface ProposalToolContext {
@@ -26,7 +27,7 @@ export const PROPOSAL_CHAT_TOOLS: Anthropic.Tool[] = [
   {
     name: "list_rate_items",
     description:
-      "Lists the real, priced line items for one trade -- labor, equipment, materials, and flat-rate service tasks -- each with its exact rateItemId, category, pricing basis, rate tier, and rate. Always call this before pricing a trade so you use real item ids and rates, never invented ones. Pass contractId when an agreement is selected: if that agreement has its own negotiated rate items for the trade (e.g. from an MSA rate card), you'll get exactly those instead. Also pass companyId when a client is selected: if no agreement rate card applies but that client has their own on-demand rates for the trade (work priced outside any signed agreement), you'll get those instead of the fully generic catalog. Check usingContractRateCard/usingCompanyRateCard in the result to see which one you got.",
+      "Lists the real, priced line items for one trade -- labor, equipment, materials, and flat-rate service tasks -- each with its exact rateItemId, category, pricing basis, rate tier, and rate. Always call this before pricing a trade so you use real item ids and rates, never invented ones. Pass contractId when an agreement is selected: if that agreement has its own negotiated rate items for the trade (e.g. from an MSA rate card), you'll get exactly those instead. Also pass companyId when a client is selected: if no agreement rate card applies but that client has their own on-demand rates for the trade (work priced outside any signed agreement), you'll get those instead of the fully generic catalog. Check usingContractRateCard/usingCompanyRateCard in the result to see which one you got. The result also includes any items scoped to apply to every trade (e.g. a trip charge or dispatch fee) -- only use one of those in a price if the scope actually calls for it.",
     input_schema: {
       type: "object",
       properties: {
@@ -85,7 +86,11 @@ export const PROPOSAL_CHAT_TOOLS: Anthropic.Tool[] = [
 export function runProposalChatTool(name: string, input: unknown, ctx: ProposalToolContext): unknown {
   switch (name) {
     case "list_trades": {
-      return { trades: Array.from(new Set(ctx.rateItems.map((r) => r.trade))).sort((a, b) => a.localeCompare(b)) };
+      return {
+        trades: Array.from(new Set(ctx.rateItems.map((r) => r.trade)))
+          .filter((t) => t !== ALL_TRADES)
+          .sort((a, b) => a.localeCompare(b)),
+      };
     }
 
     case "list_rate_items": {

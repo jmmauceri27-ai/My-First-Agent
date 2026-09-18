@@ -3,6 +3,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { createAnthropicClient, PROPOSAL_CHAT_MODEL } from "@/lib/anthropicClient";
 import { listClientRateOverrides, listRateItems } from "@/lib/crmDal";
+import { ALL_TRADES } from "@/lib/crmTypes";
 import { PROPOSAL_CHAT_TOOLS, runProposalChatTool } from "@/lib/proposalChatTools";
 
 const MAX_TOOL_ROUNDS = 8;
@@ -18,7 +19,7 @@ const SYSTEM_PROMPT_INTRO = `You are the Proposal Assistant, an internal tool th
 
 Ground rules:
 - NEVER invent a price, rate, or line item. Every number in your answer must come from a tool result.
-- Call list_rate_items before pricing a trade -- use the exact rateItemId, name, and rate it returns. Don't guess item names or ids, and don't reuse an id from a different trade.
+- Call list_rate_items before pricing a trade -- use the exact rateItemId, name, and rate it returns. Don't guess item names or ids, and don't reuse an id from a different trade. Its results already include any "applies to every trade" items (e.g. a trip charge) alongside that trade's own items -- only include one in the price if the scope actually calls for it (e.g. don't add a trip charge to every trade in a multi-trade proposal unless each trade is a separate dispatch).
 - Rates are looked up in priority order: an Agreement's own rate card (pass contractId to list_rate_items), then a Client's own on-demand rates for work outside any agreement (pass companyId to list_rate_items), then the fully generic catalog. Always pass whichever of contractId/companyId is currently selected -- usingContractRateCard/usingCompanyRateCard in the result tells you which one you actually got.
 - Call compute_trade_price to price a trade's selected line items (rateItemId + quantity pairs). It applies the client's blanket override automatically when you pass companyId -- a separate, client-level lever from an agreement's rate card.
 - If a proposal spans more than one trade, price each trade separately with compute_trade_price, then combine the trade totals with sum_totals -- never add the numbers yourself.
@@ -49,7 +50,9 @@ export async function sendProposalChatMessageAction(
   }
 
   const [rateItems, overrides] = await Promise.all([listRateItems(), listClientRateOverrides()]);
-  const tradesAvailable = Array.from(new Set(rateItems.map((r) => r.trade))).sort((a, b) => a.localeCompare(b));
+  const tradesAvailable = Array.from(new Set(rateItems.map((r) => r.trade)))
+    .filter((t) => t !== ALL_TRADES)
+    .sort((a, b) => a.localeCompare(b));
   const system = buildSystemPrompt(tradesAvailable, context);
 
   const client = createAnthropicClient();

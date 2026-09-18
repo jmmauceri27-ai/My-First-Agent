@@ -278,6 +278,11 @@ export const PRICING_BASIS_OPTIONS = [
 
 export type PricingBasis = (typeof PRICING_BASIS_OPTIONS)[number];
 
+/** Sentinel value for a rate item's `trade` that applies on top of every trade instead of one specific trade --
+ * e.g. a trip charge or dispatch fee. resolveTradeRateItems in pricingEngine.ts merges these into whichever
+ * trade is being priced, in addition to (not instead of) that trade's own items. */
+export const ALL_TRADES = "All Trades";
+
 /** Matches a freeform value (e.g. from an uploaded sheet) against the fixed Pricing Basis list, case-insensitively. */
 export function matchPricingBasis(value: string | null | undefined): PricingBasis | null {
   if (!value) return null;
@@ -311,6 +316,8 @@ export function matchRateTier(value: string | null | undefined): RateTier | null
 /** One priceable line item under a trade -- e.g. "Landscape Laborer" (Labor, Per Hour, Standard tier), "1.5" Valve Replaced" (Service, Flat), or "Gold Mop #2" (Materials, Per Each). A proposal's price for a trade is composed from its rate_items, not a single number. Scoped one of three ways: fully generic (contractId and companyId both null), a specific Client's on-demand rates with no particular agreement (companyId set, contractId null -- e.g. work done for them outside any signed contract), or one specific contract's own negotiated rate card (contractId set, e.g. an MSA rate sheet; companyId is then reachable transitively through the contract and not stored directly). See resolveTradeRateItems in pricingEngine.ts for how the three levels are reconciled. */
 export interface RateItem {
   id: string;
+  /** A real Trade name, or the ALL_TRADES sentinel for an item that applies on top of every trade (e.g. a trip
+   * charge) -- see resolveTradeRateItems in pricingEngine.ts for how the two are merged when pricing a trade. */
   trade: string;
   category: string;
   itemName: string;
