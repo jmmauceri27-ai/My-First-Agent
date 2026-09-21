@@ -46,16 +46,20 @@ async function handleDownloadTemplate() {
 export default function UploadRateItemsModal({
   companies,
   contracts,
+  defaultContractId,
   onClose,
 }: {
   companies: Company[];
   contracts: Contract[];
+  /** Pre-selects the Agreement for this import batch -- e.g. when the Rate Card screen is already filtered to
+   * one agreement, uploading from there should default to it instead of Generic. */
+  defaultContractId?: string;
   onClose: () => void;
 }) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [companyId, setCompanyId] = useState("");
-  const [contractId, setContractId] = useState("");
+  const [contractId, setContractId] = useState(defaultContractId ?? "");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 

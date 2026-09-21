@@ -29,6 +29,7 @@ export default function RateRulesClient({
   const router = useRouter();
   const [view, setView] = useState<View>("assistant");
   const [groupBy, setGroupBy] = useState<"trade" | "client">("trade");
+  const [agreementFilter, setAgreementFilter] = useState("");
   const [editingItem, setEditingItem] = useState<RateItem | null>(null);
   const [creatingItem, setCreatingItem] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -55,9 +56,19 @@ export default function RateRulesClient({
     return Array.from(categories.entries());
   }
 
+  const selectedAgreement = useMemo(
+    () => contracts.find((c) => c.id === agreementFilter) ?? null,
+    [contracts, agreementFilter],
+  );
+
+  const filteredRateItems = useMemo(
+    () => (agreementFilter ? rateItems.filter((r) => r.contractId === agreementFilter) : rateItems),
+    [rateItems, agreementFilter],
+  );
+
   const byTrade = useMemo(() => {
     const trades = new Map<string, Map<string, RateItem[]>>();
-    for (const item of rateItems) {
+    for (const item of filteredRateItems) {
       if (!trades.has(item.trade)) trades.set(item.trade, new Map());
       const byContract = trades.get(item.trade)!;
       const contractLabel = contractLabelFor(item);
@@ -76,11 +87,11 @@ export default function RateRulesClient({
           count: contractGroups.reduce((sum, g) => sum + g.count, 0),
         };
       });
-  }, [rateItems]);
+  }, [filteredRateItems]);
 
   const byClient = useMemo(() => {
     const clients = new Map<string, Map<string, RateItem[]>>();
-    for (const item of rateItems) {
+    for (const item of filteredRateItems) {
       const contractLabel = contractLabelFor(item);
       if (!clients.has(contractLabel)) clients.set(contractLabel, new Map());
       const byTradeMap = clients.get(contractLabel)!;
@@ -99,7 +110,7 @@ export default function RateRulesClient({
           count: tradeGroups.reduce((sum, g) => sum + g.count, 0),
         };
       });
-  }, [rateItems]);
+  }, [filteredRateItems]);
 
   const rateCardGroups = groupBy === "trade" ? byTrade : byClient;
 
@@ -121,7 +132,14 @@ export default function RateRulesClient({
   }
 
   function toggleSelectAll() {
-    setSelectedIds((prev) => (prev.size === rateItems.length ? new Set() : new Set(rateItems.map((r) => r.id))));
+    setSelectedIds((prev) =>
+      prev.size === filteredRateItems.length ? new Set() : new Set(filteredRateItems.map((r) => r.id)),
+    );
+  }
+
+  function handleAgreementFilterChange(contractId: string) {
+    setAgreementFilter(contractId);
+    setSelectedIds(new Set());
   }
 
   async function handleBulkDelete() {
@@ -188,9 +206,23 @@ export default function RateRulesClient({
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   Labor, equipment, materials, and flat-rate service items -- a proposal&rsquo;s price for a trade
                   is composed from these, not a single number.
+                  {selectedAgreement && ` Showing only ${selectedAgreement.name}'s rate card.`}
                 </p>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
+                <select
+                  value={agreementFilter}
+                  onChange={(e) => handleAgreementFilterChange(e.target.value)}
+                  className="rounded-lg border border-purple-400/20 bg-transparent px-2.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300"
+                >
+                  <option value="">All agreements</option>
+                  {contracts.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                      {c.companyName ? ` · ${c.companyName}` : ""}
+                    </option>
+                  ))}
+                </select>
                 <div className="flex gap-1 rounded-lg border border-purple-400/20 p-0.5">
                   <button
                     type="button"
@@ -224,17 +256,19 @@ export default function RateRulesClient({
 
             {rateItems.length === 0 ? (
               <p className="text-sm text-slate-500 dark:text-slate-400">No rate items yet.</p>
+            ) : filteredRateItems.length === 0 ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400">No rate items for this agreement yet.</p>
             ) : (
               <div className="flex flex-col gap-4">
                 <div className="flex flex-wrap items-center gap-3">
                   <label className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
                     <input
                       type="checkbox"
-                      checked={selectedIds.size > 0 && selectedIds.size === rateItems.length}
+                      checked={selectedIds.size > 0 && selectedIds.size === filteredRateItems.length}
                       onChange={toggleSelectAll}
                       className="accent-brand-600"
                     />
-                    Select all {rateItems.length}
+                    Select all {filteredRateItems.length}
                   </label>
                   {selectedIds.size > 0 && (
                     <>
@@ -356,6 +390,7 @@ export default function RateRulesClient({
               item={editingItem}
               companies={companies}
               contracts={contracts}
+              defaultContractId={agreementFilter || undefined}
               onClose={() => {
                 setEditingItem(null);
                 setCreatingItem(false);
@@ -364,7 +399,12 @@ export default function RateRulesClient({
           )}
 
           {uploading && (
-            <UploadRateItemsModal companies={companies} contracts={contracts} onClose={() => setUploading(false)} />
+            <UploadRateItemsModal
+              companies={companies}
+              contracts={contracts}
+              defaultContractId={agreementFilter || undefined}
+              onClose={() => setUploading(false)}
+            />
           )}
 
           {(editingOverride || creatingOverride) && (

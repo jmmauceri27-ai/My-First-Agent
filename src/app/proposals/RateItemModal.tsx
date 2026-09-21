@@ -14,16 +14,20 @@ export default function RateItemModal({
   item,
   companies,
   contracts,
+  defaultContractId,
   onClose,
 }: {
   item: RateItem | null;
   companies: Company[];
   contracts: Contract[];
+  /** Pre-selects the Agreement for a new item -- e.g. when the Rate Card screen is already filtered to one
+   * agreement, "+ New rate item" should default to it instead of Generic. Ignored when editing (item is set). */
+  defaultContractId?: string;
   onClose: () => void;
 }) {
   const router = useRouter();
   const [companyId, setCompanyId] = useState(item?.companyId ?? "");
-  const [contractId, setContractId] = useState(item?.contractId ?? "");
+  const [contractId, setContractId] = useState(item?.contractId ?? defaultContractId ?? "");
   const [trade, setTrade] = useState(item?.trade ?? "");
   const [category, setCategory] = useState(item?.category ?? "");
   const [itemName, setItemName] = useState(item?.itemName ?? "");
