@@ -22,6 +22,7 @@ import {
   bulkUpdateSiteRateSchedule,
   bulkUpdateSites,
   bulkUpdateSiteTradeAssignments,
+  bulkUpdateVendors,
   createSite,
   createSiteFilterTemplate,
   createVendor,
@@ -63,6 +64,8 @@ import type {
   VendorImportRow,
   VendorInput,
   VendorTradeAssignment,
+  VendorUpdateResult,
+  VendorUpdateRow,
 } from "@/lib/networkTypes";
 
 // ---------- Vendors ----------
@@ -109,6 +112,22 @@ export async function bulkCreateVendorsAction(rows: VendorImportRow[]): Promise<
     return result;
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to import vendors." };
+  }
+}
+
+/** Builds a .xlsx workbook from already-shaped vendor rows (e.g. the caller's current vendor list), returned as base64. */
+export async function exportVendorsToExcelAction(rows: DatasetRecord[], columns: string[]): Promise<string> {
+  return buildXlsxBase64(rows, columns);
+}
+
+/** Updates existing vendors in place from an uploaded sheet -- never creates new vendors. See bulkUpdateVendors for matching rules. */
+export async function bulkUpdateVendorsAction(rows: VendorUpdateRow[]): Promise<VendorUpdateResult & { error?: string }> {
+  try {
+    const result = await bulkUpdateVendors(rows);
+    revalidatePath("/network");
+    return result;
+  } catch (e) {
+    return { updated: 0, notFound: [], ambiguous: [], error: e instanceof Error ? e.message : "Failed to update vendors." };
   }
 }
 

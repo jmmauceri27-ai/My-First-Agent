@@ -20,6 +20,8 @@ import type {
   VendorImportRow,
   VendorInput,
   VendorTradeAssignment,
+  VendorUpdateResult,
+  VendorUpdateRow,
 } from "./networkTypes";
 
 // ---------- Vendors ----------
@@ -135,6 +137,109 @@ export async function bulkCreateVendors(rows: VendorImportRow[]): Promise<{ inse
     if (error) throw new Error(error.message);
   }
   return { inserted: batch.length };
+}
+
+interface VendorMatchKeys {
+  matchId: string | null;
+  matchName: string | null;
+}
+
+/** Resolves each row's `matchId` (record id) / `matchName` (case-insensitive) to a vendor id, trying matchId
+ * first and falling through to matchName on "not found" -- same matching rules as matchSiteIds, minus the
+ * Site ID/company-scoping concepts vendors don't have. */
+async function matchVendorIds<T extends VendorMatchKeys>(
+  rows: T[],
+): Promise<{ vendorIds: (string | null)[]; notFound: string[]; ambiguous: string[] }> {
+  const supabase = createAdminClient();
+  const { data: existing, error } = await supabase.from("vendors").select("id, name").eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
+
+  const byId = new Map<string, string>();
+  const byName = new Map<string, string[]>();
+  for (const v of existing ?? []) {
+    const id = v.id as string;
+    byId.set(id, id);
+    const nameKey = (v.name as string).trim().toLowerCase();
+    byName.set(nameKey, [...(byName.get(nameKey) ?? []), id]);
+  }
+
+  const notFound: string[] = [];
+  const ambiguous: string[] = [];
+  const vendorIds: (string | null)[] = [];
+
+  for (const row of rows) {
+    let vendorId: string | null = null;
+    let notFoundKey: string | null = null;
+    let ambiguousKey: string | null = null;
+
+    if (!vendorId && row.matchId) {
+      const match = byId.get(row.matchId);
+      if (match) vendorId = match;
+      else notFoundKey = notFoundKey ?? row.matchId;
+    }
+    if (!vendorId && row.matchName) {
+      const key = row.matchName.trim().toLowerCase();
+      const matches = byName.get(key) ?? [];
+      if (matches.length === 1) vendorId = matches[0];
+      else if (matches.length > 1) ambiguousKey = ambiguousKey ?? row.matchName;
+      else notFoundKey = notFoundKey ?? row.matchName;
+    }
+
+    if (!vendorId) {
+      if (ambiguousKey) ambiguous.push(ambiguousKey);
+      else if (notFoundKey) notFound.push(notFoundKey);
+    }
+    vendorIds.push(vendorId);
+  }
+
+  return { vendorIds, notFound, ambiguous };
+}
+
+/** Updates existing vendors in place from an uploaded sheet -- never creates new vendors. Only the columns
+ * mapped in the upload get changed; anything left unmapped is left exactly as it was. */
+export async function bulkUpdateVendors(rows: VendorUpdateRow[]): Promise<VendorUpdateResult> {
+  const supabase = createAdminClient();
+  const { vendorIds, notFound, ambiguous } = await matchVendorIds(rows);
+
+  const updates: { id: string; payload: Record<string, unknown> }[] = [];
+  rows.forEach((row, i) => {
+    const vendorId = vendorIds[i];
+    if (!vendorId) return;
+
+    const payload: Record<string, unknown> = {};
+    if ("services" in row) payload.services = row.services;
+    if ("contactName" in row) payload.contact_name = row.contactName;
+    if ("email" in row) payload.email = row.email;
+    if ("phone" in row) payload.phone = row.phone;
+    if ("website" in row) payload.website = row.website;
+    if ("address" in row) payload.address = row.address;
+    if ("city" in row) payload.city = row.city;
+    if ("state" in row) payload.state = row.state;
+    if ("lat" in row) payload.lat = row.lat;
+    if ("lng" in row) payload.lng = row.lng;
+    if ("notes" in row) payload.notes = row.notes;
+    if (Object.keys(payload).length === 0) return;
+
+    updates.push({ id: vendorId, payload });
+  });
+
+  const concurrency = 20;
+  for (let i = 0; i < updates.length; i += concurrency) {
+    const batch = updates.slice(i, i + concurrency);
+    const results = await Promise.all(
+      batch.map((u) =>
+        supabase
+          .from("vendors")
+          .update({ ...u.payload, updated_at: new Date().toISOString() })
+          .eq("id", u.id)
+          .eq("user_id", OWNER_USER_ID),
+      ),
+    );
+    const failed = results.find((r) => r.error);
+    if (failed?.error) throw new Error(failed.error.message);
+  }
+
+  return { updated: updates.length, notFound, ambiguous };
 }
 
 // ---------- Sites ----------

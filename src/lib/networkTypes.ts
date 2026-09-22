@@ -47,6 +47,37 @@ export interface VendorImportRow {
   notes: string | null;
 }
 
+/**
+ * A single row parsed from an uploaded sheet meant to UPDATE existing vendors rather than create new ones --
+ * the download/edit/reupload round trip. Matched to an existing vendor by `matchId` (the database's own record
+ * id, present when the sheet came from the Download button) if present, else `matchName` (case-insensitive).
+ * Only the fields actually present on the row are touched -- an omitted field leaves the vendor's existing
+ * value alone.
+ */
+export interface VendorUpdateRow {
+  matchId: string | null;
+  matchName: string | null;
+  services?: string | null;
+  contactName?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  notes?: string | null;
+}
+
+export interface VendorUpdateResult {
+  updated: number;
+  /** Match keys (ID or name) from the sheet that didn't correspond to any existing vendor. */
+  notFound: string[];
+  /** Names that matched more than one vendor (no Record ID to disambiguate). */
+  ambiguous: string[];
+}
+
 /** Flexible bag of numeric sq. ft measurements (Turf Area, Sidewalk, Parking Lot, Bed Space, Public Walk, etc.). */
 export type SiteMeasurements = Record<string, number>;
 
