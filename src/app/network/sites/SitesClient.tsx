@@ -773,21 +773,35 @@ export default function SitesClient({
           sumOrNull(s.tradeAssignments.map((a) => a.contractValue)),
           sumOrNull(s.tradeAssignments.map((a) => a.subPrice)),
         );
-      const siteMarginDollar = (s: Site) =>
-        computeSiteMargin(
-          sumOrNull(s.tradeAssignments.map((a) => a.contractValue)),
-          sumOrNull(s.tradeAssignments.map((a) => a.subPrice)),
-        );
+      // The blended % above sums every trade's contract value/sub price into one number, which can
+      // read as "wrong" next to a specific trade's own numbers (e.g. a thin-margin Snow Removal agreement
+      // blended with a richer Land one). Breaking margin out per trade in the tooltip makes that visible.
+      function tradeMarginLines(s: Site): { key: string; value: string }[] {
+        const byTrade = new Map<string, Site["tradeAssignments"]>();
+        for (const a of s.tradeAssignments) {
+          if (!byTrade.has(a.trade)) byTrade.set(a.trade, []);
+          byTrade.get(a.trade)!.push(a);
+        }
+        return Array.from(byTrade.entries()).map(([trade, assignments]) => {
+          const contractValue = sumOrNull(assignments.map((a) => a.contractValue));
+          const subPrice = sumOrNull(assignments.map((a) => a.subPrice));
+          const dollar = computeSiteMargin(contractValue, subPrice);
+          const percent = computeSiteMarginPercent(contractValue, subPrice);
+          const parts = [dollar !== null ? formatCurrency(dollar) : null, percent !== null ? formatPercent(percent) : null].filter(
+            (p): p is string => p !== null,
+          );
+          return { key: trade, value: parts.length ? parts.join(" · ") : "—" };
+        });
+      }
       const percents = plottable.map(siteMarginPercent).filter((m): m is number => m !== null);
       const min = percents.length ? Math.min(...percents) : 0;
       const max = percents.length ? Math.max(...percents) : 0;
       const pins: MapPin[] = plottable.map((s) => {
         const percent = siteMarginPercent(s);
-        const dollar = siteMarginDollar(s);
         const ratio = percent === null || max === min ? null : (percent - min) / (max - min);
         const fields: { key: string; value: string }[] = [];
-        if (percent !== null) fields.push({ key: "Margin %", value: formatPercent(percent) });
-        if (dollar !== null) fields.push({ key: "Margin $", value: formatCurrency(dollar) });
+        if (percent !== null) fields.push({ key: "Margin %", value: `${formatPercent(percent)} (blended)` });
+        fields.push(...tradeMarginLines(s));
         return {
           id: s.id,
           lat: s.lat as number,
