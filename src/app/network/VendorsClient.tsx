@@ -97,28 +97,27 @@ export default function VendorsClient({
   const vendorNames = useMemo(() => vendors.map((v) => v.name), [vendors]);
   const palette = useMemo(() => buildCategoricalPalette(vendorNames), [vendorNames]);
 
-  /** With the overlay on, a vendor's own pin and every site it's tied to (as Vendor or Sub-Vendor) share the
-   * same color, so the association reads visually on the map instead of needing a separate list. */
+  /** Every vendor gets its own color (a small "headquarters" building icon), always -- with the sites overlay
+   * on, each site tied to that vendor shows as a circle in the same color, so the association reads visually
+   * on the map instead of needing a separate list. */
   const { pins, legend } = useMemo(() => {
-    const usedNames = new Set<string>();
-
     const vendorPins: MapPin[] = vendors
       .filter((v) => v.lat != null && v.lng != null)
-      .map((v) => {
-        if (showSites) usedNames.add(v.name);
-        return {
-          id: `vendor:${v.id}`,
-          lat: v.lat as number,
-          lng: v.lng as number,
-          label: v.name,
-          color: showSites ? (palette.get(v.name) ?? NEUTRAL_PIN_COLOR) : undefined,
-          fields: v.services ? [{ key: "Services", value: v.services }] : [],
-        };
-      });
+      .map((v) => ({
+        id: `vendor:${v.id}`,
+        lat: v.lat as number,
+        lng: v.lng as number,
+        label: v.name,
+        shape: "building",
+        color: palette.get(v.name) ?? NEUTRAL_PIN_COLOR,
+        fields: v.services ? [{ key: "Services", value: v.services }] : [],
+      }));
 
     if (!showSites) {
       return { pins: vendorPins, legend: null as MapLegendProps | null };
     }
+
+    const usedNames = new Set<string>(vendors.filter((v) => v.lat != null && v.lng != null).map((v) => v.name));
 
     const sitePins: MapPin[] = sites
       .filter((s) => s.lat != null && s.lng != null)
@@ -133,7 +132,6 @@ export default function VendorsClient({
           lat: s.lat as number,
           lng: s.lng as number,
           label: s.name,
-          shape: "square",
           colors: names.map((n) => palette.get(n) ?? NEUTRAL_PIN_COLOR),
           fields: s.tradeAssignments
             .filter((a) => a.vendorId || a.subVendorId)
@@ -210,11 +208,13 @@ export default function VendorsClient({
             <div className="absolute bottom-3 left-3 z-[1000] flex max-w-[calc(100%-1.5rem)] flex-col gap-1.5 rounded-lg border border-purple-400/20 bg-white/90 px-3 py-2 shadow-md backdrop-blur dark:bg-[#150f26]/90">
               <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
                 <span className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-full bg-slate-500 dark:bg-slate-400" />
+                  <span aria-hidden className="text-sm leading-none">
+                    🏢
+                  </span>
                   Vendor
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 bg-slate-500 dark:bg-slate-400" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-slate-500 dark:bg-slate-400" />
                   Site
                 </span>
               </div>
