@@ -1,10 +1,10 @@
 export const dynamic = "force-dynamic";
 
-import { listVendors } from "@/lib/networkDal";
+import { listSites, listVendors } from "@/lib/networkDal";
 import { listFieldClasses } from "@/lib/fieldsDal";
 import VendorsClient from "./VendorsClient";
 
 export default async function NetworkPage() {
-  const [vendors, fieldClasses] = await Promise.all([listVendors(), listFieldClasses()]);
-  return <VendorsClient vendors={vendors} fieldClasses={fieldClasses} />;
+  const [vendors, sites, fieldClasses] = await Promise.all([listVendors(), listSites(), listFieldClasses()]);
+  return <VendorsClient vendors={vendors} sites={sites} fieldClasses={fieldClasses} />;
 }
