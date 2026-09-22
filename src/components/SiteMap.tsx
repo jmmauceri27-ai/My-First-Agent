@@ -2,7 +2,31 @@
 
 import { useEffect, useRef } from "react";
 import "leaflet/dist/leaflet.css";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { DEFAULT_PIN_COLOR } from "@/lib/siteMapColor";
+
+/**
+ * leaflet.markercluster is a legacy Leaflet plugin: it expects a mutable global `L` it can patch
+ * (`L.MarkerClusterGroup = ...`) rather than importing leaflet itself. The ES module namespace object from
+ * `import("leaflet")` is frozen, so that patch would throw -- this loads leaflet once, copies it into a plain
+ * mutable object, publishes that as `window.L` so the plugin's top-level code can extend it, then loads the
+ * plugin. Cached at module scope so every <SiteMap> (and every re-render) reuses the same already-patched `L`
+ * instead of re-running the plugin's patch against a fresh, unpatched copy.
+ */
+let leafletWithClusteringPromise: Promise<typeof import("leaflet")> | null = null;
+
+function loadLeafletWithClustering(): Promise<typeof import("leaflet")> {
+  if (!leafletWithClusteringPromise) {
+    leafletWithClusteringPromise = import("leaflet").then(async (leafletModule) => {
+      const L = { ...leafletModule } as typeof leafletModule;
+      (window as unknown as { L: typeof L }).L = L;
+      await import("leaflet.markercluster");
+      return L;
+    });
+  }
+  return leafletWithClusteringPromise;
+}
 
 export interface MapPin {
   id: string;
@@ -104,7 +128,7 @@ function buildTooltipContent(pin: MapPin): HTMLElement {
 export default function SiteMap({ pins, onPinClick }: { pins: MapPin[]; onPinClick: (id: string) => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
-  const markersLayerRef = useRef<import("leaflet").LayerGroup | null>(null);
+  const markersLayerRef = useRef<import("leaflet").MarkerClusterGroup | null>(null);
   const onPinClickRef = useRef(onPinClick);
 
   useEffect(() => {
@@ -114,7 +138,7 @@ export default function SiteMap({ pins, onPinClick }: { pins: MapPin[]; onPinCli
   useEffect(() => {
     let cancelled = false;
 
-    import("leaflet").then((L) => {
+    loadLeafletWithClustering().then((L) => {
       if (cancelled || !containerRef.current) return;
 
       if (!mapRef.current) {
@@ -127,8 +151,11 @@ export default function SiteMap({ pins, onPinClick }: { pins: MapPin[]; onPinCli
 
       const map = mapRef.current;
       markersLayerRef.current?.remove();
-      const markersLayer = L.layerGroup().addTo(map);
+      // Clusters nearby pins into a numbered bubble that splits apart on zoom -- without this, a few hundred
+      // sites in the same metro area render as an unreadable pile of overlapping, indistinguishable dots.
+      const markersLayer = L.markerClusterGroup({ maxClusterRadius: 60 });
       markersLayerRef.current = markersLayer;
+      markersLayer.addTo(map);
       const bounds: [number, number][] = [];
 
       for (const pin of pins) {
@@ -142,7 +169,7 @@ export default function SiteMap({ pins, onPinClick }: { pins: MapPin[]; onPinCli
         const marker = L.marker([pin.lat, pin.lng], { icon });
         marker.bindTooltip(buildTooltipContent(pin), { direction: "top", offset: [0, -8] });
         marker.on("click", () => onPinClickRef.current(pin.id));
-        marker.addTo(markersLayer);
+        markersLayer.addLayer(marker);
         bounds.push([pin.lat, pin.lng]);
       }
 
