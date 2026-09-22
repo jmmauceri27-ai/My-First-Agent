@@ -11,18 +11,40 @@ export interface MapPin {
   label: string;
   fields: { key: string; value: string }[];
   color?: string;
-  /** One or more colors to render as pie wedges on the pin (e.g. one wedge per Trade) -- takes precedence over `color` when present. */
+  /** One or more colors to render as pie/stripe wedges on the pin (e.g. one wedge per Trade) -- takes precedence over `color` when present. */
   colors?: string[];
+  /** "circle" (default) or "square" -- lets two related pin sets on the same map (e.g. vendors vs. the sites
+   * tied to them) stay colored the same way while still being tellable apart by outline alone. */
+  shape?: "circle" | "square";
 }
 
 const PIN_RADIUS = 8;
 const PIN_STROKE = "#1c1430";
 
-/** Builds a small SVG circle (single color) or pie chart (one wedge per color) for use as a Leaflet divIcon. */
-function buildPinSvg(colors: string[]): string {
+/** Builds a small SVG marker -- a circle or square, single-filled or split into one wedge/stripe per color --
+ * for use as a Leaflet divIcon. */
+function buildPinSvg(colors: string[], shape: "circle" | "square" = "circle"): string {
   const size = PIN_RADIUS * 2 + 4;
   const c = size / 2;
   const r = PIN_RADIUS;
+
+  if (shape === "square") {
+    const side = r * 1.7; // slightly smaller than the circle's diameter so it reads as a comparable size
+    const left = c - side / 2;
+    const top = c - side / 2;
+
+    if (colors.length <= 1) {
+      const fill = colors[0] ?? DEFAULT_PIN_COLOR;
+      return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg"><rect x="${left.toFixed(2)}" y="${top.toFixed(2)}" width="${side.toFixed(2)}" height="${side.toFixed(2)}" fill="${fill}" fill-opacity="0.9" stroke="${PIN_STROKE}" stroke-width="2" /></svg>`;
+    }
+
+    const stripeWidth = side / colors.length;
+    let stripes = "";
+    for (let i = 0; i < colors.length; i++) {
+      stripes += `<rect x="${(left + i * stripeWidth).toFixed(2)}" y="${top.toFixed(2)}" width="${stripeWidth.toFixed(2)}" height="${side.toFixed(2)}" fill="${colors[i]}" />`;
+    }
+    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg"><g fill-opacity="0.9">${stripes}</g><rect x="${left.toFixed(2)}" y="${top.toFixed(2)}" width="${side.toFixed(2)}" height="${side.toFixed(2)}" fill="none" stroke="${PIN_STROKE}" stroke-width="2" /></svg>`;
+  }
 
   if (colors.length <= 1) {
     const fill = colors[0] ?? DEFAULT_PIN_COLOR;
@@ -96,7 +118,7 @@ export default function SiteMap({ pins, onPinClick }: { pins: MapPin[]; onPinCli
       for (const pin of pins) {
         const size = PIN_RADIUS * 2 + 4;
         const icon = L.divIcon({
-          html: buildPinSvg(pin.colors ?? [pin.color ?? DEFAULT_PIN_COLOR]),
+          html: buildPinSvg(pin.colors ?? [pin.color ?? DEFAULT_PIN_COLOR], pin.shape ?? "circle"),
           className: "",
           iconSize: [size, size],
           iconAnchor: [size / 2, size / 2],

@@ -133,6 +133,7 @@ export default function VendorsClient({
           lat: s.lat as number,
           lng: s.lng as number,
           label: s.name,
+          shape: "square",
           colors: names.map((n) => palette.get(n) ?? NEUTRAL_PIN_COLOR),
           fields: s.tradeAssignments
             .filter((a) => a.vendorId || a.subVendorId)
@@ -206,7 +207,17 @@ export default function VendorsClient({
             </div>
           )}
           {legend && (
-            <div className="absolute bottom-3 left-3 z-[1000] max-w-[calc(100%-1.5rem)] rounded-lg border border-purple-400/20 bg-white/90 px-3 py-2 shadow-md backdrop-blur dark:bg-[#150f26]/90">
+            <div className="absolute bottom-3 left-3 z-[1000] flex max-w-[calc(100%-1.5rem)] flex-col gap-1.5 rounded-lg border border-purple-400/20 bg-white/90 px-3 py-2 shadow-md backdrop-blur dark:bg-[#150f26]/90">
+              <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-slate-500 dark:bg-slate-400" />
+                  Vendor
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 bg-slate-500 dark:bg-slate-400" />
+                  Site
+                </span>
+              </div>
               <MapLegend {...legend} />
             </div>
           )}
