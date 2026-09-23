@@ -9,9 +9,10 @@ import { TRADE_OPTIONS } from "@/lib/trades";
 import { MONTHS } from "@/lib/rateSchedule";
 import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
 import { buildTemplateXlsxAction } from "@/lib/sheetActions";
+import type { DatasetRecord } from "@/lib/types";
 import type { Company } from "@/lib/crmTypes";
-import type { SiteRateScheduleUpdateRow } from "@/lib/networkTypes";
-import { bulkUpdateSiteRateScheduleAction, parseSiteSheetAction } from "./actions";
+import type { Site, SiteRateScheduleUpdateRow } from "@/lib/networkTypes";
+import { bulkUpdateSiteRateScheduleAction, exportSitesToExcelAction, parseSiteSheetAction } from "./actions";
 
 type ParsedRow = Record<string, string | number | boolean | null>;
 
@@ -40,19 +41,48 @@ async function handleDownloadTemplate() {
   downloadBase64Xlsx(base64, "site_rate_schedule_template.xlsx");
 }
 
+const CURRENT_SCHEDULE_COLUMNS = ["Record ID", "Site ID", "Site Name", ...MONTHS];
+
 export default function UpdateSiteRateScheduleModal({
   companies,
+  sites,
   onClose,
 }: {
   companies: Company[];
+  sites: Site[];
   onClose: () => void;
 }) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [downloadingCurrent, setDownloadingCurrent] = useState(false);
 
   const [trade, setTrade] = useState("");
+
+  const sitesForTrade = trade ? sites.filter((s) => s.tradeAssignments.some((a) => a.trade === trade)) : [];
+
+  async function handleDownloadCurrent() {
+    if (!trade || sitesForTrade.length === 0) return;
+    setDownloadingCurrent(true);
+    try {
+      const rows: DatasetRecord[] = sitesForTrade.map((s) => {
+        const assignment = s.tradeAssignments.find((a) => a.trade === trade)!;
+        const row: DatasetRecord = {
+          "Record ID": s.id,
+          "Site ID": s.siteCode,
+          "Site Name": s.name,
+        };
+        for (const month of MONTHS) row[month] = assignment.rateSchedule[month] ?? null;
+        return row;
+      });
+      const base64 = await exportSitesToExcelAction(rows, CURRENT_SCHEDULE_COLUMNS);
+      const date = new Date().toISOString().slice(0, 10);
+      downloadBase64Xlsx(base64, `${trade.toLowerCase().replace(/\s+/g, "_")}_rate_schedule_${date}.xlsx`);
+    } finally {
+      setDownloadingCurrent(false);
+    }
+  }
 
   const [parsedRows, setParsedRows] = useState<ParsedRow[] | null>(null);
   const [parsedColumns, setParsedColumns] = useState<string[]>([]);
@@ -178,10 +208,11 @@ export default function UpdateSiteRateScheduleModal({
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
           Bulk-set which months one Trade is paid for, and how much, on existing sites from a sheet -- scoped to a
           single Trade you pick below, so e.g. updating Land&rsquo;s schedule never touches a site&rsquo;s Snow
-          Removal schedule.{" "}
+          Removal schedule. Pick a trade below to download its current schedule and edit that, or start from{" "}
           <button type="button" onClick={handleDownloadTemplate} className="text-brand-600 dark:text-brand-400 hover:underline">
-            Download example template
+            an example template
           </button>
+          .
         </p>
 
         <label className="mt-4 flex flex-col gap-1 text-sm">
@@ -195,6 +226,25 @@ export default function UpdateSiteRateScheduleModal({
             ))}
           </select>
         </label>
+
+        {trade && (
+          <div className="mt-3 flex items-center gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleDownloadCurrent}
+              disabled={downloadingCurrent || sitesForTrade.length === 0}
+              className="w-fit"
+            >
+              {downloadingCurrent
+                ? "Downloading…"
+                : `Download current ${trade} schedule (${sitesForTrade.length} site${sitesForTrade.length === 1 ? "" : "s"})`}
+            </Button>
+            {sitesForTrade.length === 0 && (
+              <span className="text-xs text-slate-500 dark:text-slate-400">No sites have {trade} assigned yet.</span>
+            )}
+          </div>
+        )}
 
         <div className="mt-4 flex flex-col gap-2">
           <input

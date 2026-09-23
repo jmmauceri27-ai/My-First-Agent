@@ -1490,7 +1490,7 @@ export default function SitesClient({
       )}
 
       {updatingRateSchedule && (
-        <UpdateSiteRateScheduleModal companies={companies} onClose={() => setUpdatingRateSchedule(false)} />
+        <UpdateSiteRateScheduleModal companies={companies} sites={sites} onClose={() => setUpdatingRateSchedule(false)} />
       )}
 
       {updatingExpenseSchedule && (
