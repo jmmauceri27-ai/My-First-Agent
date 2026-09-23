@@ -170,7 +170,7 @@ export default function CompanyModal({
 
   return (
     <>
-      <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
         <Card
           className="max-h-[90vh] w-full max-w-md overflow-y-auto p-6 shadow-xl"
           onClick={(e) => e.stopPropagation()}
