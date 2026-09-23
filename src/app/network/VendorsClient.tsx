@@ -108,7 +108,7 @@ export default function VendorsClient({
         lat: v.lat as number,
         lng: v.lng as number,
         label: v.name,
-        shape: "building",
+        shape: "triangle",
         color: palette.get(v.name) ?? NEUTRAL_PIN_COLOR,
         fields: v.services ? [{ key: "Services", value: v.services }] : [],
       }));
@@ -208,9 +208,10 @@ export default function VendorsClient({
             <div className="absolute bottom-3 left-3 z-[1000] flex max-w-[calc(100%-1.5rem)] flex-col gap-1.5 rounded-lg border border-purple-400/20 bg-white/90 px-3 py-2 shadow-md backdrop-blur dark:bg-[#150f26]/90">
               <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
                 <span className="flex items-center gap-1.5">
-                  <span aria-hidden className="text-sm leading-none">
-                    🏢
-                  </span>
+                  <span
+                    aria-hidden
+                    className="inline-block h-0 w-0 border-x-[5px] border-b-[8px] border-x-transparent border-b-slate-500 dark:border-b-slate-400"
+                  />
                   Vendor
                 </span>
                 <span className="flex items-center gap-1.5">

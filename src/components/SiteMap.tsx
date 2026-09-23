@@ -37,53 +37,36 @@ export interface MapPin {
   color?: string;
   /** One or more colors to render as pie/stripe wedges on the pin (e.g. one wedge per Trade) -- takes precedence over `color` when present. */
   colors?: string[];
-  /** "circle" (default) or "building" -- lets two related pin sets on the same map (e.g. vendors vs. the sites
-   * tied to them) stay colored the same way while still being tellable apart by outline alone. "building" is
-   * a small colorable office/headquarters glyph, meant for a vendor's own pin -- it always shows a single
-   * color (the first of `colors`), since an icon can't be split into wedges the way a circle can. */
-  shape?: "circle" | "building";
+  /** "circle" (default) or "triangle" -- lets two related pin sets on the same map (e.g. vendors vs. the sites
+   * tied to them) stay colored the same way while still being tellable apart by outline alone. "triangle" is
+   * meant for a vendor's own pin -- it always shows a single color (the first of `colors`), since an icon
+   * can't be split into wedges the way a circle can. */
+  shape?: "circle" | "triangle";
 }
 
 const PIN_RADIUS = 8;
 const PIN_STROKE = "#1c1430";
 
-/** A small colorable "headquarters" glyph -- a building body with a few window squares -- used for a vendor's
- * own pin so it reads as a place of business rather than a serviced site. */
-function buildBuildingSvg(fill: string, size: number): string {
+/** A simple upward-pointing triangle, inscribed in the same radius as the circle marker, used for a vendor's
+ * own pin so it's tellable apart from the (circular) sites tied to it at a glance. */
+function buildTriangleSvg(fill: string, size: number): string {
   const c = size / 2;
-  const r = PIN_RADIUS;
-  const bodyWidth = r * 1.6;
-  const bodyHeight = r * 1.9;
-  const left = c - bodyWidth / 2;
-  const top = c - bodyHeight / 2 + 1;
-  const winSize = bodyWidth * 0.22;
-  const col1 = left + bodyWidth * 0.18;
-  const col2 = left + bodyWidth * 0.6;
-  const row1 = top + bodyHeight * 0.18;
-  const row2 = top + bodyHeight * 0.52;
-  const windows = [
-    [col1, row1],
-    [col2, row1],
-    [col1, row2],
-    [col2, row2],
-  ]
-    .map(
-      ([x, y]) =>
-        `<rect x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${winSize.toFixed(2)}" height="${winSize.toFixed(2)}" fill="#ffffff" fill-opacity="0.85" />`,
-    )
-    .join("");
-  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg"><rect x="${left.toFixed(2)}" y="${top.toFixed(2)}" width="${bodyWidth.toFixed(2)}" height="${bodyHeight.toFixed(2)}" fill="${fill}" fill-opacity="0.95" stroke="${PIN_STROKE}" stroke-width="1.5" />${windows}</svg>`;
+  const r = PIN_RADIUS * 1.05;
+  const top = `${c},${(c - r).toFixed(2)}`;
+  const bottomRight = `${(c + r * 0.87).toFixed(2)},${(c + r * 0.5).toFixed(2)}`;
+  const bottomLeft = `${(c - r * 0.87).toFixed(2)},${(c + r * 0.5).toFixed(2)}`;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg"><polygon points="${top} ${bottomRight} ${bottomLeft}" fill="${fill}" fill-opacity="0.95" stroke="${PIN_STROKE}" stroke-width="2" stroke-linejoin="round" /></svg>`;
 }
 
-/** Builds a small SVG marker -- a building glyph, or a circle (single-filled or split into one wedge per
- * color) -- for use as a Leaflet divIcon. */
-function buildPinSvg(colors: string[], shape: "circle" | "building" = "circle"): string {
+/** Builds a small SVG marker -- a triangle, or a circle (single-filled or split into one wedge per color) --
+ * for use as a Leaflet divIcon. */
+function buildPinSvg(colors: string[], shape: "circle" | "triangle" = "circle"): string {
   const size = PIN_RADIUS * 2 + 4;
   const c = size / 2;
   const r = PIN_RADIUS;
 
-  if (shape === "building") {
-    return buildBuildingSvg(colors[0] ?? DEFAULT_PIN_COLOR, size);
+  if (shape === "triangle") {
+    return buildTriangleSvg(colors[0] ?? DEFAULT_PIN_COLOR, size);
   }
 
   if (colors.length <= 1) {
