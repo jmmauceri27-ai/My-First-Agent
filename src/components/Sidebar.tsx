@@ -77,7 +77,7 @@ export default function Sidebar() {
             </Link>
 
             {area.subLinks && (
-              <div className="invisible absolute left-full top-0 z-30 pl-2 opacity-0 transition-opacity group-hover:visible group-hover:opacity-100">
+              <div className="invisible absolute left-full top-0 z-[2000] pl-2 opacity-0 transition-opacity group-hover:visible group-hover:opacity-100">
                 <div className="w-52 rounded-xl border border-purple-200 bg-white p-2 shadow-xl dark:border-purple-400/30 dark:bg-[#1c1530] dark:shadow-black/50">
                   <p className="px-2 py-1 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     {area.label}
