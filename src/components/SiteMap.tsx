@@ -199,5 +199,5 @@ export default function SiteMap({ pins, onPinClick }: { pins: MapPin[]; onPinCli
     return () => observer.disconnect();
   }, []);
 
-  return <div ref={containerRef} className="h-full w-full" />;
+  return <div ref={containerRef} className="isolate h-full w-full" />;
 }
