@@ -6,7 +6,8 @@ import { useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import type { MapPin } from "@/components/SiteMap";
 import type { MapLegendProps } from "@/components/MapLegend";
-import { NEUTRAL_PIN_COLOR, buildCategoricalPalette } from "@/lib/siteMapColor";
+import { NEUTRAL_PIN_COLOR } from "@/lib/siteMapColor";
+import { CHART_COLORS_LIGHT } from "@/lib/chartPalette";
 import type { FieldClass } from "@/lib/crmTypes";
 import type { DatasetRecord } from "@/lib/types";
 import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
@@ -36,6 +37,30 @@ const VENDOR_EXPORT_COLUMNS = [
   "Longitude",
   "Notes",
 ];
+
+/** Every vendor needs its own genuinely distinct color, not just the first 8 -- the shared
+ * buildCategoricalPalette (used elsewhere for CVD-audited dataviz colors) folds anything past 8 into a flat
+ * gray, which defeats the point here once there are more than a handful of vendors. Reuses those 8 validated
+ * colors first, then fills in with hues spread evenly around the rest of the color wheel so every vendor still
+ * gets a color of its own instead of disappearing into "unassigned" gray. */
+function buildVendorPalette(names: string[]): Map<string, string> {
+  const distinct: string[] = [];
+  for (const n of names) {
+    if (!distinct.includes(n)) distinct.push(n);
+  }
+
+  const map = new Map<string, string>();
+  const overflowCount = Math.max(distinct.length - CHART_COLORS_LIGHT.length, 0);
+  distinct.forEach((n, i) => {
+    if (i < CHART_COLORS_LIGHT.length) {
+      map.set(n, CHART_COLORS_LIGHT[i]);
+    } else {
+      const hue = ((i - CHART_COLORS_LIGHT.length) * 360) / overflowCount;
+      map.set(n, `hsl(${hue.toFixed(0)}, 65%, 50%)`);
+    }
+  });
+  return map;
+}
 
 function vendorToExportRow(v: Vendor): DatasetRecord {
   return {
@@ -95,11 +120,12 @@ export default function VendorsClient({
   }
 
   const vendorNames = useMemo(() => vendors.map((v) => v.name), [vendors]);
-  const palette = useMemo(() => buildCategoricalPalette(vendorNames), [vendorNames]);
+  const palette = useMemo(() => buildVendorPalette(vendorNames), [vendorNames]);
 
-  /** Every vendor gets its own color (a small "headquarters" building icon), always -- with the sites overlay
-   * on, each site tied to that vendor shows as a circle in the same color, so the association reads visually
-   * on the map instead of needing a separate list. */
+  /** Every vendor gets its own color (a triangle pin), always -- with the sites overlay on, each site tied to
+   * that vendor shows as a circle in the same color, so the association reads visually on the map instead of
+   * needing a separate list. Vendor pins never cluster (cluster: false) -- there are always few enough of them
+   * to stay individually visible even while their (possibly hundreds of) sites do cluster. */
   const { pins, legend } = useMemo(() => {
     const vendorPins: MapPin[] = vendors
       .filter((v) => v.lat != null && v.lng != null)
@@ -109,6 +135,7 @@ export default function VendorsClient({
         lng: v.lng as number,
         label: v.name,
         shape: "triangle",
+        cluster: false,
         color: palette.get(v.name) ?? NEUTRAL_PIN_COLOR,
         fields: v.services ? [{ key: "Services", value: v.services }] : [],
       }));

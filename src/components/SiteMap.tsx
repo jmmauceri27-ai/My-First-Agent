@@ -42,6 +42,10 @@ export interface MapPin {
    * meant for a vendor's own pin -- it always shows a single color (the first of `colors`), since an icon
    * can't be split into wedges the way a circle can. */
   shape?: "circle" | "triangle";
+  /** Whether this pin can be folded into a cluster bubble with nearby pins. Defaults to true. Set false for a
+   * pin set that's never numerous enough to need it and should always stay individually visible/clickable
+   * (e.g. a handful of vendor pins on a map that also plots their many sites). */
+  cluster?: boolean;
 }
 
 const PIN_RADIUS = 8;
@@ -111,7 +115,8 @@ function buildTooltipContent(pin: MapPin): HTMLElement {
 export default function SiteMap({ pins, onPinClick }: { pins: MapPin[]; onPinClick: (id: string) => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
-  const markersLayerRef = useRef<import("leaflet").MarkerClusterGroup | null>(null);
+  const clusteredLayerRef = useRef<import("leaflet").MarkerClusterGroup | null>(null);
+  const plainLayerRef = useRef<import("leaflet").LayerGroup | null>(null);
   const onPinClickRef = useRef(onPinClick);
 
   useEffect(() => {
@@ -133,12 +138,18 @@ export default function SiteMap({ pins, onPinClick }: { pins: MapPin[]; onPinCli
       }
 
       const map = mapRef.current;
-      markersLayerRef.current?.remove();
+      clusteredLayerRef.current?.remove();
+      plainLayerRef.current?.remove();
       // Clusters nearby pins into a numbered bubble that splits apart on zoom -- without this, a few hundred
-      // sites in the same metro area render as an unreadable pile of overlapping, indistinguishable dots.
-      const markersLayer = L.markerClusterGroup({ maxClusterRadius: 60 });
-      markersLayerRef.current = markersLayer;
-      markersLayer.addTo(map);
+      // sites in the same metro area render as an unreadable pile of overlapping, indistinguishable dots. A
+      // pin marked cluster: false (e.g. a handful of vendor pins sharing the map with their many sites) skips
+      // this and stays individually visible, in its own plain layer.
+      const clusteredLayer = L.markerClusterGroup({ maxClusterRadius: 60 });
+      const plainLayer = L.layerGroup();
+      clusteredLayerRef.current = clusteredLayer;
+      plainLayerRef.current = plainLayer;
+      clusteredLayer.addTo(map);
+      plainLayer.addTo(map);
       const bounds: [number, number][] = [];
 
       for (const pin of pins) {
@@ -152,7 +163,11 @@ export default function SiteMap({ pins, onPinClick }: { pins: MapPin[]; onPinCli
         const marker = L.marker([pin.lat, pin.lng], { icon });
         marker.bindTooltip(buildTooltipContent(pin), { direction: "top", offset: [0, -8] });
         marker.on("click", () => onPinClickRef.current(pin.id));
-        markersLayer.addLayer(marker);
+        if (pin.cluster === false) {
+          plainLayer.addLayer(marker);
+        } else {
+          clusteredLayer.addLayer(marker);
+        }
         bounds.push([pin.lat, pin.lng]);
       }
 
@@ -168,7 +183,8 @@ export default function SiteMap({ pins, onPinClick }: { pins: MapPin[]; onPinCli
 
   useEffect(() => {
     return () => {
-      markersLayerRef.current = null;
+      clusteredLayerRef.current = null;
+      plainLayerRef.current = null;
       mapRef.current?.remove();
       mapRef.current = null;
     };
