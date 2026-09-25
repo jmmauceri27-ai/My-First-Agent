@@ -809,6 +809,7 @@ export default function SitesClient({
           label: s.name,
           color: ratio === null ? DEFAULT_PIN_COLOR : gradientColorForRatio(ratio),
           fields,
+          cluster: false,
         };
       });
       const legend: MapLegendProps | null = percents.length ? { mode: "gradient", min, max, format: "percent" } : null;
@@ -833,6 +834,7 @@ export default function SitesClient({
           label: s.name,
           colors: names.map((n) => palette.get(n) ?? NEUTRAL_PIN_COLOR),
           fields: s.tradeAssignments.map((a) => ({ key: a.trade, value: a.vendorName ?? "Unassigned" })),
+          cluster: false,
         };
       });
       const presentNames = Array.from(new Set(allVendorNames));
@@ -858,6 +860,7 @@ export default function SitesClient({
           label: s.name,
           colors: trades.length ? trades.map((t) => TRADE_COLORS[t as Trade] ?? NEUTRAL_PIN_COLOR) : [NEUTRAL_PIN_COLOR],
           fields: s.trades.length ? [{ key: "Trade", value: s.trades.join(", ") }] : [],
+          cluster: false,
         };
       });
       const presentTrades = TRADE_OPTIONS.filter((t) => plottable.some((s) => shownTrades(s).includes(t)));
@@ -875,6 +878,7 @@ export default function SitesClient({
       lng: s.lng as number,
       label: s.name,
       fields: [],
+      cluster: false,
     }));
     return { pins, legend: null as MapLegendProps | null };
   }, [filteredSites, colorMode, tradeFilter]);
