@@ -61,6 +61,38 @@ function SectionCard({
   );
 }
 
+/** A horizontal row of selectable tabs -- used for the right-hand panel of the Site page, where Rate & Expense
+ * Schedule / Measurements & Counts / Last Season Snowfall / Notes share one screen instead of stacking as
+ * separate cards. */
+function TabBar({
+  tabs,
+  active,
+  onChange,
+}: {
+  tabs: { key: string; label: string }[];
+  active: string;
+  onChange: (key: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1 border-b border-purple-400/15 px-1">
+      {tabs.map((tab) => (
+        <button
+          key={tab.key}
+          type="button"
+          onClick={() => onChange(tab.key)}
+          className={`-mb-px border-b-2 px-3 py-2.5 text-sm font-semibold transition-colors ${
+            active === tab.key
+              ? "border-brand-600 text-brand-600 dark:border-brand-400 dark:text-brand-400"
+              : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-50"
+          }`}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function TradeChip({ trade }: { trade: string }) {
   const color = TRADE_COLORS[trade as Trade] ?? "#78716c";
   return (
@@ -131,6 +163,7 @@ export default function SiteDetailClient({
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<"view" | "edit">("view");
+  const [activeViewTab, setActiveViewTab] = useState("schedule");
 
   const [siteCode, setSiteCode] = useState(site.siteCode ?? "");
   const [name, setName] = useState(site.name);
@@ -226,6 +259,20 @@ export default function SiteDetailClient({
       .filter((f): f is NonNullable<typeof f> => !!f)
       .map((f) => ({ label: f.label, value: fieldValues[f.id] ?? "" }));
   }, [fieldClasses, assignedFieldIds, fieldValues]);
+
+  /** The right-hand panel's tabs -- only the ones relevant to this site show up, same conditions each section
+   * used when it was its own always-visible card. */
+  const viewTabs = useMemo(() => {
+    const list: { key: string; label: string }[] = [];
+    if (assignmentTrades.length > 0) list.push({ key: "schedule", label: "Rate & Expense Schedule" });
+    list.push({ key: "measurements", label: "Measurements & Counts" });
+    if (trades.includes("Snow Removal")) list.push({ key: "snowfall", label: "Last Season Snowfall" });
+    list.push({ key: "notes", label: "Notes" });
+    if (assignedFieldEntries.length > 0) list.push({ key: "customFields", label: "Custom Fields" });
+    return list;
+  }, [assignmentTrades, trades, assignedFieldEntries]);
+
+  const currentViewTab = viewTabs.some((t) => t.key === activeViewTab) ? activeViewTab : (viewTabs[0]?.key ?? "");
 
   function updateAssignmentDraft(trade: string, patch: Partial<AssignmentDraft>) {
     setAssignmentDrafts((prev) => ({ ...prev, [trade]: { ...(prev[trade] ?? emptyDraft()), ...patch } }));
@@ -374,228 +421,236 @@ export default function SiteDetailClient({
       {error && <p className="text-sm text-critical">{error}</p>}
 
       {mode === "view" ? (
-        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
-          <SectionCard icon="🏢" title="Client & Opportunity" color="#7c3ce3">
-            <div className="flex flex-col gap-3">
-              <Field
-                label="Client"
-                value={
-                  selectedCompany && (
-                    <Link href={`/network/clients/${selectedCompany.id}`} className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
-                      {selectedCompany.name}
-                    </Link>
-                  )
-                }
-              />
-              <Field
-                label="Opportunity"
-                value={
-                  selectedOpportunity && (
-                    <Link href={`/crm/opportunities/${selectedOpportunity.id}`} className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
-                      {selectedOpportunity.name}
-                    </Link>
-                  )
-                }
-              />
-              <Field
-                label="Agreement"
-                value={
-                  site.contractId && (
-                    <Link href={`/crm/contracts?open=${site.contractId}`} className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
-                      {site.contractName}
-                    </Link>
-                  )
-                }
-              />
-            </div>
-          </SectionCard>
-
-          <SectionCard icon="📍" title="Location" color="#3b82f6">
-            <div className="flex flex-col gap-3">
-              <Field label="Address" value={address} />
-              <div className="grid grid-cols-3 gap-3">
-                <Field label="City" value={city} />
-                <Field label="State" value={state} />
-                <Field label="Zip" value={zip} />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Latitude" value={lat} />
-                <Field label="Longitude" value={lng} />
-              </div>
-            </div>
-          </SectionCard>
-
-          <SectionCard icon="🛠️" title="Trades" color="#475569">
-            {trades.length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400">No trades assigned yet.</p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {trades.map((t) => (
-                  <TradeChip key={t} trade={t} />
-                ))}
-              </div>
-            )}
-          </SectionCard>
-
-          {assignmentTrades.length > 0 && (
-            <SectionCard icon="🤝" title="Vendor & Agreement" color="#14b8a6" className="lg:col-span-2">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {assignmentTrades.map((trade) => {
-                  const draft = assignmentDrafts[trade] ?? emptyDraft();
-                  const vendor = vendors.find((v) => v.id === draft.vendorId) ?? null;
-                  const subVendor = vendors.find((v) => v.id === draft.subVendorId) ?? null;
-                  const contract = contractsForCompany.find((c) => c.id === draft.contractId) ?? null;
-                  return (
-                    <div key={trade} className="rounded-lg border border-purple-400/20 p-3">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{trade}</p>
-                      <div className="mt-2 grid grid-cols-2 gap-3">
-                        <Field
-                          label="Vendor"
-                          value={
-                            vendor && (
-                              <Link href={`/network/vendors/${vendor.id}`} className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
-                                {vendor.name}
-                              </Link>
-                            )
-                          }
-                        />
-                        <Field
-                          label="Sub-Vendor"
-                          value={
-                            subVendor && (
-                              <Link href={`/network/vendors/${subVendor.id}`} className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
-                                {subVendor.name}
-                              </Link>
-                            )
-                          }
-                        />
-                        <Field
-                          label="Agreement"
-                          value={
-                            contract && (
-                              <Link href={`/crm/contracts?open=${contract.id}`} className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
-                                {contract.name}
-                              </Link>
-                            )
-                          }
-                        />
-                        <Field label="Billing type" value={contract?.billingType ?? null} />
-                        <Field label="Agreement value" value={draft.contractValue.trim() ? formatCurrency(Number(parseCurrencyInput(draft.contractValue))) : null} />
-                        <Field label="Sub price (to Vendor)" value={draft.subPrice.trim() ? formatCurrency(Number(parseCurrencyInput(draft.subPrice))) : null} />
-                        <Field label="Sub-Vendor price" value={draft.subVendorPrice.trim() ? formatCurrency(Number(parseCurrencyInput(draft.subVendorPrice))) : null} />
-                      </div>
-                    </div>
-                  );
-                })}
+        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[380px_1fr]">
+          <div className="flex flex-col gap-6">
+            <SectionCard icon="🏢" title="Client & Opportunity" color="#7c3ce3">
+              <div className="flex flex-col gap-3">
+                <Field
+                  label="Client"
+                  value={
+                    selectedCompany && (
+                      <Link href={`/network/clients/${selectedCompany.id}`} className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
+                        {selectedCompany.name}
+                      </Link>
+                    )
+                  }
+                />
+                <Field
+                  label="Opportunity"
+                  value={
+                    selectedOpportunity && (
+                      <Link href={`/crm/opportunities/${selectedOpportunity.id}`} className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
+                        {selectedOpportunity.name}
+                      </Link>
+                    )
+                  }
+                />
+                <Field
+                  label="Agreement"
+                  value={
+                    site.contractId && (
+                      <Link href={`/crm/contracts?open=${site.contractId}`} className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
+                        {site.contractName}
+                      </Link>
+                    )
+                  }
+                />
               </div>
             </SectionCard>
-          )}
 
-          <SectionCard icon="📐" title="Measurements & Counts" color="#f97316">
-            {groupedMeasurements.length === 0 && countEntries.length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400">No measurements or counts yet.</p>
-            ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="flex flex-col gap-3">
-                  {groupedMeasurements.map((group) => (
-                    <div key={group.label}>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{group.label}</p>
-                      {group.entries.map(([label, value]) => (
-                        <div key={label} className="flex items-center justify-between gap-2 text-sm">
-                          <span className="text-slate-700 dark:text-slate-300">{label}</span>
-                          <span className="tabular-nums text-slate-900 dark:text-slate-50">{formatSquareFeet(value)}</span>
+            <SectionCard icon="📍" title="Location" color="#3b82f6">
+              <div className="flex flex-col gap-3">
+                <Field label="Address" value={address} />
+                <div className="grid grid-cols-3 gap-3">
+                  <Field label="City" value={city} />
+                  <Field label="State" value={state} />
+                  <Field label="Zip" value={zip} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Latitude" value={lat} />
+                  <Field label="Longitude" value={lng} />
+                </div>
+              </div>
+            </SectionCard>
+
+            <SectionCard icon="🛠️" title="Trades" color="#475569">
+              {trades.length === 0 ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400">No trades assigned yet.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {trades.map((t) => (
+                    <TradeChip key={t} trade={t} />
+                  ))}
+                </div>
+              )}
+            </SectionCard>
+
+            {assignmentTrades.length > 0 && (
+              <SectionCard icon="🤝" title="Vendor & Agreement" color="#14b8a6">
+                <div className="flex flex-col gap-4">
+                  {assignmentTrades.map((trade) => {
+                    const draft = assignmentDrafts[trade] ?? emptyDraft();
+                    const vendor = vendors.find((v) => v.id === draft.vendorId) ?? null;
+                    const subVendor = vendors.find((v) => v.id === draft.subVendorId) ?? null;
+                    const contract = contractsForCompany.find((c) => c.id === draft.contractId) ?? null;
+                    return (
+                      <div key={trade} className="rounded-lg border border-purple-400/20 p-3">
+                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{trade}</p>
+                        <div className="mt-2 grid grid-cols-2 gap-3">
+                          <Field
+                            label="Vendor"
+                            value={
+                              vendor && (
+                                <Link href={`/network/vendors/${vendor.id}`} className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
+                                  {vendor.name}
+                                </Link>
+                              )
+                            }
+                          />
+                          <Field
+                            label="Sub-Vendor"
+                            value={
+                              subVendor && (
+                                <Link href={`/network/vendors/${subVendor.id}`} className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
+                                  {subVendor.name}
+                                </Link>
+                              )
+                            }
+                          />
+                          <Field
+                            label="Agreement"
+                            value={
+                              contract && (
+                                <Link href={`/crm/contracts?open=${contract.id}`} className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
+                                  {contract.name}
+                                </Link>
+                              )
+                            }
+                          />
+                          <Field label="Billing type" value={contract?.billingType ?? null} />
+                          <Field label="Agreement value" value={draft.contractValue.trim() ? formatCurrency(Number(parseCurrencyInput(draft.contractValue))) : null} />
+                          <Field label="Sub price (to Vendor)" value={draft.subPrice.trim() ? formatCurrency(Number(parseCurrencyInput(draft.subPrice))) : null} />
+                          <Field label="Sub-Vendor price" value={draft.subVendorPrice.trim() ? formatCurrency(Number(parseCurrencyInput(draft.subVendorPrice))) : null} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </SectionCard>
+            )}
+          </div>
+
+          <Card>
+            <TabBar tabs={viewTabs} active={currentViewTab} onChange={setActiveViewTab} />
+            <div className="p-5">
+              {currentViewTab === "schedule" && (
+                <div className="flex flex-col gap-6">
+                  <div>
+                    <h3 className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      💵 Rate Schedule
+                    </h3>
+                    <div className="mt-3 grid grid-cols-1 gap-5 sm:grid-cols-2">
+                      {assignmentTrades.map((trade) => {
+                        const draft = assignmentDrafts[trade] ?? emptyDraft();
+                        const monthly = scheduleToNumbers(draft.rateSchedule);
+                        const monthlyTotal = scheduleTotal(draft.rateSchedule);
+                        return (
+                          <div key={trade}>
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{trade}</p>
+                              <Field label="Annual Rate Total" value={draft.annualRateTotal.trim() ? formatCurrency(Number(parseCurrencyInput(draft.annualRateTotal))) : null} />
+                            </div>
+                            <ScheduleCalendar schedule={monthly} />
+                            {monthlyTotal > 0 && (
+                              <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-500">Sum of months: {formatCurrency(monthlyTotal)}</p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      🧾 Expense Schedule
+                    </h3>
+                    <div className="mt-3 grid grid-cols-1 gap-5 sm:grid-cols-2">
+                      {assignmentTrades.map((trade) => {
+                        const draft = assignmentDrafts[trade] ?? emptyDraft();
+                        const vendorName = vendors.find((v) => v.id === draft.vendorId)?.name ?? null;
+                        const subVendorName = vendors.find((v) => v.id === draft.subVendorId)?.name ?? null;
+                        const vendorMonthly = scheduleToNumbers(draft.vendorExpenseSchedule);
+                        const subVendorMonthly = scheduleToNumbers(draft.subVendorExpenseSchedule);
+                        return (
+                          <div key={trade}>
+                            <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{trade}</p>
+                            <p className="mt-1 text-xs text-slate-600 dark:text-slate-500">
+                              Vendor{vendorName ? `: ${vendorName}` : " (not assigned)"}
+                            </p>
+                            <ScheduleCalendar schedule={vendorMonthly} />
+                            <p className="mt-3 text-xs text-slate-600 dark:text-slate-500">
+                              Sub-Vendor{subVendorName ? `: ${subVendorName}` : " (not assigned)"}
+                            </p>
+                            <ScheduleCalendar schedule={subVendorMonthly} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {currentViewTab === "measurements" &&
+                (groupedMeasurements.length === 0 && countEntries.length === 0 ? (
+                  <p className="text-sm text-slate-500 dark:text-slate-400">No measurements or counts yet.</p>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="flex flex-col gap-3">
+                      {groupedMeasurements.map((group) => (
+                        <div key={group.label}>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{group.label}</p>
+                          {group.entries.map(([label, value]) => (
+                            <div key={label} className="flex items-center justify-between gap-2 text-sm">
+                              <span className="text-slate-700 dark:text-slate-300">{label}</span>
+                              <span className="tabular-nums text-slate-900 dark:text-slate-50">{formatSquareFeet(value)}</span>
+                            </div>
+                          ))}
                         </div>
                       ))}
                     </div>
-                  ))}
-                </div>
-                <div className="flex flex-col gap-1">
-                  {countEntries.length > 0 && (
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Counts</p>
-                  )}
-                  {countEntries.map(([label, value]) => (
-                    <div key={label} className="flex items-center justify-between gap-2 text-sm">
-                      <span className="text-slate-700 dark:text-slate-300">{label}</span>
-                      <span className="tabular-nums text-slate-900 dark:text-slate-50">{value.toLocaleString("en-US")}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </SectionCard>
-
-          {trades.includes("Snow Removal") && (
-            <SectionCard icon="❄️" title="Last Season Snowfall" color="#06b6d4">
-              <Field label="Total snowfall" value={lastSeasonSnowfall ? `${lastSeasonSnowfall} in.` : null} />
-            </SectionCard>
-          )}
-
-          {assignmentTrades.length > 0 && (
-            <SectionCard icon="💵" title="Rate Schedule" color="#0ca30c" className="lg:col-span-2">
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                {assignmentTrades.map((trade) => {
-                  const draft = assignmentDrafts[trade] ?? emptyDraft();
-                  const monthly = scheduleToNumbers(draft.rateSchedule);
-                  const monthlyTotal = scheduleTotal(draft.rateSchedule);
-                  return (
-                    <div key={trade}>
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{trade}</p>
-                        <Field label="Annual Rate Total" value={draft.annualRateTotal.trim() ? formatCurrency(Number(parseCurrencyInput(draft.annualRateTotal))) : null} />
-                      </div>
-                      <ScheduleCalendar schedule={monthly} />
-                      {monthlyTotal > 0 && (
-                        <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-500">Sum of months: {formatCurrency(monthlyTotal)}</p>
+                    <div className="flex flex-col gap-1">
+                      {countEntries.length > 0 && (
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Counts</p>
                       )}
+                      {countEntries.map(([label, value]) => (
+                        <div key={label} className="flex items-center justify-between gap-2 text-sm">
+                          <span className="text-slate-700 dark:text-slate-300">{label}</span>
+                          <span className="tabular-nums text-slate-900 dark:text-slate-50">{value.toLocaleString("en-US")}</span>
+                        </div>
+                      ))}
                     </div>
-                  );
-                })}
-              </div>
-            </SectionCard>
-          )}
-
-          {assignmentTrades.length > 0 && (
-            <SectionCard icon="🧾" title="Expense Schedule" color="#ec4899" className="lg:col-span-2">
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                {assignmentTrades.map((trade) => {
-                  const draft = assignmentDrafts[trade] ?? emptyDraft();
-                  const vendorName = vendors.find((v) => v.id === draft.vendorId)?.name ?? null;
-                  const subVendorName = vendors.find((v) => v.id === draft.subVendorId)?.name ?? null;
-                  const vendorMonthly = scheduleToNumbers(draft.vendorExpenseSchedule);
-                  const subVendorMonthly = scheduleToNumbers(draft.subVendorExpenseSchedule);
-                  return (
-                    <div key={trade}>
-                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{trade}</p>
-                      <p className="mt-1 text-xs text-slate-600 dark:text-slate-500">
-                        Vendor{vendorName ? `: ${vendorName}` : " (not assigned)"}
-                      </p>
-                      <ScheduleCalendar schedule={vendorMonthly} />
-                      <p className="mt-3 text-xs text-slate-600 dark:text-slate-500">
-                        Sub-Vendor{subVendorName ? `: ${subVendorName}` : " (not assigned)"}
-                      </p>
-                      <ScheduleCalendar schedule={subVendorMonthly} />
-                    </div>
-                  );
-                })}
-              </div>
-            </SectionCard>
-          )}
-
-          <SectionCard icon="📝" title="Notes" color="#78716c">
-            <p className="whitespace-pre-wrap text-sm text-slate-900 dark:text-slate-50">
-              {notes || <span className="text-slate-500 dark:text-slate-500">No notes yet.</span>}
-            </p>
-          </SectionCard>
-
-          {assignedFieldEntries.length > 0 && (
-            <SectionCard icon="🏷️" title="Custom Fields" color="#6366f1">
-              <div className="grid grid-cols-2 gap-3">
-                {assignedFieldEntries.map((f) => (
-                  <Field key={f.label} label={f.label} value={f.value} />
+                  </div>
                 ))}
-              </div>
-            </SectionCard>
-          )}
+
+              {currentViewTab === "snowfall" && (
+                <Field label="Total snowfall" value={lastSeasonSnowfall ? `${lastSeasonSnowfall} in.` : null} />
+              )}
+
+              {currentViewTab === "notes" && (
+                <p className="whitespace-pre-wrap text-sm text-slate-900 dark:text-slate-50">
+                  {notes || <span className="text-slate-500 dark:text-slate-500">No notes yet.</span>}
+                </p>
+              )}
+
+              {currentViewTab === "customFields" && (
+                <div className="grid grid-cols-2 gap-3">
+                  {assignedFieldEntries.map((f) => (
+                    <Field key={f.label} label={f.label} value={f.value} />
+                  ))}
+                </div>
+              )}
+            </div>
+          </Card>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-5">
