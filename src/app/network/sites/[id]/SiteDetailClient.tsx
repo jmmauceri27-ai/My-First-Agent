@@ -15,7 +15,7 @@ import SiteTradeAssignmentsEditor, {
 } from "@/components/SiteTradeAssignmentsEditor";
 import SiteMeasurementsEditor from "@/components/SiteMeasurementsEditor";
 import { formatCurrency, formatSquareFeet, parseCurrencyInput } from "@/lib/siteMapColor";
-import { MONTHS } from "@/lib/rateSchedule";
+import { MONTHS, type Month } from "@/lib/rateSchedule";
 import { MEASUREMENT_FIELDS, MEASUREMENT_GROUPS } from "@/lib/measurementGroups";
 import { TRADE_COLORS, VENDOR_ASSIGNMENT_TRADES, type Trade } from "@/lib/trades";
 import type { Company, Contract, FieldClass, Opportunity } from "@/lib/crmTypes";
@@ -82,9 +82,36 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-function monthsSummary(schedule: Partial<Record<(typeof MONTHS)[number], number>>): string {
-  const parts = MONTHS.filter((m) => schedule[m] != null).map((m) => `${m} ${formatCurrency(schedule[m] as number)}`);
-  return parts.join(" · ");
+/** A 12-month grid (Jan-Dec) showing which months this schedule pays out and how much -- reads at a glance
+ * like a calendar instead of a run-on line of "Jan $100 · Feb $200 · ...". */
+function ScheduleCalendar({ schedule }: { schedule: Partial<Record<Month, number>> }) {
+  return (
+    <div className="mt-2 grid grid-cols-4 gap-1.5">
+      {MONTHS.map((month) => {
+        const value = schedule[month];
+        const active = value != null;
+        return (
+          <div
+            key={month}
+            className={`rounded-md border px-1.5 py-1 text-center ${
+              active ? "border-brand-500/30 bg-brand-500/10" : "border-purple-400/10 bg-slate-100/60 dark:bg-white/5"
+            }`}
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              {month}
+            </p>
+            <p
+              className={`text-xs ${
+                active ? "font-semibold text-slate-900 dark:text-slate-50" : "text-slate-400 dark:text-slate-600"
+              }`}
+            >
+              {active ? formatCurrency(value as number) : "—"}
+            </p>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export default function SiteDetailClient({
@@ -505,7 +532,7 @@ export default function SiteDetailClient({
 
           {assignmentTrades.length > 0 && (
             <SectionCard icon="💵" title="Rate Schedule" color="#0ca30c" className="lg:col-span-2">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 {assignmentTrades.map((trade) => {
                   const draft = assignmentDrafts[trade] ?? emptyDraft();
                   const monthly = scheduleToNumbers(draft.rateSchedule);
@@ -516,11 +543,9 @@ export default function SiteDetailClient({
                         <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{trade}</p>
                         <Field label="Annual Rate Total" value={draft.annualRateTotal.trim() ? formatCurrency(Number(parseCurrencyInput(draft.annualRateTotal))) : null} />
                       </div>
-                      <p className="mt-1 text-xs text-slate-600 dark:text-slate-500">
-                        {monthsSummary(monthly) || "No monthly breakdown set."}
-                      </p>
+                      <ScheduleCalendar schedule={monthly} />
                       {monthlyTotal > 0 && (
-                        <p className="text-xs text-slate-600 dark:text-slate-500">Sum of months: {formatCurrency(monthlyTotal)}</p>
+                        <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-500">Sum of months: {formatCurrency(monthlyTotal)}</p>
                       )}
                     </div>
                   );
@@ -531,7 +556,7 @@ export default function SiteDetailClient({
 
           {assignmentTrades.length > 0 && (
             <SectionCard icon="🧾" title="Expense Schedule" color="#ec4899" className="lg:col-span-2">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 {assignmentTrades.map((trade) => {
                   const draft = assignmentDrafts[trade] ?? emptyDraft();
                   const vendorName = vendors.find((v) => v.id === draft.vendorId)?.name ?? null;
@@ -542,11 +567,13 @@ export default function SiteDetailClient({
                     <div key={trade}>
                       <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{trade}</p>
                       <p className="mt-1 text-xs text-slate-600 dark:text-slate-500">
-                        Vendor{vendorName ? `: ${vendorName}` : " (not assigned)"} — {monthsSummary(vendorMonthly) || "no schedule set"}
+                        Vendor{vendorName ? `: ${vendorName}` : " (not assigned)"}
                       </p>
-                      <p className="text-xs text-slate-600 dark:text-slate-500">
-                        Sub-Vendor{subVendorName ? `: ${subVendorName}` : " (not assigned)"} — {monthsSummary(subVendorMonthly) || "no schedule set"}
+                      <ScheduleCalendar schedule={vendorMonthly} />
+                      <p className="mt-3 text-xs text-slate-600 dark:text-slate-500">
+                        Sub-Vendor{subVendorName ? `: ${subVendorName}` : " (not assigned)"}
                       </p>
+                      <ScheduleCalendar schedule={subVendorMonthly} />
                     </div>
                   );
                 })}
