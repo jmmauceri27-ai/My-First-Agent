@@ -1,5 +1,6 @@
 import "server-only";
 import { createAdminClient, OWNER_USER_ID } from "./supabase/admin";
+import { chunkArray, SITE_ID_CHUNK_SIZE } from "./chunk";
 import type { RateSchedule } from "./rateSchedule";
 import type {
   Site,
@@ -584,14 +585,20 @@ export async function updateSite(id: string, input: SiteInput): Promise<void> {
  * -- used to know which Contracts need site_count resynced when those sites (and their assignments, via
  * cascade) are deleted. */
 async function contractIdsForSites(supabase: ReturnType<typeof createAdminClient>, siteIds: string[]): Promise<string[]> {
-  const [{ data: siteRows, error: siteError }, { data: assignmentRows, error: assignmentError }] = await Promise.all([
-    supabase.from("sites").select("contract_id").in("id", siteIds).eq("user_id", OWNER_USER_ID),
-    supabase.from("site_trade_assignments").select("contract_id").in("site_id", siteIds).eq("user_id", OWNER_USER_ID),
-  ]);
-  if (siteError) throw new Error(siteError.message);
-  if (assignmentError) throw new Error(assignmentError.message);
-  const ids = [...(siteRows ?? []), ...(assignmentRows ?? [])].map((r) => r.contract_id as string | null);
-  return Array.from(new Set(ids.filter((id): id is string => !!id)));
+  const ids = new Set<string>();
+  for (const chunk of chunkArray(siteIds, SITE_ID_CHUNK_SIZE)) {
+    const [{ data: siteRows, error: siteError }, { data: assignmentRows, error: assignmentError }] = await Promise.all([
+      supabase.from("sites").select("contract_id").in("id", chunk).eq("user_id", OWNER_USER_ID),
+      supabase.from("site_trade_assignments").select("contract_id").in("site_id", chunk).eq("user_id", OWNER_USER_ID),
+    ]);
+    if (siteError) throw new Error(siteError.message);
+    if (assignmentError) throw new Error(assignmentError.message);
+    for (const r of [...(siteRows ?? []), ...(assignmentRows ?? [])]) {
+      const id = r.contract_id as string | null;
+      if (id) ids.add(id);
+    }
+  }
+  return Array.from(ids);
 }
 
 export async function deleteSite(id: string): Promise<void> {
@@ -611,8 +618,10 @@ export async function bulkDeleteSites(siteIds: string[]): Promise<void> {
 
   const contractIds = await contractIdsForSites(supabase, siteIds);
 
-  const { error } = await supabase.from("sites").delete().in("id", siteIds).eq("user_id", OWNER_USER_ID);
-  if (error) throw new Error(error.message);
+  for (const chunk of chunkArray(siteIds, SITE_ID_CHUNK_SIZE)) {
+    const { error } = await supabase.from("sites").delete().in("id", chunk).eq("user_id", OWNER_USER_ID);
+    if (error) throw new Error(error.message);
+  }
 
   await Promise.all(contractIds.map((id) => syncContractSiteCount(id)));
 }
@@ -673,16 +682,20 @@ export async function bulkCreateSitesForContract(
 export async function bulkAssignTrades(siteIds: string[], trades: string[]): Promise<void> {
   if (siteIds.length === 0 || trades.length === 0) return;
   const supabase = createAdminClient();
-  const { data: existing, error: fetchError } = await supabase
-    .from("sites")
-    .select("id, trades")
-    .in("id", siteIds)
-    .eq("user_id", OWNER_USER_ID);
-  if (fetchError) throw new Error(fetchError.message);
+  const existing: { id: string; trades: string[] | null }[] = [];
+  for (const chunk of chunkArray(siteIds, SITE_ID_CHUNK_SIZE)) {
+    const { data, error: fetchError } = await supabase
+      .from("sites")
+      .select("id, trades")
+      .in("id", chunk)
+      .eq("user_id", OWNER_USER_ID);
+    if (fetchError) throw new Error(fetchError.message);
+    existing.push(...(data ?? []));
+  }
 
-  const updates = (existing ?? []).map((s) => ({
-    id: s.id as string,
-    trades: Array.from(new Set([...(((s.trades as string[] | null) ?? [])), ...trades])),
+  const updates = existing.map((s) => ({
+    id: s.id,
+    trades: Array.from(new Set([...((s.trades as string[] | null) ?? []), ...trades])),
   }));
 
   const concurrency = 20;
@@ -707,37 +720,45 @@ export async function bulkUnassignTrades(siteIds: string[], trades: string[]): P
   if (siteIds.length === 0 || trades.length === 0) return;
   const supabase = createAdminClient();
 
-  const { data: existingSites, error: fetchError } = await supabase
-    .from("sites")
-    .select("id, trades")
-    .in("id", siteIds)
-    .eq("user_id", OWNER_USER_ID);
-  if (fetchError) throw new Error(fetchError.message);
+  const existingSites: { id: string; trades: string[] | null }[] = [];
+  for (const chunk of chunkArray(siteIds, SITE_ID_CHUNK_SIZE)) {
+    const { data, error: fetchError } = await supabase
+      .from("sites")
+      .select("id, trades")
+      .in("id", chunk)
+      .eq("user_id", OWNER_USER_ID);
+    if (fetchError) throw new Error(fetchError.message);
+    existingSites.push(...(data ?? []));
+  }
 
   const removeSet = new Set(trades);
-  const updates = (existingSites ?? []).map((s) => ({
-    id: s.id as string,
+  const updates = existingSites.map((s) => ({
+    id: s.id,
     trades: ((s.trades as string[] | null) ?? []).filter((t) => !removeSet.has(t)),
   }));
 
-  const { data: assignments, error: assignmentsError } = await supabase
-    .from("site_trade_assignments")
-    .select("contract_id")
-    .in("site_id", siteIds)
-    .in("trade", trades)
-    .eq("user_id", OWNER_USER_ID);
-  if (assignmentsError) throw new Error(assignmentsError.message);
-  const affectedContractIds = new Set(
-    (assignments ?? []).map((a) => a.contract_id as string | null).filter((id): id is string => !!id),
-  );
+  const affectedContractIds = new Set<string>();
+  for (const chunk of chunkArray(siteIds, SITE_ID_CHUNK_SIZE)) {
+    const { data: assignments, error: assignmentsError } = await supabase
+      .from("site_trade_assignments")
+      .select("contract_id")
+      .in("site_id", chunk)
+      .in("trade", trades)
+      .eq("user_id", OWNER_USER_ID);
+    if (assignmentsError) throw new Error(assignmentsError.message);
+    for (const a of assignments ?? []) {
+      const id = a.contract_id as string | null;
+      if (id) affectedContractIds.add(id);
+    }
 
-  const { error: deleteError } = await supabase
-    .from("site_trade_assignments")
-    .delete()
-    .in("site_id", siteIds)
-    .in("trade", trades)
-    .eq("user_id", OWNER_USER_ID);
-  if (deleteError) throw new Error(deleteError.message);
+    const { error: deleteError } = await supabase
+      .from("site_trade_assignments")
+      .delete()
+      .in("site_id", chunk)
+      .in("trade", trades)
+      .eq("user_id", OWNER_USER_ID);
+    if (deleteError) throw new Error(deleteError.message);
+  }
 
   const concurrency = 20;
   for (let i = 0; i < updates.length; i += concurrency) {
@@ -762,13 +783,15 @@ export async function bulkUnassignTrades(siteIds: string[], trades: string[]): P
 export async function bulkUnassignVendorForTrade(siteIds: string[], trade: string): Promise<void> {
   if (siteIds.length === 0) return;
   const supabase = createAdminClient();
-  const { error } = await supabase
-    .from("site_trade_assignments")
-    .update({ vendor_id: null, sub_vendor_id: null, updated_at: new Date().toISOString() })
-    .in("site_id", siteIds)
-    .eq("trade", trade)
-    .eq("user_id", OWNER_USER_ID);
-  if (error) throw new Error(error.message);
+  for (const chunk of chunkArray(siteIds, SITE_ID_CHUNK_SIZE)) {
+    const { error } = await supabase
+      .from("site_trade_assignments")
+      .update({ vendor_id: null, sub_vendor_id: null, updated_at: new Date().toISOString() })
+      .in("site_id", chunk)
+      .eq("trade", trade)
+      .eq("user_id", OWNER_USER_ID);
+    if (error) throw new Error(error.message);
+  }
 }
 
 /** Clears the Contract for one trade across many sites at once, leaving Vendor/Sub-Vendor/pricing and every other trade's assignment untouched. Resyncs site_count for any contract that was cleared. */
@@ -776,25 +799,31 @@ export async function bulkUnassignContractForTrade(siteIds: string[], trade: str
   if (siteIds.length === 0) return;
   const supabase = createAdminClient();
 
-  const { data: existing, error: fetchError } = await supabase
-    .from("site_trade_assignments")
-    .select("contract_id")
-    .in("site_id", siteIds)
-    .eq("trade", trade)
-    .eq("user_id", OWNER_USER_ID);
-  if (fetchError) throw new Error(fetchError.message);
-  const affectedContractIds = new Set(
-    (existing ?? []).map((a) => a.contract_id as string | null).filter((id): id is string => !!id),
-  );
+  const affectedContractIds = new Set<string>();
+  for (const chunk of chunkArray(siteIds, SITE_ID_CHUNK_SIZE)) {
+    const { data: existing, error: fetchError } = await supabase
+      .from("site_trade_assignments")
+      .select("contract_id")
+      .in("site_id", chunk)
+      .eq("trade", trade)
+      .eq("user_id", OWNER_USER_ID);
+    if (fetchError) throw new Error(fetchError.message);
+    for (const a of existing ?? []) {
+      const id = a.contract_id as string | null;
+      if (id) affectedContractIds.add(id);
+    }
+  }
   if (affectedContractIds.size === 0) return;
 
-  const { error } = await supabase
-    .from("site_trade_assignments")
-    .update({ contract_id: null, updated_at: new Date().toISOString() })
-    .in("site_id", siteIds)
-    .eq("trade", trade)
-    .eq("user_id", OWNER_USER_ID);
-  if (error) throw new Error(error.message);
+  for (const chunk of chunkArray(siteIds, SITE_ID_CHUNK_SIZE)) {
+    const { error } = await supabase
+      .from("site_trade_assignments")
+      .update({ contract_id: null, updated_at: new Date().toISOString() })
+      .in("site_id", chunk)
+      .eq("trade", trade)
+      .eq("user_id", OWNER_USER_ID);
+    if (error) throw new Error(error.message);
+  }
 
   await Promise.all(Array.from(affectedContractIds).map((id) => syncContractSiteCount(id)));
 }
@@ -812,19 +841,20 @@ export async function bulkAssignContractForTrade(siteIds: string[], trade: strin
 
   await bulkAssignTrades(siteIds, [trade]);
 
-  const { data: existing, error: fetchError } = await supabase
-    .from("site_trade_assignments")
-    .select("contract_id")
-    .in("site_id", siteIds)
-    .eq("trade", trade)
-    .eq("user_id", OWNER_USER_ID);
-  if (fetchError) throw new Error(fetchError.message);
-
-  const previousContractIds = new Set(
-    (existing ?? [])
-      .map((a) => a.contract_id as string | null)
-      .filter((id): id is string => !!id && id !== contractId),
-  );
+  const previousContractIds = new Set<string>();
+  for (const chunk of chunkArray(siteIds, SITE_ID_CHUNK_SIZE)) {
+    const { data: existing, error: fetchError } = await supabase
+      .from("site_trade_assignments")
+      .select("contract_id")
+      .in("site_id", chunk)
+      .eq("trade", trade)
+      .eq("user_id", OWNER_USER_ID);
+    if (fetchError) throw new Error(fetchError.message);
+    for (const a of existing ?? []) {
+      const id = a.contract_id as string | null;
+      if (id && id !== contractId) previousContractIds.add(id);
+    }
+  }
 
   const concurrency = 20;
   for (let i = 0; i < siteIds.length; i += concurrency) {
@@ -880,8 +910,10 @@ export async function bulkAssignContactToSites(contactId: string, siteIds: strin
 export async function bulkUnassignContactFromSites(contactId: string, siteIds: string[]): Promise<void> {
   if (siteIds.length === 0) return;
   const supabase = createAdminClient();
-  const { error } = await supabase.from("crm_contact_sites").delete().eq("contact_id", contactId).in("site_id", siteIds);
-  if (error) throw new Error(error.message);
+  for (const chunk of chunkArray(siteIds, SITE_ID_CHUNK_SIZE)) {
+    const { error } = await supabase.from("crm_contact_sites").delete().eq("contact_id", contactId).in("site_id", chunk);
+    if (error) throw new Error(error.message);
+  }
 }
 
 /**
