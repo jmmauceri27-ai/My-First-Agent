@@ -21,6 +21,7 @@ import {
   formatSquareFeet,
   gradientColorForRatio,
 } from "@/lib/siteMapColor";
+import { CHART_COLORS_LIGHT } from "@/lib/chartPalette";
 import { TRADE_COLORS, TRADE_OPTIONS } from "@/lib/trades";
 import type { Trade } from "@/lib/trades";
 import { MONTHS, sumRateSchedule } from "@/lib/rateSchedule";
@@ -53,9 +54,24 @@ import {
 const SiteMap = dynamic(() => import("@/components/SiteMap"), { ssr: false });
 const MapLegend = dynamic(() => import("@/components/MapLegend"), { ssr: false });
 
-type ColorMode = "none" | "margin" | "vendor" | "trade";
+type ColorMode = "none" | "margin" | "vendor" | "trade" | "clientSize";
 type AddressField = "address" | "city" | "state" | "zip";
 type InfoField = "name" | "code" | "id";
+
+const COLOR_MODES: ColorMode[] = ["none", "margin", "vendor", "trade", "clientSize"];
+
+/** Fixed buckets for "Color: by client size" -- how many total sites (across the whole portfolio, not just
+ * what's currently filtered/plotted) the site's Client has. Order matters: colors are assigned by index so the
+ * mapping stays stable regardless of which client happens to appear first in the data. */
+const CLIENT_SIZE_BUCKETS: { label: string; min: number; max: number; color: string }[] = [
+  { label: "1-5 sites", min: 1, max: 5, color: CHART_COLORS_LIGHT[0] },
+  { label: "6-25 sites", min: 6, max: 25, color: CHART_COLORS_LIGHT[1] },
+  { label: "26+ sites", min: 26, max: Infinity, color: CHART_COLORS_LIGHT[2] },
+];
+
+function bucketForClientSiteCount(count: number) {
+  return CLIENT_SIZE_BUCKETS.find((b) => count >= b.min && count <= b.max) ?? null;
+}
 
 const SITE_EXPORT_COLUMNS = [
   "Site ID",
@@ -212,7 +228,7 @@ function loadPersistedFilters(): SiteFilters {
     return {
       ...DEFAULT_FILTERS,
       ...parsed,
-      colorMode: (["none", "margin", "vendor", "trade"].includes(parsed.colorMode ?? "") ? parsed.colorMode : "none") as string,
+      colorMode: (COLOR_MODES.includes(parsed.colorMode as ColorMode) ? parsed.colorMode : "none") as string,
       addressField: (["address", "city", "state", "zip"].includes(parsed.addressField ?? "")
         ? parsed.addressField
         : "address") as string,
@@ -666,7 +682,7 @@ export default function SitesClient({
     setAssignmentTrade(f.assignmentTrade);
     setAssignmentVendorStatus(f.assignmentVendorStatus);
     setAssignmentSubVendorStatus(f.assignmentSubVendorStatus);
-    setColorMode((["none", "margin", "vendor", "trade"].includes(f.colorMode) ? f.colorMode : "none") as ColorMode);
+    setColorMode((COLOR_MODES.includes(f.colorMode as ColorMode) ? f.colorMode : "none") as ColorMode);
     setAddressField((["address", "city", "state", "zip"].includes(f.addressField) ? f.addressField : "address") as AddressField);
     setAddressValues(f.addressValues);
     setInfoField((["name", "code", "id"].includes(f.infoField) ? f.infoField : "name") as InfoField);
@@ -872,6 +888,43 @@ export default function SitesClient({
       return { pins, legend };
     }
 
+    if (colorMode === "clientSize") {
+      // Bucket by how many total sites the site's Client has across the whole portfolio (every site in
+      // `sites`, not just what's currently filtered/plotted) -- a client's "size" shouldn't change just
+      // because the map is filtered down to a subset of their sites.
+      const siteCountByCompany = new Map<string, number>();
+      for (const s of sites) {
+        if (!s.companyId) continue;
+        siteCountByCompany.set(s.companyId, (siteCountByCompany.get(s.companyId) ?? 0) + 1);
+      }
+
+      const pins: MapPin[] = plottable.map((s) => {
+        const count = s.companyId ? (siteCountByCompany.get(s.companyId) ?? 0) : 0;
+        const bucket = s.companyId ? bucketForClientSiteCount(count) : null;
+        return {
+          id: s.id,
+          lat: s.lat as number,
+          lng: s.lng as number,
+          label: s.name,
+          color: bucket?.color ?? NEUTRAL_PIN_COLOR,
+          fields: [
+            { key: "Client", value: s.companyName ?? "No client" },
+            ...(bucket ? [{ key: "Client site count", value: `${count} (${bucket.label})` }] : []),
+          ],
+          cluster: false,
+        };
+      });
+
+      const entries: { label: string; color: string }[] = CLIENT_SIZE_BUCKETS.filter((b) =>
+        plottable.some((s) => s.companyId && bucketForClientSiteCount(siteCountByCompany.get(s.companyId) ?? 0)?.label === b.label),
+      ).map((b) => ({ label: b.label, color: b.color }));
+      if (plottable.some((s) => !s.companyId)) {
+        entries.push({ label: "No client", color: NEUTRAL_PIN_COLOR });
+      }
+      const legend: MapLegendProps = { mode: "categorical", entries };
+      return { pins, legend };
+    }
+
     const pins: MapPin[] = plottable.map((s) => ({
       id: s.id,
       lat: s.lat as number,
@@ -881,7 +934,7 @@ export default function SitesClient({
       cluster: false,
     }));
     return { pins, legend: null as MapLegendProps | null };
-  }, [filteredSites, colorMode, tradeFilter]);
+  }, [filteredSites, colorMode, tradeFilter, sites]);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -1332,6 +1385,7 @@ export default function SitesClient({
                 <option value="margin">By margin %</option>
                 <option value="vendor">By vendor</option>
                 <option value="trade">By trade</option>
+                <option value="clientSize">By client size</option>
               </select>
             </FilterField>
             {legend && <MapLegend {...legend} />}
