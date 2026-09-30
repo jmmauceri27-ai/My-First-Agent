@@ -65,8 +65,9 @@ const COLOR_MODES: ColorMode[] = ["none", "margin", "vendor", "trade", "clientSi
  * mapping stays stable regardless of which client happens to appear first in the data. */
 const CLIENT_SIZE_BUCKETS: { label: string; min: number; max: number; color: string }[] = [
   { label: "1-5 sites", min: 1, max: 5, color: CHART_COLORS_LIGHT[0] },
-  { label: "6-25 sites", min: 6, max: 25, color: CHART_COLORS_LIGHT[1] },
-  { label: "26+ sites", min: 26, max: Infinity, color: CHART_COLORS_LIGHT[2] },
+  { label: "6-20 sites", min: 6, max: 20, color: CHART_COLORS_LIGHT[1] },
+  { label: "21-50 sites", min: 21, max: 50, color: CHART_COLORS_LIGHT[2] },
+  { label: "51+ sites", min: 51, max: Infinity, color: CHART_COLORS_LIGHT[3] },
 ];
 
 function bucketForClientSiteCount(count: number) {
