@@ -135,7 +135,7 @@ export default function RemoveLogoBackgroundModal({
   }
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4" onClick={onCancel}>
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 p-4" onClick={onCancel}>
       <Card
         className="flex max-h-[90vh] w-full max-w-lg flex-col gap-4 overflow-y-auto p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
