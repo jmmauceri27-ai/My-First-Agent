@@ -730,8 +730,27 @@ export async function createContract(input: ContractInput): Promise<string> {
   await setContractContacts(contractId, input.contactIds);
   if (input.opportunityId) {
     await carryOverOpportunitySites(input.opportunityId, contractId);
+    await markOpportunityWon(input.opportunityId);
   }
   return contractId;
+}
+
+/** An opportunity with a signed agreement is already won, whether that agreement was created by dragging the
+ * opportunity to "Won" (which auto-creates one, see maybeAutoCreateAgreement below) or by using "Convert to
+ * Agreement"/"+ New agreement" directly with an opportunity attached -- either way it should show up under
+ * Won on the pipeline. Updates the stage directly (not through updateOpportunityStage) since that would
+ * re-trigger maybeAutoCreateAgreement and recurse back into this same contract-creation flow. */
+async function markOpportunityWon(opportunityId: string): Promise<void> {
+  const supabase = createAdminClient();
+  const opportunity = await getOpportunity(opportunityId);
+  if (!opportunity || opportunity.stage === "Won") return;
+  const position = await nextPositionForStage("Won");
+  const { error } = await supabase
+    .from("crm_opportunities")
+    .update({ stage: "Won", position, updated_at: new Date().toISOString() })
+    .eq("id", opportunityId)
+    .eq("user_id", OWNER_USER_ID);
+  if (error) throw new Error(error.message);
 }
 
 /** Once an opportunity's stage becomes "Won" it's already an active agreement, so this creates one
