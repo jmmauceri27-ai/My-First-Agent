@@ -18,7 +18,7 @@ begin
   select coalesce(max(position), -1) into next_position from crm_opportunities where stage = 'Won';
 
   for rec in
-    select distinct o.id
+    select distinct o.id, o.created_at
     from crm_opportunities o
     join crm_contracts c on c.opportunity_id = o.id
     where o.stage <> 'Won'
