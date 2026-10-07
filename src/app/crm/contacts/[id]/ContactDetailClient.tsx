@@ -427,7 +427,7 @@ export default function ContactDetailClient({
                 contracts.map((c) => (
                   <Link
                     key={c.id}
-                    href={`/crm/contracts?open=${c.id}`}
+                    href={`/crm/contracts/${c.id}`}
                     className="flex items-center justify-between gap-2 py-2 hover:text-brand-600 dark:hover:text-brand-400"
                   >
                     <div className="min-w-0">

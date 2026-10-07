@@ -213,7 +213,7 @@ export default function OpportunityDetailClient({
           {linkedContract ? (
             <Button
               variant="secondary"
-              onClick={() => router.push(`/crm/contracts?open=${linkedContract.id}`)}
+              onClick={() => router.push(`/crm/contracts/${linkedContract.id}`)}
             >
               View agreement →
             </Button>

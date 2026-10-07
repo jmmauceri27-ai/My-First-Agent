@@ -189,6 +189,7 @@ export async function saveContractAction(id: string | null, input: ContractInput
   }
   revalidatePath("/crm");
   revalidatePath("/crm/contracts");
+  revalidatePath(`/crm/contracts/${contractId}`);
   return contractId;
 }
 

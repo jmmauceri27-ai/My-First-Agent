@@ -449,7 +449,7 @@ export default function SiteDetailClient({
                   label="Agreement"
                   value={
                     site.contractId && (
-                      <Link href={`/crm/contracts?open=${site.contractId}`} className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
+                      <Link href={`/crm/contracts/${site.contractId}`} className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
                         {site.contractName}
                       </Link>
                     )
@@ -521,7 +521,7 @@ export default function SiteDetailClient({
                             label="Agreement"
                             value={
                               contract && (
-                                <Link href={`/crm/contracts?open=${contract.id}`} className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
+                                <Link href={`/crm/contracts/${contract.id}`} className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
                                   {contract.name}
                                 </Link>
                               )

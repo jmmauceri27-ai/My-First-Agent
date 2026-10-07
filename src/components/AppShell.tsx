@@ -12,13 +12,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const isNetworkMapRoute = pathname === "/network" || pathname === "/network/sites";
   const isSiteDetailRoute = (pathname ?? "").startsWith("/network/sites/");
   const isContactDetailRoute = (pathname ?? "").startsWith("/crm/contacts/");
+  const isContractDetailRoute = (pathname ?? "").startsWith("/crm/contracts/");
   const isWide =
     pathname === "/crm" ||
     pathname === "/crm/contacts" ||
     pathname === "/dashboards" ||
     isNetworkMapRoute ||
     isSiteDetailRoute ||
-    isContactDetailRoute;
+    isContactDetailRoute ||
+    isContractDetailRoute;
   const isFullBleed = isNetworkMapRoute;
 
   return (

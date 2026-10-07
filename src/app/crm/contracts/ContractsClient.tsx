@@ -82,11 +82,8 @@ export default function ContractsClient({
   convertFromOpportunityId: string | null;
 }) {
   const router = useRouter();
-  // Lazy initializers so these only ever resolve from the URL params this page loaded with, once -- not an
+  // Lazy initializer so this only ever resolves from the URL param this page loaded with, once -- not an
   // effect, since there's no external system to synchronize with, just an initial state derivation.
-  const [editingContract, setEditingContract] = useState<Contract | null>(() =>
-    openContractId ? (contracts.find((c) => c.id === openContractId) ?? null) : null,
-  );
   const [prefill, setPrefill] = useState<Partial<ContractInput> | null>(() => {
     if (openContractId || !convertFromOpportunityId) return null;
     const source = opportunities.find((o) => o.id === convertFromOpportunityId);
@@ -107,12 +104,22 @@ export default function ContractsClient({
   const [sortBy, setSortBy] = useState<SortBy>("name");
 
   useEffect(() => {
-    if (openContractId || convertFromOpportunityId) {
+    // "?open=" used to open the edit modal in place -- agreements now have their own page, so send it there
+    // instead of just dropping the param, in case something out there still links the old way.
+    if (openContractId) {
+      router.replace(`/crm/contracts/${openContractId}`);
+      return;
+    }
+    if (convertFromOpportunityId) {
       router.replace("/crm/contracts");
     }
     // Only meant to fire once, to clean up the URL this page loaded with.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function openContract(c: Contract) {
+    router.push(`/crm/contracts/${c.id}`);
+  }
 
   const clientOptions = useMemo(() => {
     const byId = new Map<string, string>();
@@ -206,25 +213,25 @@ export default function ContractsClient({
           ) : (
             <Card className="flex flex-col divide-y divide-purple-400/10 overflow-hidden">
               {sorted.map((c) => (
-                <ContractRow key={c.id} contract={c} onSelect={setEditingContract} />
+                <ContractRow key={c.id} contract={c} onSelect={openContract} />
               ))}
             </Card>
           )}
         </div>
       ) : (
-        <ContractsTimeline contracts={contracts} onSelect={setEditingContract} />
+        <ContractsTimeline contracts={contracts} onSelect={openContract} />
       )}
 
-      {(editingContract || creating) && (
+      {creating && (
         <ContractModal
-          contract={editingContract}
+          contract={null}
           companies={companies}
           opportunities={opportunities}
           contacts={contacts}
           fieldClasses={fieldClasses}
-          prefill={editingContract ? null : prefill}
+          prefill={prefill}
+          onSaved={(id) => router.push(`/crm/contracts/${id}`)}
           onClose={() => {
-            setEditingContract(null);
             setCreating(false);
             setPrefill(null);
           }}

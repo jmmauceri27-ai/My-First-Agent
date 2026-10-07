@@ -255,7 +255,7 @@ export async function bulkCreateSitesForContractAction(
 ): Promise<{ inserted?: number; error?: string }> {
   try {
     const result = await bulkCreateSitesForContract(contractId, companyId, rows);
-    revalidatePath(`/crm/contracts?open=${contractId}`);
+    revalidatePath(`/crm/contracts/${contractId}`);
     revalidatePath("/network/sites");
     return result;
   } catch (e) {

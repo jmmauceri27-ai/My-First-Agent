@@ -1,36 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
-import FilesCard from "@/components/FilesCard";
-import SitesCard from "./SitesCard";
 import { inputClass } from "@/components/ui/formClasses";
 import { RATE_FREQUENCIES } from "@/lib/crmTypes";
 import { BILLING_TYPE_OPTIONS } from "@/lib/billingTypes";
 import TradeSelect from "@/components/TradeSelect";
-import type { Company, Contact, Contract, ContractFile, ContractInput, FieldClass, Opportunity } from "@/lib/crmTypes";
-import type { Site } from "@/lib/networkTypes";
-import {
-  deleteContractAction,
-  deleteContractFileAction,
-  getContractFileDownloadUrlAction,
-  listContractFilesAction,
-  renameContractFileAction,
-  saveContractAction,
-  uploadContractFileAction,
-} from "../actions";
-import { listSitesForContractAction } from "../../network/actions";
-import {
-  assignFieldToRecordAction,
-  getFieldValuesForRecordAction,
-  listAssignedFieldIdsAction,
-  saveFieldValuesForRecordAction,
-  unassignFieldFromRecordAction,
-} from "../fields/actions";
+import type { Company, Contact, Contract, ContractInput, FieldClass, Opportunity } from "@/lib/crmTypes";
+import { saveContractAction } from "../actions";
+import { saveFieldValuesForRecordAction } from "../fields/actions";
 import DynamicFieldsSection from "../fields/DynamicFieldsSection";
 
+/** Creates a new agreement. Editing an existing one now happens on its own page
+ * (/crm/contracts/[id]) instead of here -- this modal is only ever opened with contract={null}. */
 export default function ContractModal({
   contract,
   companies,
@@ -38,6 +22,7 @@ export default function ContractModal({
   contacts,
   fieldClasses,
   prefill,
+  onSaved,
   onClose,
 }: {
   contract: Contract | null;
@@ -45,9 +30,11 @@ export default function ContractModal({
   opportunities: Opportunity[];
   contacts: Contact[];
   fieldClasses: FieldClass[];
-  /** Prefills a blank creation form (e.g. from an opportunity's "Convert to Agreement" button) -- ignored
-   * when editing an existing contract. */
+  /** Prefills a blank creation form (e.g. from an opportunity's "Convert to Agreement" button). */
   prefill?: Partial<ContractInput> | null;
+  /** Called with the new agreement's id right after a successful create, so the caller can navigate to its
+   * own page. */
+  onSaved?: (id: string) => void;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -65,71 +52,9 @@ export default function ContractModal({
   const [notes, setNotes] = useState(contract?.notes ?? "");
   const [contactIds, setContactIds] = useState<string[]>(contract?.contactIds ?? prefill?.contactIds ?? []);
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [files, setFiles] = useState<ContractFile[]>([]);
-
-  useEffect(() => {
-    if (!contract) return;
-    let cancelled = false;
-    listContractFilesAction(contract.id).then((result) => {
-      if (!cancelled) setFiles(result);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [contract]);
-
-  function refreshFiles() {
-    if (!contract) return;
-    listContractFilesAction(contract.id).then(setFiles);
-  }
-
-  const [sites, setSites] = useState<Site[]>([]);
-
-  useEffect(() => {
-    if (!contract) return;
-    let cancelled = false;
-    listSitesForContractAction(contract.id).then((result) => {
-      if (!cancelled) setSites(result);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [contract]);
-
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
-  const [assignedFieldIds, setAssignedFieldIds] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (!contract) return;
-    getFieldValuesForRecordAction(contract.id).then((values) => {
-      const asStrings: Record<string, string> = {};
-      for (const [fieldId, value] of Object.entries(values)) {
-        if (value != null) asStrings[fieldId] = value;
-      }
-      setFieldValues(asStrings);
-    });
-    listAssignedFieldIdsAction(contract.id).then(setAssignedFieldIds);
-  }, [contract]);
-
-  async function handleAssignField(fieldId: string) {
-    if (!contract) return;
-    setAssignedFieldIds((prev) => [...prev, fieldId]);
-    await assignFieldToRecordAction(contract.id, fieldId);
-  }
-
-  async function handleUnassignField(fieldId: string) {
-    if (!contract) return;
-    setAssignedFieldIds((prev) => prev.filter((id) => id !== fieldId));
-    setFieldValues((prev) => {
-      const next = { ...prev };
-      delete next[fieldId];
-      return next;
-    });
-    await unassignFieldFromRecordAction(contract.id, fieldId);
-  }
 
   function toggleContact(id: string) {
     setContactIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
@@ -156,12 +81,13 @@ export default function ContractModal({
         notes: notes.trim() || null,
         contactIds,
       };
-      const contractId = await saveContractAction(contract?.id ?? null, input);
+      const contractId = await saveContractAction(null, input);
       await saveFieldValuesForRecordAction(
         contractId,
         Object.entries(fieldValues).map(([fieldId, value]) => ({ fieldId, value: value || null })),
       );
       router.refresh();
+      onSaved?.(contractId);
       onClose();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save agreement.");
@@ -170,29 +96,10 @@ export default function ContractModal({
     }
   }
 
-  async function handleDelete() {
-    if (!contract) return;
-    setDeleting(true);
-    try {
-      await deleteContractAction(contract.id);
-      router.refresh();
-      onClose();
-    } finally {
-      setDeleting(false);
-    }
-  }
-
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <Card className="max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">{contract ? "Edit agreement" : "New agreement"}</h2>
-          {contract?.trackingNumber && (
-            <span className="rounded-full bg-purple-500/10 px-2 py-0.5 font-mono text-xs text-slate-600 dark:text-slate-400">
-              {contract.trackingNumber}
-            </span>
-          )}
-        </div>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">New agreement</h2>
 
         <div className="mt-4 flex flex-col gap-4">
           <label className="flex flex-col gap-1 text-sm">
@@ -229,9 +136,7 @@ export default function ContractModal({
               ))}
             </select>
             <span className="text-xs text-slate-600 dark:text-slate-500">
-              {contract?.trackingNumber
-                ? "This agreement already carries a permanent tracking number and won't change even if you edit this."
-                : "Picking one links this agreement to that opportunity's tracking number, permanently."}
+              Picking one links this agreement to that opportunity&rsquo;s tracking number, permanently.
             </span>
           </label>
 
@@ -244,7 +149,7 @@ export default function ContractModal({
             <div className="flex flex-col gap-1 text-sm">
               <span className="font-medium text-slate-700 dark:text-slate-300"># of sites</span>
               <span className="rounded-md border border-transparent px-3 py-2 text-slate-600 dark:text-slate-400">
-                {contract?.siteCount ?? 0} (from linked sites)
+                0 (from linked sites)
               </span>
             </div>
             <label className="flex flex-col gap-1 text-sm">
@@ -331,55 +236,23 @@ export default function ContractModal({
           <DynamicFieldsSection
             classes={fieldClasses}
             values={fieldValues}
-            assignedFieldIds={assignedFieldIds}
+            assignedFieldIds={[]}
             onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}
-            onAssign={handleAssignField}
-            onUnassign={handleUnassignField}
-            canManageCustomFields={!!contract}
+            onAssign={() => {}}
+            onUnassign={() => {}}
+            canManageCustomFields={false}
           />
         </div>
 
-        {contract && (
-          <div className="mt-4">
-            <SitesCard contractId={contract.id} companyId={contract.companyId} sites={sites} />
-          </div>
-        )}
-
-        {contract && (
-          <div className="mt-4">
-            <FilesCard
-              title="Files"
-              description="Site lists, signed agreements, insurance docs — any file type."
-              files={files}
-              onUpload={(file) => {
-                const formData = new FormData();
-                formData.set("file", file);
-                return uploadContractFileAction(contract.id, formData);
-              }}
-              onDownload={(id) => getContractFileDownloadUrlAction(id)}
-              onDelete={(id) => deleteContractFileAction(id)}
-              onRename={(id, fileName) => renameContractFileAction(id, fileName)}
-              onChange={refreshFiles}
-            />
-          </div>
-        )}
-
         {error && <p className="mt-3 text-sm text-critical">{error}</p>}
 
-        <div className="mt-6 flex items-center justify-between">
-          <div className="flex gap-2">
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? "Saving…" : "Save"}
-            </Button>
-            <Button variant="ghost" onClick={onClose}>
-              Cancel
-            </Button>
-          </div>
-          {contract && (
-            <Button variant="danger" onClick={handleDelete} disabled={deleting}>
-              {deleting ? "Deleting…" : "Delete"}
-            </Button>
-          )}
+        <div className="mt-6 flex gap-2">
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? "Saving…" : "Save"}
+          </Button>
+          <Button variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
         </div>
       </Card>
     </div>
