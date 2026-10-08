@@ -6,6 +6,7 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { formatCurrency } from "@/lib/siteMapColor";
 import type { ClientRateOverride, Company, Contract, RateItem } from "@/lib/crmTypes";
+import type { Vendor } from "@/lib/networkTypes";
 import RateItemModal from "./RateItemModal";
 import UploadRateItemsModal from "./UploadRateItemsModal";
 import ClientRateOverrideModal from "./ClientRateOverrideModal";
@@ -20,11 +21,13 @@ export default function RateRulesClient({
   overrides,
   companies,
   contracts,
+  vendors,
 }: {
   rateItems: RateItem[];
   overrides: ClientRateOverride[];
   companies: Company[];
   contracts: Contract[];
+  vendors: Vendor[];
 }) {
   const router = useRouter();
   const [view, setView] = useState<View>("assistant");
@@ -328,9 +331,22 @@ export default function RateRulesClient({
                                             {item.unitLabel ? ` -- ${item.unitLabel}` : ""}
                                           </p>
                                         </div>
-                                        <p className="shrink-0 text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-50">
-                                          {formatCurrency(item.rate)}
-                                        </p>
+                                        <div className="flex shrink-0 flex-col items-end gap-0.5">
+                                          <p className="text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-50">
+                                            {formatCurrency(item.rate)}
+                                          </p>
+                                          {item.vendorId && item.vendorRate != null && (
+                                            <>
+                                              <p className="text-xs tabular-nums text-slate-500 dark:text-slate-400">
+                                                {item.vendorName ?? "Vendor"}: {formatCurrency(item.vendorRate)}
+                                              </p>
+                                              <p className="text-xs font-medium tabular-nums text-emerald-600 dark:text-emerald-400">
+                                                Margin: {formatCurrency(item.rate - item.vendorRate)}
+                                                {item.rate !== 0 && ` (${(((item.rate - item.vendorRate) / item.rate) * 100).toFixed(0)}%)`}
+                                              </p>
+                                            </>
+                                          )}
+                                        </div>
                                       </button>
                                     </div>
                                   ))}
@@ -390,6 +406,7 @@ export default function RateRulesClient({
               item={editingItem}
               companies={companies}
               contracts={contracts}
+              vendors={vendors}
               defaultContractId={agreementFilter || undefined}
               onClose={() => {
                 setEditingItem(null);
@@ -402,6 +419,7 @@ export default function RateRulesClient({
             <UploadRateItemsModal
               companies={companies}
               contracts={contracts}
+              vendors={vendors}
               defaultContractId={agreementFilter || undefined}
               onClose={() => setUploading(false)}
             />

@@ -334,6 +334,13 @@ export interface RateItem {
    * contractId is set, this is that contract's own company instead. */
   companyId: string | null;
   companyName: string | null;
+  /** The Vendor we'd pay to actually perform this line item, if one's been assigned yet -- optional, same as
+   * companyId/contractId above. Lets the rate card show client price and vendor cost side by side. */
+  vendorId: string | null;
+  vendorName: string | null;
+  /** What we pay vendorId for this same line item, priced on the same unit as `rate` (pricingBasis/unitLabel
+   * apply to both) -- null until a vendor's cost is known. */
+  vendorRate: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -350,11 +357,14 @@ export interface RateItemInput {
   contractId: string | null;
   /** Ignored (stored as null) when contractId is set -- see RateItem's companyId doc. */
   companyId: string | null;
+  vendorId: string | null;
+  vendorRate: number | null;
 }
 
-/** A single row parsed from an uploaded sheet, mapped onto RateItem's fixed fields, for bulk import. contractId
- * and companyId come from single pickers in the upload modal, not sheet columns -- a whole import batch shares
- * one contract/client (or neither, for the generic catalog). */
+/** A single row parsed from an uploaded sheet, mapped onto RateItem's fixed fields, for bulk import. contractId,
+ * companyId, and vendorId come from single pickers in the upload modal, not sheet columns -- a whole import
+ * batch shares one contract/client/vendor (or none, for the generic catalog). vendorRate is still a per-row
+ * sheet column, like rate, since the cost for each line item varies even within one vendor's sheet. */
 export interface RateItemImportRow {
   trade: string;
   category: string;
@@ -366,6 +376,8 @@ export interface RateItemImportRow {
   notes: string | null;
   contractId: string | null;
   companyId: string | null;
+  vendorId: string | null;
+  vendorRate: number | null;
 }
 
 export const OVERRIDE_TYPE_OPTIONS = ["Discount %", "Markup %"] as const;

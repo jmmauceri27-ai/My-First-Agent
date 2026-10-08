@@ -7,6 +7,7 @@ import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import { ALL_TRADES, PRICING_BASIS_OPTIONS, RATE_ITEM_CATEGORIES, RATE_TIER_OPTIONS } from "@/lib/crmTypes";
 import type { Company, Contract, RateItem, RateItemInput } from "@/lib/crmTypes";
+import type { Vendor } from "@/lib/networkTypes";
 import { TRADE_OPTIONS } from "@/lib/trades";
 import { deleteRateItemAction, saveRateItemAction } from "./actions";
 
@@ -14,12 +15,14 @@ export default function RateItemModal({
   item,
   companies,
   contracts,
+  vendors,
   defaultContractId,
   onClose,
 }: {
   item: RateItem | null;
   companies: Company[];
   contracts: Contract[];
+  vendors: Vendor[];
   /** Pre-selects the Agreement for a new item -- e.g. when the Rate Card screen is already filtered to one
    * agreement, "+ New rate item" should default to it instead of Generic. Ignored when editing (item is set). */
   defaultContractId?: string;
@@ -36,6 +39,8 @@ export default function RateItemModal({
   const [rate, setRate] = useState(item?.rate != null ? String(item.rate) : "");
   const [unitLabel, setUnitLabel] = useState(item?.unitLabel ?? "");
   const [notes, setNotes] = useState(item?.notes ?? "");
+  const [vendorId, setVendorId] = useState(item?.vendorId ?? "");
+  const [vendorRate, setVendorRate] = useState(item?.vendorRate != null ? String(item.vendorRate) : "");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,6 +73,10 @@ export default function RateItemModal({
       setError("Please enter a rate.");
       return;
     }
+    if (vendorRate.trim() && !Number.isFinite(Number(vendorRate))) {
+      setError("Please enter a valid vendor rate.");
+      return;
+    }
     setSaving(true);
     try {
       const input: RateItemInput = {
@@ -81,6 +90,8 @@ export default function RateItemModal({
         notes: notes.trim() || null,
         contractId: contractId || null,
         companyId: companyId || null,
+        vendorId: vendorId || null,
+        vendorRate: vendorRate.trim() ? Number(vendorRate) : null,
       };
       await saveRateItemAction(item?.id ?? null, input);
       router.refresh();
@@ -226,6 +237,34 @@ export default function RateItemModal({
               />
             </label>
           </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium text-slate-700 dark:text-slate-300">Vendor (optional)</span>
+              <select value={vendorId} onChange={(e) => setVendorId(e.target.value)} className={inputClass}>
+                <option value="">No vendor yet</option>
+                {vendors.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium text-slate-700 dark:text-slate-300">Vendor rate ($)</span>
+              <input
+                type="number"
+                step="0.01"
+                value={vendorRate}
+                onChange={(e) => setVendorRate(e.target.value)}
+                className={inputClass}
+              />
+            </label>
+          </div>
+          <span className="-mt-3 text-xs text-slate-600 dark:text-slate-500">
+            What we&rsquo;d pay the vendor for this same line item, priced on the same unit as the client rate above
+            -- used to show margin alongside this item on the rate card.
+          </span>
 
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>

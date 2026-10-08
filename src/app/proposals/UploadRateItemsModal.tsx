@@ -9,6 +9,7 @@ import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
 import { buildTemplateXlsxAction, parseUploadedSheetAction } from "@/lib/sheetActions";
 import { ALL_TRADES, matchPricingBasis, matchRateItemCategory, matchRateTier } from "@/lib/crmTypes";
 import type { Company, Contract, RateItemImportRow } from "@/lib/crmTypes";
+import type { Vendor } from "@/lib/networkTypes";
 import { matchTrade } from "@/lib/trades";
 import { bulkCreateRateItemsAction } from "./actions";
 
@@ -23,6 +24,7 @@ const TEMPLATE_COLUMNS = [
   "Pricing Basis",
   "Rate Tier",
   "Rate",
+  "Vendor Rate",
   "Unit Label",
   "Notes",
 ];
@@ -34,6 +36,7 @@ const TEMPLATE_EXAMPLE = {
   "Pricing Basis": "Per Hour",
   "Rate Tier": "Regular",
   Rate: 75,
+  "Vendor Rate": "",
   "Unit Label": "",
   Notes: "",
 };
@@ -46,11 +49,13 @@ async function handleDownloadTemplate() {
 export default function UploadRateItemsModal({
   companies,
   contracts,
+  vendors,
   defaultContractId,
   onClose,
 }: {
   companies: Company[];
   contracts: Contract[];
+  vendors: Vendor[];
   /** Pre-selects the Agreement for this import batch -- e.g. when the Rate Card screen is already filtered to
    * one agreement, uploading from there should default to it instead of Generic. */
   defaultContractId?: string;
@@ -60,6 +65,7 @@ export default function UploadRateItemsModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [companyId, setCompanyId] = useState("");
   const [contractId, setContractId] = useState(defaultContractId ?? "");
+  const [vendorId, setVendorId] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -72,6 +78,7 @@ export default function UploadRateItemsModal({
     pricingBasis: NONE,
     rateTier: NONE,
     rate: NONE,
+    vendorRate: NONE,
     unitLabel: NONE,
     notes: NONE,
   });
@@ -117,6 +124,7 @@ export default function UploadRateItemsModal({
         pricingBasis: columns.find((c) => /pricing.?basis|basis/i.test(c)) ?? NONE,
         rateTier: columns.find((c) => /tier/i.test(c)) ?? NONE,
         rate: columns.find((c) => /^rate$/i.test(c.trim()) || /price|amount/i.test(c)) ?? NONE,
+        vendorRate: columns.find((c) => /vendor.?rate|vendor.?cost|vendor.?price/i.test(c)) ?? NONE,
         unitLabel: columns.find((c) => /unit.?label/i.test(c)) ?? NONE,
         notes: columns.find((c) => /notes?/i.test(c)) ?? NONE,
       });
@@ -168,6 +176,7 @@ export default function UploadRateItemsModal({
 
         const rateTierRaw = mapping.rateTier ? String(row[mapping.rateTier] ?? "").trim() : "";
         const rateTier = matchRateTier(rateTierRaw) ?? "Regular";
+        const vendorRateValue = mapping.vendorRate ? Number(row[mapping.vendorRate]) : NaN;
 
         rows.push({
           trade,
@@ -180,6 +189,8 @@ export default function UploadRateItemsModal({
           notes: mapping.notes ? String(row[mapping.notes] ?? "").trim() || null : null,
           contractId: contractId || null,
           companyId: companyId || null,
+          vendorId: vendorId || null,
+          vendorRate: Number.isFinite(vendorRateValue) ? vendorRateValue : null,
         });
       }
 
@@ -295,6 +306,22 @@ export default function UploadRateItemsModal({
           </span>
         </label>
 
+        <label className="mt-4 flex flex-col gap-1 text-sm">
+          <span className="font-medium text-slate-700 dark:text-slate-300">Vendor (optional)</span>
+          <select value={vendorId} onChange={(e) => setVendorId(e.target.value)} className={inputClass}>
+            <option value="">No vendor yet</option>
+            {vendors.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.name}
+              </option>
+            ))}
+          </select>
+          <span className="text-xs text-slate-600 dark:text-slate-500">
+            Applies to every row in this file -- pick the vendor this sheet&rsquo;s rates come from, so each row&rsquo;s
+            Vendor Rate column shows what they&rsquo;d charge for that same item.
+          </span>
+        </label>
+
         <div className="mt-4 flex flex-col gap-2">
           <input
             ref={fileInputRef}
@@ -323,6 +350,7 @@ export default function UploadRateItemsModal({
                     ["pricingBasis", "Pricing Basis column"],
                     ["rateTier", "Rate Tier column (optional)"],
                     ["rate", "Rate column"],
+                    ["vendorRate", "Vendor Rate column (optional)"],
                     ["unitLabel", "Unit Label column (optional)"],
                     ["notes", "Notes column (optional)"],
                   ] as const
@@ -334,7 +362,9 @@ export default function UploadRateItemsModal({
                       onChange={(e) => setMapping((prev) => ({ ...prev, [key]: e.target.value }))}
                       className={inputClass}
                     >
-                      <option value={NONE}>{key === "unitLabel" || key === "notes" || key === "rateTier" ? "None" : "Choose a column…"}</option>
+                      <option value={NONE}>
+                        {key === "unitLabel" || key === "notes" || key === "rateTier" || key === "vendorRate" ? "None" : "Choose a column…"}
+                      </option>
                       {parsedColumns.map((c) => (
                         <option key={c} value={c}>
                           {c}
