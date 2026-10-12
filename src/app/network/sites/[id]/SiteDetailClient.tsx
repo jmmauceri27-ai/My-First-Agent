@@ -247,10 +247,6 @@ export default function SiteDetailClient({
   const countEntries = useMemo(() => Object.entries(counts), [counts]);
 
   const selectedCompany = useMemo(() => companies.find((c) => c.id === companyId) ?? null, [companies, companyId]);
-  const selectedOpportunity = useMemo(
-    () => opportunities.find((o) => o.id === opportunityId) ?? null,
-    [opportunities, opportunityId],
-  );
 
   /** Every distinct Agreement covering this site, drawn from its trades (a site's trades can each sit under a
    * different Agreement -- e.g. Land under one, Snow Removal under another). Falls back to the site's own
@@ -442,7 +438,7 @@ export default function SiteDetailClient({
       {mode === "view" ? (
         <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[380px_1fr]">
           <div className="flex flex-col gap-6">
-            <SectionCard icon="🏢" title="Client & Opportunity" color="#7c3ce3">
+            <SectionCard icon="🏢" title="Client & Agreement" color="#7c3ce3">
               <div className="flex flex-col gap-3">
                 <Field
                   label="Client"
@@ -450,16 +446,6 @@ export default function SiteDetailClient({
                     selectedCompany && (
                       <Link href={`/network/clients/${selectedCompany.id}`} className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
                         {selectedCompany.name}
-                      </Link>
-                    )
-                  }
-                />
-                <Field
-                  label="Opportunity"
-                  value={
-                    selectedOpportunity && (
-                      <Link href={`/crm/opportunities/${selectedOpportunity.id}`} className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
-                        {selectedOpportunity.name}
                       </Link>
                     )
                   }
