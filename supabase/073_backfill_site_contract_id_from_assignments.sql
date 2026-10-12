@@ -10,7 +10,7 @@ with distinct_pairs as (
   where contract_id is not null
 ),
 site_contract as (
-  select site_id, max(contract_id) as contract_id
+  select site_id, (array_agg(contract_id))[1] as contract_id
   from distinct_pairs
   group by site_id
   having count(*) = 1
