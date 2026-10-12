@@ -476,27 +476,57 @@ export async function saveSiteTradeAssignments(siteId: string, assignments: Site
   await Promise.all(Array.from(affectedContractIds).map((id) => syncContractSiteCount(id)));
 }
 
-/** Sites directly linked to this Agreement (its own "Sites" section) -- doesn't include sites only reachable
- * through a per-trade assignment (see syncContractSiteCount's note); those are managed from the site's own
- * detail page instead. */
+/** Every site covered by this Agreement, directly (site.contract_id) or through a per-trade assignment
+ * (site_trade_assignments.contract_id, set from a site's own detail page) -- the same "either" rule
+ * site_count uses (see syncContractSiteCount), so this list and that count always agree. A site reachable
+ * only through a trade (e.g. its Land trade is under a different Agreement, so its own direct link points
+ * elsewhere or nowhere) still shows up here for the Agreement that trade is actually under. */
 export async function listSitesForContract(contractId: string): Promise<Site[]> {
   const supabase = createAdminClient();
-  const rows = await fetchAllSitePages((from, to) =>
-    supabase
+  const [directRows, assignmentRows] = await Promise.all([
+    fetchAllSitePages((from, to) =>
+      supabase
+        .from("sites")
+        .select(SITE_COLUMNS)
+        .eq("contract_id", contractId)
+        .eq("user_id", OWNER_USER_ID)
+        .order("name", { ascending: true })
+        .range(from, to),
+    ),
+    fetchAllSitePages((from, to) =>
+      supabase
+        .from("site_trade_assignments")
+        .select("site_id")
+        .eq("contract_id", contractId)
+        .eq("user_id", OWNER_USER_ID)
+        .range(from, to),
+    ),
+  ]);
+
+  const directIds = new Set(directRows.map((r) => r.id as string));
+  const extraIds = Array.from(new Set(assignmentRows.map((r) => r.site_id as string))).filter(
+    (id) => !directIds.has(id),
+  );
+
+  const extraRows: Record<string, unknown>[] = [];
+  for (const chunk of chunkArray(extraIds, SITE_ID_CHUNK_SIZE)) {
+    const { data, error } = await supabase
       .from("sites")
       .select(SITE_COLUMNS)
-      .eq("contract_id", contractId)
-      .eq("user_id", OWNER_USER_ID)
-      .order("name", { ascending: true })
-      .range(from, to),
-  );
-  return rows.map(mapSite);
+      .in("id", chunk)
+      .eq("user_id", OWNER_USER_ID);
+    if (error) throw new Error(error.message);
+    extraRows.push(...(data ?? []));
+  }
+
+  return [...directRows, ...extraRows].map(mapSite).sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/** A site can relate to a Contract two ways: directly (site.contract_id, the Agreement's own "Sites"
- * section) or per-trade (site_trade_assignments.contract_id, set from a site's own detail page when
- * assigning a vendor for one trade). site_count is the number of *distinct sites* covered by either --
- * not the number of trade-assignment rows (a site can have two trades under the same contract). */
+/** A site can relate to a Contract two ways: directly (site.contract_id) or per-trade
+ * (site_trade_assignments.contract_id, set from a site's own detail page when assigning a vendor for one
+ * trade) -- listSitesForContract's own "Sites" list already covers both. site_count is the number of
+ * *distinct sites* covered by either -- not the number of trade-assignment rows (a site can have two trades
+ * under the same contract). */
 async function syncContractSiteCount(contractId: string): Promise<void> {
   const supabase = createAdminClient();
   const [directSites, assignments] = await Promise.all([
