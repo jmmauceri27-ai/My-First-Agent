@@ -1,6 +1,7 @@
 import "server-only";
 import { createAdminClient, OWNER_USER_ID } from "./supabase/admin";
 import { chunkArray, SITE_ID_CHUNK_SIZE } from "./chunk";
+import { sumRateSchedule } from "./rateSchedule";
 import type { RateSchedule } from "./rateSchedule";
 import type {
   Site,
@@ -454,7 +455,7 @@ export async function saveSiteTradeAssignments(siteId: string, assignments: Site
       contract_id: a.contractId,
       contract_value: a.contractValue,
       rate_schedule: a.rateSchedule ?? {},
-      annual_rate_total: a.annualRateTotal,
+      annual_rate_total: sumRateSchedule(a.rateSchedule ?? {}),
       sub_price: a.subPrice,
       sub_vendor_price: a.subVendorPrice,
       vendor_expense_schedule: a.vendorExpenseSchedule ?? {},
@@ -1136,7 +1137,6 @@ export async function bulkUpdateSiteTradeAssignments(
     if ("subVendorId" in row) payload.sub_vendor_id = row.subVendorId;
     if ("contractId" in row) payload.contract_id = row.contractId;
     if ("contractValue" in row) payload.contract_value = row.contractValue;
-    if ("annualRateTotal" in row) payload.annual_rate_total = row.annualRateTotal;
     if ("subPrice" in row) payload.sub_price = row.subPrice;
     if ("subVendorPrice" in row) payload.sub_vendor_price = row.subVendorPrice;
     if (Object.keys(payload).length === 0) return;
@@ -1225,9 +1225,10 @@ export async function bulkUpdateSiteRateSchedule(
     const batch = updates.slice(i, i + concurrency);
     const results = await Promise.all(
       batch.map(async (u) => {
+        const annualRateTotal = sumRateSchedule(u.rateSchedule);
         const { data, error } = await supabase
           .from("site_trade_assignments")
-          .update({ rate_schedule: u.rateSchedule, updated_at: new Date().toISOString() })
+          .update({ rate_schedule: u.rateSchedule, annual_rate_total: annualRateTotal, updated_at: new Date().toISOString() })
           .eq("site_id", u.siteId)
           .eq("trade", trade)
           .eq("user_id", OWNER_USER_ID)
@@ -1236,7 +1237,13 @@ export async function bulkUpdateSiteRateSchedule(
         if (!data || data.length === 0) {
           const { error: insertError } = await supabase
             .from("site_trade_assignments")
-            .insert({ user_id: OWNER_USER_ID, site_id: u.siteId, trade, rate_schedule: u.rateSchedule });
+            .insert({
+              user_id: OWNER_USER_ID,
+              site_id: u.siteId,
+              trade,
+              rate_schedule: u.rateSchedule,
+              annual_rate_total: annualRateTotal,
+            });
           if (insertError) return { error: insertError };
         }
         return { error: null };

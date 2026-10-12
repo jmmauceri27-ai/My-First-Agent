@@ -558,12 +558,9 @@ export default function SiteDetailClient({
                           <div key={trade}>
                             <div className="flex items-center justify-between gap-3">
                               <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{trade}</p>
-                              <Field label="Annual Rate Total" value={draft.annualRateTotal.trim() ? formatCurrency(Number(parseCurrencyInput(draft.annualRateTotal))) : null} />
+                              <Field label="Annual Rate Total" value={monthlyTotal > 0 ? formatCurrency(monthlyTotal) : null} />
                             </div>
                             <ScheduleCalendar schedule={monthly} />
-                            {monthlyTotal > 0 && (
-                              <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-500">Sum of months: {formatCurrency(monthlyTotal)}</p>
-                            )}
                           </div>
                         );
                       })}
@@ -824,9 +821,8 @@ export default function SiteDetailClient({
               <Card className="p-5">
                 <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Rate Schedule</h2>
                 <p className="-mt-0.5 text-xs text-slate-600 dark:text-slate-500">
-                  Annual Rate Total is a flat yearly figure you set directly. The monthly breakdown below (which
-                  months this trade gets paid, and how much) is tracked separately and isn&rsquo;t derived from it --
-                  the two aren&rsquo;t kept in sync.
+                  Annual Rate Total is calculated automatically by adding up the monthly breakdown below (which
+                  months this trade gets paid, and how much) -- it&rsquo;s not independently editable.
                 </p>
                 <div className="mt-3 flex flex-col gap-4">
                   {assignmentTrades.map((trade) => {
@@ -842,21 +838,12 @@ export default function SiteDetailClient({
                               {billingType ?? "No billing type (set on the Agreement)"}
                             </p>
                           </div>
-                          <label className="flex flex-col gap-1 text-xs">
+                          <div className="flex flex-col gap-1 text-xs">
                             <span className="font-medium text-slate-500 dark:text-slate-400">Annual Rate Total</span>
-                            <input
-                              value={draft.annualRateTotal}
-                              onChange={(e) => updateAssignmentDraft(trade, { annualRateTotal: e.target.value })}
-                              onBlur={() => {
-                                const num = Number(parseCurrencyInput(draft.annualRateTotal));
-                                if (draft.annualRateTotal.trim() && Number.isFinite(num)) {
-                                  updateAssignmentDraft(trade, { annualRateTotal: formatCurrency(num) });
-                                }
-                              }}
-                              placeholder="—"
-                              className={`${inputClass} w-32 px-2 py-1 text-xs`}
-                            />
-                          </label>
+                            <span className="rounded-md border border-transparent px-2 py-1 text-slate-700 dark:text-slate-300">
+                              {monthlyTotal > 0 ? formatCurrency(monthlyTotal) : "—"}
+                            </span>
+                          </div>
                         </div>
                         <p className="mt-3 text-xs text-slate-600 dark:text-slate-500">Monthly breakdown (optional)</p>
                         <div className="mt-1 grid grid-cols-4 gap-2">
@@ -879,9 +866,6 @@ export default function SiteDetailClient({
                             </label>
                           ))}
                         </div>
-                        {monthlyTotal > 0 && (
-                          <p className="mt-1 text-xs text-slate-600 dark:text-slate-500">Sum of months: {formatCurrency(monthlyTotal)}</p>
-                        )}
                       </div>
                     );
                   })}

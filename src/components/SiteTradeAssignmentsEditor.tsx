@@ -30,8 +30,9 @@ export interface AssignmentDraft {
   subVendorId: string;
   contractId: string;
   contractValue: string;
+  /** No draft field for annualRateTotal -- it's never independently edited, only computed (as the sum of
+   * rateSchedule) when the assignment is saved. See SiteDetailClient.tsx's read-only display. */
   rateSchedule: MonthDraft;
-  annualRateTotal: string;
   subPrice: string;
   subVendorPrice: string;
   vendorExpenseSchedule: MonthDraft;
@@ -45,7 +46,6 @@ export function emptyDraft(): AssignmentDraft {
     contractId: "",
     contractValue: "",
     rateSchedule: {},
-    annualRateTotal: "",
     subPrice: "",
     subVendorPrice: "",
     vendorExpenseSchedule: {},
@@ -62,7 +62,6 @@ export function assignmentsToDrafts(assignments: SiteTradeAssignment[]): Record<
       contractId: a.contractId ?? "",
       contractValue: a.contractValue != null ? formatCurrency(a.contractValue) : "",
       rateSchedule: rateScheduleToMonthDraft(a.rateSchedule),
-      annualRateTotal: a.annualRateTotal != null ? formatCurrency(a.annualRateTotal) : "",
       subPrice: a.subPrice != null ? formatCurrency(a.subPrice) : "",
       subVendorPrice: a.subVendorPrice != null ? formatCurrency(a.subVendorPrice) : "",
       vendorExpenseSchedule: rateScheduleToMonthDraft(a.vendorExpenseSchedule),
@@ -85,7 +84,6 @@ export function draftsToAssignmentInputs(
       contractId: d.contractId || null,
       contractValue: d.contractValue.trim() ? Number(parseCurrencyInput(d.contractValue)) : null,
       rateSchedule: monthDraftToRateSchedule(d.rateSchedule),
-      annualRateTotal: d.annualRateTotal.trim() ? Number(parseCurrencyInput(d.annualRateTotal)) : null,
       subPrice: d.subPrice.trim() ? Number(parseCurrencyInput(d.subPrice)) : null,
       subVendorPrice: d.subVendorPrice.trim() ? Number(parseCurrencyInput(d.subVendorPrice)) : null,
       vendorExpenseSchedule: monthDraftToRateSchedule(d.vendorExpenseSchedule),

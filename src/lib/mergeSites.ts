@@ -55,8 +55,9 @@ export interface TradeMergeFields {
   subVendorId: FieldResolution<string>;
   contractId: FieldResolution<string>;
   contractValue: FieldResolution<number>;
+  /** No separate annualRateTotal field -- it's always the sum of rateSchedule, so there's nothing to pick once
+   * rateSchedule itself is resolved. */
   rateSchedule: FieldResolution<RateSchedule>;
-  annualRateTotal: FieldResolution<number>;
   subPrice: FieldResolution<number>;
   subVendorPrice: FieldResolution<number>;
   vendorExpenseSchedule: FieldResolution<RateSchedule>;
@@ -108,7 +109,6 @@ export function buildMergePlan(group: Site[]): SiteMergePlan {
       contractId: pick((a) => a.contractId),
       contractValue: pick((a) => a.contractValue),
       rateSchedule: pick((a) => (Object.keys(a.rateSchedule).length ? a.rateSchedule : null)),
-      annualRateTotal: pick((a) => a.annualRateTotal),
       subPrice: pick((a) => a.subPrice),
       subVendorPrice: pick((a) => a.subVendorPrice),
       vendorExpenseSchedule: pick((a) => (Object.keys(a.vendorExpenseSchedule).length ? a.vendorExpenseSchedule : null)),
@@ -134,7 +134,6 @@ export function conflictFieldKeys(plan: SiteMergePlan): string[] {
       "contractId",
       "contractValue",
       "rateSchedule",
-      "annualRateTotal",
       "subPrice",
       "subVendorPrice",
       "vendorExpenseSchedule",
@@ -187,7 +186,6 @@ export function applyMergeSelections(
     contractId: pick(t.contractId, `trade:${t.trade}:contractId`, selections),
     contractValue: pick(t.contractValue, `trade:${t.trade}:contractValue`, selections),
     rateSchedule: pick(t.rateSchedule, `trade:${t.trade}:rateSchedule`, selections) ?? {},
-    annualRateTotal: pick(t.annualRateTotal, `trade:${t.trade}:annualRateTotal`, selections),
     subPrice: pick(t.subPrice, `trade:${t.trade}:subPrice`, selections),
     subVendorPrice: pick(t.subVendorPrice, `trade:${t.trade}:subVendorPrice`, selections),
     vendorExpenseSchedule: pick(t.vendorExpenseSchedule, `trade:${t.trade}:vendorExpenseSchedule`, selections) ?? {},
