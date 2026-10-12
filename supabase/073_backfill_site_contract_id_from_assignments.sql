@@ -4,18 +4,16 @@
 -- this point on -- set sites.contract_id to match, wherever all of a site's trades
 -- agree on a single Agreement. Sites whose trades span zero or more than one
 -- Agreement are left untouched; there's no single value to backfill there.
-with site_contract as (
-  select site_id, contract_id
-  from (
-    select
-      site_id,
-      contract_id,
-      count(distinct contract_id) over (partition by site_id) as distinct_count
-    from site_trade_assignments
-    where contract_id is not null
-  ) t
-  where distinct_count = 1
-  group by site_id, contract_id
+with distinct_pairs as (
+  select distinct site_id, contract_id
+  from site_trade_assignments
+  where contract_id is not null
+),
+site_contract as (
+  select site_id, max(contract_id) as contract_id
+  from distinct_pairs
+  group by site_id
+  having count(*) = 1
 )
 update sites s
 set contract_id = sc.contract_id,
