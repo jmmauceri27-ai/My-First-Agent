@@ -252,6 +252,21 @@ export default function SiteDetailClient({
     [opportunities, opportunityId],
   );
 
+  /** Every distinct Agreement covering this site, drawn from its trades (a site's trades can each sit under a
+   * different Agreement -- e.g. Land under one, Snow Removal under another). Falls back to the site's own
+   * direct Agreement link only when no trade has one of its own (e.g. sites added straight from an Agreement's
+   * own "Upload sites" flow, before any per-trade Vendor/Agreement has been assigned). */
+  const siteAgreements = useMemo(() => {
+    const fromTrades = new Map<string, string | null>();
+    for (const a of site.tradeAssignments) {
+      if (a.contractId) fromTrades.set(a.contractId, a.contractName);
+    }
+    if (fromTrades.size > 0) {
+      return Array.from(fromTrades, ([id, name]) => ({ id, name }));
+    }
+    return site.contractId ? [{ id: site.contractId, name: site.contractName }] : [];
+  }, [site.tradeAssignments, site.contractId, site.contractName]);
+
   const assignedFieldEntries = useMemo(() => {
     const allFields = fieldClasses.flatMap((c) => c.fields);
     return assignedFieldIds
@@ -452,10 +467,17 @@ export default function SiteDetailClient({
                 <Field
                   label="Agreement"
                   value={
-                    site.contractId && (
-                      <Link href={`/crm/contracts/${site.contractId}`} className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
-                        {site.contractName}
-                      </Link>
+                    siteAgreements.length > 0 && (
+                      <span className="flex flex-wrap gap-x-1 gap-y-0.5">
+                        {siteAgreements.map((a, i) => (
+                          <span key={a.id}>
+                            <Link href={`/crm/contracts/${a.id}`} className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
+                              {a.name}
+                            </Link>
+                            {i < siteAgreements.length - 1 && ","}
+                          </span>
+                        ))}
+                      </span>
                     )
                   }
                 />
