@@ -466,10 +466,36 @@ export async function saveSiteTradeAssignments(siteId: string, assignments: Site
     if (error) throw new Error(error.message);
   }
 
+  // Keep the site's own direct contract_id (used by "Client & Opportunity" and the Agreement's own Sites
+  // list) in sync with its trades' agreements when they agree on one -- so assigning an Agreement from this
+  // site's own page doesn't leave those other views pointing at nothing or at a stale Agreement. Left alone
+  // when trades span zero or more than one Agreement, since there's no single value to show there.
+  const { data: siteRow, error: siteFetchError } = await supabase
+    .from("sites")
+    .select("contract_id")
+    .eq("id", siteId)
+    .eq("user_id", OWNER_USER_ID)
+    .maybeSingle();
+  if (siteFetchError) throw new Error(siteFetchError.message);
+  const currentSiteContractId = (siteRow?.contract_id as string | null | undefined) ?? null;
+
+  const distinctContractIds = new Set(assignments.map((a) => a.contractId).filter((id): id is string => !!id));
+  if (distinctContractIds.size === 1) {
+    const [sharedContractId] = distinctContractIds;
+    if (sharedContractId !== currentSiteContractId) {
+      const { error: updateError } = await supabase
+        .from("sites")
+        .update({ contract_id: sharedContractId, updated_at: new Date().toISOString() })
+        .eq("id", siteId)
+        .eq("user_id", OWNER_USER_ID);
+      if (updateError) throw new Error(updateError.message);
+    }
+  }
+
   const previousContractIds = (existing ?? []).map((e) => e.contract_id as string | null);
   const nextContractIds = assignments.map((a) => a.contractId);
   const affectedContractIds = new Set(
-    [...previousContractIds, ...nextContractIds].filter((id): id is string => !!id),
+    [...previousContractIds, ...nextContractIds, currentSiteContractId].filter((id): id is string => !!id),
   );
   await Promise.all(Array.from(affectedContractIds).map((id) => syncContractSiteCount(id)));
 }
