@@ -466,36 +466,12 @@ export async function saveSiteTradeAssignments(siteId: string, assignments: Site
     if (error) throw new Error(error.message);
   }
 
-  // Keep the site's own direct contract_id (used by "Client & Opportunity" and the Agreement's own Sites
-  // list) in sync with its trades' agreements when they agree on one -- so assigning an Agreement from this
-  // site's own page doesn't leave those other views pointing at nothing or at a stale Agreement. Left alone
-  // when trades span zero or more than one Agreement, since there's no single value to show there.
-  const { data: siteRow, error: siteFetchError } = await supabase
-    .from("sites")
-    .select("contract_id")
-    .eq("id", siteId)
-    .eq("user_id", OWNER_USER_ID)
-    .maybeSingle();
-  if (siteFetchError) throw new Error(siteFetchError.message);
-  const currentSiteContractId = (siteRow?.contract_id as string | null | undefined) ?? null;
-
-  const distinctContractIds = new Set(assignments.map((a) => a.contractId).filter((id): id is string => !!id));
-  if (distinctContractIds.size === 1) {
-    const [sharedContractId] = distinctContractIds;
-    if (sharedContractId !== currentSiteContractId) {
-      const { error: updateError } = await supabase
-        .from("sites")
-        .update({ contract_id: sharedContractId, updated_at: new Date().toISOString() })
-        .eq("id", siteId)
-        .eq("user_id", OWNER_USER_ID);
-      if (updateError) throw new Error(updateError.message);
-    }
-  }
+  const previousDirectContractIds = await syncSiteDirectContractIds(supabase, [siteId]);
 
   const previousContractIds = (existing ?? []).map((e) => e.contract_id as string | null);
   const nextContractIds = assignments.map((a) => a.contractId);
   const affectedContractIds = new Set(
-    [...previousContractIds, ...nextContractIds, currentSiteContractId].filter((id): id is string => !!id),
+    [...previousContractIds, ...nextContractIds, ...previousDirectContractIds].filter((id): id is string => !!id),
   );
   await Promise.all(Array.from(affectedContractIds).map((id) => syncContractSiteCount(id)));
 }
@@ -548,6 +524,74 @@ async function syncContractSiteCount(contractId: string): Promise<void> {
     .eq("id", contractId)
     .eq("user_id", OWNER_USER_ID);
   if (error) throw new Error(error.message);
+}
+
+/** Keeps each site's own direct contract_id (used by "Client & Opportunity" and the Agreement's own Sites
+ * list) in sync with its trades' agreements when they agree on one -- see saveSiteTradeAssignments. Looks at
+ * the CURRENT (already-written) state of site_trade_assignments, so callers must write their trade changes
+ * before calling this. Returns each touched site's previous direct contract_id (if any), so callers can also
+ * resync site_count for a Contract this sync is moving a site off of. */
+async function syncSiteDirectContractIds(
+  supabase: ReturnType<typeof createAdminClient>,
+  siteIds: string[],
+): Promise<string[]> {
+  if (siteIds.length === 0) return [];
+
+  const byContractIds = new Map<string, Set<string>>();
+  for (const chunk of chunkArray(siteIds, SITE_ID_CHUNK_SIZE)) {
+    const { data, error } = await supabase
+      .from("site_trade_assignments")
+      .select("site_id, contract_id")
+      .in("site_id", chunk)
+      .eq("user_id", OWNER_USER_ID);
+    if (error) throw new Error(error.message);
+    for (const row of data ?? []) {
+      const siteId = row.site_id as string;
+      const contractId = row.contract_id as string | null;
+      if (!contractId) continue;
+      if (!byContractIds.has(siteId)) byContractIds.set(siteId, new Set());
+      byContractIds.get(siteId)!.add(contractId);
+    }
+  }
+
+  const previousContractIds: string[] = [];
+  const updates: { siteId: string; contractId: string }[] = [];
+  for (const chunk of chunkArray(siteIds, SITE_ID_CHUNK_SIZE)) {
+    const { data: currentSites, error: siteFetchError } = await supabase
+      .from("sites")
+      .select("id, contract_id")
+      .in("id", chunk)
+      .eq("user_id", OWNER_USER_ID);
+    if (siteFetchError) throw new Error(siteFetchError.message);
+    for (const s of currentSites ?? []) {
+      const siteId = s.id as string;
+      const existingContractId = s.contract_id as string | null;
+      if (existingContractId) previousContractIds.push(existingContractId);
+      const distinct = byContractIds.get(siteId);
+      if (distinct?.size === 1) {
+        const [sharedContractId] = distinct;
+        if (sharedContractId !== existingContractId) updates.push({ siteId, contractId: sharedContractId });
+      }
+    }
+  }
+
+  const concurrency = 20;
+  for (let i = 0; i < updates.length; i += concurrency) {
+    const batch = updates.slice(i, i + concurrency);
+    const results = await Promise.all(
+      batch.map((u) =>
+        supabase
+          .from("sites")
+          .update({ contract_id: u.contractId, updated_at: new Date().toISOString() })
+          .eq("id", u.siteId)
+          .eq("user_id", OWNER_USER_ID),
+      ),
+    );
+    const failed = results.find((r) => r.error);
+    if (failed?.error) throw new Error(failed.error.message);
+  }
+
+  return previousContractIds;
 }
 
 function siteRow(input: SiteInput) {
@@ -864,7 +908,11 @@ export async function bulkUnassignContractForTrade(siteIds: string[], trade: str
     if (error) throw new Error(error.message);
   }
 
-  await Promise.all(Array.from(affectedContractIds).map((id) => syncContractSiteCount(id)));
+  const previousDirectContractIds = await syncSiteDirectContractIds(supabase, siteIds);
+
+  await Promise.all(
+    Array.from(new Set([...affectedContractIds, ...previousDirectContractIds])).map((id) => syncContractSiteCount(id)),
+  );
 }
 
 /**
@@ -921,10 +969,13 @@ export async function bulkAssignContractForTrade(siteIds: string[], trade: strin
     if (failed?.error) throw new Error(failed.error.message);
   }
 
-  await Promise.all([
-    syncContractSiteCount(contractId),
-    ...Array.from(previousContractIds).map((id) => syncContractSiteCount(id)),
-  ]);
+  const previousDirectContractIds = await syncSiteDirectContractIds(supabase, siteIds);
+
+  await Promise.all(
+    Array.from(new Set([contractId, ...previousContractIds, ...previousDirectContractIds])).map((id) =>
+      syncContractSiteCount(id),
+    ),
+  );
 }
 
 /** Adds a CRM Contact as responsible for each of the given sites, on top of whatever sites they're already
