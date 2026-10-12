@@ -9,7 +9,7 @@ import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import type { Site, SiteImportRow } from "@/lib/networkTypes";
 import type { MapPin } from "@/components/SiteMap";
-import { bulkCreateSitesForContractAction, bulkDeleteSitesAction, deleteSiteAction, parseSiteSheetAction } from "../../network/actions";
+import { bulkCreateSitesForContractAction, parseSiteSheetAction, unlinkSitesFromContractAction } from "../../network/actions";
 
 const SiteMap = dynamic(() => import("@/components/SiteMap"), { ssr: false });
 
@@ -133,7 +133,7 @@ export default function SitesCard({
   async function handleDelete(id: string) {
     setDeletingId(id);
     try {
-      await deleteSiteAction(id);
+      await unlinkSitesFromContractAction([id], contractId);
       router.refresh();
     } finally {
       setDeletingId(null);
@@ -156,13 +156,17 @@ export default function SitesCard({
   async function handleBulkDelete() {
     if (selectedIds.size === 0) return;
     const count = selectedIds.size;
-    if (!window.confirm(`Remove ${count} site${count === 1 ? "" : "s"} from this agreement? This can't be undone.`)) {
+    if (
+      !window.confirm(
+        `Remove ${count} site${count === 1 ? "" : "s"} from this agreement? They'll stay in Network → Sites, and keep any other agreement they're linked to -- only this agreement's link is cleared.`,
+      )
+    ) {
       return;
     }
     setBulkDeleteError(null);
     setBulkDeleting(true);
     try {
-      const result = await bulkDeleteSitesAction(Array.from(selectedIds));
+      const result = await unlinkSitesFromContractAction(Array.from(selectedIds), contractId);
       if (result.error) {
         setBulkDeleteError(result.error);
         return;

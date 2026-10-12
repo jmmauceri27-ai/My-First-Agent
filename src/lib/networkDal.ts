@@ -727,6 +727,40 @@ export async function bulkDeleteSites(siteIds: string[]): Promise<void> {
   await Promise.all(contractIds.map((id) => syncContractSiteCount(id)));
 }
 
+/** Clears this one Agreement's link for each given site -- its direct contract_id if it points here, and any
+ * trade assignment's contract_id if it points here -- without deleting the site or touching any other
+ * Agreement/trade it's linked to. Used by an Agreement's own "Remove" action: a site can be covered by two
+ * different Agreements through two different trades (see listSitesForContract), so removing it from one
+ * Agreement's Sites list must not delete it out from under the other. */
+export async function unlinkSitesFromContract(siteIds: string[], contractId: string): Promise<void> {
+  if (siteIds.length === 0) return;
+  const supabase = createAdminClient();
+
+  for (const chunk of chunkArray(siteIds, SITE_ID_CHUNK_SIZE)) {
+    const { error: siteError } = await supabase
+      .from("sites")
+      .update({ contract_id: null, updated_at: new Date().toISOString() })
+      .in("id", chunk)
+      .eq("contract_id", contractId)
+      .eq("user_id", OWNER_USER_ID);
+    if (siteError) throw new Error(siteError.message);
+
+    const { error: assignmentError } = await supabase
+      .from("site_trade_assignments")
+      .update({ contract_id: null, updated_at: new Date().toISOString() })
+      .in("site_id", chunk)
+      .eq("contract_id", contractId)
+      .eq("user_id", OWNER_USER_ID);
+    if (assignmentError) throw new Error(assignmentError.message);
+  }
+
+  // A site's other trades might now agree on a single different Agreement its direct link hadn't caught up
+  // to yet (e.g. it had two trades both under this Agreement, directly-linked, plus a third trade under a
+  // different one) -- re-sync those too.
+  await syncSiteDirectContractIds(supabase, siteIds);
+  await syncContractSiteCount(contractId);
+}
+
 /** Bulk-imports uploaded sheet rows as new sites, all sharing the same Client/Opportunity/Contract/Trades links. Vendor assignments are per-trade and set afterward from each site's detail page. Appends -- does not replace existing sites. */
 export async function bulkCreateSites(
   links: SiteBulkLinks,

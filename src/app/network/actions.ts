@@ -41,6 +41,7 @@ import {
   listVendors,
   mergeSites,
   saveSiteTradeAssignments,
+  unlinkSitesFromContract,
   updateSite,
   updateSiteFilterTemplate,
   updateVendor,
@@ -223,6 +224,22 @@ export async function bulkDeleteSitesAction(siteIds: string[]): Promise<{ error?
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to delete sites." };
   }
+  revalidatePath("/network/sites");
+  return {};
+}
+
+/** Removes sites from one Agreement's Sites list without deleting them -- clears this Agreement's link only
+ * (direct and/or per-trade), leaving the site itself and any other Agreement it's linked to untouched. */
+export async function unlinkSitesFromContractAction(
+  siteIds: string[],
+  contractId: string,
+): Promise<{ error?: string }> {
+  try {
+    await unlinkSitesFromContract(siteIds, contractId);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to remove sites from this agreement." };
+  }
+  revalidatePath(`/crm/contracts/${contractId}`);
   revalidatePath("/network/sites");
   return {};
 }
