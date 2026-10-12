@@ -1279,7 +1279,7 @@ export default function SitesClient({
           <FilterGroup title="Client & Vendor">
             <FilterField label="Clients">
               <MultiSelectDropdown
-                options={companies.map((c) => ({ value: c.id, label: c.name }))}
+                options={[{ value: "", label: "(No client)" }, ...companies.map((c) => ({ value: c.id, label: c.name }))]}
                 values={companyFilters}
                 onChange={setCompanyFilters}
                 className="w-full"

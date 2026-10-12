@@ -338,6 +338,10 @@ export default function SiteDetailClient({
       setError("Please enter a site name.");
       return;
     }
+    if (!companyId) {
+      setError("Please choose a Client -- a site can't exist without one.");
+      return;
+    }
     setSaving(true);
     try {
       const input: SiteInput = {
@@ -673,7 +677,7 @@ export default function SiteDetailClient({
 
               <div className="grid grid-cols-3 gap-3">
                 <label className="flex flex-col gap-1 text-sm">
-                  <span className="font-medium text-slate-700 dark:text-slate-300">Client</span>
+                  <span className="font-medium text-slate-700 dark:text-slate-300">Client (required)</span>
                   <select
                     value={companyId}
                     onChange={(e) => {
@@ -682,7 +686,7 @@ export default function SiteDetailClient({
                     }}
                     className={inputClass}
                   >
-                    <option value="">(none)</option>
+                    <option value="">Choose a client…</option>
                     {companies.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}

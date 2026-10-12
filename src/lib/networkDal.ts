@@ -628,26 +628,38 @@ export async function bulkDeleteSites(siteIds: string[]): Promise<void> {
 }
 
 /** Bulk-imports uploaded sheet rows as new sites, all sharing the same Client/Opportunity/Contract/Trades links. Vendor assignments are per-trade and set afterward from each site's detail page. Appends -- does not replace existing sites. */
-export async function bulkCreateSites(links: SiteBulkLinks, rows: SiteImportRow[]): Promise<{ inserted: number }> {
+export async function bulkCreateSites(
+  links: SiteBulkLinks,
+  rows: SiteImportRow[],
+): Promise<{ inserted: number; skippedNoClient: number }> {
   const supabase = createAdminClient();
-  const batch = rows.map((row) => ({
-    user_id: OWNER_USER_ID,
-    company_id: row.companyId !== undefined ? row.companyId : links.companyId,
-    opportunity_id: links.opportunityId,
-    contract_id: links.contractId,
-    site_code: row.siteCode,
-    name: row.name,
-    address: row.address,
-    city: row.city,
-    state: row.state,
-    zip: row.zip,
-    lat: row.lat,
-    lng: row.lng,
-    trades: links.trades,
-    measurements: {},
-    counts: {},
-    notes: null,
-  }));
+  // A site can't exist without a Client -- drop any row that would end up with neither a per-row companyId
+  // nor the batch-level fallback, rather than inserting a client-less site.
+  let skippedNoClient = 0;
+  const batch = rows
+    .map((row) => ({
+      user_id: OWNER_USER_ID,
+      company_id: row.companyId !== undefined ? row.companyId : links.companyId,
+      opportunity_id: links.opportunityId,
+      contract_id: links.contractId,
+      site_code: row.siteCode,
+      name: row.name,
+      address: row.address,
+      city: row.city,
+      state: row.state,
+      zip: row.zip,
+      lat: row.lat,
+      lng: row.lng,
+      trades: links.trades,
+      measurements: {},
+      counts: {},
+      notes: null,
+    }))
+    .filter((row) => {
+      if (row.company_id) return true;
+      skippedNoClient++;
+      return false;
+    });
 
   const batchSize = 500;
   for (let i = 0; i < batch.length; i += batchSize) {
@@ -656,7 +668,7 @@ export async function bulkCreateSites(links: SiteBulkLinks, rows: SiteImportRow[
   }
 
   if (links.contractId) await syncContractSiteCount(links.contractId);
-  return { inserted: batch.length };
+  return { inserted: batch.length, skippedNoClient };
 }
 
 /** Bulk-imports uploaded sheet rows as new sites, scoped to one Agreement (and its company). Trades default
@@ -665,7 +677,7 @@ export async function bulkCreateSitesForContract(
   contractId: string,
   companyId: string | null,
   rows: SiteImportRow[],
-): Promise<{ inserted: number }> {
+): Promise<{ inserted: number; skippedNoClient: number }> {
   const supabase = createAdminClient();
   const { data: contract, error } = await supabase
     .from("crm_contracts")

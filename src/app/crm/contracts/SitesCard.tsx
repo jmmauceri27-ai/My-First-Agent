@@ -115,8 +115,16 @@ export default function SitesCard({
         setImportError(result.error);
         return;
       }
-      cancelImport();
       router.refresh();
+      if (result.skippedNoClient) {
+        setImportError(
+          `${result.inserted ?? 0} site${result.inserted === 1 ? "" : "s"} imported. ${result.skippedNoClient} row${
+            result.skippedNoClient === 1 ? "" : "s"
+          } skipped -- a site can't exist without a Client, and this Agreement has none set. Set a Client on this Agreement, then re-upload the skipped rows.`,
+        );
+        return;
+      }
+      cancelImport();
     } finally {
       setImporting(false);
     }

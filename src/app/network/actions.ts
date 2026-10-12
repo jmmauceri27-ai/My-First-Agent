@@ -252,7 +252,7 @@ export async function bulkCreateSitesForContractAction(
   contractId: string,
   companyId: string | null,
   rows: SiteImportRow[],
-): Promise<{ inserted?: number; error?: string }> {
+): Promise<{ inserted?: number; skippedNoClient?: number; error?: string }> {
   try {
     const result = await bulkCreateSitesForContract(contractId, companyId, rows);
     revalidatePath(`/crm/contracts/${contractId}`);
@@ -266,7 +266,7 @@ export async function bulkCreateSitesForContractAction(
 export async function bulkCreateSitesAction(
   links: SiteBulkLinks,
   rows: SiteImportRow[],
-): Promise<{ inserted?: number; error?: string }> {
+): Promise<{ inserted?: number; skippedNoClient?: number; error?: string }> {
   try {
     const result = await bulkCreateSites(links, rows);
     revalidatePath("/network/sites");

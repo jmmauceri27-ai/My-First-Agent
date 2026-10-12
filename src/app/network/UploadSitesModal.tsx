@@ -89,6 +89,7 @@ export default function UploadSitesModal({
   const [importError, setImportError] = useState<string | null>(null);
   const [importedCount, setImportedCount] = useState<number | null>(null);
   const [unmatchedClientNames, setUnmatchedClientNames] = useState<string[]>([]);
+  const [skippedNoClient, setSkippedNoClient] = useState(0);
 
   const opportunitiesForCompany = useMemo(
     () => (companyId ? opportunities.filter((o) => o.companyId === companyId) : opportunities),
@@ -172,7 +173,9 @@ export default function UploadSitesModal({
     try {
       const companyByName = new Map(localCompanies.map((c) => [c.name.trim().toLowerCase(), c.id]));
       const unmatched: string[] = [];
-      const rows: SiteImportRow[] = parsedRows.map((row) => {
+      const rows: SiteImportRow[] = [];
+      let noClientCount = 0;
+      for (const row of parsedRows) {
         const lat = Number(row[mapping.lat]);
         const lng = Number(row[mapping.lng]);
 
@@ -186,7 +189,15 @@ export default function UploadSitesModal({
           }
         }
 
-        return {
+        // A site can't exist without a Client -- skip any row that would end up with neither a matched
+        // per-row Client nor the batch-level fallback, rather than silently creating a client-less site.
+        const resolvedCompanyId = rowCompanyId !== undefined ? rowCompanyId : companyId || null;
+        if (!resolvedCompanyId) {
+          noClientCount++;
+          continue;
+        }
+
+        rows.push({
           siteCode: mapping.siteCode ? String(row[mapping.siteCode] ?? "").trim() || null : null,
           name: String(row[mapping.name] ?? "").trim() || "Untitled site",
           lat: Number.isFinite(lat) ? lat : null,
@@ -196,8 +207,8 @@ export default function UploadSitesModal({
           state: mapping.state ? String(row[mapping.state] ?? "").trim() || null : null,
           zip: mapping.zip ? String(row[mapping.zip] ?? "").trim() || null : null,
           companyId: rowCompanyId,
-        };
-      });
+        });
+      }
       const result = await bulkCreateSitesAction(
         {
           companyId: companyId || null,
@@ -212,6 +223,7 @@ export default function UploadSitesModal({
         return;
       }
       setUnmatchedClientNames(Array.from(new Set(unmatched)));
+      setSkippedNoClient(noClientCount);
       setImportedCount(result.inserted);
       router.refresh();
     } finally {
@@ -230,9 +242,16 @@ export default function UploadSitesModal({
           {unmatchedClientNames.length > 0 && (
             <p className="mt-2 text-xs text-critical">
               {unmatchedClientNames.length} client name{unmatchedClientNames.length === 1 ? "" : "s"} from the sheet
-              didn&rsquo;t match any existing client (those sites used the selected Client above, or were left
-              unassigned): {unmatchedClientNames.slice(0, 10).join(", ")}
+              didn&rsquo;t match any existing client (those rows used the selected Client above instead, if one was
+              picked): {unmatchedClientNames.slice(0, 10).join(", ")}
               {unmatchedClientNames.length > 10 ? `, +${unmatchedClientNames.length - 10} more` : ""}
+            </p>
+          )}
+          {skippedNoClient > 0 && (
+            <p className="mt-2 text-xs text-critical">
+              {skippedNoClient} row{skippedNoClient === 1 ? "" : "s"} skipped -- a site can&rsquo;t exist without a
+              Client, and no Client could be determined for {skippedNoClient === 1 ? "it" : "them"} (no matching
+              per-row Client, and no Client selected above as a fallback).
             </p>
           )}
           <div className="mt-6">

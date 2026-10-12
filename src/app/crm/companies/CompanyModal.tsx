@@ -7,6 +7,7 @@ import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import type { Company, FieldClass } from "@/lib/crmTypes";
 import { deleteCompanyAction, deleteCompanyLogoAction, saveCompanyAction, uploadCompanyLogoAction } from "../actions";
+import { listSitesForCompanyAction } from "../../network/actions";
 import {
   assignFieldToRecordAction,
   getFieldValuesForRecordAction,
@@ -158,6 +159,16 @@ export default function CompanyModal({
 
   async function handleDelete() {
     if (!company) return;
+    const count = await listSitesForCompanyAction(company.id)
+      .then((sites) => sites.length)
+      .catch(() => null);
+    const message =
+      count === 0
+        ? `Delete ${company.name}? This can't be undone.`
+        : count != null
+          ? `Delete ${company.name}? This will also permanently delete ${count} site${count === 1 ? "" : "s"} tied to them -- and everything on those sites (trade assignments, vendor pricing, rate/expense schedules). This can't be undone.`
+          : `Delete ${company.name}? This will also permanently delete any sites tied to them. This can't be undone.`;
+    if (!window.confirm(message)) return;
     setDeleting(true);
     try {
       await deleteCompanyAction(company.id);

@@ -124,6 +124,10 @@ export default function SiteModal({
       setError("Please enter a site name.");
       return;
     }
+    if (!companyId) {
+      setError("Please choose a Client -- a site can't exist without one.");
+      return;
+    }
     setSaving(true);
     try {
       const input: SiteInput = {
@@ -211,7 +215,7 @@ export default function SiteModal({
           </div>
 
           <div className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-300">Client</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Client (required)</span>
             {addingCompany ? (
               <div className="flex gap-2">
                 <input
@@ -234,7 +238,7 @@ export default function SiteModal({
                   }}
                   className={inputClass}
                 >
-                  <option value="">(none)</option>
+                  <option value="">Choose a client…</option>
                   {localCompanies.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
