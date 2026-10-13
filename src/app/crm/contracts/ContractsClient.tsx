@@ -9,12 +9,51 @@ import SearchableSelect from "@/components/SearchableSelect";
 import TradeSelect from "@/components/TradeSelect";
 import { formatCurrency } from "@/lib/siteMapColor";
 import { contractStatus, formatContractDate } from "@/lib/contractStatus";
+import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
+import type { DatasetRecord } from "@/lib/types";
 import type { Company, Contact, Contract, ContractInput, FieldClass, Opportunity } from "@/lib/crmTypes";
+import { exportContractsToExcelAction } from "../actions";
 import ContractModal from "./ContractModal";
 import ContractsTimeline from "./ContractsTimeline";
 
 type View = "list" | "timeline";
 type SortBy = "name" | "expiration";
+
+const CONTRACT_EXPORT_COLUMNS = [
+  "Tracking #",
+  "Agreement",
+  "Client",
+  "Opportunity",
+  "Trades",
+  "Status",
+  "Site Count",
+  "Rate Amount",
+  "Rate Frequency",
+  "Billing Type",
+  "Start Date",
+  "End Date",
+  "Notes",
+  "Created",
+];
+
+function contractToExportRow(c: Contract): DatasetRecord {
+  return {
+    "Tracking #": c.trackingNumber ?? "",
+    Agreement: c.name,
+    Client: c.companyName ?? "",
+    Opportunity: c.opportunityName ?? "",
+    Trades: c.trades.join(", "),
+    Status: contractStatus(c.endDate).label,
+    "Site Count": c.siteCount,
+    "Rate Amount": c.rateAmount,
+    "Rate Frequency": c.rateFrequency ?? "",
+    "Billing Type": c.billingType ?? "",
+    "Start Date": c.startDate ?? "",
+    "End Date": c.endDate ?? "",
+    Notes: c.notes ?? "",
+    Created: c.createdAt,
+  };
+}
 
 function ContractRow({ contract: c, onSelect }: { contract: Contract; onSelect: (c: Contract) => void }) {
   const status = contractStatus(c.endDate);
@@ -102,6 +141,7 @@ export default function ContractsClient({
   const [clientFilter, setClientFilter] = useState("");
   const [tradeFilter, setTradeFilter] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortBy>("name");
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     // "?open=" used to open the edit modal in place -- agreements now have their own page, so send it there
@@ -156,6 +196,19 @@ export default function ContractsClient({
     return list;
   }, [filtered, sortBy]);
 
+  async function handleExport() {
+    if (sorted.length === 0) return;
+    setExporting(true);
+    try {
+      const rows = sorted.map(contractToExportRow);
+      const base64 = await exportContractsToExcelAction(rows, CONTRACT_EXPORT_COLUMNS);
+      const date = new Date().toISOString().slice(0, 10);
+      downloadBase64Xlsx(base64, `agreements_export_${date}.xlsx`);
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
@@ -179,7 +232,12 @@ export default function ContractsClient({
             Timeline
           </button>
         </div>
-        <Button onClick={() => setCreating(true)}>+ New agreement</Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={handleExport} disabled={sorted.length === 0 || exporting}>
+            {exporting ? "Downloading…" : `Download ${sorted.length} agreement${sorted.length === 1 ? "" : "s"}`}
+          </Button>
+          <Button onClick={() => setCreating(true)}>+ New agreement</Button>
+        </div>
       </div>
 
       {contracts.length === 0 ? (

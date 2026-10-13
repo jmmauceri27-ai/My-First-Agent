@@ -67,6 +67,10 @@ export async function exportPipelineToExcelAction(
   return buildXlsxBase64(rows, columns, boldLastRow);
 }
 
+export async function exportContractsToExcelAction(rows: DatasetRecord[], columns: string[]): Promise<string> {
+  return buildXlsxBase64(rows, columns);
+}
+
 /** Renames every Opportunity/Contract file attachment whose name is missing an extension (from before uploads
  * started guaranteeing one), inferring the right extension from content_type or, failing that, the file's own bytes. */
 export async function fixMissingFileExtensionsAction(): Promise<
