@@ -1,17 +1,20 @@
 export const dynamic = "force-dynamic";
 
 import { DASHBOARD_CATEGORIES, DASHBOARD_DEFINITIONS } from "@/lib/dashboardDefinitions";
+import { listContracts } from "@/lib/crmDal";
 import { listSites } from "@/lib/networkDal";
 import AreaSidebar from "./AreaSidebar";
 import DashboardPicker from "./DashboardPicker";
 import DashboardViewClient from "./DashboardViewClient";
 import RatesClient from "./RatesClient";
 import ExpensesClient from "./ExpensesClient";
+import AgreementsOverviewClient from "./AgreementsOverviewClient";
 
-/** The Rate Schedule and Monthly Expenses views are hand-built pages (chart + per-site/trade breakdown table),
- * not config-driven dashboards -- they're pinned into this area as extra picker tabs rather than modeled as a
- * DashboardDefinition. */
+/** The Overview, Rate Schedule, and Monthly Expenses views are hand-built pages (stat breakdown / chart +
+ * per-site/trade breakdown table), not config-driven dashboards -- they're pinned into this area as extra
+ * picker tabs rather than modeled as a DashboardDefinition. */
 const RATE_SCHEDULE_AREA = "Agreements";
+const OVERVIEW_ID = "agreements-overview";
 const RATE_SCHEDULE_ID = "rate-schedule";
 const EXPENSE_SCHEDULE_ID = "expense-schedule";
 
@@ -26,9 +29,13 @@ export default async function DashboardsPage({
   const selectedArea = area ?? (id && byId.get(id)?.area) ?? DASHBOARD_DEFINITIONS[0]?.area ?? DASHBOARD_CATEGORIES[0];
 
   const areaDashboards = DASHBOARD_DEFINITIONS.filter((d) => d.area === selectedArea);
-  const showRateSchedule = selectedArea === RATE_SCHEDULE_AREA && id === RATE_SCHEDULE_ID;
-  const showExpenseSchedule = selectedArea === RATE_SCHEDULE_AREA && id === EXPENSE_SCHEDULE_ID;
-  const showCustomTab = showRateSchedule || showExpenseSchedule;
+  const isAgreementsArea = selectedArea === RATE_SCHEDULE_AREA;
+  // Overview is the default landing tab for Agreements -- there's no config-driven dashboard for this area,
+  // so without this, picking "Agreements" in the sidebar used to land on an empty "no cards yet" state.
+  const showOverview = isAgreementsArea && (id === OVERVIEW_ID || (!id && areaDashboards.length === 0));
+  const showRateSchedule = isAgreementsArea && id === RATE_SCHEDULE_ID;
+  const showExpenseSchedule = isAgreementsArea && id === EXPENSE_SCHEDULE_ID;
+  const showCustomTab = showOverview || showRateSchedule || showExpenseSchedule;
   const selected =
     !showCustomTab && id && areaDashboards.some((d) => d.id === id)
       ? byId.get(id)
@@ -37,8 +44,9 @@ export default async function DashboardsPage({
         : undefined;
 
   const pickerItems = [
+    ...(isAgreementsArea ? [{ id: OVERVIEW_ID, name: "Overview" }] : []),
     ...areaDashboards.map((d) => ({ id: d.id, name: d.config.name })),
-    ...(selectedArea === RATE_SCHEDULE_AREA
+    ...(isAgreementsArea
       ? [
           { id: RATE_SCHEDULE_ID, name: "Rate Schedule" },
           { id: EXPENSE_SCHEDULE_ID, name: "Monthly Expenses" },
@@ -46,7 +54,10 @@ export default async function DashboardsPage({
       : []),
   ];
 
-  const sites = showCustomTab ? await listSites() : null;
+  const [sites, contracts] = await Promise.all([
+    showRateSchedule || showExpenseSchedule ? listSites() : Promise.resolve(null),
+    showOverview ? listContracts() : Promise.resolve(null),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -64,10 +75,20 @@ export default async function DashboardsPage({
             <>
               <DashboardPicker
                 dashboards={pickerItems}
-                selectedId={showRateSchedule ? RATE_SCHEDULE_ID : showExpenseSchedule ? EXPENSE_SCHEDULE_ID : selected?.id}
+                selectedId={
+                  showOverview
+                    ? OVERVIEW_ID
+                    : showRateSchedule
+                      ? RATE_SCHEDULE_ID
+                      : showExpenseSchedule
+                        ? EXPENSE_SCHEDULE_ID
+                        : selected?.id
+                }
                 area={selectedArea}
               />
-              {showRateSchedule ? (
+              {showOverview ? (
+                <AgreementsOverviewClient contracts={contracts ?? []} />
+              ) : showRateSchedule ? (
                 <RatesClient sites={sites ?? []} />
               ) : showExpenseSchedule ? (
                 <ExpensesClient sites={sites ?? []} />
