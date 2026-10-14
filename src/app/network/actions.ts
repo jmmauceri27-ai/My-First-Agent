@@ -36,6 +36,7 @@ import {
   listDuplicateSiteGroups,
   listSiteFilterTemplates,
   listSites,
+  listSitesByIds,
   listSitesForCompany,
   listSitesForContract,
   listVendors,
@@ -136,6 +137,12 @@ export async function bulkUpdateVendorsAction(rows: VendorUpdateRow[]): Promise<
 
 export async function listSitesAction(): Promise<Site[]> {
   return listSites();
+}
+
+/** Full site data (including every trade's monthly rate/expense schedules) for exactly the given ids -- used
+ * by on-demand downloads/exports on the Sites screen, which otherwise only loads the lighter listSitesSummary(). */
+export async function listSitesByIdsAction(ids: string[]): Promise<Site[]> {
+  return listSitesByIds(ids);
 }
 
 export async function getSiteAction(id: string): Promise<Site | null> {

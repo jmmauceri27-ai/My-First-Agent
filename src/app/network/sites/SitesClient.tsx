@@ -48,6 +48,7 @@ import {
   bulkUnassignVendorAction,
   deleteSiteFilterTemplateAction,
   exportSitesToExcelAction,
+  listSitesByIdsAction,
   saveSiteFilterTemplateAction,
 } from "../actions";
 
@@ -769,7 +770,10 @@ export default function SitesClient({
     if (filteredSites.length === 0) return;
     setExporting(true);
     try {
-      const rows = filteredSites.map(siteToExportRow);
+      // The Sites screen only loads the lighter listSitesSummary() (no monthly rate/expense schedules) --
+      // fetch the full data for just the filtered sites fresh, since the export needs those schedules.
+      const fullSites = await listSitesByIdsAction(filteredSites.map((s) => s.id));
+      const rows = fullSites.map(siteToExportRow);
       const base64 = await exportSitesToExcelAction(rows, SITE_EXPORT_COLUMNS);
       const date = new Date().toISOString().slice(0, 10);
       downloadBase64Xlsx(base64, `sites_export_${date}.xlsx`);

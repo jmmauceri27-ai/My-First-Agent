@@ -12,7 +12,7 @@ import { buildTemplateXlsxAction } from "@/lib/sheetActions";
 import type { DatasetRecord } from "@/lib/types";
 import type { Company } from "@/lib/crmTypes";
 import type { Site, SiteRateScheduleUpdateRow } from "@/lib/networkTypes";
-import { bulkUpdateSiteRateScheduleAction, exportSitesToExcelAction, parseSiteSheetAction } from "./actions";
+import { bulkUpdateSiteRateScheduleAction, exportSitesToExcelAction, listSitesByIdsAction, parseSiteSheetAction } from "./actions";
 
 type ParsedRow = Record<string, string | number | boolean | null>;
 
@@ -66,7 +66,10 @@ export default function UpdateSiteRateScheduleModal({
     if (!trade || sitesForTrade.length === 0) return;
     setDownloadingCurrent(true);
     try {
-      const rows: DatasetRecord[] = sitesForTrade.map((s) => {
+      // The Sites screen only loads the lighter listSitesSummary() (no monthly rate schedules) -- fetch the
+      // full data for just these sites fresh, since this download needs each one's actual current schedule.
+      const fullSites = await listSitesByIdsAction(sitesForTrade.map((s) => s.id));
+      const rows: DatasetRecord[] = fullSites.map((s) => {
         const assignment = s.tradeAssignments.find((a) => a.trade === trade)!;
         const row: DatasetRecord = {
           "Record ID": s.id,

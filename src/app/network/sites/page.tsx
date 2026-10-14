@@ -2,13 +2,13 @@ export const dynamic = "force-dynamic";
 
 import { listCompanies, listContacts, listContracts, listOpportunities } from "@/lib/crmDal";
 import { listFieldClasses } from "@/lib/fieldsDal";
-import { listSiteFilterTemplates, listSites, listVendors } from "@/lib/networkDal";
+import { listSiteFilterTemplates, listSitesSummary, listVendors } from "@/lib/networkDal";
 import SitesClient from "./SitesClient";
 
 export default async function SitesPage() {
   const [sites, companies, vendors, opportunities, contracts, contacts, filterTemplates, fieldClasses] =
     await Promise.all([
-      listSites(),
+      listSitesSummary(),
       listCompanies(),
       listVendors(),
       listOpportunities(),

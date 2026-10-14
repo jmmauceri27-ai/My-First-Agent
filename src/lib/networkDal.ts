@@ -249,6 +249,14 @@ export async function bulkUpdateVendors(rows: VendorUpdateRow[]): Promise<Vendor
 const ASSIGNMENT_COLUMNS =
   "id, site_id, trade, vendor_id, sub_vendor_id, contract_id, contract_value, rate_schedule, annual_rate_total, sub_price, sub_vendor_price, vendor_expense_schedule, sub_vendor_expense_schedule, vendor:vendors!site_trade_assignments_vendor_id_fkey(name), sub_vendor:vendors!site_trade_assignments_sub_vendor_id_fkey(name), contract:crm_contracts(name, billing_type)";
 
+/** Same as ASSIGNMENT_COLUMNS but without the three monthly-schedule JSONB columns (rate_schedule,
+ * vendor_expense_schedule, sub_vendor_expense_schedule) -- those are by far the heaviest part of each
+ * assignment row (up to 12 keys apiece) and are only actually needed when editing one site's own schedule or
+ * exporting it, never for browsing/filtering/map-coloring the Sites list. Used by listSitesSummary(); mapSite/
+ * mapAssignment default the missing fields to {} same as they would for a site with no schedule set at all. */
+const ASSIGNMENT_COLUMNS_SUMMARY =
+  "id, site_id, trade, vendor_id, sub_vendor_id, contract_id, contract_value, annual_rate_total, sub_price, sub_vendor_price, vendor:vendors!site_trade_assignments_vendor_id_fkey(name), sub_vendor:vendors!site_trade_assignments_sub_vendor_id_fkey(name), contract:crm_contracts(name, billing_type)";
+
 function mapAssignment(a: Record<string, unknown>): SiteTradeAssignment {
   const vendor = a.vendor as unknown as { name: string } | null;
   const subVendor = a.sub_vendor as unknown as { name: string } | null;
@@ -275,6 +283,7 @@ function mapAssignment(a: Record<string, unknown>): SiteTradeAssignment {
 }
 
 const SITE_COLUMNS = `id, company_id, opportunity_id, contract_id, site_code, name, address, city, state, zip, lat, lng, trades, measurements, counts, last_season_snowfall, notes, created_at, updated_at, crm_companies(name), crm_opportunities(name), crm_contracts(name), site_trade_assignments(${ASSIGNMENT_COLUMNS})`;
+const SITE_COLUMNS_SUMMARY = `id, company_id, opportunity_id, contract_id, site_code, name, address, city, state, zip, lat, lng, trades, measurements, counts, last_season_snowfall, notes, created_at, updated_at, crm_companies(name), crm_opportunities(name), crm_contracts(name), site_trade_assignments(${ASSIGNMENT_COLUMNS_SUMMARY})`;
 
 function mapSite(s: Record<string, unknown>): Site {
   const company = s.crm_companies as unknown as { name: string } | null;
@@ -333,6 +342,43 @@ export async function listSites(): Promise<Site[]> {
   const rows = await fetchAllSitePages((from, to) =>
     supabase.from("sites").select(SITE_COLUMNS).eq("user_id", OWNER_USER_ID).order("name", { ascending: true }).range(from, to),
   );
+  return rows.map(mapSite);
+}
+
+/** Same rows as listSites(), minus the heavy monthly rate/expense schedule JSONB columns on each trade
+ * assignment (see ASSIGNMENT_COLUMNS_SUMMARY) -- for the Sites screen's everyday browsing/filtering/map, which
+ * never reads those fields directly (only scalars like annualRateTotal/contractValue). Anything that needs a
+ * site's actual month-by-month schedule (an export, a "download current schedule" sheet) should fetch it
+ * fresh via listSitesByIds for just the sites it needs, rather than relying on this being loaded already. */
+export async function listSitesSummary(): Promise<Site[]> {
+  const supabase = createAdminClient();
+  const rows = await fetchAllSitePages((from, to) =>
+    supabase
+      .from("sites")
+      .select(SITE_COLUMNS_SUMMARY)
+      .eq("user_id", OWNER_USER_ID)
+      .order("name", { ascending: true })
+      .range(from, to),
+  );
+  return rows.map(mapSite);
+}
+
+/** Full site rows (including every trade's monthly rate/expense schedules) for exactly the given ids -- the
+ * on-demand counterpart to listSitesSummary(), for exports/downloads that need the heavy schedule data for a
+ * specific (usually filtered) set of sites without loading it for the whole portfolio on every page view. */
+export async function listSitesByIds(ids: string[]): Promise<Site[]> {
+  if (ids.length === 0) return [];
+  const supabase = createAdminClient();
+  const rows: Record<string, unknown>[] = [];
+  for (const chunk of chunkArray(ids, SITE_ID_CHUNK_SIZE)) {
+    const { data, error } = await supabase
+      .from("sites")
+      .select(SITE_COLUMNS)
+      .in("id", chunk)
+      .eq("user_id", OWNER_USER_ID);
+    if (error) throw new Error(error.message);
+    rows.push(...(data ?? []));
+  }
   return rows.map(mapSite);
 }
 
