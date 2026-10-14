@@ -605,20 +605,12 @@ async function syncSiteDirectContractIds(
     }
   }
 
-  const concurrency = 20;
-  for (let i = 0; i < updates.length; i += concurrency) {
-    const batch = updates.slice(i, i + concurrency);
-    const results = await Promise.all(
-      batch.map((u) =>
-        supabase
-          .from("sites")
-          .update({ contract_id: u.contractId, updated_at: new Date().toISOString() })
-          .eq("id", u.siteId)
-          .eq("user_id", OWNER_USER_ID),
-      ),
+  for (const chunk of chunkArray(updates, SITE_ID_CHUNK_SIZE)) {
+    const { error } = await supabase.from("sites").upsert(
+      chunk.map((u) => ({ id: u.siteId, contract_id: u.contractId, updated_at: new Date().toISOString() })),
+      { onConflict: "id" },
     );
-    const failed = results.find((r) => r.error);
-    if (failed?.error) throw new Error(failed.error.message);
+    if (error) throw new Error(error.message);
   }
 
   return previousContractIds;
@@ -845,20 +837,14 @@ export async function bulkAssignTrades(siteIds: string[], trades: string[]): Pro
     trades: Array.from(new Set([...((s.trades as string[] | null) ?? []), ...trades])),
   }));
 
-  const concurrency = 20;
-  for (let i = 0; i < updates.length; i += concurrency) {
-    const batch = updates.slice(i, i + concurrency);
-    const results = await Promise.all(
-      batch.map((u) =>
-        supabase
-          .from("sites")
-          .update({ trades: u.trades, updated_at: new Date().toISOString() })
-          .eq("id", u.id)
-          .eq("user_id", OWNER_USER_ID),
-      ),
+  // One upsert per chunk instead of one update per site -- every row touches the same columns (id, trades),
+  // just with a different trades array value, so a single batched upsert (onConflict "id") is equivalent.
+  for (const chunk of chunkArray(updates, SITE_ID_CHUNK_SIZE)) {
+    const { error } = await supabase.from("sites").upsert(
+      chunk.map((u) => ({ id: u.id, trades: u.trades, updated_at: new Date().toISOString() })),
+      { onConflict: "id" },
     );
-    const failed = results.find((r) => r.error);
-    if (failed?.error) throw new Error(failed.error.message);
+    if (error) throw new Error(error.message);
   }
 }
 
@@ -907,20 +893,12 @@ export async function bulkUnassignTrades(siteIds: string[], trades: string[]): P
     if (deleteError) throw new Error(deleteError.message);
   }
 
-  const concurrency = 20;
-  for (let i = 0; i < updates.length; i += concurrency) {
-    const batch = updates.slice(i, i + concurrency);
-    const results = await Promise.all(
-      batch.map((u) =>
-        supabase
-          .from("sites")
-          .update({ trades: u.trades, updated_at: new Date().toISOString() })
-          .eq("id", u.id)
-          .eq("user_id", OWNER_USER_ID),
-      ),
+  for (const chunk of chunkArray(updates, SITE_ID_CHUNK_SIZE)) {
+    const { error } = await supabase.from("sites").upsert(
+      chunk.map((u) => ({ id: u.id, trades: u.trades, updated_at: new Date().toISOString() })),
+      { onConflict: "id" },
     );
-    const failed = results.find((r) => r.error);
-    if (failed?.error) throw new Error(failed.error.message);
+    if (error) throw new Error(error.message);
   }
 
   await Promise.all(Array.from(affectedContractIds).map((id) => syncContractSiteCount(id)));
@@ -1007,30 +985,21 @@ export async function bulkAssignContractForTrade(siteIds: string[], trade: strin
     }
   }
 
-  const concurrency = 20;
-  for (let i = 0; i < siteIds.length; i += concurrency) {
-    const batch = siteIds.slice(i, i + concurrency);
-    const results = await Promise.all(
-      batch.map(async (siteId) => {
-        const { data, error } = await supabase
-          .from("site_trade_assignments")
-          .update({ contract_id: contractId, updated_at: new Date().toISOString() })
-          .eq("site_id", siteId)
-          .eq("trade", trade)
-          .eq("user_id", OWNER_USER_ID)
-          .select("id");
-        if (error) return { error };
-        if (!data || data.length === 0) {
-          const { error: insertError } = await supabase
-            .from("site_trade_assignments")
-            .insert({ user_id: OWNER_USER_ID, site_id: siteId, trade, contract_id: contractId });
-          if (insertError) return { error: insertError };
-        }
-        return { error: null };
-      }),
+  // One upsert per chunk instead of one update (plus a fallback insert) per site -- same end state, since
+  // site_trade_assignments has a unique (site_id, trade) constraint to upsert against, but ~150 sites per
+  // round trip instead of one round trip per site.
+  for (const chunk of chunkArray(siteIds, SITE_ID_CHUNK_SIZE)) {
+    const { error } = await supabase.from("site_trade_assignments").upsert(
+      chunk.map((siteId) => ({
+        user_id: OWNER_USER_ID,
+        site_id: siteId,
+        trade,
+        contract_id: contractId,
+        updated_at: new Date().toISOString(),
+      })),
+      { onConflict: "site_id,trade" },
     );
-    const failed = results.find((r) => r.error);
-    if (failed?.error) throw new Error(failed.error.message);
+    if (error) throw new Error(error.message);
   }
 
   const previousDirectContractIds = await syncSiteDirectContractIds(supabase, siteIds);
@@ -1087,30 +1056,19 @@ export async function bulkAssignVendorForTrade(
 
   await bulkAssignTrades(siteIds, [trade]);
 
-  const concurrency = 20;
-  for (let i = 0; i < siteIds.length; i += concurrency) {
-    const batch = siteIds.slice(i, i + concurrency);
-    const results = await Promise.all(
-      batch.map(async (siteId) => {
-        const { data, error } = await supabase
-          .from("site_trade_assignments")
-          .update({ vendor_id: vendorId, sub_vendor_id: subVendorId, updated_at: new Date().toISOString() })
-          .eq("site_id", siteId)
-          .eq("trade", trade)
-          .eq("user_id", OWNER_USER_ID)
-          .select("id");
-        if (error) return { error };
-        if (!data || data.length === 0) {
-          const { error: insertError } = await supabase
-            .from("site_trade_assignments")
-            .insert({ user_id: OWNER_USER_ID, site_id: siteId, trade, vendor_id: vendorId, sub_vendor_id: subVendorId });
-          if (insertError) return { error: insertError };
-        }
-        return { error: null };
-      }),
+  for (const chunk of chunkArray(siteIds, SITE_ID_CHUNK_SIZE)) {
+    const { error } = await supabase.from("site_trade_assignments").upsert(
+      chunk.map((siteId) => ({
+        user_id: OWNER_USER_ID,
+        site_id: siteId,
+        trade,
+        vendor_id: vendorId,
+        sub_vendor_id: subVendorId,
+        updated_at: new Date().toISOString(),
+      })),
+      { onConflict: "site_id,trade" },
     );
-    const failed = results.find((r) => r.error);
-    if (failed?.error) throw new Error(failed.error.message);
+    if (error) throw new Error(error.message);
   }
 }
 
@@ -1373,37 +1331,19 @@ export async function bulkUpdateSiteRateSchedule(
     updates.push({ siteId, rateSchedule });
   });
 
-  const concurrency = 20;
-  for (let i = 0; i < updates.length; i += concurrency) {
-    const batch = updates.slice(i, i + concurrency);
-    const results = await Promise.all(
-      batch.map(async (u) => {
-        const annualRateTotal = sumRateSchedule(u.rateSchedule);
-        const { data, error } = await supabase
-          .from("site_trade_assignments")
-          .update({ rate_schedule: u.rateSchedule, annual_rate_total: annualRateTotal, updated_at: new Date().toISOString() })
-          .eq("site_id", u.siteId)
-          .eq("trade", trade)
-          .eq("user_id", OWNER_USER_ID)
-          .select("id");
-        if (error) return { error };
-        if (!data || data.length === 0) {
-          const { error: insertError } = await supabase
-            .from("site_trade_assignments")
-            .insert({
-              user_id: OWNER_USER_ID,
-              site_id: u.siteId,
-              trade,
-              rate_schedule: u.rateSchedule,
-              annual_rate_total: annualRateTotal,
-            });
-          if (insertError) return { error: insertError };
-        }
-        return { error: null };
-      }),
+  for (const chunk of chunkArray(updates, SITE_ID_CHUNK_SIZE)) {
+    const { error } = await supabase.from("site_trade_assignments").upsert(
+      chunk.map((u) => ({
+        user_id: OWNER_USER_ID,
+        site_id: u.siteId,
+        trade,
+        rate_schedule: u.rateSchedule,
+        annual_rate_total: sumRateSchedule(u.rateSchedule),
+        updated_at: new Date().toISOString(),
+      })),
+      { onConflict: "site_id,trade" },
     );
-    const failed = results.find((r) => r.error);
-    if (failed?.error) throw new Error(failed.error.message);
+    if (error) throw new Error(error.message);
   }
 
   return { updated: updates.length, notFound, ambiguous };
@@ -1461,30 +1401,18 @@ export async function bulkUpdateSiteExpenseSchedule(
     updates.push({ siteId, expenseSchedule });
   });
 
-  const concurrency = 20;
-  for (let i = 0; i < updates.length; i += concurrency) {
-    const batch = updates.slice(i, i + concurrency);
-    const results = await Promise.all(
-      batch.map(async (u) => {
-        const { data, error } = await supabase
-          .from("site_trade_assignments")
-          .update({ [column]: u.expenseSchedule, updated_at: new Date().toISOString() })
-          .eq("site_id", u.siteId)
-          .eq("trade", trade)
-          .eq("user_id", OWNER_USER_ID)
-          .select("id");
-        if (error) return { error };
-        if (!data || data.length === 0) {
-          const { error: insertError } = await supabase
-            .from("site_trade_assignments")
-            .insert({ user_id: OWNER_USER_ID, site_id: u.siteId, trade, [column]: u.expenseSchedule });
-          if (insertError) return { error: insertError };
-        }
-        return { error: null };
-      }),
+  for (const chunk of chunkArray(updates, SITE_ID_CHUNK_SIZE)) {
+    const { error } = await supabase.from("site_trade_assignments").upsert(
+      chunk.map((u) => ({
+        user_id: OWNER_USER_ID,
+        site_id: u.siteId,
+        trade,
+        [column]: u.expenseSchedule,
+        updated_at: new Date().toISOString(),
+      })),
+      { onConflict: "site_id,trade" },
     );
-    const failed = results.find((r) => r.error);
-    if (failed?.error) throw new Error(failed.error.message);
+    if (error) throw new Error(error.message);
   }
 
   return { updated: updates.length, notFound, ambiguous };
@@ -1525,20 +1453,12 @@ export async function bulkUpdateSiteMeasurements(
     updates.push({ id: siteId, payload: { measurements: mergedMeasurements, counts: mergedCounts } });
   });
 
-  const concurrency = 20;
-  for (let i = 0; i < updates.length; i += concurrency) {
-    const batch = updates.slice(i, i + concurrency);
-    const results = await Promise.all(
-      batch.map((u) =>
-        supabase
-          .from("sites")
-          .update({ ...u.payload, updated_at: new Date().toISOString() })
-          .eq("id", u.id)
-          .eq("user_id", OWNER_USER_ID),
-      ),
+  for (const chunk of chunkArray(updates, SITE_ID_CHUNK_SIZE)) {
+    const { error } = await supabase.from("sites").upsert(
+      chunk.map((u) => ({ id: u.id, ...u.payload, updated_at: new Date().toISOString() })),
+      { onConflict: "id" },
     );
-    const failed = results.find((r) => r.error);
-    if (failed?.error) throw new Error(failed.error.message);
+    if (error) throw new Error(error.message);
   }
 
   return { updated: updates.length, notFound, ambiguous };
