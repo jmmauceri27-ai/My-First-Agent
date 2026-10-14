@@ -451,6 +451,23 @@ export default function SiteDetailClient({
                   }
                 />
                 <Field
+                  label="Facility Contact"
+                  value={
+                    site.facilityContacts.length > 0 && (
+                      <span className="flex flex-wrap gap-x-1 gap-y-0.5">
+                        {site.facilityContacts.map((c, i) => (
+                          <span key={c.id}>
+                            <Link href={`/crm/contacts/${c.id}`} className="font-medium text-brand-600 dark:text-brand-400 hover:underline">
+                              {c.name}
+                            </Link>
+                            {i < site.facilityContacts.length - 1 && ","}
+                          </span>
+                        ))}
+                      </span>
+                    )
+                  }
+                />
+                <Field
                   label="Agreement"
                   value={
                     siteAgreements.length > 0 && (

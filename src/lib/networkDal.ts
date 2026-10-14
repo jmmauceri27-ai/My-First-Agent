@@ -312,6 +312,8 @@ function mapSite(s: Record<string, unknown>): Site {
     counts: (s.counts as Site["counts"] | null) ?? {},
     lastSeasonSnowfall: s.last_season_snowfall as number | null,
     notes: s.notes as string | null,
+    // Resolved separately by getSite() only -- see Site.facilityContacts' own doc comment.
+    facilityContacts: [],
     createdAt: s.created_at as string,
     updatedAt: s.updated_at as string,
   };
@@ -411,15 +413,23 @@ export async function mergeSites(
 
 export async function getSite(id: string): Promise<Site | null> {
   const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("sites")
-    .select(SITE_COLUMNS)
-    .eq("id", id)
-    .eq("user_id", OWNER_USER_ID)
-    .maybeSingle();
+  const [{ data, error }, { data: contactRows, error: contactError }] = await Promise.all([
+    supabase.from("sites").select(SITE_COLUMNS).eq("id", id).eq("user_id", OWNER_USER_ID).maybeSingle(),
+    supabase.from("crm_contact_sites").select("contact_id, crm_contacts(name)").eq("site_id", id),
+  ]);
   if (error) throw new Error(error.message);
   if (!data) return null;
-  return mapSite(data);
+  if (contactError) throw new Error(contactError.message);
+
+  const facilityContacts = (contactRows ?? [])
+    .map((r) => {
+      const contact = r.crm_contacts as unknown as { name: string } | null;
+      return contact ? { id: r.contact_id as string, name: contact.name } : null;
+    })
+    .filter((c): c is { id: string; name: string } => !!c)
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  return { ...mapSite(data), facilityContacts };
 }
 
 export async function listSitesForCompany(companyId: string): Promise<Site[]> {

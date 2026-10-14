@@ -111,6 +111,11 @@ export interface Site {
   /** Total snowfall (inches) recorded for this site over the most recent winter season. */
   lastSeasonSnowfall: number | null;
   notes: string | null;
+  /** CRM Contacts assigned responsible for this site (crm_contact_sites, set from a Contact's own "Sites
+   * responsible for" checklist, or Network > Sites' bulk "Assign facility contact" action) -- a site can have
+   * more than one. Only populated by getSite(); the bulk list*() functions leave this empty since resolving
+   * it for every site on every visit to the Sites screen isn't needed there. */
+  facilityContacts: { id: string; name: string }[];
   createdAt: string;
   updatedAt: string;
 }
