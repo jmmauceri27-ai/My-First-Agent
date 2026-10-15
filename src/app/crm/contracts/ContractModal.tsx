@@ -235,6 +235,7 @@ export default function ContractModal({
         <div className="mt-4">
           <DynamicFieldsSection
             classes={fieldClasses}
+            recordType="Agreement"
             values={fieldValues}
             assignedFieldIds={[]}
             onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}

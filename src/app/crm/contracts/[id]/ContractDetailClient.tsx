@@ -493,6 +493,7 @@ export default function ContractDetailClient({
           <div className="mt-4">
             <DynamicFieldsSection
               classes={fieldClasses}
+              recordType="Agreement"
               values={fieldValues}
               assignedFieldIds={assignedFieldIds}
               onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}

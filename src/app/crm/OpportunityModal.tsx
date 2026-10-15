@@ -361,6 +361,7 @@ export default function OpportunityModal({
         <div className="mt-4">
           <DynamicFieldsSection
             classes={fieldClasses}
+            recordType="Opportunity"
             values={fieldValues}
             assignedFieldIds={[]}
             onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}

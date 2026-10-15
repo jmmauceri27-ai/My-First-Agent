@@ -225,6 +225,7 @@ export default function ContactModal({
         <div className="mt-4">
           <DynamicFieldsSection
             classes={fieldClasses}
+            recordType="Contact"
             values={fieldValues}
             assignedFieldIds={assignedFieldIds}
             onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}

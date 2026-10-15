@@ -5,12 +5,13 @@ import type { CrmField, CrmFieldInput, FieldClass, FieldClassInput } from "./crm
 
 // ---------- Field Classes ----------
 
-const FIELD_CLASS_COLUMNS = "id, name, position, created_at, updated_at";
+const FIELD_CLASS_COLUMNS = "id, name, record_type, position, created_at, updated_at";
 
 function mapFieldClass(c: Record<string, unknown>): Omit<FieldClass, "fields"> {
   return {
     id: c.id as string,
     name: c.name as string,
+    recordType: (c.record_type as string | null) ?? null,
     position: c.position as number,
     createdAt: c.created_at as string,
     updatedAt: c.updated_at as string,

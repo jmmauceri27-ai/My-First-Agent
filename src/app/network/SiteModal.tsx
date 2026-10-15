@@ -330,6 +330,7 @@ export default function SiteModal({
 
           <DynamicFieldsSection
             classes={fieldClasses}
+            recordType="Site"
             values={fieldValues}
             assignedFieldIds={[]}
             onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}

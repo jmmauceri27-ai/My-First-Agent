@@ -10,6 +10,7 @@ import type { CrmField, FieldClass } from "@/lib/crmTypes";
  * the bottom, grouped by class, rather than one picker per class. */
 export default function DynamicFieldsSection({
   classes,
+  recordType,
   values,
   assignedFieldIds,
   onChange,
@@ -18,6 +19,10 @@ export default function DynamicFieldsSection({
   canManageCustomFields = true,
 }: {
   classes: FieldClass[];
+  /** This record's type (e.g. "Site", "Contact") -- a class with recordType set to something else is left
+   * out entirely, so a Site-only class like "Snow" never shows up on a Contact. A class with recordType null
+   * is universal and always shown. */
+  recordType: string;
   values: Record<string, string>;
   assignedFieldIds: string[];
   onChange: (fieldId: string, value: string) => void;
@@ -27,6 +32,8 @@ export default function DynamicFieldsSection({
    * it's been saved) to show only standard fields until then. */
   canManageCustomFields?: boolean;
 }) {
+  const scopedClasses = classes.filter((c) => c.recordType == null || c.recordType === recordType);
+
   function renderFieldInput(f: CrmField) {
     const value = values[f.id] ?? "";
     return (
@@ -64,7 +71,7 @@ export default function DynamicFieldsSection({
     );
   }
 
-  const visibleClasses = classes
+  const visibleClasses = scopedClasses
     .map((c) => ({
       ...c,
       standardFields: c.fields.filter((f) => f.isStandard),
@@ -73,7 +80,7 @@ export default function DynamicFieldsSection({
     .filter((c) => c.standardFields.length > 0 || c.attachedCustomFields.length > 0);
 
   const addableGroups = canManageCustomFields
-    ? classes
+    ? scopedClasses
         .map((c) => ({
           className: c.name,
           fields: c.fields.filter((f) => !f.isStandard && !assignedFieldIds.includes(f.id)),

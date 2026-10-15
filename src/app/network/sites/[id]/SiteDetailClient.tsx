@@ -251,6 +251,7 @@ export default function SiteDetailClient({
    * visibleClasses logic, for the read-only view-mode rendering (that component only renders edit inputs). */
   const siteFieldGroups = useMemo(() => {
     return fieldClasses
+      .filter((c) => c.recordType == null || c.recordType === "Site")
       .map((c) => ({
         className: c.name,
         entries: c.fields
@@ -783,6 +784,7 @@ export default function SiteDetailClient({
               <div className="mt-3">
                 <DynamicFieldsSection
                   classes={fieldClasses}
+                  recordType="Site"
                   values={fieldValues}
                   assignedFieldIds={assignedFieldIds}
                   onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}

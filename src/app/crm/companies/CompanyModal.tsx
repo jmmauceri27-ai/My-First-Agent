@@ -260,6 +260,7 @@ export default function CompanyModal({
           <div className="mt-4">
             <DynamicFieldsSection
               classes={fieldClasses}
+              recordType="Company"
               values={fieldValues}
               assignedFieldIds={assignedFieldIds}
               onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}

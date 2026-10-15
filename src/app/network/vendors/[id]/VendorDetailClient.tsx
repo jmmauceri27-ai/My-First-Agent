@@ -209,6 +209,7 @@ export default function VendorDetailClient({
           <div className="mt-4">
             <DynamicFieldsSection
               classes={fieldClasses}
+              recordType="Vendor"
               values={fieldValues}
               assignedFieldIds={assignedFieldIds}
               onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}

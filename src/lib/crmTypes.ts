@@ -420,6 +420,10 @@ export type FieldType = (typeof FIELD_TYPES)[number];
 export interface FieldClass {
   id: string;
   name: string;
+  /** null means "universal" -- shows on every record type, the original behavior. A specific record type
+   * (e.g. "Site") scopes this class's fields to that record type's own pages only -- see
+   * 079_field_class_record_type_scope.sql for why this exists. */
+  recordType: string | null;
   position: number;
   fields: CrmField[];
   createdAt: string;

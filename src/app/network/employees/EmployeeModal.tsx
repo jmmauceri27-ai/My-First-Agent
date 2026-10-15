@@ -102,6 +102,7 @@ export default function EmployeeModal({
         <div className="mt-4">
           <DynamicFieldsSection
             classes={fieldClasses}
+            recordType="Employee"
             values={fieldValues}
             assignedFieldIds={[]}
             onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}

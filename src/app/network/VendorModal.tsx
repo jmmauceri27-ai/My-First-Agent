@@ -174,6 +174,7 @@ export default function VendorModal({
         <div className="mt-4">
           <DynamicFieldsSection
             classes={fieldClasses}
+            recordType="Vendor"
             values={fieldValues}
             assignedFieldIds={[]}
             onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}
