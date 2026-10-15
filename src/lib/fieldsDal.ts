@@ -1,6 +1,7 @@
 import "server-only";
 import { createAdminClient, OWNER_USER_ID } from "./supabase/admin";
 import { chunkArray, SITE_ID_CHUNK_SIZE } from "./chunk";
+import { RECORD_TYPES } from "./crmTypes";
 import type { CrmField, CrmFieldInput, FieldClass, FieldClassInput } from "./crmTypes";
 
 // ---------- Field Classes ----------
@@ -69,6 +70,9 @@ export async function listFieldClasses(): Promise<FieldClass[]> {
 }
 
 export async function createFieldClass(input: FieldClassInput): Promise<string> {
+  if (!(RECORD_TYPES as readonly string[]).includes(input.recordType)) {
+    throw new Error(`"${input.recordType}" isn't a valid record type.`);
+  }
   const supabase = createAdminClient();
   const { data: existing } = await supabase
     .from("crm_field_classes")
@@ -169,7 +173,15 @@ export async function createField(input: CrmFieldInput): Promise<string> {
 
 export async function updateField(id: string, input: CrmFieldInput): Promise<void> {
   const supabase = createAdminClient();
-  const recordType = await recordTypeForClass(input.classId);
+  const [{ data: existingField, error: fetchError }, newRecordType] = await Promise.all([
+    supabase.from("crm_fields").select("record_type").eq("id", id).eq("user_id", OWNER_USER_ID).single(),
+    recordTypeForClass(input.classId),
+  ]);
+  if (fetchError) throw new Error(fetchError.message);
+  if ((existingField.record_type as string) !== newRecordType) {
+    throw new Error("A field can't be moved to a class of a different record type.");
+  }
+
   const { error } = await supabase
     .from("crm_fields")
     .update({
@@ -177,7 +189,7 @@ export async function updateField(id: string, input: CrmFieldInput): Promise<voi
       label: input.label,
       field_type: input.fieldType,
       options: input.options,
-      record_type: recordType,
+      record_type: newRecordType,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
