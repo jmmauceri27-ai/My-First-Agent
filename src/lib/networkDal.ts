@@ -1277,20 +1277,21 @@ export async function bulkUpdateSiteTradeAssignments(
   const { siteIds, notFound, ambiguous } = await matchSiteIds(rows, companyId);
 
   const touchesContract = rows.some((r) => "contractId" in r);
-  let previousContractIds = new Set<string>();
+  const previousContractIds = new Set<string>();
   if (touchesContract) {
     const matchedSiteIds = siteIds.filter((id): id is string => !!id);
-    if (matchedSiteIds.length > 0) {
+    for (const chunk of chunkArray(matchedSiteIds, SITE_ID_CHUNK_SIZE)) {
       const { data, error } = await supabase
         .from("site_trade_assignments")
         .select("contract_id")
-        .in("site_id", matchedSiteIds)
+        .in("site_id", chunk)
         .eq("trade", trade)
         .eq("user_id", OWNER_USER_ID);
       if (error) throw new Error(error.message);
-      previousContractIds = new Set(
-        (data ?? []).map((a) => a.contract_id as string | null).filter((id): id is string => !!id),
-      );
+      for (const a of data ?? []) {
+        const id = a.contract_id as string | null;
+        if (id) previousContractIds.add(id);
+      }
     }
   }
 
@@ -1363,16 +1364,17 @@ export async function bulkUpdateSiteRateSchedule(
   const { siteIds, notFound, ambiguous } = await matchSiteIds(rows, companyId);
 
   const matchedSiteIds = Array.from(new Set(siteIds.filter((id): id is string => !!id)));
-  const { data: existingAssignments, error: fetchError } =
-    matchedSiteIds.length > 0
-      ? await supabase
-          .from("site_trade_assignments")
-          .select("site_id, rate_schedule")
-          .in("site_id", matchedSiteIds)
-          .eq("trade", trade)
-          .eq("user_id", OWNER_USER_ID)
-      : { data: [] as { site_id: string; rate_schedule: unknown }[], error: null };
-  if (fetchError) throw new Error(fetchError.message);
+  const existingAssignments: { site_id: string; rate_schedule: unknown }[] = [];
+  for (const chunk of chunkArray(matchedSiteIds, SITE_ID_CHUNK_SIZE)) {
+    const { data, error: fetchError } = await supabase
+      .from("site_trade_assignments")
+      .select("site_id, rate_schedule")
+      .in("site_id", chunk)
+      .eq("trade", trade)
+      .eq("user_id", OWNER_USER_ID);
+    if (fetchError) throw new Error(fetchError.message);
+    existingAssignments.push(...(data ?? []));
+  }
   const existingBySiteId = new Map(
     (existingAssignments ?? []).map((a) => [a.site_id as string, (a.rate_schedule as RateSchedule | null) ?? {}]),
   );
@@ -1430,16 +1432,17 @@ export async function bulkUpdateSiteExpenseSchedule(
   const { siteIds, notFound, ambiguous } = await matchSiteIds(rows, companyId);
 
   const matchedSiteIds = Array.from(new Set(siteIds.filter((id): id is string => !!id)));
-  const { data: existingAssignments, error: fetchError } =
-    matchedSiteIds.length > 0
-      ? await supabase
-          .from("site_trade_assignments")
-          .select(`site_id, ${column}`)
-          .in("site_id", matchedSiteIds)
-          .eq("trade", trade)
-          .eq("user_id", OWNER_USER_ID)
-      : { data: [] as Record<string, unknown>[], error: null };
-  if (fetchError) throw new Error(fetchError.message);
+  const existingAssignments: Record<string, unknown>[] = [];
+  for (const chunk of chunkArray(matchedSiteIds, SITE_ID_CHUNK_SIZE)) {
+    const { data, error: fetchError } = await supabase
+      .from("site_trade_assignments")
+      .select(`site_id, ${column}`)
+      .in("site_id", chunk)
+      .eq("trade", trade)
+      .eq("user_id", OWNER_USER_ID);
+    if (fetchError) throw new Error(fetchError.message);
+    existingAssignments.push(...(data ?? []));
+  }
   const existingBySiteId = new Map(
     (existingAssignments ?? []).map((row) => {
       const a = row as Record<string, unknown>;
@@ -1487,12 +1490,17 @@ export async function bulkUpdateSiteMeasurements(
   const { siteIds, notFound, ambiguous } = await matchSiteIds(rows, companyId);
 
   const matchedIds = Array.from(new Set(siteIds.filter((id): id is string => !!id)));
-  const { data: existingSites, error: fetchError } =
-    matchedIds.length > 0
-      ? await supabase.from("sites").select("id, measurements, counts").in("id", matchedIds).eq("user_id", OWNER_USER_ID)
-      : { data: [] as { id: string; measurements: unknown; counts: unknown }[], error: null };
-  if (fetchError) throw new Error(fetchError.message);
-  const existingById = new Map((existingSites ?? []).map((s) => [s.id as string, s]));
+  const existingSites: { id: string; measurements: unknown; counts: unknown }[] = [];
+  for (const chunk of chunkArray(matchedIds, SITE_ID_CHUNK_SIZE)) {
+    const { data, error: fetchError } = await supabase
+      .from("sites")
+      .select("id, measurements, counts")
+      .in("id", chunk)
+      .eq("user_id", OWNER_USER_ID);
+    if (fetchError) throw new Error(fetchError.message);
+    existingSites.push(...(data ?? []));
+  }
+  const existingById = new Map(existingSites.map((s) => [s.id as string, s]));
 
   const updates: { id: string; payload: Record<string, unknown> }[] = [];
   rows.forEach((row, i) => {
