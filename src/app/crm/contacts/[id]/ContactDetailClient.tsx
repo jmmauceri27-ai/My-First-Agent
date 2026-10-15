@@ -10,7 +10,7 @@ import { formatCurrency } from "@/lib/siteMapColor";
 import { CONTACT_ACTIVITY_TYPES } from "@/lib/crmTypes";
 import type { Company, Contact, ContactActivity, ContactActivityType, Contract, FieldClass, Opportunity } from "@/lib/crmTypes";
 import type { Site } from "@/lib/networkTypes";
-import { getFieldValuesForRecordAction, listAssignedFieldIdsAction } from "@/app/crm/fields/actions";
+import { getFieldValuesForRecordAction } from "@/app/crm/fields/actions";
 import ContactModal from "../ContactModal";
 import { deleteContactActivityAction, saveContactActivityAction } from "../../actions";
 
@@ -92,7 +92,6 @@ export default function ContactDetailClient({
   const responsibleSites = sites.filter((s) => contact.siteIds.includes(s.id));
 
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
-  const [assignedFieldIds, setAssignedFieldIds] = useState<string[]>([]);
 
   useEffect(() => {
     getFieldValuesForRecordAction(contact.id).then((values) => {
@@ -102,16 +101,14 @@ export default function ContactDetailClient({
       }
       setFieldValues(asStrings);
     });
-    listAssignedFieldIdsAction(contact.id).then(setAssignedFieldIds);
   }, [contact.id]);
 
-  const assignedFieldEntries = useMemo(() => {
-    const allFields = fieldClasses.flatMap((c) => c.fields);
-    return assignedFieldIds
-      .map((id) => allFields.find((f) => f.id === id))
-      .filter((f): f is NonNullable<typeof f> => !!f)
+  const contactFieldEntries = useMemo(() => {
+    return fieldClasses
+      .filter((c) => c.recordType === "Contact")
+      .flatMap((c) => c.fields)
       .map((f) => ({ label: f.label, value: fieldValues[f.id] ?? "" }));
-  }, [fieldClasses, assignedFieldIds, fieldValues]);
+  }, [fieldClasses, fieldValues]);
 
   const [activities, setActivities] = useState<ContactActivity[]>(initialActivities);
   const [selectedActivityType, setSelectedActivityType] = useState<ContactActivityType>("Call");
@@ -234,10 +231,10 @@ export default function ContactDetailClient({
             </div>
           </SectionCard>
 
-          {assignedFieldEntries.length > 0 && (
-            <SectionCard icon="🏷️" title="Custom Fields" color="#6366f1">
+          {contactFieldEntries.length > 0 && (
+            <SectionCard icon="🏷️" title="Fields" color="#6366f1">
               <div className="grid grid-cols-2 gap-3">
-                {assignedFieldEntries.map((f) => (
+                {contactFieldEntries.map((f) => (
                   <Field key={f.label} label={f.label} value={f.value} />
                 ))}
               </div>

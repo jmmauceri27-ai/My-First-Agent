@@ -332,11 +332,7 @@ export default function SiteModal({
             classes={fieldClasses}
             recordType="Site"
             values={fieldValues}
-            assignedFieldIds={[]}
             onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}
-            onAssign={() => {}}
-            onUnassign={() => {}}
-            canManageCustomFields={false}
           />
         </div>
 

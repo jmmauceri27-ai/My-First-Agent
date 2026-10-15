@@ -767,6 +767,10 @@ export default function SitesClient({
     }
   }
 
+  /** Only Site-scoped classes/fields -- fieldClasses carries every record type's fields, but exporting and
+   * bulk-updating sites should only ever offer this record type's own properties. */
+  const siteFieldClasses = useMemo(() => fieldClasses.filter((c) => c.recordType === "Site"), [fieldClasses]);
+
   async function handleExport() {
     if (filteredSites.length === 0) return;
     setExporting(true);
@@ -778,7 +782,7 @@ export default function SitesClient({
         listSitesByIdsAction(ids),
         getFieldValuesForRecordsAction(ids),
       ]);
-      const allFields = fieldClasses.flatMap((c) => c.fields);
+      const allFields = siteFieldClasses.flatMap((c) => c.fields);
       const rows = fullSites.map((s) => siteToExportRow(s, allFields, fieldValuesBySite[s.id] ?? {}));
       const base64 = await exportSitesToExcelAction(rows, SITE_EXPORT_COLUMNS);
       const date = new Date().toISOString().slice(0, 10);
@@ -1557,7 +1561,7 @@ export default function SitesClient({
       {updatingFieldValues && (
         <UpdateSiteFieldValuesModal
           companies={companies}
-          fieldClasses={fieldClasses}
+          fieldClasses={siteFieldClasses}
           onClose={() => setUpdatingFieldValues(false)}
         />
       )}

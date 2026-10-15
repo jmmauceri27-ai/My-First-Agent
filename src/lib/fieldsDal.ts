@@ -11,7 +11,7 @@ function mapFieldClass(c: Record<string, unknown>): Omit<FieldClass, "fields"> {
   return {
     id: c.id as string,
     name: c.name as string,
-    recordType: (c.record_type as string | null) ?? null,
+    recordType: c.record_type as string,
     position: c.position as number,
     createdAt: c.created_at as string,
     updatedAt: c.updated_at as string,
@@ -19,7 +19,7 @@ function mapFieldClass(c: Record<string, unknown>): Omit<FieldClass, "fields"> {
 }
 
 const FIELD_COLUMNS =
-  "id, class_id, name, label, field_type, options, is_standard, position, created_at, updated_at";
+  "id, class_id, name, label, field_type, options, record_type, position, created_at, updated_at";
 
 function mapField(f: Record<string, unknown>): CrmField {
   return {
@@ -29,7 +29,7 @@ function mapField(f: Record<string, unknown>): CrmField {
     label: f.label as string,
     fieldType: f.field_type as string,
     options: (f.options as string[] | null) ?? null,
-    isStandard: f.is_standard as boolean,
+    recordType: f.record_type as string,
     position: f.position as number,
     createdAt: f.created_at as string,
     updatedAt: f.updated_at as string,
@@ -80,7 +80,7 @@ export async function createFieldClass(input: FieldClassInput): Promise<string> 
 
   const { data, error } = await supabase
     .from("crm_field_classes")
-    .insert({ user_id: OWNER_USER_ID, name: input.name, position: nextPosition })
+    .insert({ user_id: OWNER_USER_ID, name: input.name, record_type: input.recordType, position: nextPosition })
     .select("id")
     .single();
   if (error) throw new Error(error.message);
@@ -117,14 +117,31 @@ function slugify(label: string): string {
   return slug || "field";
 }
 
+/** A field's record_type always matches its class's -- fetched here rather than trusted from the caller,
+ * since the class a field belongs to is the only thing that actually determines its record type. */
+async function recordTypeForClass(classId: string): Promise<string> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("crm_field_classes")
+    .select("record_type")
+    .eq("id", classId)
+    .eq("user_id", OWNER_USER_ID)
+    .single();
+  if (error) throw new Error(error.message);
+  return data.record_type as string;
+}
+
 export async function createField(input: CrmFieldInput): Promise<string> {
   const supabase = createAdminClient();
-  const { data: existing } = await supabase
-    .from("crm_fields")
-    .select("position")
-    .eq("user_id", OWNER_USER_ID)
-    .order("position", { ascending: false })
-    .limit(1);
+  const [{ data: existing }, recordType] = await Promise.all([
+    supabase
+      .from("crm_fields")
+      .select("position")
+      .eq("user_id", OWNER_USER_ID)
+      .order("position", { ascending: false })
+      .limit(1),
+    recordTypeForClass(input.classId),
+  ]);
   const nextPosition = existing && existing.length > 0 ? (existing[0].position as number) + 1 : 0;
 
   const { data, error } = await supabase
@@ -136,14 +153,14 @@ export async function createField(input: CrmFieldInput): Promise<string> {
       label: input.label,
       field_type: input.fieldType,
       options: input.options,
-      is_standard: input.isStandard,
+      record_type: recordType,
       position: nextPosition,
     })
     .select("id")
     .single();
   if (error) {
     if (error.code === "23505") {
-      throw new Error("A field with a similar name already exists -- try a different label.");
+      throw new Error("A field with a similar name already exists on this record type -- try a different label.");
     }
     throw new Error(error.message);
   }
@@ -152,6 +169,7 @@ export async function createField(input: CrmFieldInput): Promise<string> {
 
 export async function updateField(id: string, input: CrmFieldInput): Promise<void> {
   const supabase = createAdminClient();
+  const recordType = await recordTypeForClass(input.classId);
   const { error } = await supabase
     .from("crm_fields")
     .update({
@@ -159,7 +177,7 @@ export async function updateField(id: string, input: CrmFieldInput): Promise<voi
       label: input.label,
       field_type: input.fieldType,
       options: input.options,
-      is_standard: input.isStandard,
+      record_type: recordType,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
@@ -254,40 +272,3 @@ export async function saveFieldValuesForRecord(
   }
 }
 
-// ---------- Custom field assignments ----------
-// A custom field (isStandard: false) only shows up on a record once it has a row here -- e.g. attaching
-// "Trigger" to one Snow contract without it appearing on every other contract.
-
-/** The ids of every custom field currently attached to `recordId`. */
-export async function listAssignedFieldIds(recordId: string): Promise<string[]> {
-  const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("crm_field_assignments")
-    .select("field_id")
-    .eq("user_id", OWNER_USER_ID)
-    .eq("record_id", recordId);
-  if (error) throw new Error(error.message);
-  return (data ?? []).map((row) => row.field_id as string);
-}
-
-export async function assignFieldToRecord(recordId: string, fieldId: string): Promise<void> {
-  const supabase = createAdminClient();
-  const { error } = await supabase
-    .from("crm_field_assignments")
-    .upsert({ user_id: OWNER_USER_ID, field_id: fieldId, record_id: recordId }, { onConflict: "field_id,record_id" });
-  if (error) throw new Error(error.message);
-}
-
-/** Detaching a field from a record also clears any value stored for it there, since deleting the value's
- * only way in (the record's form) will be gone once unassigned. */
-export async function unassignFieldFromRecord(recordId: string, fieldId: string): Promise<void> {
-  const supabase = createAdminClient();
-  const { error } = await supabase
-    .from("crm_field_assignments")
-    .delete()
-    .eq("user_id", OWNER_USER_ID)
-    .eq("record_id", recordId)
-    .eq("field_id", fieldId);
-  if (error) throw new Error(error.message);
-  await saveFieldValuesForRecord(recordId, [{ fieldId, value: null }]);
-}

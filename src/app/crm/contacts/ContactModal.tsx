@@ -8,13 +8,7 @@ import { inputClass } from "@/components/ui/formClasses";
 import type { Company, Contact, FieldClass } from "@/lib/crmTypes";
 import type { Site } from "@/lib/networkTypes";
 import { deleteContactAction, saveContactAction } from "../actions";
-import {
-  assignFieldToRecordAction,
-  getFieldValuesForRecordAction,
-  listAssignedFieldIdsAction,
-  saveFieldValuesForRecordAction,
-  unassignFieldFromRecordAction,
-} from "../fields/actions";
+import { getFieldValuesForRecordAction, saveFieldValuesForRecordAction } from "../fields/actions";
 import DynamicFieldsSection from "../fields/DynamicFieldsSection";
 
 export default function ContactModal({
@@ -48,7 +42,6 @@ export default function ContactModal({
   const [error, setError] = useState<string | null>(null);
 
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
-  const [assignedFieldIds, setAssignedFieldIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (!contact) return;
@@ -59,25 +52,7 @@ export default function ContactModal({
       }
       setFieldValues(asStrings);
     });
-    listAssignedFieldIdsAction(contact.id).then(setAssignedFieldIds);
   }, [contact]);
-
-  async function handleAssignField(fieldId: string) {
-    if (!contact) return;
-    setAssignedFieldIds((prev) => [...prev, fieldId]);
-    await assignFieldToRecordAction(contact.id, fieldId);
-  }
-
-  async function handleUnassignField(fieldId: string) {
-    if (!contact) return;
-    setAssignedFieldIds((prev) => prev.filter((id) => id !== fieldId));
-    setFieldValues((prev) => {
-      const next = { ...prev };
-      delete next[fieldId];
-      return next;
-    });
-    await unassignFieldFromRecordAction(contact.id, fieldId);
-  }
 
   function toggleSite(id: string) {
     setSiteIds((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
@@ -227,11 +202,7 @@ export default function ContactModal({
             classes={fieldClasses}
             recordType="Contact"
             values={fieldValues}
-            assignedFieldIds={assignedFieldIds}
             onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}
-            onAssign={handleAssignField}
-            onUnassign={handleUnassignField}
-            canManageCustomFields={!!contact}
           />
         </div>
 

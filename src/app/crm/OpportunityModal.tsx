@@ -363,11 +363,7 @@ export default function OpportunityModal({
             classes={fieldClasses}
             recordType="Opportunity"
             values={fieldValues}
-            assignedFieldIds={[]}
             onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}
-            onAssign={() => {}}
-            onUnassign={() => {}}
-            canManageCustomFields={false}
           />
         </div>
 

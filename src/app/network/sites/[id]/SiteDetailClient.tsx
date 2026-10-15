@@ -18,13 +18,7 @@ import { MONTHS, type Month } from "@/lib/rateSchedule";
 import { TRADE_COLORS, VENDOR_ASSIGNMENT_TRADES, type Trade } from "@/lib/trades";
 import type { Company, Contract, FieldClass, Opportunity } from "@/lib/crmTypes";
 import type { Site, SiteInput, Vendor } from "@/lib/networkTypes";
-import {
-  assignFieldToRecordAction,
-  getFieldValuesForRecordAction,
-  listAssignedFieldIdsAction,
-  saveFieldValuesForRecordAction,
-  unassignFieldFromRecordAction,
-} from "@/app/crm/fields/actions";
+import { getFieldValuesForRecordAction, saveFieldValuesForRecordAction } from "@/app/crm/fields/actions";
 import DynamicFieldsSection from "@/app/crm/fields/DynamicFieldsSection";
 import { deleteSiteAction, saveSiteAction, saveSiteTradeAssignmentsAction } from "../../actions";
 
@@ -186,7 +180,6 @@ export default function SiteDetailClient({
   const [error, setError] = useState<string | null>(null);
 
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
-  const [assignedFieldIds, setAssignedFieldIds] = useState<string[]>([]);
 
   useEffect(() => {
     getFieldValuesForRecordAction(site.id).then((values) => {
@@ -196,23 +189,7 @@ export default function SiteDetailClient({
       }
       setFieldValues(asStrings);
     });
-    listAssignedFieldIdsAction(site.id).then(setAssignedFieldIds);
   }, [site.id]);
-
-  async function handleAssignField(fieldId: string) {
-    setAssignedFieldIds((prev) => [...prev, fieldId]);
-    await assignFieldToRecordAction(site.id, fieldId);
-  }
-
-  async function handleUnassignField(fieldId: string) {
-    setAssignedFieldIds((prev) => prev.filter((id) => id !== fieldId));
-    setFieldValues((prev) => {
-      const next = { ...prev };
-      delete next[fieldId];
-      return next;
-    });
-    await unassignFieldFromRecordAction(site.id, fieldId);
-  }
 
   const opportunitiesForCompany = useMemo(
     () => (companyId ? opportunities.filter((o) => o.companyId === companyId) : opportunities),
@@ -246,20 +223,18 @@ export default function SiteDetailClient({
     return site.contractId ? [{ id: site.contractId, name: site.contractName }] : [];
   }, [site.tradeAssignments, site.contractId, site.contractName]);
 
-  /** Every field this site shows, grouped by class -- standard fields (Measurements/Counts groups) always
-   * included, custom ones (Site Attributes) only once attached. Mirrors DynamicFieldsSection's own
-   * visibleClasses logic, for the read-only view-mode rendering (that component only renders edit inputs). */
+  /** Every field this site shows, grouped by class -- every field in a Site-scoped class always included,
+   * blank until a value is entered. Mirrors DynamicFieldsSection's own filtering, for the read-only view-mode
+   * rendering (that component only renders edit inputs). */
   const siteFieldGroups = useMemo(() => {
     return fieldClasses
-      .filter((c) => c.recordType == null || c.recordType === "Site")
+      .filter((c) => c.recordType === "Site")
       .map((c) => ({
         className: c.name,
-        entries: c.fields
-          .filter((f) => f.isStandard || assignedFieldIds.includes(f.id))
-          .map((f) => ({ label: f.label, value: fieldValues[f.id] ?? "" })),
+        entries: c.fields.map((f) => ({ label: f.label, value: fieldValues[f.id] ?? "" })),
       }))
       .filter((g) => g.entries.length > 0);
-  }, [fieldClasses, assignedFieldIds, fieldValues]);
+  }, [fieldClasses, fieldValues]);
 
   /** The right-hand panel's tabs -- only the ones relevant to this site show up, same conditions each section
    * used when it was its own always-visible card. */
@@ -786,10 +761,7 @@ export default function SiteDetailClient({
                   classes={fieldClasses}
                   recordType="Site"
                   values={fieldValues}
-                  assignedFieldIds={assignedFieldIds}
                   onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}
-                  onAssign={handleAssignField}
-                  onUnassign={handleUnassignField}
                 />
               </div>
             </Card>

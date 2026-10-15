@@ -29,6 +29,12 @@ export default function FieldModal({
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /** A field's record type is fixed by whichever class it's in -- so the class picker only ever offers
+   * classes of that same record type (the one this field already belongs to, or the one it's being created
+   * under), never a cross-type move. */
+  const fixedRecordType = classes.find((c) => c.id === (field?.classId ?? classId))?.recordType;
+  const classOptions = classes.filter((c) => c.recordType === fixedRecordType);
+
   async function handleSave() {
     setError(null);
     if (!label.trim()) {
@@ -58,7 +64,6 @@ export default function FieldModal({
         label: label.trim(),
         fieldType,
         options,
-        isStandard: false,
       };
       const result = field ? await updateFieldAction(field.id, input) : await createFieldAction(input);
       if (result.error) {
@@ -125,7 +130,7 @@ export default function FieldModal({
                 onChange={(e) => setSelectedClassId(e.target.value)}
                 className={inputClass}
               >
-                {classes.map((c) => (
+                {classOptions.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
                   </option>
@@ -147,7 +152,7 @@ export default function FieldModal({
           )}
 
           <p className="text-xs text-slate-600 dark:text-slate-500">
-            Hidden by default -- attach it to individual records from their edit screen.
+            Will show up on every {fixedRecordType} record once saved, blank until a value is entered.
           </p>
         </div>
 

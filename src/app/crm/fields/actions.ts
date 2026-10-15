@@ -2,16 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import {
-  assignFieldToRecord,
   createField,
   createFieldClass,
   deleteField,
   deleteFieldClass,
   getFieldValuesForRecord,
   getFieldValuesForRecords,
-  listAssignedFieldIds,
   saveFieldValuesForRecord,
-  unassignFieldFromRecord,
   updateField,
   updateFieldClass,
 } from "@/lib/fieldsDal";
@@ -96,27 +93,5 @@ export async function saveFieldValuesForRecordAction(
     return {};
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to save field values." };
-  }
-}
-
-export async function listAssignedFieldIdsAction(recordId: string): Promise<string[]> {
-  return listAssignedFieldIds(recordId);
-}
-
-export async function assignFieldToRecordAction(recordId: string, fieldId: string): Promise<{ error?: string }> {
-  try {
-    await assignFieldToRecord(recordId, fieldId);
-    return {};
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : "Failed to add field." };
-  }
-}
-
-export async function unassignFieldFromRecordAction(recordId: string, fieldId: string): Promise<{ error?: string }> {
-  try {
-    await unassignFieldFromRecord(recordId, fieldId);
-    return {};
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : "Failed to remove field." };
   }
 }

@@ -30,13 +30,7 @@ import {
   saveOpportunityAction,
   uploadOpportunityFileAction,
 } from "../../actions";
-import {
-  assignFieldToRecordAction,
-  getFieldValuesForRecordAction,
-  listAssignedFieldIdsAction,
-  saveFieldValuesForRecordAction,
-  unassignFieldFromRecordAction,
-} from "../../fields/actions";
+import { getFieldValuesForRecordAction, saveFieldValuesForRecordAction } from "../../fields/actions";
 import DynamicFieldsSection from "../../fields/DynamicFieldsSection";
 
 export default function OpportunityDetailClient({
@@ -78,7 +72,6 @@ export default function OpportunityDetailClient({
   const [error, setError] = useState<string | null>(null);
 
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
-  const [assignedFieldIds, setAssignedFieldIds] = useState<string[]>([]);
 
   useEffect(() => {
     getFieldValuesForRecordAction(opportunity.id).then((values) => {
@@ -88,23 +81,7 @@ export default function OpportunityDetailClient({
       }
       setFieldValues(asStrings);
     });
-    listAssignedFieldIdsAction(opportunity.id).then(setAssignedFieldIds);
   }, [opportunity.id]);
-
-  async function handleAssignField(fieldId: string) {
-    setAssignedFieldIds((prev) => [...prev, fieldId]);
-    await assignFieldToRecordAction(opportunity.id, fieldId);
-  }
-
-  async function handleUnassignField(fieldId: string) {
-    setAssignedFieldIds((prev) => prev.filter((id) => id !== fieldId));
-    setFieldValues((prev) => {
-      const next = { ...prev };
-      delete next[fieldId];
-      return next;
-    });
-    await unassignFieldFromRecordAction(opportunity.id, fieldId);
-  }
 
   function toggleContact(id: string) {
     setContactIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
@@ -376,10 +353,7 @@ export default function OpportunityDetailClient({
               classes={fieldClasses}
               recordType="Opportunity"
               values={fieldValues}
-              assignedFieldIds={assignedFieldIds}
               onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}
-              onAssign={handleAssignField}
-              onUnassign={handleUnassignField}
             />
           </div>
 

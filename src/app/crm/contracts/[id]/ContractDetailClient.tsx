@@ -26,13 +26,7 @@ import {
   uploadContractFileAction,
 } from "../../actions";
 import { listSitesForContractAction } from "../../../network/actions";
-import {
-  assignFieldToRecordAction,
-  getFieldValuesForRecordAction,
-  listAssignedFieldIdsAction,
-  saveFieldValuesForRecordAction,
-  unassignFieldFromRecordAction,
-} from "../../fields/actions";
+import { getFieldValuesForRecordAction, saveFieldValuesForRecordAction } from "../../fields/actions";
 import DynamicFieldsSection from "../../fields/DynamicFieldsSection";
 
 /** A colored, iconed card used to visually separate each section of the Agreement page -- same pattern as
@@ -131,7 +125,6 @@ export default function ContractDetailClient({
   }, [contract.id]);
 
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
-  const [assignedFieldIds, setAssignedFieldIds] = useState<string[]>([]);
 
   useEffect(() => {
     getFieldValuesForRecordAction(contract.id).then((values) => {
@@ -141,35 +134,18 @@ export default function ContractDetailClient({
       }
       setFieldValues(asStrings);
     });
-    listAssignedFieldIdsAction(contract.id).then(setAssignedFieldIds);
   }, [contract.id]);
-
-  async function handleAssignField(fieldId: string) {
-    setAssignedFieldIds((prev) => [...prev, fieldId]);
-    await assignFieldToRecordAction(contract.id, fieldId);
-  }
-
-  async function handleUnassignField(fieldId: string) {
-    setAssignedFieldIds((prev) => prev.filter((id) => id !== fieldId));
-    setFieldValues((prev) => {
-      const next = { ...prev };
-      delete next[fieldId];
-      return next;
-    });
-    await unassignFieldFromRecordAction(contract.id, fieldId);
-  }
 
   function toggleContact(id: string) {
     setContactIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
   }
 
-  const assignedFieldEntries = useMemo(() => {
-    const allFields = fieldClasses.flatMap((c) => c.fields);
-    return assignedFieldIds
-      .map((id) => allFields.find((f) => f.id === id))
-      .filter((f): f is NonNullable<typeof f> => !!f)
+  const agreementFieldEntries = useMemo(() => {
+    return fieldClasses
+      .filter((c) => c.recordType === "Agreement")
+      .flatMap((c) => c.fields)
       .map((f) => ({ label: f.label, value: fieldValues[f.id] ?? "" }));
-  }, [fieldClasses, assignedFieldIds, fieldValues]);
+  }, [fieldClasses, fieldValues]);
 
   function handleCancel() {
     setName(contract.name);
@@ -350,10 +326,10 @@ export default function ContractDetailClient({
             </p>
           </SectionCard>
 
-          {assignedFieldEntries.length > 0 && (
-            <SectionCard icon="🏷️" title="Custom Fields" color="#6366f1">
+          {agreementFieldEntries.length > 0 && (
+            <SectionCard icon="🏷️" title="Fields" color="#6366f1">
               <div className="grid grid-cols-2 gap-3">
-                {assignedFieldEntries.map((f) => (
+                {agreementFieldEntries.map((f) => (
                   <Field key={f.label} label={f.label} value={f.value} />
                 ))}
               </div>
@@ -495,11 +471,7 @@ export default function ContractDetailClient({
               classes={fieldClasses}
               recordType="Agreement"
               values={fieldValues}
-              assignedFieldIds={assignedFieldIds}
               onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}
-              onAssign={handleAssignField}
-              onUnassign={handleUnassignField}
-              canManageCustomFields
             />
           </div>
 

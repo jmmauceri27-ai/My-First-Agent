@@ -9,13 +9,7 @@ import { inputClass } from "@/components/ui/formClasses";
 import { computeSiteMargin, formatCurrency } from "@/lib/siteMapColor";
 import type { FieldClass } from "@/lib/crmTypes";
 import type { Vendor, VendorInput, VendorTradeAssignment } from "@/lib/networkTypes";
-import {
-  assignFieldToRecordAction,
-  getFieldValuesForRecordAction,
-  listAssignedFieldIdsAction,
-  saveFieldValuesForRecordAction,
-  unassignFieldFromRecordAction,
-} from "@/app/crm/fields/actions";
+import { getFieldValuesForRecordAction, saveFieldValuesForRecordAction } from "@/app/crm/fields/actions";
 import DynamicFieldsSection from "@/app/crm/fields/DynamicFieldsSection";
 import { deleteVendorAction, saveVendorAction } from "../../actions";
 
@@ -48,7 +42,6 @@ export default function VendorDetailClient({
   const [error, setError] = useState<string | null>(null);
 
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
-  const [assignedFieldIds, setAssignedFieldIds] = useState<string[]>([]);
 
   useEffect(() => {
     getFieldValuesForRecordAction(vendor.id).then((values) => {
@@ -58,23 +51,7 @@ export default function VendorDetailClient({
       }
       setFieldValues(asStrings);
     });
-    listAssignedFieldIdsAction(vendor.id).then(setAssignedFieldIds);
   }, [vendor.id]);
-
-  async function handleAssignField(fieldId: string) {
-    setAssignedFieldIds((prev) => [...prev, fieldId]);
-    await assignFieldToRecordAction(vendor.id, fieldId);
-  }
-
-  async function handleUnassignField(fieldId: string) {
-    setAssignedFieldIds((prev) => prev.filter((id) => id !== fieldId));
-    setFieldValues((prev) => {
-      const next = { ...prev };
-      delete next[fieldId];
-      return next;
-    });
-    await unassignFieldFromRecordAction(vendor.id, fieldId);
-  }
 
   async function handleSave() {
     setError(null);
@@ -211,10 +188,7 @@ export default function VendorDetailClient({
               classes={fieldClasses}
               recordType="Vendor"
               values={fieldValues}
-              assignedFieldIds={assignedFieldIds}
               onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}
-              onAssign={handleAssignField}
-              onUnassign={handleUnassignField}
             />
           </div>
 

@@ -1500,11 +1500,9 @@ export async function bulkUpdateSiteExpenseSchedule(
 }
 
 /**
- * Bulk-sets Field values (crm_fields/crm_field_values) on existing sites -- standard fields (Measurements,
- * Counts) and custom ones (e.g. "Mulch Color", "Pine Straw") alike, since both now live in the same system.
- * Mapping a sheet column to a field a site doesn't have attached yet attaches it (crm_field_assignments) as
- * part of the same write -- harmless no-op for a standard field, which doesn't need one to show. Matching
- * rules are identical to bulkUpdateSites.
+ * Bulk-sets Field values (crm_fields/crm_field_values) on existing sites. Every field mapped is already a
+ * Site property, so there's nothing to attach -- this just writes the values. Matching rules are identical to
+ * bulkUpdateSites.
  */
 export async function bulkUpdateSiteFieldValues(
   rows: SiteFieldValuesUpdateRow[],
@@ -1514,7 +1512,6 @@ export async function bulkUpdateSiteFieldValues(
   const { siteIds, notFound, ambiguous } = await matchSiteIds(rows, companyId);
 
   const now = new Date().toISOString();
-  const assignmentRows: { user_id: string; field_id: string; record_id: string }[] = [];
   const valueRows: { user_id: string; field_id: string; record_id: string; value: string; updated_at: string }[] = [];
   let updatedCount = 0;
 
@@ -1525,17 +1522,10 @@ export async function bulkUpdateSiteFieldValues(
     if (entries.length === 0) return;
     updatedCount += 1;
     for (const [fieldId, value] of entries) {
-      assignmentRows.push({ user_id: OWNER_USER_ID, field_id: fieldId, record_id: siteId });
       valueRows.push({ user_id: OWNER_USER_ID, field_id: fieldId, record_id: siteId, value, updated_at: now });
     }
   });
 
-  for (const chunk of chunkArray(assignmentRows, SITE_ID_CHUNK_SIZE)) {
-    const { error } = await supabase
-      .from("crm_field_assignments")
-      .upsert(chunk, { onConflict: "field_id,record_id" });
-    if (error) throw new Error(error.message);
-  }
   for (const chunk of chunkArray(valueRows, SITE_ID_CHUNK_SIZE)) {
     const { error } = await supabase.from("crm_field_values").upsert(chunk, { onConflict: "field_id,record_id" });
     if (error) throw new Error(error.message);

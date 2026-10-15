@@ -104,11 +104,7 @@ export default function EmployeeModal({
             classes={fieldClasses}
             recordType="Employee"
             values={fieldValues}
-            assignedFieldIds={[]}
             onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}
-            onAssign={() => {}}
-            onUnassign={() => {}}
-            canManageCustomFields={false}
           />
         </div>
 

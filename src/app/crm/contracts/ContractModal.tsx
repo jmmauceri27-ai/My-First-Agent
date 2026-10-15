@@ -237,11 +237,7 @@ export default function ContractModal({
             classes={fieldClasses}
             recordType="Agreement"
             values={fieldValues}
-            assignedFieldIds={[]}
             onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}
-            onAssign={() => {}}
-            onUnassign={() => {}}
-            canManageCustomFields={false}
           />
         </div>
 

@@ -159,11 +159,10 @@ export default function UpdateSiteFieldValuesModal({
     return (
       <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
         <Card className="w-full max-w-md p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Custom fields updated</h2>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Fields updated</h2>
           <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
             Updated {result.updated} site{result.updated === 1 ? "" : "s"}. Only the mapped fields changed --
-            everything else on those sites was left as-is. A mapped field was attached to a site automatically if
-            it wasn&rsquo;t already.
+            everything else on those sites was left as-is.
           </p>
           {result.notFound.length > 0 && (
             <p className="mt-2 text-xs text-critical">
@@ -192,8 +191,7 @@ export default function UpdateSiteFieldValuesModal({
       <Card className="max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Update custom fields</h2>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-          Bulk-set Custom Field values on existing sites from a sheet -- only the fields you map below are touched,
-          and mapping one attaches it to a site automatically if it isn&rsquo;t already.{" "}
+          Bulk-set Field values on existing sites from a sheet -- only the fields you map below are touched.{" "}
           <button type="button" onClick={handleDownloadTemplate} className="text-brand-600 dark:text-brand-400 hover:underline">
             Download example template
           </button>
@@ -201,7 +199,7 @@ export default function UpdateSiteFieldValuesModal({
 
         {allFields.length === 0 ? (
           <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
-            No Custom Fields exist yet -- add one from CRM &rarr; Custom Fields first.
+            No Site fields exist yet -- add one from CRM &rarr; Fields first.
           </p>
         ) : (
           <>

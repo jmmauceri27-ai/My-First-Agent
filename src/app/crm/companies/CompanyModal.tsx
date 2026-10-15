@@ -8,13 +8,7 @@ import { inputClass } from "@/components/ui/formClasses";
 import type { Company, FieldClass } from "@/lib/crmTypes";
 import { deleteCompanyAction, deleteCompanyLogoAction, saveCompanyAction, uploadCompanyLogoAction } from "../actions";
 import { listSitesForCompanyAction } from "../../network/actions";
-import {
-  assignFieldToRecordAction,
-  getFieldValuesForRecordAction,
-  listAssignedFieldIdsAction,
-  saveFieldValuesForRecordAction,
-  unassignFieldFromRecordAction,
-} from "../fields/actions";
+import { getFieldValuesForRecordAction, saveFieldValuesForRecordAction } from "../fields/actions";
 import DynamicFieldsSection from "../fields/DynamicFieldsSection";
 import LogoCropModal from "./LogoCropModal";
 import RemoveLogoBackgroundModal from "./RemoveLogoBackgroundModal";
@@ -40,7 +34,6 @@ export default function CompanyModal({
   const [error, setError] = useState<string | null>(null);
 
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
-  const [assignedFieldIds, setAssignedFieldIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (!company) return;
@@ -51,25 +44,7 @@ export default function CompanyModal({
       }
       setFieldValues(asStrings);
     });
-    listAssignedFieldIdsAction(company.id).then(setAssignedFieldIds);
   }, [company]);
-
-  async function handleAssignField(fieldId: string) {
-    if (!company) return;
-    setAssignedFieldIds((prev) => [...prev, fieldId]);
-    await assignFieldToRecordAction(company.id, fieldId);
-  }
-
-  async function handleUnassignField(fieldId: string) {
-    if (!company) return;
-    setAssignedFieldIds((prev) => prev.filter((id) => id !== fieldId));
-    setFieldValues((prev) => {
-      const next = { ...prev };
-      delete next[fieldId];
-      return next;
-    });
-    await unassignFieldFromRecordAction(company.id, fieldId);
-  }
 
   const logoInputRef = useRef<HTMLInputElement>(null);
   const [logoUrl, setLogoUrl] = useState(company?.logoUrl ?? null);
@@ -262,11 +237,7 @@ export default function CompanyModal({
               classes={fieldClasses}
               recordType="Company"
               values={fieldValues}
-              assignedFieldIds={assignedFieldIds}
               onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}
-              onAssign={handleAssignField}
-              onUnassign={handleUnassignField}
-              canManageCustomFields={!!company}
             />
           </div>
 

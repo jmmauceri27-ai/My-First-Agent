@@ -405,25 +405,31 @@ export interface ClientRateOverrideInput {
   notes: string | null;
 }
 
-// ---------- CRM Fields (custom properties) ----------
-// A Class is a named section (e.g. "Contact Info") holding one or more Fields (e.g. "Phone Number"). Classes
-// and Fields aren't scoped to any one record type -- the same class/field is usable on any CRM/Network
-// record (opportunity, agreement, site, client, contact); a record just opts a field in via
-// crm_field_assignments. A record's actual values live separately in crm_field_values, keyed by
-// (fieldId, recordId) -- see fieldsDal.ts.
+// ---------- CRM Fields (HubSpot-style Properties & Property Groups) ----------
+// A Class ("Property Group") is a named section (e.g. "Contact Info") holding one or more Fields
+// ("Properties", e.g. "Phone Number"). Every class, and every field in it, belongs to exactly one record
+// type (Site/Company/Contact/Opportunity/Agreement/Vendor/Employee) -- the same field needed on two record
+// types is two separate fields, one per type, created separately (same name allowed on both, since a
+// field's internal name only has to be unique within its own record type). Once a field exists it's
+// available on every record of that type, blank until a value is entered -- there's no per-record opt-in.
+// A record's actual values live separately in crm_field_values, keyed by (fieldId, recordId) -- see
+// fieldsDal.ts.
 
 export const FIELD_TYPES = ["Text", "Number", "Date", "Dropdown", "Checkbox"] as const;
 
 export type FieldType = (typeof FIELD_TYPES)[number];
 
-/** A named section (e.g. "Contact Info") that groups related Fields together. */
+/** The record types a Property Group / Property can belong to. */
+export const RECORD_TYPES = ["Site", "Company", "Contact", "Opportunity", "Agreement", "Vendor", "Employee"] as const;
+
+export type RecordType = (typeof RECORD_TYPES)[number];
+
+/** A named section (e.g. "Contact Info") that groups related Fields together -- HubSpot calls this a
+ * Property Group. Scoped to exactly one record type, fixed at creation. */
 export interface FieldClass {
   id: string;
   name: string;
-  /** null means "universal" -- shows on every record type, the original behavior. A specific record type
-   * (e.g. "Site") scopes this class's fields to that record type's own pages only -- see
-   * 079_field_class_record_type_scope.sql for why this exists. */
-  recordType: string | null;
+  recordType: string;
   position: number;
   fields: CrmField[];
   createdAt: string;
@@ -432,22 +438,24 @@ export interface FieldClass {
 
 export interface FieldClassInput {
   name: string;
+  recordType: string;
 }
 
-/** One custom field definition -- e.g. "Phone Number" (Text, in the "Contact Info" class). Named CrmField,
- * not Field, to avoid colliding with the FieldChoice/FieldResolution "field" concept used in mergeSites.ts. */
+/** One field definition -- e.g. "Phone Number" (Text, in the "Contact Info" class). Named CrmField, not
+ * Field, to avoid colliding with the FieldChoice/FieldResolution "field" concept used in mergeSites.ts. */
 export interface CrmField {
   id: string;
   classId: string;
-  /** Stable internal key, slugified from the label at creation (e.g. "phone_number"). Globally unique. */
+  /** Stable internal key, slugified from the label at creation (e.g. "phone_number"). Unique within its own
+   * record type, not globally -- see RECORD_TYPES. */
   name: string;
   label: string;
   fieldType: string;
   /** Only set when fieldType is "Dropdown" -- the fixed list of choices. */
   options: string[] | null;
-  /** Standard fields render on every record, like Company's fields do today. Custom fields only render on a
-   * record once attached to it -- see crm_field_assignments in fieldsDal.ts. */
-  isStandard: boolean;
+  /** Always equal to its class's recordType -- denormalized here for convenience/uniqueness, not independently
+   * settable. */
+  recordType: string;
   position: number;
   createdAt: string;
   updatedAt: string;
@@ -458,7 +466,6 @@ export interface CrmFieldInput {
   label: string;
   fieldType: string;
   options: string[] | null;
-  isStandard: boolean;
 }
 
 /** One record's stored value for one field. value is always a string on the wire -- Number/Date/Checkbox

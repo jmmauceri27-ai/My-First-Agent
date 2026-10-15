@@ -176,11 +176,7 @@ export default function VendorModal({
             classes={fieldClasses}
             recordType="Vendor"
             values={fieldValues}
-            assignedFieldIds={[]}
             onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}
-            onAssign={() => {}}
-            onUnassign={() => {}}
-            canManageCustomFields={false}
           />
         </div>
 

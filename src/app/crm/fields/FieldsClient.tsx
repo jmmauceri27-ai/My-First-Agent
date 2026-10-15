@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
+import { RECORD_TYPES } from "@/lib/crmTypes";
 import type { CrmField, FieldClass } from "@/lib/crmTypes";
 import FieldClassModal from "./FieldClassModal";
 import FieldModal from "./FieldModal";
@@ -13,14 +14,20 @@ export default function FieldsClient({ classes }: { classes: FieldClass[] }) {
   const [editingField, setEditingField] = useState<CrmField | null>(null);
   const [creatingFieldInClass, setCreatingFieldInClass] = useState<string | null>(null);
 
+  const groups = RECORD_TYPES.map((recordType) => ({
+    recordType,
+    classes: classes.filter((c) => c.recordType === recordType),
+  })).filter((g) => g.classes.length > 0);
+
   return (
     <div className="flex flex-col gap-4">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Fields</h2>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Custom fields for your CRM records, organized into classes -- e.g. the field &ldquo;Phone
-          Number&rdquo; in the class &ldquo;Contact Info&rdquo;. Every class and field is available anywhere
-          -- opportunities, agreements, sites, clients, and contacts alike.
+          Properties for your CRM records, organized into groups -- e.g. the field &ldquo;Phone Number&rdquo;
+          in the group &ldquo;Contact Info&rdquo;. Every group and field belongs to exactly one record type --
+          a field needed on two record types (e.g. both Sites and Contacts) is two separate fields, one per
+          type.
         </p>
       </div>
 
@@ -28,48 +35,53 @@ export default function FieldsClient({ classes }: { classes: FieldClass[] }) {
         <Button onClick={() => setCreatingClass(true)}>+ New class</Button>
       </div>
 
-      {classes.length === 0 ? (
+      {groups.length === 0 ? (
         <p className="text-sm text-slate-500 dark:text-slate-400">
           No classes yet. Add one to start grouping fields (e.g. &ldquo;Contact Info&rdquo;).
         </p>
       ) : (
-        <div className="flex flex-col gap-4">
-          {classes.map((c) => (
-            <div key={c.id} className="flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={() => setEditingClass(c)}
-                className="flex w-fit items-center gap-2 text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-50"
-              >
-                {c.name}{" "}
-                <span className="font-normal normal-case text-slate-400 dark:text-slate-500">
-                  ({c.fields.length})
-                </span>
-              </button>
-              <Card className="flex flex-col divide-y divide-purple-400/10 overflow-hidden">
-                {c.fields.map((f) => (
+        <div className="flex flex-col gap-8">
+          {groups.map((g) => (
+            <div key={g.recordType} className="flex flex-col gap-4">
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-50">{g.recordType}</h2>
+              {g.classes.map((c) => (
+                <div key={c.id} className="flex flex-col gap-2">
                   <button
-                    key={f.id}
-                    onClick={() => setEditingField(f)}
-                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-purple-500/5"
+                    type="button"
+                    onClick={() => setEditingClass(c)}
+                    className="flex w-fit items-center gap-2 text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-50"
                   >
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{f.label}</p>
-                      <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                        {f.fieldType}
-                        {f.fieldType === "Dropdown" && f.options ? ` -- ${f.options.join(", ")}` : ""}
-                      </p>
-                    </div>
+                    {c.name}{" "}
+                    <span className="font-normal normal-case text-slate-400 dark:text-slate-500">
+                      ({c.fields.length})
+                    </span>
                   </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => setCreatingFieldInClass(c.id)}
-                  className="px-4 py-2.5 text-left text-sm font-medium text-brand-600 dark:text-brand-400 hover:bg-purple-500/5"
-                >
-                  + New field
-                </button>
-              </Card>
+                  <Card className="flex flex-col divide-y divide-purple-400/10 overflow-hidden">
+                    {c.fields.map((f) => (
+                      <button
+                        key={f.id}
+                        onClick={() => setEditingField(f)}
+                        className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-purple-500/5"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{f.label}</p>
+                          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                            {f.fieldType}
+                            {f.fieldType === "Dropdown" && f.options ? ` -- ${f.options.join(", ")}` : ""}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setCreatingFieldInClass(c.id)}
+                      className="px-4 py-2.5 text-left text-sm font-medium text-brand-600 dark:text-brand-400 hover:bg-purple-500/5"
+                    >
+                      + New field
+                    </button>
+                  </Card>
+                </div>
+              ))}
             </div>
           ))}
         </div>
