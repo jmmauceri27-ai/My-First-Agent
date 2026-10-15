@@ -7,6 +7,7 @@ import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
 import { buildTemplateXlsxAction } from "@/lib/sheetActions";
+import { parseMeasurementInput } from "@/lib/siteMapColor";
 import type { DatasetRecord } from "@/lib/types";
 import type { Company, FieldClass } from "@/lib/crmTypes";
 import type { SiteFieldValuesUpdateRow } from "@/lib/networkTypes";
@@ -18,7 +19,9 @@ const NONE = "";
 
 /** Converts a raw sheet cell into this field's own stored string form (see DynamicFieldsSection) -- null
  * means "leave this field untouched for this row" (blank cell, or a Checkbox cell that's neither a recognized
- * yes nor no), same as a mapped Measurements column left blank. */
+ * yes nor no), same as a mapped Measurements column left blank. A Number cell goes through
+ * parseMeasurementInput first (strips a "sq ft" suffix, commas, currency symbols, etc.) so a sq. ft.
+ * Measurement field tolerates the same messy formatting the old dedicated Measurements tool did. */
 function parseFieldValue(fieldType: string, raw: string): string | null {
   const trimmed = raw.trim();
   if (!trimmed) return null;
@@ -29,7 +32,7 @@ function parseFieldValue(fieldType: string, raw: string): string | null {
     return null;
   }
   if (fieldType === "Number") {
-    const num = Number(trimmed);
+    const num = Number(parseMeasurementInput(trimmed));
     return Number.isFinite(num) ? String(num) : null;
   }
   return trimmed;

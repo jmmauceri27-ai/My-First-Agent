@@ -11,10 +11,9 @@ import SiteTradeAssignmentsEditor, {
   draftsToAssignmentInputs,
   type AssignmentDraft,
 } from "@/components/SiteTradeAssignmentsEditor";
-import SiteMeasurementsEditor from "@/components/SiteMeasurementsEditor";
 import { VENDOR_ASSIGNMENT_TRADES } from "@/lib/trades";
 import type { Company, Contract, FieldClass, Opportunity } from "@/lib/crmTypes";
-import type { Site, SiteInput, SiteMeasurements, Vendor } from "@/lib/networkTypes";
+import type { Site, SiteInput, Vendor } from "@/lib/networkTypes";
 import { saveCompanyAction } from "@/app/crm/actions";
 import { saveFieldValuesForRecordAction } from "@/app/crm/fields/actions";
 import DynamicFieldsSection from "@/app/crm/fields/DynamicFieldsSection";
@@ -59,8 +58,6 @@ export default function SiteModal({
     site ? assignmentsToDrafts(site.tradeAssignments) : {},
   );
   const [notes, setNotes] = useState(site?.notes ?? "");
-  const [measurements, setMeasurements] = useState<SiteMeasurements>(site?.measurements ?? {});
-  const [counts, setCounts] = useState<SiteMeasurements>(site?.counts ?? {});
   const [lastSeasonSnowfall, setLastSeasonSnowfall] = useState(
     site?.lastSeasonSnowfall != null ? String(site.lastSeasonSnowfall) : "",
   );
@@ -145,8 +142,6 @@ export default function SiteModal({
         lat: lat.trim() ? Number(lat) : null,
         lng: lng.trim() ? Number(lng) : null,
         trades,
-        measurements,
-        counts,
         lastSeasonSnowfall:
           trades.includes("Snow Removal") && lastSeasonSnowfall.trim() ? Number(lastSeasonSnowfall) : null,
         notes: notes.trim() || null,
@@ -341,15 +336,6 @@ export default function SiteModal({
             onAssign={() => {}}
             onUnassign={() => {}}
             canManageCustomFields={false}
-          />
-        </div>
-
-        <div className="mt-6 border-t border-purple-400/10 pt-4">
-          <SiteMeasurementsEditor
-            measurements={measurements}
-            onChangeMeasurements={setMeasurements}
-            counts={counts}
-            onChangeCounts={setCounts}
           />
         </div>
 

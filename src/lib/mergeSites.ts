@@ -1,4 +1,4 @@
-import type { Site, SiteInput, SiteMeasurements, SiteTradeAssignment, SiteTradeAssignmentInput } from "./networkTypes";
+import type { Site, SiteInput, SiteTradeAssignment, SiteTradeAssignmentInput } from "./networkTypes";
 import type { RateSchedule } from "./rateSchedule";
 
 /** One duplicate-group field's distinct non-blank values, each tagged with the record it came from. */
@@ -43,8 +43,6 @@ export interface SiteMergeFields {
   zip: FieldResolution<string>;
   lat: FieldResolution<number>;
   lng: FieldResolution<number>;
-  measurements: FieldResolution<SiteMeasurements>;
-  counts: FieldResolution<SiteMeasurements>;
   lastSeasonSnowfall: FieldResolution<number>;
   notes: FieldResolution<string>;
 }
@@ -87,8 +85,6 @@ export function buildMergePlan(group: Site[]): SiteMergePlan {
     zip: field((s) => s.zip),
     lat: field((s) => s.lat),
     lng: field((s) => s.lng),
-    measurements: field((s) => (Object.keys(s.measurements).length ? s.measurements : null)),
-    counts: field((s) => (Object.keys(s.counts).length ? s.counts : null)),
     lastSeasonSnowfall: field((s) => s.lastSeasonSnowfall),
     notes: field((s) => s.notes),
   };
@@ -173,8 +169,6 @@ export function applyMergeSelections(
     zip: pick(f.zip, "zip", selections),
     lat: pick(f.lat, "lat", selections),
     lng: pick(f.lng, "lng", selections),
-    measurements: pick(f.measurements, "measurements", selections) ?? {},
-    counts: pick(f.counts, "counts", selections) ?? {},
     lastSeasonSnowfall: pick(f.lastSeasonSnowfall, "lastSeasonSnowfall", selections),
     notes: pick(f.notes, "notes", selections),
   };

@@ -13,13 +13,11 @@ import SiteTradeAssignmentsEditor, {
   emptyDraft,
   type AssignmentDraft,
 } from "@/components/SiteTradeAssignmentsEditor";
-import SiteMeasurementsEditor from "@/components/SiteMeasurementsEditor";
-import { formatCurrency, formatSquareFeet, parseCurrencyInput } from "@/lib/siteMapColor";
+import { formatCurrency, parseCurrencyInput } from "@/lib/siteMapColor";
 import { MONTHS, type Month } from "@/lib/rateSchedule";
-import { MEASUREMENT_FIELDS, MEASUREMENT_GROUPS } from "@/lib/measurementGroups";
 import { TRADE_COLORS, VENDOR_ASSIGNMENT_TRADES, type Trade } from "@/lib/trades";
 import type { Company, Contract, FieldClass, Opportunity } from "@/lib/crmTypes";
-import type { Site, SiteInput, SiteMeasurements, Vendor } from "@/lib/networkTypes";
+import type { Site, SiteInput, Vendor } from "@/lib/networkTypes";
 import {
   assignFieldToRecordAction,
   getFieldValuesForRecordAction,
@@ -180,8 +178,6 @@ export default function SiteDetailClient({
     assignmentsToDrafts(site.tradeAssignments),
   );
   const [notes, setNotes] = useState(site.notes ?? "");
-  const [measurements, setMeasurements] = useState<SiteMeasurements>(site.measurements);
-  const [counts, setCounts] = useState<SiteMeasurements>(site.counts);
   const [lastSeasonSnowfall, setLastSeasonSnowfall] = useState(
     site.lastSeasonSnowfall != null ? String(site.lastSeasonSnowfall) : "",
   );
@@ -233,19 +229,6 @@ export default function SiteDetailClient({
     [trades],
   );
 
-  const groupedMeasurements = useMemo(() => {
-    const knownLabels = new Set(MEASUREMENT_FIELDS);
-    const groups = MEASUREMENT_GROUPS.map((g) => ({
-      label: g.label,
-      entries: g.fields.filter((f) => f in measurements).map((f): [string, number] => [f, measurements[f]]),
-    }));
-    const other = Object.entries(measurements).filter(([label]) => !knownLabels.has(label));
-    if (other.length > 0) groups.push({ label: "Other", entries: other });
-    return groups.filter((g) => g.entries.length > 0);
-  }, [measurements]);
-
-  const countEntries = useMemo(() => Object.entries(counts), [counts]);
-
   const selectedCompany = useMemo(() => companies.find((c) => c.id === companyId) ?? null, [companies, companyId]);
 
   /** Every distinct Agreement covering this site, drawn from its trades (a site's trades can each sit under a
@@ -263,12 +246,18 @@ export default function SiteDetailClient({
     return site.contractId ? [{ id: site.contractId, name: site.contractName }] : [];
   }, [site.tradeAssignments, site.contractId, site.contractName]);
 
-  const assignedFieldEntries = useMemo(() => {
-    const allFields = fieldClasses.flatMap((c) => c.fields);
-    return assignedFieldIds
-      .map((id) => allFields.find((f) => f.id === id))
-      .filter((f): f is NonNullable<typeof f> => !!f)
-      .map((f) => ({ label: f.label, value: fieldValues[f.id] ?? "" }));
+  /** Every field this site shows, grouped by class -- standard fields (Measurements/Counts groups) always
+   * included, custom ones (Site Attributes) only once attached. Mirrors DynamicFieldsSection's own
+   * visibleClasses logic, for the read-only view-mode rendering (that component only renders edit inputs). */
+  const siteFieldGroups = useMemo(() => {
+    return fieldClasses
+      .map((c) => ({
+        className: c.name,
+        entries: c.fields
+          .filter((f) => f.isStandard || assignedFieldIds.includes(f.id))
+          .map((f) => ({ label: f.label, value: fieldValues[f.id] ?? "" })),
+      }))
+      .filter((g) => g.entries.length > 0);
   }, [fieldClasses, assignedFieldIds, fieldValues]);
 
   /** The right-hand panel's tabs -- only the ones relevant to this site show up, same conditions each section
@@ -331,8 +320,6 @@ export default function SiteDetailClient({
     setTrades(site.trades ?? []);
     setAssignmentDrafts(assignmentsToDrafts(site.tradeAssignments));
     setNotes(site.notes ?? "");
-    setMeasurements(site.measurements);
-    setCounts(site.counts);
     setLastSeasonSnowfall(site.lastSeasonSnowfall != null ? String(site.lastSeasonSnowfall) : "");
     setError(null);
   }
@@ -369,8 +356,6 @@ export default function SiteDetailClient({
         lat: lat.trim() ? Number(lat) : null,
         lng: lng.trim() ? Number(lng) : null,
         trades,
-        measurements,
-        counts,
         lastSeasonSnowfall:
           trades.includes("Snow Removal") && lastSeasonSnowfall.trim() ? Number(lastSeasonSnowfall) : null,
         notes: notes.trim() || null,
@@ -626,48 +611,25 @@ export default function SiteDetailClient({
               )}
 
               {currentViewTab === "measurements" &&
-                (groupedMeasurements.length === 0 && countEntries.length === 0 && assignedFieldEntries.length === 0 ? (
+                (siteFieldGroups.length === 0 ? (
                   <p className="text-sm text-slate-500 dark:text-slate-400">No attributes set yet.</p>
                 ) : (
-                  <div className="flex flex-col gap-4">
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <div className="flex flex-col gap-3">
-                        {groupedMeasurements.map((group) => (
-                          <div key={group.label}>
-                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{group.label}</p>
-                            {group.entries.map(([label, value]) => (
-                              <div key={label} className="flex items-center justify-between gap-2 text-sm">
-                                <span className="text-slate-700 dark:text-slate-300">{label}</span>
-                                <span className="tabular-nums text-slate-900 dark:text-slate-50">{formatSquareFeet(value)}</span>
-                              </div>
-                            ))}
-                          </div>
-                        ))}
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        {countEntries.length > 0 && (
-                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Counts</p>
-                        )}
-                        {countEntries.map(([label, value]) => (
-                          <div key={label} className="flex items-center justify-between gap-2 text-sm">
-                            <span className="text-slate-700 dark:text-slate-300">{label}</span>
-                            <span className="tabular-nums text-slate-900 dark:text-slate-50">{value.toLocaleString("en-US")}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    {assignedFieldEntries.length > 0 && (
-                      <div>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {siteFieldGroups.map((group) => (
+                      <div key={group.className}>
                         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                          Custom attributes
+                          {group.className}
                         </p>
-                        <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                          {assignedFieldEntries.map((f) => (
-                            <Field key={f.label} label={f.label} value={f.value} />
+                        <div className="mt-1 flex flex-col gap-1">
+                          {group.entries.map((entry) => (
+                            <div key={entry.label} className="flex items-center justify-between gap-2 text-sm">
+                              <span className="text-slate-700 dark:text-slate-300">{entry.label}</span>
+                              <span className="tabular-nums text-slate-900 dark:text-slate-50">{entry.value || "—"}</span>
+                            </div>
                           ))}
                         </div>
                       </div>
-                    )}
+                    ))}
                   </div>
                 ))}
 
@@ -819,14 +781,6 @@ export default function SiteDetailClient({
             <Card className="p-5">
               <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Site Attributes</h2>
               <div className="mt-3">
-                <SiteMeasurementsEditor
-                  measurements={measurements}
-                  onChangeMeasurements={setMeasurements}
-                  counts={counts}
-                  onChangeCounts={setCounts}
-                />
-              </div>
-              <div className="mt-4 border-t border-purple-400/10 pt-4">
                 <DynamicFieldsSection
                   classes={fieldClasses}
                   values={fieldValues}

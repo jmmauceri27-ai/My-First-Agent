@@ -12,7 +12,6 @@ import type {
   SiteExpenseScheduleUpdateRow,
   SiteImportRow,
   SiteInput,
-  SiteMeasurementsUpdateRow,
   SiteRateScheduleUpdateRow,
   SiteTradeAssignment,
   SiteTradeAssignmentInput,
@@ -283,8 +282,8 @@ function mapAssignment(a: Record<string, unknown>): SiteTradeAssignment {
   };
 }
 
-const SITE_COLUMNS = `id, company_id, opportunity_id, contract_id, site_code, name, address, city, state, zip, lat, lng, trades, measurements, counts, last_season_snowfall, notes, created_at, updated_at, crm_companies(name), crm_opportunities(name), crm_contracts(name), site_trade_assignments(${ASSIGNMENT_COLUMNS})`;
-const SITE_COLUMNS_SUMMARY = `id, company_id, opportunity_id, contract_id, site_code, name, address, city, state, zip, lat, lng, trades, measurements, counts, last_season_snowfall, notes, created_at, updated_at, crm_companies(name), crm_opportunities(name), crm_contracts(name), site_trade_assignments(${ASSIGNMENT_COLUMNS_SUMMARY})`;
+const SITE_COLUMNS = `id, company_id, opportunity_id, contract_id, site_code, name, address, city, state, zip, lat, lng, trades, last_season_snowfall, notes, created_at, updated_at, crm_companies(name), crm_opportunities(name), crm_contracts(name), site_trade_assignments(${ASSIGNMENT_COLUMNS})`;
+const SITE_COLUMNS_SUMMARY = `id, company_id, opportunity_id, contract_id, site_code, name, address, city, state, zip, lat, lng, trades, last_season_snowfall, notes, created_at, updated_at, crm_companies(name), crm_opportunities(name), crm_contracts(name), site_trade_assignments(${ASSIGNMENT_COLUMNS_SUMMARY})`;
 
 function mapSite(s: Record<string, unknown>): Site {
   const company = s.crm_companies as unknown as { name: string } | null;
@@ -309,8 +308,6 @@ function mapSite(s: Record<string, unknown>): Site {
     lng: s.lng as number | null,
     trades: (s.trades as string[] | null) ?? [],
     tradeAssignments: assignments.map(mapAssignment),
-    measurements: (s.measurements as Site["measurements"] | null) ?? {},
-    counts: (s.counts as Site["counts"] | null) ?? {},
     lastSeasonSnowfall: s.last_season_snowfall as number | null,
     notes: s.notes as string | null,
     // Resolved separately by getSite() only -- see Site.facilityContacts' own doc comment.
@@ -699,8 +696,6 @@ function siteRow(input: SiteInput) {
     lat: input.lat,
     lng: input.lng,
     trades: input.trades,
-    measurements: input.measurements,
-    counts: input.counts,
     last_season_snowfall: input.lastSeasonSnowfall,
     notes: input.notes,
   };
@@ -846,8 +841,6 @@ export async function bulkCreateSites(
       lat: row.lat,
       lng: row.lng,
       trades: links.trades,
-      measurements: {},
-      counts: {},
       notes: null,
     }))
     .filter((row) => {
@@ -1507,66 +1500,11 @@ export async function bulkUpdateSiteExpenseSchedule(
 }
 
 /**
- * Merges each matched row's `measurements`/`counts` labels into the site's existing bags (added or
- * overwritten by label) -- never replaces the whole bag, so uploading one batch of labels doesn't erase
- * labels set by an earlier upload or entered manually. Matching rules are identical to bulkUpdateSites.
- */
-export async function bulkUpdateSiteMeasurements(
-  rows: SiteMeasurementsUpdateRow[],
-  companyId: string | null,
-): Promise<SiteUpdateResult> {
-  const supabase = createAdminClient();
-  const { siteIds, notFound, ambiguous } = await matchSiteIds(rows, companyId);
-
-  const matchedIds = Array.from(new Set(siteIds.filter((id): id is string => !!id)));
-  const existingSites: { id: string; name: string; measurements: unknown; counts: unknown }[] = [];
-  for (const chunk of chunkArray(matchedIds, SITE_ID_CHUNK_SIZE)) {
-    const { data, error: fetchError } = await supabase
-      .from("sites")
-      .select("id, name, measurements, counts")
-      .in("id", chunk)
-      .eq("user_id", OWNER_USER_ID);
-    if (fetchError) throw new Error(fetchError.message);
-    existingSites.push(...(data ?? []));
-  }
-  const existingById = new Map(existingSites.map((s) => [s.id as string, s]));
-
-  const updates: { id: string; name: string; payload: Record<string, unknown> }[] = [];
-  rows.forEach((row, i) => {
-    const siteId = siteIds[i];
-    if (!siteId) return;
-    if (Object.keys(row.measurements).length === 0 && Object.keys(row.counts).length === 0) return;
-
-    const existing = existingById.get(siteId);
-    if (!existing) return;
-    const mergedMeasurements = {
-      ...((existing.measurements as Record<string, number> | null) ?? {}),
-      ...row.measurements,
-    };
-    const mergedCounts = { ...((existing.counts as Record<string, number> | null) ?? {}), ...row.counts };
-    updates.push({ id: siteId, name: existing.name, payload: { measurements: mergedMeasurements, counts: mergedCounts } });
-  });
-
-  // user_id/name (sites' NOT NULL, no-default columns besides id) have to ride along unchanged -- Postgres
-  // validates them on the row an upsert *would* insert even though every id here always takes the update branch.
-  for (const chunk of chunkArray(updates, SITE_ID_CHUNK_SIZE)) {
-    const { error } = await supabase.from("sites").upsert(
-      chunk.map((u) => ({ id: u.id, user_id: OWNER_USER_ID, name: u.name, ...u.payload, updated_at: new Date().toISOString() })),
-      { onConflict: "id" },
-    );
-    if (error) throw new Error(error.message);
-  }
-
-  return { updated: updates.length, notFound, ambiguous };
-}
-
-/**
- * Bulk-sets Custom Field values (crm_fields/crm_field_values) on existing sites -- the Custom Fields
- * counterpart to bulkUpdateSiteMeasurements, for one-off attributes that aren't part of the fixed
- * Measurements/Counts set (e.g. "Mulch Color", "Pine Straw"). Mapping a sheet column to a field a site
- * doesn't have attached yet attaches it (crm_field_assignments) as part of the same write -- the Custom
- * Fields system otherwise only attaches a field to a record one at a time, from that record's own edit
- * screen. Matching rules are identical to bulkUpdateSites.
+ * Bulk-sets Field values (crm_fields/crm_field_values) on existing sites -- standard fields (Measurements,
+ * Counts) and custom ones (e.g. "Mulch Color", "Pine Straw") alike, since both now live in the same system.
+ * Mapping a sheet column to a field a site doesn't have attached yet attaches it (crm_field_assignments) as
+ * part of the same write -- harmless no-op for a standard field, which doesn't need one to show. Matching
+ * rules are identical to bulkUpdateSites.
  */
 export async function bulkUpdateSiteFieldValues(
   rows: SiteFieldValuesUpdateRow[],

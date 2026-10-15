@@ -18,7 +18,6 @@ import {
   computeSiteMarginPercent,
   formatCurrency,
   formatPercent,
-  formatSquareFeet,
   gradientColorForRatio,
 } from "@/lib/siteMapColor";
 import { CHART_COLORS_LIGHT } from "@/lib/chartPalette";
@@ -27,13 +26,13 @@ import type { Trade } from "@/lib/trades";
 import { MONTHS, sumRateSchedule } from "@/lib/rateSchedule";
 import type { DatasetRecord } from "@/lib/types";
 import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
-import type { Company, Contact, Contract, FieldClass, Opportunity } from "@/lib/crmTypes";
+import type { Company, Contact, Contract, CrmField, FieldClass, Opportunity } from "@/lib/crmTypes";
 import type { Site, SiteFilterTemplate, SiteFilters, Vendor } from "@/lib/networkTypes";
+import { getFieldValuesForRecordsAction } from "@/app/crm/fields/actions";
 import SiteModal from "../SiteModal";
 import UploadSitesModal from "../UploadSitesModal";
 import UpdateSitesModal from "../UpdateSitesModal";
 import UpdateSiteTradeAssignmentsModal from "../UpdateSiteTradeAssignmentsModal";
-import UpdateSiteMeasurementsModal from "../UpdateSiteMeasurementsModal";
 import UpdateSiteFieldValuesModal from "../UpdateSiteFieldValuesModal";
 import UpdateSiteRateScheduleModal from "../UpdateSiteRateScheduleModal";
 import UpdateSiteExpenseScheduleModal from "../UpdateSiteExpenseScheduleModal";
@@ -102,8 +101,7 @@ const SITE_EXPORT_COLUMNS = [
   "Annual Vendor Expense Total",
   "Sub-Vendor Expense Schedule",
   "Annual Sub-Vendor Expense Total",
-  "Measurements",
-  "Counts",
+  "Attributes",
   "Last Season Snowfall",
   "Notes",
 ];
@@ -125,7 +123,14 @@ function scheduleExportSummary(assignments: Site["tradeAssignments"], pick: (a: 
     .join("; ");
 }
 
-function siteToExportRow(s: Site): DatasetRecord {
+function siteAttributesSummary(allFields: CrmField[], values: Record<string, string | null>): string {
+  return allFields
+    .filter((f) => values[f.id] != null && values[f.id] !== "")
+    .map((f) => `${f.label}: ${values[f.id]}`)
+    .join("; ");
+}
+
+function siteToExportRow(s: Site, allFields: CrmField[], fieldValues: Record<string, string | null>): DatasetRecord {
   return {
     "Site ID": s.siteCode ?? "",
     "Record ID": s.id,
@@ -163,12 +168,7 @@ function siteToExportRow(s: Site): DatasetRecord {
     "Annual Sub-Vendor Expense Total": sumOrNull(
       s.tradeAssignments.map((a) => sumRateSchedule(a.subVendorExpenseSchedule)),
     ),
-    Measurements: Object.entries(s.measurements)
-      .map(([label, value]) => `${label}: ${formatSquareFeet(value)}`)
-      .join("; "),
-    Counts: Object.entries(s.counts)
-      .map(([label, value]) => `${label}: ${value}`)
-      .join("; "),
+    Attributes: siteAttributesSummary(allFields, fieldValues),
     "Last Season Snowfall": s.lastSeasonSnowfall,
     Notes: s.notes ?? "",
   };
@@ -266,7 +266,6 @@ export default function SitesClient({
   const [uploading, setUploading] = useState(false);
   const [updatingSheet, setUpdatingSheet] = useState(false);
   const [updatingAssignments, setUpdatingAssignments] = useState(false);
-  const [updatingMeasurements, setUpdatingMeasurements] = useState(false);
   const [updatingFieldValues, setUpdatingFieldValues] = useState(false);
   const [updatingRateSchedule, setUpdatingRateSchedule] = useState(false);
   const [updatingExpenseSchedule, setUpdatingExpenseSchedule] = useState(false);
@@ -774,8 +773,13 @@ export default function SitesClient({
     try {
       // The Sites screen only loads the lighter listSitesSummary() (no monthly rate/expense schedules) --
       // fetch the full data for just the filtered sites fresh, since the export needs those schedules.
-      const fullSites = await listSitesByIdsAction(filteredSites.map((s) => s.id));
-      const rows = fullSites.map(siteToExportRow);
+      const ids = filteredSites.map((s) => s.id);
+      const [fullSites, fieldValuesBySite] = await Promise.all([
+        listSitesByIdsAction(ids),
+        getFieldValuesForRecordsAction(ids),
+      ]);
+      const allFields = fieldClasses.flatMap((c) => c.fields);
+      const rows = fullSites.map((s) => siteToExportRow(s, allFields, fieldValuesBySite[s.id] ?? {}));
       const base64 = await exportSitesToExcelAction(rows, SITE_EXPORT_COLUMNS);
       const date = new Date().toISOString().slice(0, 10);
       downloadBase64Xlsx(base64, `sites_export_${date}.xlsx`);
@@ -987,22 +991,12 @@ export default function SitesClient({
                 <button
                   type="button"
                   onClick={() => {
-                    setUpdatingMeasurements(true);
-                    setShowUpdateMenu(false);
-                  }}
-                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-900 dark:text-slate-100 hover:bg-purple-500/10"
-                >
-                  Measurements
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
                     setUpdatingFieldValues(true);
                     setShowUpdateMenu(false);
                   }}
                   className="block w-full rounded px-3 py-2 text-left text-sm text-slate-900 dark:text-slate-100 hover:bg-purple-500/10"
                 >
-                  Custom fields
+                  Fields
                 </button>
                 <button
                   type="button"
@@ -1558,10 +1552,6 @@ export default function SitesClient({
           contracts={contracts}
           onClose={() => setUpdatingAssignments(false)}
         />
-      )}
-
-      {updatingMeasurements && (
-        <UpdateSiteMeasurementsModal companies={companies} onClose={() => setUpdatingMeasurements(false)} />
       )}
 
       {updatingFieldValues && (

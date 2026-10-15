@@ -1,5 +1,6 @@
 import "server-only";
 import { createAdminClient, OWNER_USER_ID } from "./supabase/admin";
+import { chunkArray, SITE_ID_CHUNK_SIZE } from "./chunk";
 import type { CrmField, CrmFieldInput, FieldClass, FieldClassInput } from "./crmTypes";
 
 // ---------- Field Classes ----------
@@ -189,6 +190,29 @@ export async function getFieldValuesForRecord(recordId: string): Promise<Record<
   const result: Record<string, string | null> = {};
   for (const row of data ?? []) {
     result[row.field_id as string] = row.value as string | null;
+  }
+  return result;
+}
+
+/** Same as getFieldValuesForRecord, for many records at once -- e.g. exporting a batch of sites, each with
+ * its own Measurements/Counts/Custom Field values. Chunked to stay under the .in(...) URL-length limit (see
+ * chunkArray's own note). */
+export async function getFieldValuesForRecords(recordIds: string[]): Promise<Record<string, Record<string, string | null>>> {
+  if (recordIds.length === 0) return {};
+  const supabase = createAdminClient();
+  const result: Record<string, Record<string, string | null>> = {};
+  for (const chunk of chunkArray(recordIds, SITE_ID_CHUNK_SIZE)) {
+    const { data, error } = await supabase
+      .from("crm_field_values")
+      .select("field_id, record_id, value")
+      .eq("user_id", OWNER_USER_ID)
+      .in("record_id", chunk);
+    if (error) throw new Error(error.message);
+    for (const row of data ?? []) {
+      const recordId = row.record_id as string;
+      if (!result[recordId]) result[recordId] = {};
+      result[recordId][row.field_id as string] = row.value as string | null;
+    }
   }
   return result;
 }

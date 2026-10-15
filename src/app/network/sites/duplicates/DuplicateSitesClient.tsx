@@ -86,11 +86,6 @@ function FieldRow<T>({
   );
 }
 
-function formatMeasurements(v: Record<string, number>): string {
-  const entries = Object.entries(v);
-  return entries.length ? entries.map(([k, val]) => `${k}: ${val}`).join(", ") : "(empty)";
-}
-
 function GroupCard({ group, onMerged }: { group: Site[]; onMerged: () => void }) {
   const router = useRouter();
   const plan = useMemo(() => buildMergePlan(group), [group]);
@@ -173,22 +168,6 @@ function GroupCard({ group, onMerged }: { group: Site[]; onMerged: () => void })
         <FieldRow label="Zip" fieldKey="zip" resolution={plan.fields.zip} selected={selections.zip} onSelect={select} format={(v) => v} />
         <FieldRow label="Latitude" fieldKey="lat" resolution={plan.fields.lat} selected={selections.lat} onSelect={select} format={(v) => v.toFixed(6)} />
         <FieldRow label="Longitude" fieldKey="lng" resolution={plan.fields.lng} selected={selections.lng} onSelect={select} format={(v) => v.toFixed(6)} />
-        <FieldRow
-          label="Measurements"
-          fieldKey="measurements"
-          resolution={plan.fields.measurements}
-          selected={selections.measurements}
-          onSelect={select}
-          format={(v) => formatMeasurements(v)}
-        />
-        <FieldRow
-          label="Counts"
-          fieldKey="counts"
-          resolution={plan.fields.counts}
-          selected={selections.counts}
-          onSelect={select}
-          format={(v) => formatMeasurements(v)}
-        />
         <FieldRow
           label="Last Season Snowfall"
           fieldKey="lastSeasonSnowfall"

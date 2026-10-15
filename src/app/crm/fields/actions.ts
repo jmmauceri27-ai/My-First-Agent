@@ -8,6 +8,7 @@ import {
   deleteField,
   deleteFieldClass,
   getFieldValuesForRecord,
+  getFieldValuesForRecords,
   listAssignedFieldIds,
   saveFieldValuesForRecord,
   unassignFieldFromRecord,
@@ -78,6 +79,12 @@ export async function deleteFieldAction(id: string): Promise<{ error?: string }>
 
 export async function getFieldValuesForRecordAction(recordId: string): Promise<Record<string, string | null>> {
   return getFieldValuesForRecord(recordId);
+}
+
+export async function getFieldValuesForRecordsAction(
+  recordIds: string[],
+): Promise<Record<string, Record<string, string | null>>> {
+  return getFieldValuesForRecords(recordIds);
 }
 
 export async function saveFieldValuesForRecordAction(
