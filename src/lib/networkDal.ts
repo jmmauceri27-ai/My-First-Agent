@@ -641,11 +641,11 @@ async function syncSiteDirectContractIds(
   }
 
   const previousContractIds: string[] = [];
-  const updates: { siteId: string; contractId: string }[] = [];
+  const updates: { siteId: string; name: string; contractId: string }[] = [];
   for (const chunk of chunkArray(siteIds, SITE_ID_CHUNK_SIZE)) {
     const { data: currentSites, error: siteFetchError } = await supabase
       .from("sites")
-      .select("id, contract_id")
+      .select("id, name, contract_id")
       .in("id", chunk)
       .eq("user_id", OWNER_USER_ID);
     if (siteFetchError) throw new Error(siteFetchError.message);
@@ -656,14 +656,26 @@ async function syncSiteDirectContractIds(
       const distinct = byContractIds.get(siteId);
       if (distinct?.size === 1) {
         const [sharedContractId] = distinct;
-        if (sharedContractId !== existingContractId) updates.push({ siteId, contractId: sharedContractId });
+        if (sharedContractId !== existingContractId) {
+          updates.push({ siteId, name: s.name as string, contractId: sharedContractId });
+        }
       }
     }
   }
 
+  // Postgres validates every NOT NULL column on the row an upsert *would* insert, even when every id here is
+  // guaranteed to already exist and only ever takes the update branch -- so user_id and name (sites' only
+  // other NOT NULL, no-default column) have to ride along unchanged, or this fails outright, not just for
+  // genuinely-new rows.
   for (const chunk of chunkArray(updates, SITE_ID_CHUNK_SIZE)) {
     const { error } = await supabase.from("sites").upsert(
-      chunk.map((u) => ({ id: u.siteId, contract_id: u.contractId, updated_at: new Date().toISOString() })),
+      chunk.map((u) => ({
+        id: u.siteId,
+        user_id: OWNER_USER_ID,
+        name: u.name,
+        contract_id: u.contractId,
+        updated_at: new Date().toISOString(),
+      })),
       { onConflict: "id" },
     );
     if (error) throw new Error(error.message);
@@ -877,11 +889,11 @@ export async function bulkCreateSitesForContract(
 export async function bulkAssignTrades(siteIds: string[], trades: string[]): Promise<void> {
   if (siteIds.length === 0 || trades.length === 0) return;
   const supabase = createAdminClient();
-  const existing: { id: string; trades: string[] | null }[] = [];
+  const existing: { id: string; name: string; trades: string[] | null }[] = [];
   for (const chunk of chunkArray(siteIds, SITE_ID_CHUNK_SIZE)) {
     const { data, error: fetchError } = await supabase
       .from("sites")
-      .select("id, trades")
+      .select("id, name, trades")
       .in("id", chunk)
       .eq("user_id", OWNER_USER_ID);
     if (fetchError) throw new Error(fetchError.message);
@@ -890,14 +902,23 @@ export async function bulkAssignTrades(siteIds: string[], trades: string[]): Pro
 
   const updates = existing.map((s) => ({
     id: s.id,
+    name: s.name,
     trades: Array.from(new Set([...((s.trades as string[] | null) ?? []), ...trades])),
   }));
 
   // One upsert per chunk instead of one update per site -- every row touches the same columns (id, trades),
   // just with a different trades array value, so a single batched upsert (onConflict "id") is equivalent.
+  // user_id/name (sites' NOT NULL, no-default columns besides id) have to ride along unchanged -- Postgres
+  // validates them on the row an upsert *would* insert even though every id here always takes the update branch.
   for (const chunk of chunkArray(updates, SITE_ID_CHUNK_SIZE)) {
     const { error } = await supabase.from("sites").upsert(
-      chunk.map((u) => ({ id: u.id, trades: u.trades, updated_at: new Date().toISOString() })),
+      chunk.map((u) => ({
+        id: u.id,
+        user_id: OWNER_USER_ID,
+        name: u.name,
+        trades: u.trades,
+        updated_at: new Date().toISOString(),
+      })),
       { onConflict: "id" },
     );
     if (error) throw new Error(error.message);
@@ -909,11 +930,11 @@ export async function bulkUnassignTrades(siteIds: string[], trades: string[]): P
   if (siteIds.length === 0 || trades.length === 0) return;
   const supabase = createAdminClient();
 
-  const existingSites: { id: string; trades: string[] | null }[] = [];
+  const existingSites: { id: string; name: string; trades: string[] | null }[] = [];
   for (const chunk of chunkArray(siteIds, SITE_ID_CHUNK_SIZE)) {
     const { data, error: fetchError } = await supabase
       .from("sites")
-      .select("id, trades")
+      .select("id, name, trades")
       .in("id", chunk)
       .eq("user_id", OWNER_USER_ID);
     if (fetchError) throw new Error(fetchError.message);
@@ -923,6 +944,7 @@ export async function bulkUnassignTrades(siteIds: string[], trades: string[]): P
   const removeSet = new Set(trades);
   const updates = existingSites.map((s) => ({
     id: s.id,
+    name: s.name,
     trades: ((s.trades as string[] | null) ?? []).filter((t) => !removeSet.has(t)),
   }));
 
@@ -951,7 +973,13 @@ export async function bulkUnassignTrades(siteIds: string[], trades: string[]): P
 
   for (const chunk of chunkArray(updates, SITE_ID_CHUNK_SIZE)) {
     const { error } = await supabase.from("sites").upsert(
-      chunk.map((u) => ({ id: u.id, trades: u.trades, updated_at: new Date().toISOString() })),
+      chunk.map((u) => ({
+        id: u.id,
+        user_id: OWNER_USER_ID,
+        name: u.name,
+        trades: u.trades,
+        updated_at: new Date().toISOString(),
+      })),
       { onConflict: "id" },
     );
     if (error) throw new Error(error.message);
@@ -1490,11 +1518,11 @@ export async function bulkUpdateSiteMeasurements(
   const { siteIds, notFound, ambiguous } = await matchSiteIds(rows, companyId);
 
   const matchedIds = Array.from(new Set(siteIds.filter((id): id is string => !!id)));
-  const existingSites: { id: string; measurements: unknown; counts: unknown }[] = [];
+  const existingSites: { id: string; name: string; measurements: unknown; counts: unknown }[] = [];
   for (const chunk of chunkArray(matchedIds, SITE_ID_CHUNK_SIZE)) {
     const { data, error: fetchError } = await supabase
       .from("sites")
-      .select("id, measurements, counts")
+      .select("id, name, measurements, counts")
       .in("id", chunk)
       .eq("user_id", OWNER_USER_ID);
     if (fetchError) throw new Error(fetchError.message);
@@ -1502,24 +1530,27 @@ export async function bulkUpdateSiteMeasurements(
   }
   const existingById = new Map(existingSites.map((s) => [s.id as string, s]));
 
-  const updates: { id: string; payload: Record<string, unknown> }[] = [];
+  const updates: { id: string; name: string; payload: Record<string, unknown> }[] = [];
   rows.forEach((row, i) => {
     const siteId = siteIds[i];
     if (!siteId) return;
     if (Object.keys(row.measurements).length === 0 && Object.keys(row.counts).length === 0) return;
 
     const existing = existingById.get(siteId);
+    if (!existing) return;
     const mergedMeasurements = {
-      ...((existing?.measurements as Record<string, number> | null) ?? {}),
+      ...((existing.measurements as Record<string, number> | null) ?? {}),
       ...row.measurements,
     };
-    const mergedCounts = { ...((existing?.counts as Record<string, number> | null) ?? {}), ...row.counts };
-    updates.push({ id: siteId, payload: { measurements: mergedMeasurements, counts: mergedCounts } });
+    const mergedCounts = { ...((existing.counts as Record<string, number> | null) ?? {}), ...row.counts };
+    updates.push({ id: siteId, name: existing.name, payload: { measurements: mergedMeasurements, counts: mergedCounts } });
   });
 
+  // user_id/name (sites' NOT NULL, no-default columns besides id) have to ride along unchanged -- Postgres
+  // validates them on the row an upsert *would* insert even though every id here always takes the update branch.
   for (const chunk of chunkArray(updates, SITE_ID_CHUNK_SIZE)) {
     const { error } = await supabase.from("sites").upsert(
-      chunk.map((u) => ({ id: u.id, ...u.payload, updated_at: new Date().toISOString() })),
+      chunk.map((u) => ({ id: u.id, user_id: OWNER_USER_ID, name: u.name, ...u.payload, updated_at: new Date().toISOString() })),
       { onConflict: "id" },
     );
     if (error) throw new Error(error.message);
