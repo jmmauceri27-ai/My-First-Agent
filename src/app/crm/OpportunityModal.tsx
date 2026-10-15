@@ -53,7 +53,6 @@ export default function OpportunityModal({
   );
   const [trades, setTrades] = useState<string[]>(opportunity?.trades ?? []);
   const [expectedCloseDate, setExpectedCloseDate] = useState(opportunity?.expectedCloseDate ?? "");
-  const [notes, setNotes] = useState(opportunity?.notes ?? "");
   const [contactIds, setContactIds] = useState<string[]>(opportunity?.contactIds ?? []);
   const [salesManagerId, setSalesManagerId] = useState(opportunity?.salesManagerId ?? "");
 
@@ -83,8 +82,6 @@ export default function OpportunityModal({
       address: null,
       city: null,
       state: null,
-      website: null,
-      notes: null,
     });
     setLocalCompanies((prev) => [
       ...prev,
@@ -94,8 +91,6 @@ export default function OpportunityModal({
         address: null,
         city: null,
         state: null,
-        website: null,
-        notes: null,
         logoUrl: null,
         createdAt: new Date().toISOString(),
       },
@@ -153,7 +148,6 @@ export default function OpportunityModal({
         siteCount: siteCount.trim() ? Number(siteCount) : null,
         trades,
         expectedCloseDate: expectedCloseDate || null,
-        notes: notes.trim() || null,
         contactIds,
         salesManagerId: salesManagerId || null,
       };
@@ -347,15 +341,6 @@ export default function OpportunityModal({
             </div>
           </div>
 
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-              className={inputClass}
-            />
-          </label>
         </div>
 
         <div className="mt-4">

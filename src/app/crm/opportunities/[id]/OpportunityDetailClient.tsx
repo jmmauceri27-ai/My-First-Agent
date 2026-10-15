@@ -58,7 +58,6 @@ export default function OpportunityDetailClient({
   const [siteCount, setSiteCount] = useState(opportunity.siteCount != null ? String(opportunity.siteCount) : "");
   const [trades, setTrades] = useState<string[]>(opportunity.trades ?? []);
   const [expectedCloseDate, setExpectedCloseDate] = useState(opportunity.expectedCloseDate ?? "");
-  const [notes, setNotes] = useState(opportunity.notes ?? "");
   const [contactIds, setContactIds] = useState<string[]>(opportunity.contactIds);
   const [salesManagerId, setSalesManagerId] = useState(opportunity.salesManagerId ?? "");
 
@@ -135,7 +134,6 @@ export default function OpportunityDetailClient({
         siteCount: siteCount.trim() ? Number(siteCount) : null,
         trades,
         expectedCloseDate: expectedCloseDate || null,
-        notes: notes.trim() || null,
         contactIds,
         salesManagerId: salesManagerId || null,
       };
@@ -342,10 +340,6 @@ export default function OpportunityDetailClient({
               </div>
             </div>
 
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>
-              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} className={inputClass} />
-            </label>
           </div>
 
           <div className="mt-4">

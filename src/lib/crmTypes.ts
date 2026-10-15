@@ -17,8 +17,6 @@ export interface Company {
   address: string | null;
   city: string | null;
   state: string | null;
-  website: string | null;
-  notes: string | null;
   /** Public URL for the client's logo, ready to use as an <img> src, or null if none is set. */
   logoUrl: string | null;
   createdAt: string;
@@ -30,16 +28,6 @@ export interface Contact {
   companyName: string | null;
   companyLogoUrl: string | null;
   name: string;
-  email: string | null;
-  phone: string | null;
-  title: string | null;
-  notes: string | null;
-  /** Whether this contact can approve work on their own, up to approvalLimit (if set) -- null limit with
-   * canApproveWork true means no set ceiling. */
-  canApproveWork: boolean;
-  approvalLimit: number | null;
-  /** Free-text region/territory label, e.g. "Northeast" -- there's no fixed list since it varies per client. */
-  region: string | null;
   /** Sites this contact is responsible for -- many-to-many, since a site can have more than one responsible
    * contact (e.g. primary + backup). */
   siteIds: string[];
@@ -106,7 +94,6 @@ export interface Opportunity {
   siteCount: number | null;
   trades: string[];
   expectedCloseDate: string | null;
-  notes: string | null;
   contactIds: string[];
   salesManagerId: string | null;
   salesManagerName: string | null;
@@ -125,7 +112,6 @@ export interface OpportunityInput {
   siteCount: number | null;
   trades: string[];
   expectedCloseDate: string | null;
-  notes: string | null;
   contactIds: string[];
   salesManagerId: string | null;
 }
@@ -145,18 +131,16 @@ export interface CompanyInput {
   address: string | null;
   city: string | null;
   state: string | null;
-  website: string | null;
-  notes: string | null;
 }
 
-/** A single row parsed from an uploaded sheet, mapped onto Company's fixed fields, for bulk import. */
+/** A single row parsed from an uploaded sheet, mapped onto Company's fixed fields, for bulk import. Website
+ * and Notes are no longer fixed fields -- a sheet column mapped to either is written as a Field value after
+ * the company is created (see UploadCompaniesModal.tsx). */
 export interface CompanyImportRow {
   name: string;
   address: string | null;
   city: string | null;
   state: string | null;
-  website: string | null;
-  notes: string | null;
 }
 
 /** A single row parsed from an uploaded sheet, mapped onto Employee's fixed fields, for bulk import. */
@@ -171,13 +155,6 @@ export interface EmployeeImportRow {
 export interface ContactInput {
   name: string;
   companyId: string | null;
-  email: string | null;
-  phone: string | null;
-  title: string | null;
-  notes: string | null;
-  canApproveWork: boolean;
-  approvalLimit: number | null;
-  region: string | null;
   siteIds: string[];
 }
 
@@ -212,7 +189,6 @@ export interface Contract {
   billingType: string | null;
   startDate: string | null;
   endDate: string | null;
-  notes: string | null;
   contactIds: string[];
   createdAt: string;
   updatedAt: string;
@@ -228,7 +204,6 @@ export interface ContractInput {
   billingType: string | null;
   startDate: string | null;
   endDate: string | null;
-  notes: string | null;
   contactIds: string[];
 }
 
@@ -415,7 +390,7 @@ export interface ClientRateOverrideInput {
 // A record's actual values live separately in crm_field_values, keyed by (fieldId, recordId) -- see
 // fieldsDal.ts.
 
-export const FIELD_TYPES = ["Text", "Number", "Date", "Dropdown", "Checkbox"] as const;
+export const FIELD_TYPES = ["Text", "Multi-line Text", "Number", "Date", "Dropdown", "Checkbox"] as const;
 
 export type FieldType = (typeof FIELD_TYPES)[number];
 

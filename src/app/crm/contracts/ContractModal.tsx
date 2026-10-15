@@ -49,7 +49,6 @@ export default function ContractModal({
   const [billingType, setBillingType] = useState(contract?.billingType ?? "");
   const [startDate, setStartDate] = useState(contract?.startDate ?? "");
   const [endDate, setEndDate] = useState(contract?.endDate ?? "");
-  const [notes, setNotes] = useState(contract?.notes ?? "");
   const [contactIds, setContactIds] = useState<string[]>(contract?.contactIds ?? prefill?.contactIds ?? []);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,7 +77,6 @@ export default function ContractModal({
         billingType: billingType || null,
         startDate: startDate || null,
         endDate: endDate || null,
-        notes: notes.trim() || null,
         contactIds,
       };
       const contractId = await saveContractAction(null, input);
@@ -203,11 +201,6 @@ export default function ContractModal({
               <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={inputClass} />
             </label>
           </div>
-
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputClass} />
-          </label>
 
           <div className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-slate-700 dark:text-slate-300">Contacts involved</span>

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import type { Company, FieldClass } from "@/lib/crmTypes";
+import { getFieldValuesForRecordsAction } from "@/app/crm/fields/actions";
 import CompanyModal from "./CompanyModal";
 import UploadCompaniesModal from "./UploadCompaniesModal";
 
@@ -17,6 +18,24 @@ export default function CompaniesClient({
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [creating, setCreating] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  const websiteFieldId = useMemo(
+    () => fieldClasses.find((c) => c.recordType === "Company")?.fields.find((f) => f.name === "website")?.id,
+    [fieldClasses],
+  );
+  const [websiteByCompany, setWebsiteByCompany] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!websiteFieldId || companies.length === 0) return;
+    getFieldValuesForRecordsAction(companies.map((c) => c.id)).then((values) => {
+      const byCompany: Record<string, string> = {};
+      for (const [companyId, fields] of Object.entries(values)) {
+        const website = fields[websiteFieldId];
+        if (website) byCompany[companyId] = website;
+      }
+      setWebsiteByCompany(byCompany);
+    });
+  }, [companies, websiteFieldId]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -49,11 +68,13 @@ export default function CompaniesClient({
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">{c.name}</p>
                   <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                    {[c.city, c.state].filter(Boolean).join(", ") || c.website || c.address || "No details"}
+                    {[c.city, c.state].filter(Boolean).join(", ") || websiteByCompany[c.id] || c.address || "No details"}
                   </p>
                 </div>
               </div>
-              {c.website && <span className="shrink-0 text-xs text-brand-600 dark:text-brand-400">{c.website}</span>}
+              {websiteByCompany[c.id] && (
+                <span className="shrink-0 text-xs text-brand-600 dark:text-brand-400">{websiteByCompany[c.id]}</span>
+              )}
             </button>
           ))}
         </Card>
@@ -70,7 +91,7 @@ export default function CompaniesClient({
         />
       )}
 
-      {uploading && <UploadCompaniesModal onClose={() => setUploading(false)} />}
+      {uploading && <UploadCompaniesModal fieldClasses={fieldClasses} onClose={() => setUploading(false)} />}
     </div>
   );
 }

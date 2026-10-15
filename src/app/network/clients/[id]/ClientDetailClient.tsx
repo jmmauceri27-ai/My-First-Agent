@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import CompanyModal from "@/app/crm/companies/CompanyModal";
+import { getFieldValuesForRecordsAction } from "@/app/crm/fields/actions";
 import { formatCurrency } from "@/lib/siteMapColor";
 import type { Company, Contact, Contract, FieldClass, Opportunity } from "@/lib/crmTypes";
 import type { Site } from "@/lib/networkTypes";
@@ -27,6 +28,23 @@ export default function ClientDetailClient({
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
+
+  const contactFieldIds = useMemo(() => {
+    const contactFields = fieldClasses.find((c) => c.recordType === "Contact")?.fields ?? [];
+    return Object.fromEntries(contactFields.map((f) => [f.name, f.id])) as Record<string, string | undefined>;
+  }, [fieldClasses]);
+  const [fieldValuesByContact, setFieldValuesByContact] = useState<Record<string, Record<string, string | null>>>({});
+
+  useEffect(() => {
+    if (contacts.length === 0) return;
+    getFieldValuesForRecordsAction(contacts.map((c) => c.id)).then(setFieldValuesByContact);
+  }, [contacts]);
+
+  function contactSubtitle(contactId: string): string {
+    const values = fieldValuesByContact[contactId] ?? {};
+    const get = (name: string) => (contactFieldIds[name] ? values[contactFieldIds[name]!] : null) ?? "";
+    return [get("title"), get("email"), get("phone")].filter(Boolean).join(" · ");
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -70,7 +88,7 @@ export default function ClientDetailClient({
               contacts.map((c) => (
                 <div key={c.id} className="py-2">
                   <p className="text-sm font-medium text-slate-900 dark:text-slate-50">{c.name}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{[c.title, c.email, c.phone].filter(Boolean).join(" · ")}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{contactSubtitle(c.id)}</p>
                 </div>
               ))
             )}

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { buildXlsxBase64 } from "@/lib/exportExcel";
 import type { DatasetRecord } from "@/lib/types";
+import { saveFieldValuesForRecord } from "@/lib/fieldsDal";
 import {
   bulkCreateCompanies,
   bulkCreateEmployees,
@@ -353,14 +354,29 @@ export async function updateEmployeeAction(id: string, input: EmployeeInput): Pr
   revalidatePath(`/network/employees/${id}`);
 }
 
-/** Bulk-imports uploaded sheet rows as new companies. Appends -- does not de-duplicate against existing clients. */
-export async function bulkCreateCompaniesAction(rows: CompanyImportRow[]): Promise<{ inserted?: number; error?: string }> {
+/**
+ * Bulk-imports uploaded sheet rows as new companies. Appends -- does not de-duplicate against existing
+ * clients. `fieldValuesByRow[i]` (if given) is written as Field values for the i-th row's new company --
+ * e.g. a sheet column mapped to Website or Notes.
+ */
+export async function bulkCreateCompaniesAction(
+  rows: CompanyImportRow[],
+  fieldValuesByRow?: ({ fieldId: string; value: string | null }[] | undefined)[],
+): Promise<{ inserted?: number; error?: string }> {
   try {
     const result = await bulkCreateCompanies(rows);
+    if (fieldValuesByRow) {
+      await Promise.all(
+        result.ids.map((id, i) => {
+          const values = fieldValuesByRow[i];
+          return values && values.length > 0 ? saveFieldValuesForRecord(id, values) : undefined;
+        }),
+      );
+    }
     revalidatePath("/crm");
     revalidatePath("/crm/companies");
     revalidatePath("/network/clients");
-    return result;
+    return { inserted: result.inserted };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to import clients." };
   }

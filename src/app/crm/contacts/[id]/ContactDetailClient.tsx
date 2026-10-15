@@ -65,6 +65,10 @@ function todayDateInputValue(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+/** Standard Contact Fields rendered individually elsewhere on this page -- excluded from the generic "Fields"
+ * list below so they don't show up twice. */
+const STANDARD_CONTACT_FIELD_NAMES = ["email", "phone", "title", "region", "can_approve_work", "approval_limit", "notes"];
+
 function formatActivityDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
@@ -103,12 +107,30 @@ export default function ContactDetailClient({
     });
   }, [contact.id]);
 
+  /** Email/phone/title/region/canApproveWork/approvalLimit/notes are standard Contact Fields, but they're
+   * rendered individually below with their own formatting (currency, combined approve-work line, etc.) --
+   * looked up by their stable internal name, not by label, which a user could rename. */
+  const contactFieldIds = useMemo(() => {
+    const contactFields = fieldClasses.find((c) => c.recordType === "Contact")?.fields ?? [];
+    return Object.fromEntries(contactFields.map((f) => [f.name, f.id])) as Record<string, string | undefined>;
+  }, [fieldClasses]);
+
   const contactFieldEntries = useMemo(() => {
     return fieldClasses
       .filter((c) => c.recordType === "Contact")
       .flatMap((c) => c.fields)
+      .filter((f) => !STANDARD_CONTACT_FIELD_NAMES.includes(f.name))
       .map((f) => ({ label: f.label, value: fieldValues[f.id] ?? "" }));
   }, [fieldClasses, fieldValues]);
+
+  const email = (contactFieldIds.email && fieldValues[contactFieldIds.email]) || "";
+  const phone = (contactFieldIds.phone && fieldValues[contactFieldIds.phone]) || "";
+  const title = (contactFieldIds.title && fieldValues[contactFieldIds.title]) || "";
+  const region = (contactFieldIds.region && fieldValues[contactFieldIds.region]) || "";
+  const notes = (contactFieldIds.notes && fieldValues[contactFieldIds.notes]) || "";
+  const canApproveWork = !!contactFieldIds.can_approve_work && fieldValues[contactFieldIds.can_approve_work] === "true";
+  const approvalLimitRaw = contactFieldIds.approval_limit && fieldValues[contactFieldIds.approval_limit];
+  const approvalLimit = approvalLimitRaw ? Number(approvalLimitRaw) : null;
 
   const [activities, setActivities] = useState<ContactActivity[]>(initialActivities);
   const [selectedActivityType, setSelectedActivityType] = useState<ContactActivityType>("Call");
@@ -192,8 +214,7 @@ export default function ContactDetailClient({
             <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">{contact.name}</h1>
           </div>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {[contact.title, contact.companyName, contact.email, contact.phone].filter(Boolean).join(" · ") ||
-              "No details on file"}
+            {[title, contact.companyName, email, phone].filter(Boolean).join(" · ") || "No details on file"}
           </p>
         </div>
         <Button variant="secondary" onClick={() => setEditing(true)}>
@@ -206,7 +227,7 @@ export default function ContactDetailClient({
         <div className="flex flex-col gap-6">
           <SectionCard icon="👤" title="Contact Info" color="#7c3ce3">
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Title" value={contact.title} />
+              <Field label="Title" value={title} />
               <Field
                 label="Client"
                 value={
@@ -217,16 +238,12 @@ export default function ContactDetailClient({
                   )
                 }
               />
-              <Field label="Email" value={contact.email} />
-              <Field label="Phone" value={contact.phone} />
-              <Field label="Region" value={contact.region} />
+              <Field label="Email" value={email} />
+              <Field label="Phone" value={phone} />
+              <Field label="Region" value={region} />
               <Field
                 label="Approves work"
-                value={
-                  contact.canApproveWork
-                    ? `Yes${contact.approvalLimit != null ? ` · up to ${formatCurrency(contact.approvalLimit)}` : ""}`
-                    : null
-                }
+                value={canApproveWork ? `Yes${approvalLimit != null ? ` · up to ${formatCurrency(approvalLimit)}` : ""}` : null}
               />
             </div>
           </SectionCard>
@@ -410,7 +427,7 @@ export default function ContactDetailClient({
 
           <SectionCard icon="📝" title="Notes" color="#78716c">
             <p className="whitespace-pre-wrap text-sm text-slate-900 dark:text-slate-50">
-              {contact.notes || <span className="text-slate-500 dark:text-slate-500">No notes yet.</span>}
+              {notes || <span className="text-slate-500 dark:text-slate-500">No notes yet.</span>}
             </p>
           </SectionCard>
 

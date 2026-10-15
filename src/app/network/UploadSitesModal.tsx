@@ -108,8 +108,6 @@ export default function UploadSitesModal({
       address: null,
       city: null,
       state: null,
-      website: null,
-      notes: null,
     });
     setLocalCompanies((prev) => [
       ...prev,
@@ -119,8 +117,6 @@ export default function UploadSitesModal({
         address: null,
         city: null,
         state: null,
-        website: null,
-        notes: null,
         logoUrl: null,
         createdAt: new Date().toISOString(),
       },

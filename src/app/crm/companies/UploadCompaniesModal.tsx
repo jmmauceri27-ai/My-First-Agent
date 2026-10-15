@@ -7,7 +7,7 @@ import Card from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/formClasses";
 import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
 import { buildTemplateXlsxAction, parseUploadedSheetAction } from "@/lib/sheetActions";
-import type { CompanyImportRow } from "@/lib/crmTypes";
+import type { CompanyImportRow, FieldClass } from "@/lib/crmTypes";
 import { bulkCreateCompaniesAction } from "../actions";
 
 type ParsedRow = Record<string, string | number | boolean | null>;
@@ -30,8 +30,20 @@ async function handleDownloadTemplate() {
   downloadBase64Xlsx(base64, "client_upload_template.xlsx");
 }
 
-export default function UploadCompaniesModal({ onClose }: { onClose: () => void }) {
+export default function UploadCompaniesModal({
+  fieldClasses,
+  onClose,
+}: {
+  fieldClasses: FieldClass[];
+  onClose: () => void;
+}) {
   const router = useRouter();
+  const websiteFieldId = fieldClasses
+    .find((c) => c.recordType === "Company")
+    ?.fields.find((f) => f.name === "website")?.id;
+  const notesFieldId = fieldClasses
+    .find((c) => c.recordType === "Company")
+    ?.fields.find((f) => f.name === "notes")?.id;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -94,10 +106,20 @@ export default function UploadCompaniesModal({ onClose }: { onClose: () => void 
         address: mapping.address ? String(row[mapping.address] ?? "").trim() || null : null,
         city: mapping.city ? String(row[mapping.city] ?? "").trim() || null : null,
         state: mapping.state ? String(row[mapping.state] ?? "").trim() || null : null,
-        website: mapping.website ? String(row[mapping.website] ?? "").trim() || null : null,
-        notes: mapping.notes ? String(row[mapping.notes] ?? "").trim() || null : null,
       }));
-      const result = await bulkCreateCompaniesAction(rows);
+      const fieldValuesByRow = parsedRows.map((row) => {
+        const values: { fieldId: string; value: string | null }[] = [];
+        if (websiteFieldId && mapping.website) {
+          const v = String(row[mapping.website] ?? "").trim();
+          if (v) values.push({ fieldId: websiteFieldId, value: v });
+        }
+        if (notesFieldId && mapping.notes) {
+          const v = String(row[mapping.notes] ?? "").trim();
+          if (v) values.push({ fieldId: notesFieldId, value: v });
+        }
+        return values;
+      });
+      const result = await bulkCreateCompaniesAction(rows, fieldValuesByRow);
       if (result.error || result.inserted == null) {
         setImportError(result.error ?? "Failed to import clients.");
         return;

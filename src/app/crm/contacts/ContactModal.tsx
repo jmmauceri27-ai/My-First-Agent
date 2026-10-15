@@ -27,15 +27,6 @@ export default function ContactModal({
   const router = useRouter();
   const [name, setName] = useState(contact?.name ?? "");
   const [companyId, setCompanyId] = useState(contact?.companyId ?? "");
-  const [email, setEmail] = useState(contact?.email ?? "");
-  const [phone, setPhone] = useState(contact?.phone ?? "");
-  const [title, setTitle] = useState(contact?.title ?? "");
-  const [notes, setNotes] = useState(contact?.notes ?? "");
-  const [canApproveWork, setCanApproveWork] = useState(contact?.canApproveWork ?? false);
-  const [approvalLimit, setApprovalLimit] = useState(
-    contact?.approvalLimit != null ? String(contact.approvalLimit) : "",
-  );
-  const [region, setRegion] = useState(contact?.region ?? "");
   const [siteIds, setSiteIds] = useState<string[]>(contact?.siteIds ?? []);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -69,13 +60,6 @@ export default function ContactModal({
       const contactId = await saveContactAction(contact?.id ?? null, {
         name: name.trim(),
         companyId: companyId || null,
-        email: email.trim() || null,
-        phone: phone.trim() || null,
-        title: title.trim() || null,
-        notes: notes.trim() || null,
-        canApproveWork,
-        approvalLimit: approvalLimit.trim() ? Number(approvalLimit) : null,
-        region: region.trim() || null,
         siteIds,
       });
       await saveFieldValuesForRecordAction(
@@ -126,54 +110,6 @@ export default function ContactModal({
               ))}
             </select>
           </label>
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-300">Title</span>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} />
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-700 dark:text-slate-300">Email</span>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-700 dark:text-slate-300">Phone</span>
-              <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} />
-            </label>
-          </div>
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputClass} />
-          </label>
-
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-300">Region / territory</span>
-            <input value={region} onChange={(e) => setRegion(e.target.value)} className={inputClass} placeholder="e.g. Northeast" />
-          </label>
-
-          <div className="flex flex-col gap-2 rounded-lg border border-slate-300 p-3 dark:border-slate-700">
-            <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-              <input
-                type="checkbox"
-                checked={canApproveWork}
-                onChange={(e) => setCanApproveWork(e.target.checked)}
-                className="accent-brand-600"
-              />
-              Can approve work
-            </label>
-            {canApproveWork && (
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-slate-700 dark:text-slate-300">Approval limit ($)</span>
-                <input
-                  type="number"
-                  value={approvalLimit}
-                  onChange={(e) => setApprovalLimit(e.target.value)}
-                  className={inputClass}
-                  placeholder="Leave blank for no set limit"
-                />
-              </label>
-            )}
-          </div>
-
           <div className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-slate-700 dark:text-slate-300">Sites responsible for</span>
             <div className="flex max-h-32 flex-col gap-1 overflow-y-auto rounded-lg border border-slate-300 p-2 dark:border-slate-700">

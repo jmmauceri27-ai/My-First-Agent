@@ -1,15 +1,29 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import { inputClass } from "@/components/ui/formClasses";
 import type { Company, Contact, FieldClass } from "@/lib/crmTypes";
 import type { Site } from "@/lib/networkTypes";
+import { getFieldValuesForRecordsAction } from "@/app/crm/fields/actions";
 import ContactModal from "./ContactModal";
 
 type SortField = "name" | "title" | "companyName" | "email" | "phone" | "region" | "siteCount" | "canApproveWork";
 type SortDirection = "asc" | "desc";
+
+/** Title/email/phone/region/canApproveWork/approvalLimit are standard Contact Fields now, not columns -- this
+ * is a contact's resolved values for them, derived from bulk-fetched Field values. */
+interface ContactExtra {
+  title: string;
+  email: string;
+  phone: string;
+  region: string;
+  canApproveWork: boolean;
+  approvalLimit: number | null;
+}
+
+const EMPTY_EXTRA: ContactExtra = { title: "", email: "", phone: "", region: "", canApproveWork: false, approvalLimit: null };
 
 const COLUMNS: { field: SortField; label: string; align?: "right" | "center" }[] = [
   { field: "name", label: "Name" },
@@ -24,11 +38,13 @@ const COLUMNS: { field: SortField; label: string; align?: "right" | "center" }[]
 
 /** Missing values always sort to the end regardless of direction; siteCount/canApproveWork compare numerically
  * (a boolean coerces to 0/1), everything else is a case-insensitive string comparison. */
-function compareContacts(a: Contact, b: Contact, field: SortField): number {
+function compareContacts(a: Contact, b: Contact, field: SortField, extras: Record<string, ContactExtra>): number {
   if (field === "siteCount") return a.siteIds.length - b.siteIds.length;
-  if (field === "canApproveWork") return Number(a.canApproveWork) - Number(b.canApproveWork);
-  const av = a[field];
-  const bv = b[field];
+  const ea = extras[a.id] ?? EMPTY_EXTRA;
+  const eb = extras[b.id] ?? EMPTY_EXTRA;
+  if (field === "canApproveWork") return Number(ea.canApproveWork) - Number(eb.canApproveWork);
+  const av = field === "companyName" ? a.companyName : field === "name" ? a.name : ea[field];
+  const bv = field === "companyName" ? b.companyName : field === "name" ? b.name : eb[field];
   if (!av && !bv) return 0;
   if (!av) return 1;
   if (!bv) return -1;
@@ -55,31 +71,63 @@ export default function ContactsClient({
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
+  const contactFieldIds = useMemo(() => {
+    const contactFields = fieldClasses.find((c) => c.recordType === "Contact")?.fields ?? [];
+    return Object.fromEntries(contactFields.map((f) => [f.name, f.id])) as Record<string, string | undefined>;
+  }, [fieldClasses]);
+
+  const [fieldValuesByContact, setFieldValuesByContact] = useState<Record<string, Record<string, string | null>>>({});
+
+  useEffect(() => {
+    if (contacts.length === 0) return;
+    getFieldValuesForRecordsAction(contacts.map((c) => c.id)).then(setFieldValuesByContact);
+  }, [contacts]);
+
+  const extras = useMemo(() => {
+    const result: Record<string, ContactExtra> = {};
+    for (const c of contacts) {
+      const values = fieldValuesByContact[c.id] ?? {};
+      const get = (name: string) => (contactFieldIds[name] ? (values[contactFieldIds[name]!] ?? "") : "");
+      const approvalLimitRaw = get("approval_limit");
+      result[c.id] = {
+        title: get("title"),
+        email: get("email"),
+        phone: get("phone"),
+        region: get("region"),
+        canApproveWork: get("can_approve_work") === "true",
+        approvalLimit: approvalLimitRaw ? Number(approvalLimitRaw) : null,
+      };
+    }
+    return result;
+  }, [contacts, fieldValuesByContact, contactFieldIds]);
+
   const regions = useMemo(
-    () => Array.from(new Set(contacts.map((c) => c.region).filter((r): r is string => !!r))).sort((a, b) => a.localeCompare(b)),
-    [contacts],
+    () =>
+      Array.from(new Set(Object.values(extras).map((e) => e.region).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+    [extras],
   );
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
     return contacts.filter((c) => {
+      const e = extras[c.id] ?? EMPTY_EXTRA;
       if (companyFilter && c.companyId !== companyFilter) return false;
-      if (regionFilter && c.region !== regionFilter) return false;
-      if (approvesFilter === "yes" && !c.canApproveWork) return false;
-      if (approvesFilter === "no" && c.canApproveWork) return false;
+      if (regionFilter && e.region !== regionFilter) return false;
+      if (approvesFilter === "yes" && !e.canApproveWork) return false;
+      if (approvesFilter === "no" && e.canApproveWork) return false;
       if (query) {
-        const haystack = [c.name, c.title, c.companyName, c.email, c.phone].filter(Boolean).join(" ").toLowerCase();
+        const haystack = [c.name, e.title, c.companyName, e.email, e.phone].filter(Boolean).join(" ").toLowerCase();
         if (!haystack.includes(query)) return false;
       }
       return true;
     });
-  }, [contacts, search, companyFilter, regionFilter, approvesFilter]);
+  }, [contacts, extras, search, companyFilter, regionFilter, approvesFilter]);
 
   const sorted = useMemo(() => {
     if (!sortField) return filtered;
     const sign = sortDirection === "asc" ? 1 : -1;
-    return [...filtered].sort((a, b) => sign * compareContacts(a, b, sortField));
-  }, [filtered, sortField, sortDirection]);
+    return [...filtered].sort((a, b) => sign * compareContacts(a, b, sortField, extras));
+  }, [filtered, sortField, sortDirection, extras]);
 
   function handleSort(field: SortField) {
     if (sortField === field) {
@@ -170,44 +218,47 @@ export default function ContactsClient({
               </tr>
             </thead>
             <tbody>
-              {sorted.map((c) => (
-                <tr
-                  key={c.id}
-                  onClick={() => router.push(`/crm/contacts/${c.id}`)}
-                  className="cursor-pointer border-b border-purple-400/5 hover:bg-purple-500/5"
-                >
-                  <td className="py-2 pr-3">
-                    {c.companyLogoUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={c.companyLogoUrl}
-                        alt=""
-                        className="h-7 w-7 shrink-0 rounded-full border border-slate-200 bg-slate-50 object-contain dark:border-slate-800 dark:bg-slate-900"
-                      />
-                    ) : (
-                      <span className="block h-7 w-7 shrink-0 rounded-full bg-slate-100 dark:bg-slate-800" />
-                    )}
-                  </td>
-                  <td className="py-2 pr-3 font-medium text-slate-900 dark:text-slate-50">{c.name}</td>
-                  <td className="py-2 pr-3 text-slate-700 dark:text-slate-300">{c.title ?? "—"}</td>
-                  <td className="py-2 pr-3 text-slate-700 dark:text-slate-300">{c.companyName ?? "—"}</td>
-                  <td className="py-2 pr-3 text-slate-700 dark:text-slate-300">{c.email ?? "—"}</td>
-                  <td className="py-2 pr-3 text-slate-700 dark:text-slate-300">{c.phone ?? "—"}</td>
-                  <td className="py-2 pr-3 text-slate-700 dark:text-slate-300">{c.region ?? "—"}</td>
-                  <td className="py-2 pr-3 text-right tabular-nums text-slate-700 dark:text-slate-300">
-                    {c.siteIds.length > 0 ? c.siteIds.length : "—"}
-                  </td>
-                  <td className="py-2 pr-3 text-center">
-                    {c.canApproveWork ? (
-                      <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                        Yes{c.approvalLimit != null ? ` · $${c.approvalLimit.toLocaleString()}` : ""}
-                      </span>
-                    ) : (
-                      <span className="text-slate-400 dark:text-slate-600">—</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {sorted.map((c) => {
+                const e = extras[c.id] ?? EMPTY_EXTRA;
+                return (
+                  <tr
+                    key={c.id}
+                    onClick={() => router.push(`/crm/contacts/${c.id}`)}
+                    className="cursor-pointer border-b border-purple-400/5 hover:bg-purple-500/5"
+                  >
+                    <td className="py-2 pr-3">
+                      {c.companyLogoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={c.companyLogoUrl}
+                          alt=""
+                          className="h-7 w-7 shrink-0 rounded-full border border-slate-200 bg-slate-50 object-contain dark:border-slate-800 dark:bg-slate-900"
+                        />
+                      ) : (
+                        <span className="block h-7 w-7 shrink-0 rounded-full bg-slate-100 dark:bg-slate-800" />
+                      )}
+                    </td>
+                    <td className="py-2 pr-3 font-medium text-slate-900 dark:text-slate-50">{c.name}</td>
+                    <td className="py-2 pr-3 text-slate-700 dark:text-slate-300">{e.title || "—"}</td>
+                    <td className="py-2 pr-3 text-slate-700 dark:text-slate-300">{c.companyName ?? "—"}</td>
+                    <td className="py-2 pr-3 text-slate-700 dark:text-slate-300">{e.email || "—"}</td>
+                    <td className="py-2 pr-3 text-slate-700 dark:text-slate-300">{e.phone || "—"}</td>
+                    <td className="py-2 pr-3 text-slate-700 dark:text-slate-300">{e.region || "—"}</td>
+                    <td className="py-2 pr-3 text-right tabular-nums text-slate-700 dark:text-slate-300">
+                      {c.siteIds.length > 0 ? c.siteIds.length : "—"}
+                    </td>
+                    <td className="py-2 pr-3 text-center">
+                      {e.canApproveWork ? (
+                        <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                          Yes{e.approvalLimit != null ? ` · $${e.approvalLimit.toLocaleString()}` : ""}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 dark:text-slate-600">—</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

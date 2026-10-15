@@ -157,8 +157,7 @@ function buildLogoUrl(
   return cacheBustKey ? `${publicUrl}?v=${encodeURIComponent(cacheBustKey)}` : publicUrl;
 }
 
-const COMPANY_COLUMNS =
-  "id, name, address, city, state, website, notes, logo_storage_path, updated_at, created_at";
+const COMPANY_COLUMNS = "id, name, address, city, state, logo_storage_path, updated_at, created_at";
 
 function mapCompany(c: Record<string, unknown>, supabase: ReturnType<typeof createAdminClient>): Company {
   return {
@@ -167,8 +166,6 @@ function mapCompany(c: Record<string, unknown>, supabase: ReturnType<typeof crea
     address: c.address as string | null,
     city: c.city as string | null,
     state: c.state as string | null,
-    website: c.website as string | null,
-    notes: c.notes as string | null,
     logoUrl: buildLogoUrl(supabase, c.logo_storage_path as string | null, c.updated_at as string),
     createdAt: c.created_at as string,
   };
@@ -247,8 +244,6 @@ export async function createCompany(input: CompanyInput): Promise<string> {
       address: input.address,
       city: input.city,
       state: input.state,
-      website: input.website,
-      notes: input.notes,
     })
     .select("id")
     .single();
@@ -265,8 +260,6 @@ export async function updateCompany(id: string, input: CompanyInput): Promise<vo
       address: input.address,
       city: input.city,
       state: input.state,
-      website: input.website,
-      notes: input.notes,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
@@ -280,8 +273,12 @@ export async function deleteCompany(id: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
-/** Bulk-imports uploaded sheet rows as new companies. Appends -- does not de-duplicate against existing companies. */
-export async function bulkCreateCompanies(rows: CompanyImportRow[]): Promise<{ inserted: number }> {
+/**
+ * Bulk-imports uploaded sheet rows as new companies. Appends -- does not de-duplicate against existing
+ * companies. Returns the new companies' ids in the same order as `rows`, so a caller mapping a sheet column
+ * to a Field (e.g. Website, Notes) can write those values afterward.
+ */
+export async function bulkCreateCompanies(rows: CompanyImportRow[]): Promise<{ inserted: number; ids: string[] }> {
   const supabase = createAdminClient();
   const batch = rows.map((row) => ({
     user_id: OWNER_USER_ID,
@@ -289,22 +286,25 @@ export async function bulkCreateCompanies(rows: CompanyImportRow[]): Promise<{ i
     address: row.address,
     city: row.city,
     state: row.state,
-    website: row.website,
-    notes: row.notes,
   }));
 
   const batchSize = 500;
+  const ids: string[] = [];
   for (let i = 0; i < batch.length; i += batchSize) {
-    const { error } = await supabase.from("crm_companies").insert(batch.slice(i, i + batchSize));
+    const { data, error } = await supabase
+      .from("crm_companies")
+      .insert(batch.slice(i, i + batchSize))
+      .select("id");
     if (error) throw new Error(error.message);
+    ids.push(...(data ?? []).map((row) => row.id as string));
   }
-  return { inserted: batch.length };
+  return { inserted: batch.length, ids };
 }
 
 // ---------- Contacts ----------
 
 const CONTACT_COLUMNS =
-  "id, company_id, name, email, phone, title, notes, can_approve_work, approval_limit, region, created_at, crm_companies(name, logo_storage_path, updated_at), crm_contact_sites(site_id)";
+  "id, company_id, name, created_at, crm_companies(name, logo_storage_path, updated_at), crm_contact_sites(site_id)";
 
 function mapContactRecord(c: Record<string, unknown>, supabase: ReturnType<typeof createAdminClient>): Contact {
   const company = c.crm_companies as unknown as {
@@ -319,13 +319,6 @@ function mapContactRecord(c: Record<string, unknown>, supabase: ReturnType<typeo
     companyName: company?.name ?? null,
     companyLogoUrl: buildLogoUrl(supabase, company?.logo_storage_path, company?.updated_at),
     name: c.name as string,
-    email: c.email as string | null,
-    phone: c.phone as string | null,
-    title: c.title as string | null,
-    notes: c.notes as string | null,
-    canApproveWork: c.can_approve_work as boolean,
-    approvalLimit: c.approval_limit as number | null,
-    region: c.region as string | null,
     siteIds: siteRows.map((r) => r.site_id),
     createdAt: c.created_at as string,
   };
@@ -379,13 +372,6 @@ export async function createContact(input: ContactInput): Promise<string> {
       user_id: OWNER_USER_ID,
       company_id: input.companyId,
       name: input.name,
-      email: input.email,
-      phone: input.phone,
-      title: input.title,
-      notes: input.notes,
-      can_approve_work: input.canApproveWork,
-      approval_limit: input.approvalLimit,
-      region: input.region,
     })
     .select("id")
     .single();
@@ -402,13 +388,6 @@ export async function updateContact(id: string, input: ContactInput): Promise<vo
     .update({
       company_id: input.companyId,
       name: input.name,
-      email: input.email,
-      phone: input.phone,
-      title: input.title,
-      notes: input.notes,
-      can_approve_work: input.canApproveWork,
-      approval_limit: input.approvalLimit,
-      region: input.region,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
@@ -589,7 +568,7 @@ export async function bulkCreateEmployees(rows: EmployeeImportRow[]): Promise<{ 
 // pipeline): a validity window, rate, site count, and type of work.
 
 const CONTRACT_COLUMNS =
-  "id, company_id, opportunity_id, tracking_number, name, trades, site_count, rate_amount, rate_frequency, billing_type, start_date, end_date, notes, created_at, updated_at, crm_companies(name, logo_storage_path, updated_at), crm_opportunities(name), crm_contract_contacts(contact_id)";
+  "id, company_id, opportunity_id, tracking_number, name, trades, site_count, rate_amount, rate_frequency, billing_type, start_date, end_date, created_at, updated_at, crm_companies(name, logo_storage_path, updated_at), crm_opportunities(name), crm_contract_contacts(contact_id)";
 
 function mapContract(c: Record<string, unknown>, supabase: ReturnType<typeof createAdminClient>): Contract {
   const company = c.crm_companies as unknown as {
@@ -615,7 +594,6 @@ function mapContract(c: Record<string, unknown>, supabase: ReturnType<typeof cre
     billingType: c.billing_type as string | null,
     startDate: c.start_date as string | null,
     endDate: c.end_date as string | null,
-    notes: c.notes as string | null,
     contactIds: contactRows.map((r) => r.contact_id),
     createdAt: c.created_at as string,
     updatedAt: c.updated_at as string,
@@ -734,7 +712,6 @@ export async function createContract(input: ContractInput): Promise<string> {
       billing_type: input.billingType,
       start_date: input.startDate,
       end_date: input.endDate,
-      notes: input.notes,
     })
     .select("id")
     .single();
@@ -786,7 +763,6 @@ async function maybeAutoCreateAgreement(opportunityId: string, stage: Opportunit
     billingType: null,
     startDate: null,
     endDate: null,
-    notes: null,
     contactIds: opportunity.contactIds,
   });
 }
@@ -818,7 +794,6 @@ export async function updateContract(id: string, input: ContractInput): Promise<
       billing_type: input.billingType,
       start_date: input.startDate,
       end_date: input.endDate,
-      notes: input.notes,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
@@ -939,7 +914,7 @@ export async function getContractFileDownloadUrl(id: string): Promise<string> {
 // ---------- Opportunities ----------
 
 const OPPORTUNITY_COLUMNS =
-  "id, tracking_number, name, company_id, stage, amount, site_count, trades, expected_close_date, notes, sales_manager_id, position, created_at, updated_at, crm_companies(name, logo_storage_path, updated_at), crm_employees(name), crm_opportunity_contacts(contact_id)";
+  "id, tracking_number, name, company_id, stage, amount, site_count, trades, expected_close_date, sales_manager_id, position, created_at, updated_at, crm_companies(name, logo_storage_path, updated_at), crm_employees(name), crm_opportunity_contacts(contact_id)";
 
 function mapOpportunity(o: Record<string, unknown>, supabase: ReturnType<typeof createAdminClient>): Opportunity {
   const company = o.crm_companies as unknown as {
@@ -961,7 +936,6 @@ function mapOpportunity(o: Record<string, unknown>, supabase: ReturnType<typeof 
     siteCount: o.site_count as number | null,
     trades: (o.trades as string[] | null) ?? [],
     expectedCloseDate: o.expected_close_date as string | null,
-    notes: o.notes as string | null,
     contactIds: contactRows.map((r) => r.contact_id),
     salesManagerId: o.sales_manager_id as string | null,
     salesManagerName: salesManager?.name ?? null,
@@ -1056,7 +1030,6 @@ export async function createOpportunity(input: OpportunityInput): Promise<string
       site_count: input.siteCount,
       trades: input.trades,
       expected_close_date: input.expectedCloseDate,
-      notes: input.notes,
       sales_manager_id: input.salesManagerId,
       position,
     })
@@ -1082,7 +1055,6 @@ export async function updateOpportunity(id: string, input: OpportunityInput): Pr
       site_count: input.siteCount,
       trades: input.trades,
       expected_close_date: input.expectedCloseDate,
-      notes: input.notes,
       sales_manager_id: input.salesManagerId,
       updated_at: new Date().toISOString(),
     })

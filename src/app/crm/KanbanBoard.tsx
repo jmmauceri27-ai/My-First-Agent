@@ -17,6 +17,7 @@ import type { DatasetRecord } from "@/lib/types";
 import { OPPORTUNITY_STAGES } from "@/lib/crmTypes";
 import type { Company, Contact, Employee, FieldClass, Opportunity, OpportunityStage } from "@/lib/crmTypes";
 import type { FileExtensionFixResult } from "@/lib/crmDal";
+import { getFieldValuesForRecordsAction } from "@/app/crm/fields/actions";
 import { exportPipelineToExcelAction, fixMissingFileExtensionsAction, moveOpportunityStageAction } from "./actions";
 import KanbanColumn from "./KanbanColumn";
 import OpportunityCard from "./OpportunityCard";
@@ -39,7 +40,7 @@ const PIPELINE_EXPORT_COLUMNS = [
   "Created",
 ];
 
-function opportunityToExportRow(o: Opportunity): DatasetRecord {
+function opportunityToExportRow(o: Opportunity, notes: string): DatasetRecord {
   return {
     "Tracking #": o.trackingNumber,
     Opportunity: o.name,
@@ -50,7 +51,7 @@ function opportunityToExportRow(o: Opportunity): DatasetRecord {
     "Work Type": o.trades.join(", "),
     "Submission Due Date": o.expectedCloseDate ?? "",
     "Sales Manager": o.salesManagerName ?? "",
-    Notes: o.notes ?? "",
+    Notes: notes,
     Created: o.createdAt,
   };
 }
@@ -115,7 +116,15 @@ export default function KanbanBoard({
     setExporting(true);
     try {
       const sortedByStage = OPPORTUNITY_STAGES.flatMap((s) => grouped[s]);
-      const rows = sortedByStage.map(opportunityToExportRow);
+      const notesFieldId = fieldClasses
+        .find((c) => c.recordType === "Opportunity")
+        ?.fields.find((f) => f.name === "notes")?.id;
+      const fieldValuesByOpportunity = notesFieldId
+        ? await getFieldValuesForRecordsAction(sortedByStage.map((o) => o.id))
+        : {};
+      const rows = sortedByStage.map((o) =>
+        opportunityToExportRow(o, (notesFieldId && fieldValuesByOpportunity[o.id]?.[notesFieldId]) || ""),
+      );
       const totalsRow: DatasetRecord = {
         "Tracking #": "",
         Opportunity: "TOTAL",

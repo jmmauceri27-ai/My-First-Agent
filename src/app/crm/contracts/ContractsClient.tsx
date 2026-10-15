@@ -12,6 +12,7 @@ import { contractStatus, formatContractDate } from "@/lib/contractStatus";
 import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
 import type { DatasetRecord } from "@/lib/types";
 import type { Company, Contact, Contract, ContractInput, FieldClass, Opportunity } from "@/lib/crmTypes";
+import { getFieldValuesForRecordsAction } from "@/app/crm/fields/actions";
 import { exportContractsToExcelAction } from "../actions";
 import ContractModal from "./ContractModal";
 import ContractsTimeline from "./ContractsTimeline";
@@ -36,7 +37,7 @@ const CONTRACT_EXPORT_COLUMNS = [
   "Created",
 ];
 
-function contractToExportRow(c: Contract): DatasetRecord {
+function contractToExportRow(c: Contract, notes: string): DatasetRecord {
   return {
     "Tracking #": c.trackingNumber ?? "",
     Agreement: c.name,
@@ -50,7 +51,7 @@ function contractToExportRow(c: Contract): DatasetRecord {
     "Billing Type": c.billingType ?? "",
     "Start Date": c.startDate ?? "",
     "End Date": c.endDate ?? "",
-    Notes: c.notes ?? "",
+    Notes: notes,
     Created: c.createdAt,
   };
 }
@@ -200,7 +201,15 @@ export default function ContractsClient({
     if (sorted.length === 0) return;
     setExporting(true);
     try {
-      const rows = sorted.map(contractToExportRow);
+      const notesFieldId = fieldClasses
+        .find((c) => c.recordType === "Agreement")
+        ?.fields.find((f) => f.name === "notes")?.id;
+      const fieldValuesByContract = notesFieldId
+        ? await getFieldValuesForRecordsAction(sorted.map((c) => c.id))
+        : {};
+      const rows = sorted.map((c) =>
+        contractToExportRow(c, (notesFieldId && fieldValuesByContract[c.id]?.[notesFieldId]) || ""),
+      );
       const base64 = await exportContractsToExcelAction(rows, CONTRACT_EXPORT_COLUMNS);
       const date = new Date().toISOString().slice(0, 10);
       downloadBase64Xlsx(base64, `agreements_export_${date}.xlsx`);

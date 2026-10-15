@@ -105,7 +105,6 @@ export default function ContractDetailClient({
   const [billingType, setBillingType] = useState(contract.billingType ?? "");
   const [startDate, setStartDate] = useState(contract.startDate ?? "");
   const [endDate, setEndDate] = useState(contract.endDate ?? "");
-  const [notes, setNotes] = useState(contract.notes ?? "");
   const [contactIds, setContactIds] = useState<string[]>(contract.contactIds);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -140,10 +139,19 @@ export default function ContractDetailClient({
     setContactIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
   }
 
+  /** "notes" is a standard Agreement Field too, but it gets its own full-width, whitespace-preserved "Notes"
+   * card below instead of sitting in the generic entries grid. */
+  const agreementNotesFieldId = useMemo(
+    () => fieldClasses.find((c) => c.recordType === "Agreement")?.fields.find((f) => f.name === "notes")?.id,
+    [fieldClasses],
+  );
+  const notes = (agreementNotesFieldId && fieldValues[agreementNotesFieldId]) || "";
+
   const agreementFieldEntries = useMemo(() => {
     return fieldClasses
       .filter((c) => c.recordType === "Agreement")
       .flatMap((c) => c.fields)
+      .filter((f) => f.name !== "notes")
       .map((f) => ({ label: f.label, value: fieldValues[f.id] ?? "" }));
   }, [fieldClasses, fieldValues]);
 
@@ -157,7 +165,6 @@ export default function ContractDetailClient({
     setBillingType(contract.billingType ?? "");
     setStartDate(contract.startDate ?? "");
     setEndDate(contract.endDate ?? "");
-    setNotes(contract.notes ?? "");
     setContactIds(contract.contactIds);
     setError(null);
     setMode("view");
@@ -181,7 +188,6 @@ export default function ContractDetailClient({
         billingType: billingType || null,
         startDate: startDate || null,
         endDate: endDate || null,
-        notes: notes.trim() || null,
         contactIds,
       };
       await saveContractAction(contract.id, input);
@@ -437,11 +443,6 @@ export default function ContractDetailClient({
                 <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={inputClass} />
               </label>
             </div>
-
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>
-              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputClass} />
-            </label>
 
             <div className="flex flex-col gap-1 text-sm">
               <span className="font-medium text-slate-700 dark:text-slate-300">Contacts involved</span>

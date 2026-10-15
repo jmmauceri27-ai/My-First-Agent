@@ -42,6 +42,8 @@ export default function DynamicFieldsSection({
           </select>
         ) : f.fieldType === "Date" ? (
           <input type="date" value={value} onChange={(e) => onChange(f.id, e.target.value)} className={inputClass} />
+        ) : f.fieldType === "Multi-line Text" ? (
+          <textarea value={value} onChange={(e) => onChange(f.id, e.target.value)} rows={3} className={inputClass} />
         ) : f.fieldType === "Number" ? (
           <input
             type="number"

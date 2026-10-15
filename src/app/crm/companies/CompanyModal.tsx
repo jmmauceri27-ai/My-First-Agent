@@ -27,8 +27,6 @@ export default function CompanyModal({
   const [address, setAddress] = useState(company?.address ?? "");
   const [city, setCity] = useState(company?.city ?? "");
   const [state, setState] = useState(company?.state ?? "");
-  const [website, setWebsite] = useState(company?.website ?? "");
-  const [notes, setNotes] = useState(company?.notes ?? "");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -116,8 +114,6 @@ export default function CompanyModal({
         address: address.trim() || null,
         city: city.trim() || null,
         state: state.trim() || null,
-        website: website.trim() || null,
-        notes: notes.trim() || null,
       });
       await saveFieldValuesForRecordAction(
         companyId,
@@ -222,14 +218,6 @@ export default function CompanyModal({
                 <input value={state} onChange={(e) => setState(e.target.value)} className={inputClass} />
               </label>
             </div>
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-700 dark:text-slate-300">Website</span>
-              <input value={website} onChange={(e) => setWebsite(e.target.value)} className={inputClass} />
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-700 dark:text-slate-300">Notes</span>
-              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputClass} />
-            </label>
           </div>
 
           <div className="mt-4">
