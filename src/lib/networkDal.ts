@@ -6,6 +6,7 @@ import type { RateSchedule } from "./rateSchedule";
 import type {
   Site,
   SiteBulkLinks,
+  SiteFieldValuesUpdateRow,
   SiteFilterTemplate,
   SiteFilters,
   SiteExpenseScheduleUpdateRow,
@@ -1557,6 +1558,52 @@ export async function bulkUpdateSiteMeasurements(
   }
 
   return { updated: updates.length, notFound, ambiguous };
+}
+
+/**
+ * Bulk-sets Custom Field values (crm_fields/crm_field_values) on existing sites -- the Custom Fields
+ * counterpart to bulkUpdateSiteMeasurements, for one-off attributes that aren't part of the fixed
+ * Measurements/Counts set (e.g. "Mulch Color", "Pine Straw"). Mapping a sheet column to a field a site
+ * doesn't have attached yet attaches it (crm_field_assignments) as part of the same write -- the Custom
+ * Fields system otherwise only attaches a field to a record one at a time, from that record's own edit
+ * screen. Matching rules are identical to bulkUpdateSites.
+ */
+export async function bulkUpdateSiteFieldValues(
+  rows: SiteFieldValuesUpdateRow[],
+  companyId: string | null,
+): Promise<SiteUpdateResult> {
+  const supabase = createAdminClient();
+  const { siteIds, notFound, ambiguous } = await matchSiteIds(rows, companyId);
+
+  const now = new Date().toISOString();
+  const assignmentRows: { user_id: string; field_id: string; record_id: string }[] = [];
+  const valueRows: { user_id: string; field_id: string; record_id: string; value: string; updated_at: string }[] = [];
+  let updatedCount = 0;
+
+  rows.forEach((row, i) => {
+    const siteId = siteIds[i];
+    if (!siteId) return;
+    const entries = Object.entries(row.values).filter(([, v]) => v != null && v !== "");
+    if (entries.length === 0) return;
+    updatedCount += 1;
+    for (const [fieldId, value] of entries) {
+      assignmentRows.push({ user_id: OWNER_USER_ID, field_id: fieldId, record_id: siteId });
+      valueRows.push({ user_id: OWNER_USER_ID, field_id: fieldId, record_id: siteId, value, updated_at: now });
+    }
+  });
+
+  for (const chunk of chunkArray(assignmentRows, SITE_ID_CHUNK_SIZE)) {
+    const { error } = await supabase
+      .from("crm_field_assignments")
+      .upsert(chunk, { onConflict: "field_id,record_id" });
+    if (error) throw new Error(error.message);
+  }
+  for (const chunk of chunkArray(valueRows, SITE_ID_CHUNK_SIZE)) {
+    const { error } = await supabase.from("crm_field_values").upsert(chunk, { onConflict: "field_id,record_id" });
+    if (error) throw new Error(error.message);
+  }
+
+  return { updated: updatedCount, notFound, ambiguous };
 }
 
 // ---------- Site Filter Templates ----------

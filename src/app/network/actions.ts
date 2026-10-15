@@ -18,6 +18,7 @@ import {
   bulkUnassignTrades,
   bulkUnassignVendorForTrade,
   bulkUpdateSiteExpenseSchedule,
+  bulkUpdateSiteFieldValues,
   bulkUpdateSiteMeasurements,
   bulkUpdateSiteRateSchedule,
   bulkUpdateSites,
@@ -52,6 +53,7 @@ import type {
   Site,
   SiteBulkLinks,
   SiteExpenseScheduleUpdateRow,
+  SiteFieldValuesUpdateRow,
   SiteFilterTemplate,
   SiteFilters,
   SiteImportRow,
@@ -460,6 +462,26 @@ export async function bulkUpdateSiteMeasurementsAction(
       notFound: [],
       ambiguous: [],
       error: e instanceof Error ? e.message : "Failed to update measurements.",
+    };
+  }
+}
+
+/** Bulk-sets Custom Field values on matched sites from a sheet, attaching a field to a site that doesn't have
+ * it yet as part of the same write. See bulkUpdateSiteFieldValues for matching rules. */
+export async function bulkUpdateSiteFieldValuesAction(
+  rows: SiteFieldValuesUpdateRow[],
+  companyId: string | null,
+): Promise<SiteUpdateResult & { error?: string }> {
+  try {
+    const result = await bulkUpdateSiteFieldValues(rows, companyId);
+    revalidatePath("/network/sites");
+    return result;
+  } catch (e) {
+    return {
+      updated: 0,
+      notFound: [],
+      ambiguous: [],
+      error: e instanceof Error ? e.message : "Failed to update custom fields.",
     };
   }
 }

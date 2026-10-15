@@ -267,6 +267,21 @@ export interface SiteMeasurementsUpdateRow {
 }
 
 /**
+ * A single row parsed from an uploaded sheet meant to bulk-set Custom Field values (crm_fields/
+ * crm_field_values) on existing sites -- e.g. a one-off attribute like "Mulch Color" or "Pine Straw" that
+ * isn't one of the fixed Measurements/Counts labels. Matched the same way as SiteMeasurementsUpdateRow.
+ * `values` is keyed by field id, already converted to each field's own stored string form (e.g. "true"/
+ * "false" for a Checkbox field) -- fields not present are left untouched, and mapping a sheet column to a
+ * field a site doesn't have attached yet attaches it (crm_field_assignments) as part of the same write.
+ */
+export interface SiteFieldValuesUpdateRow {
+  matchCode: string | null;
+  matchId: string | null;
+  matchName: string | null;
+  values: Record<string, string>;
+}
+
+/**
  * A single row parsed from an uploaded sheet meant to bulk-set one Trade's Rate Schedule (which months are
  * paid, and how much) on existing sites -- scoped to exactly one trade per call, same as
  * SiteTradeAssignmentUpdateRow. Months present in `rateSchedule` are merged into the trade's existing schedule
