@@ -276,12 +276,11 @@ export default function SiteDetailClient({
   const viewTabs = useMemo(() => {
     const list: { key: string; label: string }[] = [];
     if (assignmentTrades.length > 0) list.push({ key: "schedule", label: "Rate & Expense Schedule" });
-    list.push({ key: "measurements", label: "Measurements & Counts" });
+    list.push({ key: "measurements", label: "Site Attributes" });
     if (trades.includes("Snow Removal")) list.push({ key: "snowfall", label: "Last Season Snowfall" });
     list.push({ key: "notes", label: "Notes" });
-    if (assignedFieldEntries.length > 0) list.push({ key: "customFields", label: "Custom Fields" });
     return list;
-  }, [assignmentTrades, trades, assignedFieldEntries]);
+  }, [assignmentTrades, trades]);
 
   const currentViewTab = viewTabs.some((t) => t.key === activeViewTab) ? activeViewTab : (viewTabs[0]?.key ?? "");
 
@@ -627,34 +626,48 @@ export default function SiteDetailClient({
               )}
 
               {currentViewTab === "measurements" &&
-                (groupedMeasurements.length === 0 && countEntries.length === 0 ? (
-                  <p className="text-sm text-slate-500 dark:text-slate-400">No measurements or counts yet.</p>
+                (groupedMeasurements.length === 0 && countEntries.length === 0 && assignedFieldEntries.length === 0 ? (
+                  <p className="text-sm text-slate-500 dark:text-slate-400">No attributes set yet.</p>
                 ) : (
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div className="flex flex-col gap-3">
-                      {groupedMeasurements.map((group) => (
-                        <div key={group.label}>
-                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{group.label}</p>
-                          {group.entries.map(([label, value]) => (
-                            <div key={label} className="flex items-center justify-between gap-2 text-sm">
-                              <span className="text-slate-700 dark:text-slate-300">{label}</span>
-                              <span className="tabular-nums text-slate-900 dark:text-slate-50">{formatSquareFeet(value)}</span>
-                            </div>
+                  <div className="flex flex-col gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div className="flex flex-col gap-3">
+                        {groupedMeasurements.map((group) => (
+                          <div key={group.label}>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{group.label}</p>
+                            {group.entries.map(([label, value]) => (
+                              <div key={label} className="flex items-center justify-between gap-2 text-sm">
+                                <span className="text-slate-700 dark:text-slate-300">{label}</span>
+                                <span className="tabular-nums text-slate-900 dark:text-slate-50">{formatSquareFeet(value)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        {countEntries.length > 0 && (
+                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Counts</p>
+                        )}
+                        {countEntries.map(([label, value]) => (
+                          <div key={label} className="flex items-center justify-between gap-2 text-sm">
+                            <span className="text-slate-700 dark:text-slate-300">{label}</span>
+                            <span className="tabular-nums text-slate-900 dark:text-slate-50">{value.toLocaleString("en-US")}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    {assignedFieldEntries.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          Custom attributes
+                        </p>
+                        <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          {assignedFieldEntries.map((f) => (
+                            <Field key={f.label} label={f.label} value={f.value} />
                           ))}
                         </div>
-                      ))}
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      {countEntries.length > 0 && (
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Counts</p>
-                      )}
-                      {countEntries.map(([label, value]) => (
-                        <div key={label} className="flex items-center justify-between gap-2 text-sm">
-                          <span className="text-slate-700 dark:text-slate-300">{label}</span>
-                          <span className="tabular-nums text-slate-900 dark:text-slate-50">{value.toLocaleString("en-US")}</span>
-                        </div>
-                      ))}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 ))}
 
@@ -666,14 +679,6 @@ export default function SiteDetailClient({
                 <p className="whitespace-pre-wrap text-sm text-slate-900 dark:text-slate-50">
                   {notes || <span className="text-slate-500 dark:text-slate-500">No notes yet.</span>}
                 </p>
-              )}
-
-              {currentViewTab === "customFields" && (
-                <div className="grid grid-cols-2 gap-3">
-                  {assignedFieldEntries.map((f) => (
-                    <Field key={f.label} label={f.label} value={f.value} />
-                  ))}
-                </div>
               )}
             </div>
           </Card>
@@ -800,17 +805,6 @@ export default function SiteDetailClient({
               </label>
             </div>
 
-            <div className="mt-4">
-              <DynamicFieldsSection
-                classes={fieldClasses}
-                values={fieldValues}
-                assignedFieldIds={assignedFieldIds}
-                onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}
-                onAssign={handleAssignField}
-                onUnassign={handleUnassignField}
-              />
-            </div>
-
             <div className="mt-6 flex items-center justify-between">
               <Button onClick={handleSave} disabled={saving}>
                 {saving ? "Saving…" : "Save changes"}
@@ -823,12 +817,25 @@ export default function SiteDetailClient({
 
           <div className="flex flex-col gap-6 xl:col-span-2">
             <Card className="p-5">
-              <SiteMeasurementsEditor
-                measurements={measurements}
-                onChangeMeasurements={setMeasurements}
-                counts={counts}
-                onChangeCounts={setCounts}
-              />
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Site Attributes</h2>
+              <div className="mt-3">
+                <SiteMeasurementsEditor
+                  measurements={measurements}
+                  onChangeMeasurements={setMeasurements}
+                  counts={counts}
+                  onChangeCounts={setCounts}
+                />
+              </div>
+              <div className="mt-4 border-t border-purple-400/10 pt-4">
+                <DynamicFieldsSection
+                  classes={fieldClasses}
+                  values={fieldValues}
+                  assignedFieldIds={assignedFieldIds}
+                  onChange={(fieldId, value) => setFieldValues((prev) => ({ ...prev, [fieldId]: value }))}
+                  onAssign={handleAssignField}
+                  onUnassign={handleUnassignField}
+                />
+              </div>
             </Card>
 
             {trades.includes("Snow Removal") && (
