@@ -17,7 +17,7 @@ type ParsedRow = Record<string, string | number | boolean | null>;
 
 const NONE = "";
 
-const COUNT_FIELDS = ["Palm Trees", "Deciduous Tree", "Shrubs"] as const;
+const COUNT_FIELDS = ["Deciduous Tree", "Shrubs"] as const;
 
 const ALL_FIELDS = [...MEASUREMENT_FIELDS, ...COUNT_FIELDS];
 
@@ -34,7 +34,6 @@ const TEMPLATE_EXAMPLE = {
   "Rock Bed": 400,
   "Native Mow": 2000,
   Hedges: 60,
-  "Palm Trees": 4,
   "Deciduous Tree": 9,
   Shrubs: 22,
 };

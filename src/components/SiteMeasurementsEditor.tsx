@@ -149,7 +149,7 @@ export default function SiteMeasurementsEditor({
           <input
             value={newCountLabel}
             onChange={(e) => setNewCountLabel(e.target.value)}
-            placeholder="e.g. Palm Trees"
+            placeholder="e.g. Shrubs"
             className={`${inputClass} min-w-[120px] flex-1`}
           />
           <input
