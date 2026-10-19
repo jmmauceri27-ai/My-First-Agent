@@ -7,14 +7,26 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #f7f5fb;
-  --foreground: #1b1530;
+  --background: #f7f8fa;
+  --foreground: #0b1220;
+  --surface: #ffffff;
+  --surface-border: #e3e6ea;
+  --good: #15803d;
+  --warning: #92400e;
+  --serious: #c2410c;
+  --critical: #b91c1c;
   color-scheme: light;
 }
 
 .dark {
-  --background: #0a070f;
-  --foreground: #f0edfb;
+  --background: #24272c;
+  --foreground: #c7ccd3;
+  --surface: #2a2e34;
+  --surface-border: #383d44;
+  --good: #4ade80;
+  --warning: #fbbf24;
+  --serious: #fb923c;
+  --critical: #f87171;
   /* Without this, native form controls (date-picker calendar icon, scrollbars) render assuming a
      light UI and the calendar icon comes out near-black, invisible against the dark inputs. */
   color-scheme: dark;
@@ -23,38 +35,34 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-border: var(--surface-border);
   --font-sans: var(--font-display);
   --font-mono: var(--font-geist-mono);
 
-  /* Brand accent — vivid electric purple, UI chrome only (buttons/links/nav).
+  /* Brand accent — teal, UI chrome only (buttons/links/nav).
      Independent of the validated chart palette, which stays untouched for
      data-encoding accessibility. */
-  --color-brand-50: #f3ecfe;
-  --color-brand-100: #e0cdfd;
-  --color-brand-400: #a873fa;
-  --color-brand-500: #9055f6;
-  --color-brand-600: #7c3ce3;
-  --color-brand-700: #642dbd;
-  --color-brand-800: #4f2296;
+  --color-brand-50: #ecfdf8;
+  --color-brand-100: #cff7ec;
+  --color-brand-400: #2dd4bf;
+  --color-brand-500: #14b8a6;
+  --color-brand-600: #0d9488;
+  --color-brand-700: #0f766e;
+  --color-brand-800: #115e59;
 
-  /* Status palette (fixed — never reused for chart series) */
-  --color-good: #0ca30c;
-  --color-warning: #fab219;
-  --color-serious: #ec835a;
-  --color-critical: #d03b3b;
+  /* Status palette (fixed per theme — never reused for chart series). Dark mode uses the
+     brighter variants tuned for the charcoal background; light mode uses the deeper variants
+     tuned for a white background, since a single hex can't read well against both. */
+  --color-good: var(--good);
+  --color-warning: var(--warning);
+  --color-serious: var(--serious);
+  --color-critical: var(--critical);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-}
-
-/* Soft hazy "sky" glow behind the ridge layers (see BackgroundArt.tsx). */
-.bg-art {
-  background-image:
-    radial-gradient(ellipse 70% 50% at 50% -10%, rgba(168, 115, 250, 0.18), transparent 60%),
-    radial-gradient(ellipse 60% 45% at 12% 8%, rgba(144, 85, 246, 0.16), transparent 60%),
-    radial-gradient(ellipse 55% 45% at 88% 4%, rgba(180, 140, 250, 0.14), transparent 60%);
 }
 
 * {

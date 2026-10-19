@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Manrope } from "next/font/google";
+import { Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import AppShell from "@/components/AppShell";
 import "./globals.css";
 
-const displayFont = Manrope({
+const displayFont = Plus_Jakarta_Sans({
   variable: "--font-display",
   subsets: ["latin"],
 });

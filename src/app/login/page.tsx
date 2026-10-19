@@ -12,7 +12,7 @@ export default function LoginPage() {
   const [state, formAction, pending] = useActionState(login, initialState);
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-slate-50 px-4 dark:bg-black">
+    <div className="flex flex-1 items-center justify-center bg-slate-50 px-4 dark:bg-background">
       <Card className="w-full max-w-sm p-8 shadow-lg">
         <h1 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">
           🛠️ Facility Maintenance Dashboard
