@@ -449,3 +449,20 @@ export interface FieldValue {
   fieldId: string;
   value: string | null;
 }
+
+/** Formats a field's raw stored string for read-only display -- a Checkbox's "true"/"false" reads as
+ * "Yes"/"No", and a blank Text/Multi-line Text value reads as "None" instead of empty. Number/Date/Dropdown
+ * values are shown as stored, since "None" would read oddly for an unmeasured count or an unset date. Based
+ * on the field's type, not its name, so this applies uniformly to every field of that type rather than
+ * special-casing specific fields. */
+export function formatFieldValueForDisplay(field: Pick<CrmField, "fieldType">, value: string | null | undefined): string {
+  if (field.fieldType === "Checkbox") {
+    if (value === "true") return "Yes";
+    if (value === "false") return "No";
+    return value ?? "";
+  }
+  if (field.fieldType === "Text" || field.fieldType === "Multi-line Text") {
+    return value && value !== "" ? value : "None";
+  }
+  return value ?? "";
+}

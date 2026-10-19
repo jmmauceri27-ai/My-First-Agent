@@ -16,6 +16,7 @@ import SiteTradeAssignmentsEditor, {
 import { formatCurrency, parseCurrencyInput } from "@/lib/siteMapColor";
 import { MONTHS, type Month } from "@/lib/rateSchedule";
 import { TRADE_COLORS, VENDOR_ASSIGNMENT_TRADES, type Trade } from "@/lib/trades";
+import { formatFieldValueForDisplay } from "@/lib/crmTypes";
 import type { Company, Contract, FieldClass, Opportunity } from "@/lib/crmTypes";
 import type { Site, SiteInput, Vendor } from "@/lib/networkTypes";
 import { getFieldValuesForRecordAction, saveFieldValuesForRecordAction } from "@/app/crm/fields/actions";
@@ -231,7 +232,7 @@ export default function SiteDetailClient({
       .filter((c) => c.recordType === "Site")
       .map((c) => ({
         className: c.name,
-        entries: c.fields.map((f) => ({ label: f.label, value: fieldValues[f.id] ?? "" })),
+        entries: c.fields.map((f) => ({ label: f.label, value: formatFieldValueForDisplay(f, fieldValues[f.id]) })),
       }))
       .filter((g) => g.entries.length > 0);
   }, [fieldClasses, fieldValues]);
