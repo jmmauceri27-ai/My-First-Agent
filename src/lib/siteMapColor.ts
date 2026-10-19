@@ -4,7 +4,7 @@ import { CHART_COLORS_LIGHT, STATUS_COLORS } from "./chartPalette";
 export const NEUTRAL_PIN_COLOR = "#898781";
 
 /** Default pin color when no view is active ("All"). */
-export const DEFAULT_PIN_COLOR = "#a78bfa";
+export const DEFAULT_PIN_COLOR = "#14b8a6";
 
 function hexToRgb(hex: string): [number, number, number] {
   const n = parseInt(hex.slice(1), 16);

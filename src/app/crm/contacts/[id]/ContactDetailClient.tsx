@@ -225,7 +225,7 @@ export default function ContactDetailClient({
       <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(260px,1fr)_minmax(0,1.6fr)_minmax(260px,1fr)]">
         {/* Left: contact info */}
         <div className="flex flex-col gap-6">
-          <SectionCard icon="👤" title="Contact Info" color="#7c3ce3">
+          <SectionCard icon="👤" title="Contact Info" color="#b45309">
             <div className="grid grid-cols-2 gap-3">
               <Field label="Title" value={title} />
               <Field

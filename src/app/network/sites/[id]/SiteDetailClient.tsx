@@ -399,7 +399,7 @@ export default function SiteDetailClient({
       {mode === "view" ? (
         <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[380px_1fr]">
           <div className="flex flex-col gap-6">
-            <SectionCard icon="🏢" title="Client & Agreement" color="#7c3ce3">
+            <SectionCard icon="🏢" title="Client & Agreement" color="#b45309">
               <div className="flex flex-col gap-3">
                 <Field
                   label="Client"

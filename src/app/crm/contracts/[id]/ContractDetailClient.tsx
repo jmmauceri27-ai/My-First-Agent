@@ -252,7 +252,7 @@ export default function ContractDetailClient({
 
       {mode === "view" ? (
         <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
-          <SectionCard icon="🏢" title="Client & Source" color="#7c3ce3">
+          <SectionCard icon="🏢" title="Client & Source" color="#b45309">
             <div className="flex flex-col gap-3">
               <Field
                 label="Client"
