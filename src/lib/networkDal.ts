@@ -1401,15 +1401,21 @@ export async function bulkUpdateSiteRateSchedule(
     (existingAssignments ?? []).map((a) => [a.site_id as string, (a.rate_schedule as RateSchedule | null) ?? {}]),
   );
 
-  const updates: { siteId: string; rateSchedule: RateSchedule }[] = [];
+  // Accumulated into one entry per site, not pushed straight into an array -- a sheet can have more than one
+  // row matching the same site (e.g. a duplicate name), and each needs to layer onto the same running
+  // schedule rather than each overwrite it from the same stale DB snapshot (which would silently drop
+  // whichever row's months the other didn't share). It also sidesteps Postgres rejecting a single upsert
+  // statement that would touch the same (site_id, trade) conflict target twice.
+  const scheduleBySiteId = new Map<string, RateSchedule>();
   rows.forEach((row, i) => {
     const siteId = siteIds[i];
     if (!siteId) return;
     if (Object.keys(row.rateSchedule).length === 0) return;
 
-    const rateSchedule = { ...(existingBySiteId.get(siteId) ?? {}), ...row.rateSchedule };
-    updates.push({ siteId, rateSchedule });
+    const base = scheduleBySiteId.get(siteId) ?? existingBySiteId.get(siteId) ?? {};
+    scheduleBySiteId.set(siteId, { ...base, ...row.rateSchedule });
   });
+  const updates = Array.from(scheduleBySiteId, ([siteId, rateSchedule]) => ({ siteId, rateSchedule }));
 
   for (const chunk of chunkArray(updates, SITE_ID_CHUNK_SIZE)) {
     const { error } = await supabase.from("site_trade_assignments").upsert(
@@ -1472,15 +1478,19 @@ export async function bulkUpdateSiteExpenseSchedule(
     }),
   );
 
-  const updates: { siteId: string; expenseSchedule: RateSchedule }[] = [];
+  // See bulkUpdateSiteRateSchedule's identical comment -- accumulate per site instead of pushing straight into
+  // an array, so a sheet with more than one row matching the same site merges correctly instead of either
+  // silently dropping months or crashing Postgres with a duplicate (site_id, trade) conflict target.
+  const scheduleBySiteId = new Map<string, RateSchedule>();
   rows.forEach((row, i) => {
     const siteId = siteIds[i];
     if (!siteId) return;
     if (Object.keys(row.expenseSchedule).length === 0) return;
 
-    const expenseSchedule = { ...(existingBySiteId.get(siteId) ?? {}), ...row.expenseSchedule };
-    updates.push({ siteId, expenseSchedule });
+    const base = scheduleBySiteId.get(siteId) ?? existingBySiteId.get(siteId) ?? {};
+    scheduleBySiteId.set(siteId, { ...base, ...row.expenseSchedule });
   });
+  const updates = Array.from(scheduleBySiteId, ([siteId, expenseSchedule]) => ({ siteId, expenseSchedule }));
 
   for (const chunk of chunkArray(updates, SITE_ID_CHUNK_SIZE)) {
     const { error } = await supabase.from("site_trade_assignments").upsert(
@@ -1512,26 +1522,35 @@ export async function bulkUpdateSiteFieldValues(
   const { siteIds, notFound, ambiguous } = await matchSiteIds(rows, companyId);
 
   const now = new Date().toISOString();
-  const valueRows: { user_id: string; field_id: string; record_id: string; value: string; updated_at: string }[] = [];
-  let updatedCount = 0;
+  // Keyed by field+site, not pushed straight into an array -- a sheet can have more than one row matching the
+  // same site (e.g. a duplicate name), and Postgres rejects a single upsert statement that would touch the
+  // same (field_id, record_id) conflict target twice. Keying by both collapses duplicates down to one entry
+  // per field/site pair (whichever matching row comes last in the sheet wins), while still writing every
+  // field's value independently.
+  const valueByKey = new Map<
+    string,
+    { user_id: string; field_id: string; record_id: string; value: string; updated_at: string }
+  >();
+  const updatedSiteIds = new Set<string>();
 
   rows.forEach((row, i) => {
     const siteId = siteIds[i];
     if (!siteId) return;
     const entries = Object.entries(row.values).filter(([, v]) => v != null && v !== "");
     if (entries.length === 0) return;
-    updatedCount += 1;
+    updatedSiteIds.add(siteId);
     for (const [fieldId, value] of entries) {
-      valueRows.push({ user_id: OWNER_USER_ID, field_id: fieldId, record_id: siteId, value, updated_at: now });
+      valueByKey.set(`${fieldId}:${siteId}`, { user_id: OWNER_USER_ID, field_id: fieldId, record_id: siteId, value, updated_at: now });
     }
   });
+  const valueRows = Array.from(valueByKey.values());
 
   for (const chunk of chunkArray(valueRows, SITE_ID_CHUNK_SIZE)) {
     const { error } = await supabase.from("crm_field_values").upsert(chunk, { onConflict: "field_id,record_id" });
     if (error) throw new Error(error.message);
   }
 
-  return { updated: updatedCount, notFound, ambiguous };
+  return { updated: updatedSiteIds.size, notFound, ambiguous };
 }
 
 // ---------- Site Filter Templates ----------
