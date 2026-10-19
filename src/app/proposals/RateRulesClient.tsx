@@ -164,7 +164,7 @@ export default function RateRulesClient({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex gap-1 rounded-lg border border-purple-400/20 p-1">
+      <div className="flex gap-1 rounded-lg border border-surface-border p-1">
         <button
           type="button"
           onClick={() => setView("assistant")}
@@ -216,7 +216,7 @@ export default function RateRulesClient({
                 <select
                   value={agreementFilter}
                   onChange={(e) => handleAgreementFilterChange(e.target.value)}
-                  className="rounded-lg border border-purple-400/20 bg-transparent px-2.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300"
+                  className="rounded-lg border border-surface-border bg-transparent px-2.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300"
                 >
                   <option value="">All agreements</option>
                   {contracts.map((c) => (
@@ -226,7 +226,7 @@ export default function RateRulesClient({
                     </option>
                   ))}
                 </select>
-                <div className="flex gap-1 rounded-lg border border-purple-400/20 p-0.5">
+                <div className="flex gap-1 rounded-lg border border-surface-border p-0.5">
                   <button
                     type="button"
                     onClick={() => setGroupBy("trade")}
@@ -296,17 +296,17 @@ export default function RateRulesClient({
                       {groups.map(({ label, categories }) => (
                         <div key={label} className="flex flex-col gap-1">
                           {shouldShowGroupLabel(groups.length, label) && (
-                            <p className="text-xs font-semibold text-purple-300">{label}</p>
+                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{label}</p>
                           )}
-                          <Card className="flex flex-col divide-y divide-purple-400/10 overflow-hidden">
+                          <Card className="flex flex-col divide-y divide-surface-border overflow-hidden">
                             {categories.map(([category, items]) => (
                               <div key={category}>
-                                <p className="bg-purple-500/5 px-4 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                <p className="bg-surface px-4 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
                                   {category}
                                 </p>
-                                <div className="flex flex-col divide-y divide-purple-400/10">
+                                <div className="flex flex-col divide-y divide-surface-border">
                                   {items.map((item) => (
-                                    <div key={item.id} className="flex items-center gap-2 px-4 py-2.5 hover:bg-purple-500/5">
+                                    <div key={item.id} className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-900/5 dark:hover:bg-white/5">
                                       <input
                                         type="checkbox"
                                         checked={selectedIds.has(item.id)}
@@ -321,7 +321,7 @@ export default function RateRulesClient({
                                           <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
                                             {item.itemName}
                                             {item.rateTier !== "Regular" && (
-                                              <span className="ml-2 rounded-full bg-purple-500/15 px-2 py-0.5 text-xs font-medium text-purple-300">
+                                              <span className="ml-2 rounded-full bg-brand-500/15 px-2 py-0.5 text-xs font-medium text-brand-600 dark:text-brand-400">
                                                 {item.rateTier}
                                               </span>
                                             )}
@@ -380,12 +380,12 @@ export default function RateRulesClient({
             {overrides.length === 0 ? (
               <p className="text-sm text-slate-500 dark:text-slate-400">No client overrides yet.</p>
             ) : (
-              <Card className="flex flex-col divide-y divide-purple-400/10 overflow-hidden">
+              <Card className="flex flex-col divide-y divide-surface-border overflow-hidden">
                 {overrides.map((o) => (
                   <button
                     key={o.id}
                     onClick={() => setEditingOverride(o)}
-                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-left hover:bg-purple-500/5"
+                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-left hover:bg-slate-900/5 dark:hover:bg-white/5"
                   >
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">

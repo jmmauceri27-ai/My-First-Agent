@@ -191,7 +191,7 @@ export default function ExpensesClient({ sites }: { sites: Site[] }) {
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[1000px] border-collapse text-sm">
               <thead>
-                <tr className="border-b border-purple-400/10 text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <tr className="border-b border-surface-border text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   <th className="py-2 pr-3">Client</th>
                   <th className="py-2 pr-3">Site</th>
                   <th className="py-2 pr-3">Trade</th>
@@ -206,7 +206,7 @@ export default function ExpensesClient({ sites }: { sites: Site[] }) {
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r.key} className="border-b border-purple-400/5">
+                  <tr key={r.key} className="border-b border-surface-border">
                     <td className="py-2 pr-3 text-slate-700 dark:text-slate-300">{r.companyName ?? "—"}</td>
                     <td className="py-2 pr-3 text-slate-700 dark:text-slate-300">{r.siteName}</td>
                     <td className="py-2 pr-3 text-slate-700 dark:text-slate-300">{r.trade}</td>
@@ -224,7 +224,7 @@ export default function ExpensesClient({ sites }: { sites: Site[] }) {
                 ))}
               </tbody>
               <tfoot>
-                <tr className="border-t border-purple-400/20 font-semibold">
+                <tr className="border-t border-surface-border font-semibold">
                   <td className="py-2 pr-3 text-slate-900 dark:text-slate-50" colSpan={4}>
                     Portfolio Total
                   </td>

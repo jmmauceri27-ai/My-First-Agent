@@ -73,7 +73,7 @@ export default function SearchableSelect({
         <span className="shrink-0 text-slate-600 dark:text-slate-500">▾</span>
       </button>
       {open && (
-        <div className="absolute z-[2000] mt-1 w-64 rounded-lg border border-purple-200 bg-white p-2 shadow-xl dark:border-purple-400/40 dark:bg-[#3c2b6b] dark:shadow-black/50">
+        <div className="absolute z-[2000] mt-1 w-64 rounded-lg border border-surface-border bg-white p-2 shadow-xl dark:bg-surface dark:shadow-black/50">
           {options.length > 5 && (
             <input
               autoFocus
@@ -87,7 +87,7 @@ export default function SearchableSelect({
             <button
               type="button"
               onClick={() => choose("")}
-              className={`block w-full rounded px-2 py-1.5 text-left text-sm hover:bg-purple-500/10 ${
+              className={`block w-full rounded px-2 py-1.5 text-left text-sm hover:bg-slate-900/5 dark:hover:bg-white/5 ${
                 !value ? "font-semibold text-brand-600 dark:text-brand-400" : "text-slate-900 dark:text-slate-100"
               }`}
             >
@@ -101,7 +101,7 @@ export default function SearchableSelect({
                   key={o.value}
                   type="button"
                   onClick={() => choose(o.value)}
-                  className={`block w-full truncate rounded px-2 py-1.5 text-left text-sm hover:bg-purple-500/10 ${
+                  className={`block w-full truncate rounded px-2 py-1.5 text-left text-sm hover:bg-slate-900/5 dark:hover:bg-white/5 ${
                     o.value === value
                       ? "font-semibold text-brand-600 dark:text-brand-400"
                       : "text-slate-900 dark:text-slate-100"

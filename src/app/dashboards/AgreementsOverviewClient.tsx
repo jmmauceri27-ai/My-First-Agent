@@ -71,7 +71,7 @@ function GroupTable({ title, caption, rows }: { title: string; caption: string; 
       <div className="mt-4 overflow-x-auto">
         <table className="w-full min-w-[560px] border-collapse text-sm">
           <thead>
-            <tr className="border-b border-purple-400/10 text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <tr className="border-b border-surface-border text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
               <th className="py-2 pr-3">{title.replace("By ", "")}</th>
               <th className="py-2 pr-3 text-right">Agreements</th>
               <th className="py-2 pr-3 text-right">Sites</th>
@@ -81,7 +81,7 @@ function GroupTable({ title, caption, rows }: { title: string; caption: string; 
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.key} className="border-b border-purple-400/5">
+              <tr key={r.key} className="border-b border-surface-border">
                 <td className="py-2 pr-3 font-medium text-slate-900 dark:text-slate-50">{r.label}</td>
                 <td className="py-2 pr-3 text-right tabular-nums text-slate-700 dark:text-slate-300">{r.agreements}</td>
                 <td className="py-2 pr-3 text-right tabular-nums text-slate-700 dark:text-slate-300">{r.sites}</td>

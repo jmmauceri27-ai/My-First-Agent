@@ -128,7 +128,7 @@ export default function SiteTradeAssignmentsEditor({
           draft.subVendorPrice.trim() ? Number(parseCurrencyInput(draft.subVendorPrice)) : null,
         );
         return (
-          <div key={trade} className="rounded-lg border border-purple-400/20 p-3">
+          <div key={trade} className="rounded-lg border border-surface-border p-3">
             <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{trade}</p>
             <div className="mt-2 grid grid-cols-3 gap-3">
               <label className="flex flex-col gap-1 text-sm">

@@ -81,7 +81,7 @@ export default function ClientDetailClient({
               View all →
             </Link>
           </div>
-          <div className="mt-3 flex flex-col divide-y divide-purple-400/10">
+          <div className="mt-3 flex flex-col divide-y divide-surface-border">
             {contacts.length === 0 ? (
               <p className="py-2 text-xs text-slate-500 dark:text-slate-400">No contacts yet.</p>
             ) : (
@@ -102,7 +102,7 @@ export default function ClientDetailClient({
               View pipeline →
             </Link>
           </div>
-          <div className="mt-3 flex flex-col divide-y divide-purple-400/10">
+          <div className="mt-3 flex flex-col divide-y divide-surface-border">
             {opportunities.length === 0 ? (
               <p className="py-2 text-xs text-slate-500 dark:text-slate-400">No opportunities yet.</p>
             ) : (
@@ -132,7 +132,7 @@ export default function ClientDetailClient({
               View all →
             </Link>
           </div>
-          <div className="mt-3 flex flex-col divide-y divide-purple-400/10">
+          <div className="mt-3 flex flex-col divide-y divide-surface-border">
             {contracts.length === 0 ? (
               <p className="py-2 text-xs text-slate-500 dark:text-slate-400">No agreements yet.</p>
             ) : (
@@ -155,7 +155,7 @@ export default function ClientDetailClient({
               View all →
             </Link>
           </div>
-          <div className="mt-3 flex flex-col divide-y divide-purple-400/10">
+          <div className="mt-3 flex flex-col divide-y divide-surface-border">
             {sites.length === 0 ? (
               <p className="py-2 text-xs text-slate-500 dark:text-slate-400">No sites yet.</p>
             ) : (

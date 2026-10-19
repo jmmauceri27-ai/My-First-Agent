@@ -50,15 +50,15 @@ export default function ClientsClient({
       {companies.length === 0 ? (
         <p className="text-sm text-slate-500 dark:text-slate-400">No clients yet.</p>
       ) : (
-        <Card className="flex flex-col divide-y divide-purple-400/10 overflow-hidden">
+        <Card className="flex flex-col divide-y divide-surface-border overflow-hidden">
           {companies.map((c) => (
             <button
               key={c.id}
               onClick={() => router.push(`/network/clients/${c.id}`)}
-              className="flex items-center justify-between gap-4 px-4 py-3 text-left hover:bg-purple-500/5"
+              className="flex items-center justify-between gap-4 px-4 py-3 text-left hover:bg-slate-900/5 dark:hover:bg-white/5"
             >
               <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-purple-400/20 bg-slate-50 dark:bg-slate-900">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-surface-border bg-slate-50 dark:bg-slate-900">
                   {c.logoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={c.logoUrl} alt="" className="h-full w-full object-contain" />

@@ -67,7 +67,7 @@ function TabBar({
   onChange: (key: string) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-1 border-b border-purple-400/15 px-1">
+    <div className="flex flex-wrap gap-1 border-b border-surface-border px-1">
       {tabs.map((tab) => (
         <button
           key={tab.key}
@@ -119,7 +119,7 @@ function ScheduleCalendar({ schedule }: { schedule: Partial<Record<Month, number
           <div
             key={month}
             className={`rounded-md border px-1.5 py-1 text-center ${
-              active ? "border-brand-500/30 bg-brand-500/10" : "border-purple-400/10 bg-slate-100/60 dark:bg-white/5"
+              active ? "border-brand-500/30 bg-brand-500/10" : "border-surface-border bg-slate-100/60 dark:bg-white/5"
             }`}
           >
             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -484,7 +484,7 @@ export default function SiteDetailClient({
                     const subVendor = vendors.find((v) => v.id === draft.subVendorId) ?? null;
                     const contract = contractsForCompany.find((c) => c.id === draft.contractId) ?? null;
                     return (
-                      <div key={trade} className="rounded-lg border border-purple-400/20 p-3">
+                      <div key={trade} className="rounded-lg border border-surface-border p-3">
                         <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{trade}</p>
                         <div className="mt-2 grid grid-cols-2 gap-3">
                           <Field
@@ -795,7 +795,7 @@ export default function SiteDetailClient({
                     const billingType = contractsForCompany.find((c) => c.id === draft.contractId)?.billingType ?? null;
                     const monthlyTotal = scheduleTotal(draft.rateSchedule);
                     return (
-                      <div key={trade} className="rounded-lg border border-purple-400/20 p-3">
+                      <div key={trade} className="rounded-lg border border-surface-border p-3">
                         <div className="flex items-center justify-between gap-3">
                           <div>
                             <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{trade}</p>
@@ -853,7 +853,7 @@ export default function SiteDetailClient({
                     const vendorTotal = scheduleTotal(draft.vendorExpenseSchedule);
                     const subVendorTotal = scheduleTotal(draft.subVendorExpenseSchedule);
                     return (
-                      <div key={trade} className="rounded-lg border border-purple-400/20 p-3">
+                      <div key={trade} className="rounded-lg border border-surface-border p-3">
                         <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{trade}</p>
 
                         <div className="mt-2 flex items-center justify-between">

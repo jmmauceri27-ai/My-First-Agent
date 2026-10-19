@@ -98,7 +98,7 @@ export default function OpportunityListView({ opportunities }: { opportunities: 
     <div className="overflow-x-auto">
       <table className="w-full min-w-[960px] border-collapse text-sm">
         <thead>
-          <tr className="border-b border-purple-400/10 text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <tr className="border-b border-surface-border text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
             {COLUMNS.map((c) => (
               <th
                 key={c.field}
@@ -118,7 +118,7 @@ export default function OpportunityListView({ opportunities }: { opportunities: 
             <tr
               key={o.id}
               onClick={() => router.push(`/crm/opportunities/${o.id}`)}
-              className="cursor-pointer border-b border-purple-400/5 hover:bg-purple-500/5"
+              className="cursor-pointer border-b border-surface-border hover:bg-slate-900/5 dark:hover:bg-white/5"
             >
               <td className="py-2 pr-3 font-mono text-xs text-slate-500 dark:text-slate-400">{o.trackingNumber}</td>
               <td className="py-2 pr-3 font-medium text-slate-900 dark:text-slate-50">{o.name}</td>

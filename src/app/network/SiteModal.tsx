@@ -333,7 +333,7 @@ export default function SiteModal({
         </div>
 
         {trades.includes("Snow Removal") && (
-          <div className="mt-6 border-t border-purple-400/10 pt-4">
+          <div className="mt-6 border-t border-surface-border pt-4">
             <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Last Season Snowfall</span>
             <label className="mt-2 flex flex-col gap-1 text-sm">
               <span className="text-slate-500 dark:text-slate-400">Total snowfall (in.)</span>

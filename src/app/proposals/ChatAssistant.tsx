@@ -161,7 +161,7 @@ export default function ChatAssistant({
                   className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm ${
                     bubble.role === "user"
                       ? "self-end bg-brand-600 text-white"
-                      : "self-start bg-purple-500/10 text-slate-900 dark:text-slate-100"
+                      : "self-start bg-surface text-slate-900 dark:text-slate-100"
                   }`}
                 >
                   {bubble.text}
@@ -170,7 +170,7 @@ export default function ChatAssistant({
               {sending && <p className="self-start text-xs text-slate-600 dark:text-slate-500">Thinking…</p>}
             </div>
 
-            <div className="flex items-center gap-2 border-t border-purple-400/10 p-3">
+            <div className="flex items-center gap-2 border-t border-surface-border p-3">
               <input
                 type="text"
                 value={input}

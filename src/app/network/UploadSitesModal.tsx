@@ -285,7 +285,7 @@ export default function UploadSitesModal({
 
         {parsedRows && (
           <>
-            <div className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-purple-400/30 p-3">
+            <div className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-surface-border p-3">
               <p className="text-sm text-slate-700 dark:text-slate-300">
                 Map this sheet&rsquo;s columns — {parsedRows.length} row{parsedRows.length === 1 ? "" : "s"} found.
               </p>
@@ -324,7 +324,7 @@ export default function UploadSitesModal({
               </div>
             </div>
 
-            <div className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-purple-400/30 p-3">
+            <div className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-surface-border p-3">
               <p className="text-sm text-slate-700 dark:text-slate-300">
                 {mapping.clientName
                   ? "Applied to every imported site, except Client — each row uses its matched Client Name (this is the fallback for rows that don't match)"

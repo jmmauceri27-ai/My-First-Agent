@@ -185,7 +185,7 @@ function infoValueOf(s: Site, field: InfoField): string {
 /** A compact, labeled section of the vertical filter sidebar. */
 function FilterGroup({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-2 border-b border-purple-400/10 pb-3 last:border-b-0 last:pb-0">
+    <div className="flex flex-col gap-2 border-b border-surface-border pb-3 last:border-b-0 last:pb-0">
       <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500">{title}</p>
       <div className="flex flex-col gap-2">{children}</div>
     </div>
@@ -953,7 +953,7 @@ export default function SitesClient({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-purple-400/10 bg-slate-50 dark:bg-[#150f26] px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-surface-border bg-slate-50 dark:bg-surface px-4 py-3">
         <h1 className="text-lg font-bold text-slate-900 dark:text-slate-50">🌐 Network · Sites</h1>
         <div className="flex gap-2">
           <Button
@@ -971,14 +971,14 @@ export default function SitesClient({
               Update
             </Button>
             {showUpdateMenu && (
-              <div className="absolute right-0 z-[2000] mt-1 w-56 rounded-lg border border-purple-200 bg-white p-1.5 shadow-xl dark:border-purple-400/40 dark:bg-[#3c2b6b] dark:shadow-black/50">
+              <div className="absolute right-0 z-[2000] mt-1 w-56 rounded-lg border border-surface-border bg-white p-1.5 shadow-xl dark:bg-surface dark:shadow-black/50">
                 <button
                   type="button"
                   onClick={() => {
                     setUpdatingSheet(true);
                     setShowUpdateMenu(false);
                   }}
-                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-900 dark:text-slate-100 hover:bg-purple-500/10"
+                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-900 dark:text-slate-100 hover:bg-slate-900/5 dark:hover:bg-white/5"
                 >
                   Sites
                 </button>
@@ -988,7 +988,7 @@ export default function SitesClient({
                     setUpdatingAssignments(true);
                     setShowUpdateMenu(false);
                   }}
-                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-900 dark:text-slate-100 hover:bg-purple-500/10"
+                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-900 dark:text-slate-100 hover:bg-slate-900/5 dark:hover:bg-white/5"
                 >
                   Trade assignments
                 </button>
@@ -998,7 +998,7 @@ export default function SitesClient({
                     setUpdatingFieldValues(true);
                     setShowUpdateMenu(false);
                   }}
-                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-900 dark:text-slate-100 hover:bg-purple-500/10"
+                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-900 dark:text-slate-100 hover:bg-slate-900/5 dark:hover:bg-white/5"
                 >
                   Fields
                 </button>
@@ -1008,7 +1008,7 @@ export default function SitesClient({
                     setUpdatingRateSchedule(true);
                     setShowUpdateMenu(false);
                   }}
-                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-900 dark:text-slate-100 hover:bg-purple-500/10"
+                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-900 dark:text-slate-100 hover:bg-slate-900/5 dark:hover:bg-white/5"
                 >
                   Rate schedule
                 </button>
@@ -1018,7 +1018,7 @@ export default function SitesClient({
                     setUpdatingExpenseSchedule(true);
                     setShowUpdateMenu(false);
                   }}
-                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-900 dark:text-slate-100 hover:bg-purple-500/10"
+                  className="block w-full rounded px-3 py-2 text-left text-sm text-slate-900 dark:text-slate-100 hover:bg-slate-900/5 dark:hover:bg-white/5"
                 >
                   Expense schedule
                 </button>
@@ -1033,7 +1033,7 @@ export default function SitesClient({
       </div>
 
       {selectedIds.size > 0 && (
-        <div className="flex flex-col gap-2 border-b border-purple-400/10 bg-white dark:bg-[#1a1330] px-4 py-2">
+        <div className="flex flex-col gap-2 border-b border-surface-border bg-white dark:bg-surface px-4 py-2">
           <div className="flex flex-wrap items-center gap-3">
             <span className="text-sm text-slate-700 dark:text-slate-300">{selectedIds.size} selected</span>
             <TradeSelect value={bulkTrades} onChange={setBulkTrades} className="w-56" placeholder="Add trade(s)…" />
@@ -1216,7 +1216,7 @@ export default function SitesClient({
       )}
 
       <div className="flex min-h-0 flex-1">
-        <div className="flex w-64 shrink-0 flex-col gap-4 overflow-y-auto border-r border-purple-400/10 bg-slate-50 dark:bg-[#150f26] p-3">
+        <div className="flex w-64 shrink-0 flex-col gap-4 overflow-y-auto border-r border-surface-border bg-slate-50 dark:bg-surface p-3">
           <div className="flex flex-col gap-2">
             <h2 className="text-sm font-bold text-slate-900 dark:text-slate-50">Filters</h2>
             <Button variant="secondary" onClick={clearAllFilters} disabled={!hasActiveFilters} className="w-full">
@@ -1248,7 +1248,7 @@ export default function SitesClient({
                   className="w-full"
                   footer={
                     addressUnmatched.length > 0 ? (
-                      <p className="border-t border-purple-400/10 px-2 py-1.5 text-xs text-critical">
+                      <p className="border-t border-surface-border px-2 py-1.5 text-xs text-critical">
                         {addressUnmatched.length} didn&rsquo;t match any site: {addressUnmatched.slice(0, 5).join(", ")}
                         {addressUnmatched.length > 5 ? `, +${addressUnmatched.length - 5} more` : ""}
                       </p>
@@ -1279,7 +1279,7 @@ export default function SitesClient({
                   className="w-full"
                   footer={
                     infoUnmatched.length > 0 ? (
-                      <p className="border-t border-purple-400/10 px-2 py-1.5 text-xs text-critical">
+                      <p className="border-t border-surface-border px-2 py-1.5 text-xs text-critical">
                         {infoUnmatched.length} didn&rsquo;t match any site: {infoUnmatched.slice(0, 5).join(", ")}
                         {infoUnmatched.length > 5 ? `, +${infoUnmatched.length - 5} more` : ""}
                       </p>
@@ -1477,7 +1477,7 @@ export default function SitesClient({
           )}
         </div>
 
-        <div className="flex w-80 shrink-0 flex-col divide-y divide-purple-400/10 overflow-y-auto border-l border-purple-400/10 bg-slate-50 dark:bg-[#150f26]">
+        <div className="flex w-80 shrink-0 flex-col divide-y divide-surface-border overflow-y-auto border-l border-surface-border bg-slate-50 dark:bg-surface">
           {filteredSites.length === 0 ? (
             <p className="p-4 text-sm text-slate-500 dark:text-slate-400">No sites match these filters.</p>
           ) : (
@@ -1492,7 +1492,7 @@ export default function SitesClient({
                 Select all {filteredSites.length} filtered
               </label>
               {filteredSites.map((s) => (
-                <div key={s.id} className="flex items-center gap-2 px-4 py-3 hover:bg-purple-500/5">
+                <div key={s.id} className="flex items-center gap-2 px-4 py-3 hover:bg-slate-900/5 dark:hover:bg-white/5">
                   <input
                     type="checkbox"
                     checked={selectedIds.has(s.id)}

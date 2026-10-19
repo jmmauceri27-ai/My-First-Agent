@@ -261,7 +261,7 @@ export default function ContactDetailClient({
 
         {/* Middle: activity tabs -- Calls / Emails / Meetings / Tasks, one type visible at a time */}
         <SectionCard icon="🗒️" title="Activity" color="#ec4899">
-          <div className="flex gap-1 rounded-lg border border-purple-400/20 p-1">
+          <div className="flex gap-1 rounded-lg border border-surface-border p-1">
             {CONTACT_ACTIVITY_TYPES.map((t) => {
               const meta = ACTIVITY_TYPE_META[t];
               const count = activities.filter((a) => a.type === t).length;
@@ -284,7 +284,7 @@ export default function ContactDetailClient({
             })}
           </div>
 
-          <div className="mt-4 flex flex-col gap-3 rounded-lg border border-purple-400/20 p-3">
+          <div className="mt-4 flex flex-col gap-3 rounded-lg border border-surface-border p-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <label className="flex flex-col gap-1 text-sm">
                 <span className="font-medium text-slate-700 dark:text-slate-300">{ACTIVITY_TYPE_META[selectedActivityType].dateLabel}</span>
@@ -315,7 +315,7 @@ export default function ContactDetailClient({
             </Button>
           </div>
 
-          <div className="mt-4 flex flex-col divide-y divide-purple-400/10">
+          <div className="mt-4 flex flex-col divide-y divide-surface-border">
             {activitiesForSelectedType.length === 0 ? (
               <p className="py-2 text-xs text-slate-500 dark:text-slate-400">
                 {ACTIVITY_TYPE_META[selectedActivityType].emptyMessage}
@@ -376,7 +376,7 @@ export default function ContactDetailClient({
                   </button>
                 </div>
                 {showAllSites && (
-                  <div className="flex flex-col divide-y divide-purple-400/10">
+                  <div className="flex flex-col divide-y divide-surface-border">
                     {responsibleSites.map((s) => (
                       <Link
                         key={s.id}
@@ -398,7 +398,7 @@ export default function ContactDetailClient({
           </SectionCard>
 
           <SectionCard icon="📈" title="Opportunities" color="#3b82f6">
-            <div className="flex flex-col divide-y divide-purple-400/10">
+            <div className="flex flex-col divide-y divide-surface-border">
               {opportunities.length === 0 ? (
                 <p className="py-2 text-xs text-slate-500 dark:text-slate-400">
                   No opportunities tied to this contact yet.
@@ -432,7 +432,7 @@ export default function ContactDetailClient({
           </SectionCard>
 
           <SectionCard icon="📄" title="Agreements" color="#14b8a6">
-            <div className="flex flex-col divide-y divide-purple-400/10">
+            <div className="flex flex-col divide-y divide-surface-border">
               {contracts.length === 0 ? (
                 <p className="py-2 text-xs text-slate-500 dark:text-slate-400">
                   No agreements tied to this contact yet.

@@ -218,7 +218,7 @@ export default function UpdateSiteFieldValuesModal({
 
             {parsedRows && (
               <>
-                <div className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-purple-400/30 p-3">
+                <div className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-surface-border p-3">
                   <p className="text-sm text-slate-700 dark:text-slate-300">
                     Match sites by — {parsedRows.length} row{parsedRows.length === 1 ? "" : "s"} found.
                   </p>
@@ -289,7 +289,7 @@ export default function UpdateSiteFieldValuesModal({
                   .map((fc) => (
                     <div
                       key={fc.id}
-                      className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-purple-400/30 p-3"
+                      className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-surface-border p-3"
                     >
                       <p className="text-sm text-slate-700 dark:text-slate-300">
                         {fc.name} — leave as None to leave untouched

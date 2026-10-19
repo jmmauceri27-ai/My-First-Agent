@@ -157,7 +157,7 @@ export default function FilesCard({
         {error && <p className="text-xs text-critical">{error}</p>}
       </div>
 
-      <div className="mt-4 flex flex-col divide-y divide-purple-400/10">
+      <div className="mt-4 flex flex-col divide-y divide-surface-border">
         {files.length === 0 ? (
           <p className="py-2 text-xs text-slate-500 dark:text-slate-400">No files attached yet.</p>
         ) : (
@@ -186,7 +186,7 @@ export default function FilesCard({
                   <button
                     onClick={() => setEditingId(null)}
                     disabled={renaming}
-                    className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-purple-500/10"
+                    className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-900/5 dark:hover:bg-white/5"
                   >
                     Cancel
                   </button>
@@ -209,7 +209,7 @@ export default function FilesCard({
                   {onRename && (
                     <button
                       onClick={() => startRename(f)}
-                      className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-purple-500/10"
+                      className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-900/5 dark:hover:bg-white/5"
                     >
                       Rename
                     </button>

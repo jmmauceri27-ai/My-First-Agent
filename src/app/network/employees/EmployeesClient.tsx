@@ -46,12 +46,12 @@ export default function EmployeesClient({ employees, fieldClasses }: { employees
               <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 {department} <span className="font-normal text-slate-600 dark:text-slate-500">({list.length})</span>
               </h2>
-              <Card className="flex flex-col divide-y divide-purple-400/10 overflow-hidden">
+              <Card className="flex flex-col divide-y divide-surface-border overflow-hidden">
                 {list.map((e) => (
                   <button
                     key={e.id}
                     onClick={() => router.push(`/network/employees/${e.id}`)}
-                    className="flex items-center justify-between gap-4 px-4 py-3 text-left hover:bg-purple-500/5"
+                    className="flex items-center justify-between gap-4 px-4 py-3 text-left hover:bg-slate-900/5 dark:hover:bg-white/5"
                   >
                     <div>
                       <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{e.name}</p>

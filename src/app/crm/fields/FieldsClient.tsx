@@ -56,12 +56,12 @@ export default function FieldsClient({ classes }: { classes: FieldClass[] }) {
                       ({c.fields.length})
                     </span>
                   </button>
-                  <Card className="flex flex-col divide-y divide-purple-400/10 overflow-hidden">
+                  <Card className="flex flex-col divide-y divide-surface-border overflow-hidden">
                     {c.fields.map((f) => (
                       <button
                         key={f.id}
                         onClick={() => setEditingField(f)}
-                        className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-purple-500/5"
+                        className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-slate-900/5 dark:hover:bg-white/5"
                       >
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{f.label}</p>
@@ -75,7 +75,7 @@ export default function FieldsClient({ classes }: { classes: FieldClass[] }) {
                     <button
                       type="button"
                       onClick={() => setCreatingFieldInClass(c.id)}
-                      className="px-4 py-2.5 text-left text-sm font-medium text-brand-600 dark:text-brand-400 hover:bg-purple-500/5"
+                      className="px-4 py-2.5 text-left text-sm font-medium text-brand-600 dark:text-brand-400 hover:bg-slate-900/5 dark:hover:bg-white/5"
                     >
                       + New field
                     </button>

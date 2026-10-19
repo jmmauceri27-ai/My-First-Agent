@@ -10,7 +10,7 @@ export default function DashboardPicker({
   area: string;
 }) {
   return (
-    <nav className="flex flex-wrap items-center gap-1 border-b border-purple-500/15 pb-2">
+    <nav className="flex flex-wrap items-center gap-1 border-b border-surface-border pb-2">
       {dashboards.map((d) => {
         const active = d.id === selectedId;
         return (
@@ -20,7 +20,7 @@ export default function DashboardPicker({
             className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
               active
                 ? "bg-brand-600 text-white shadow-sm shadow-brand-600/30"
-                : "text-slate-500 dark:text-slate-400 hover:bg-purple-500/10 hover:text-slate-900 dark:hover:text-slate-50"
+                : "text-slate-500 dark:text-slate-400 hover:bg-slate-900/5 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-slate-50"
             }`}
           >
             {d.name}

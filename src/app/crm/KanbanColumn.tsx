@@ -26,7 +26,7 @@ export default function KanbanColumn({
     <div
       ref={setNodeRef}
       className={`flex min-w-[200px] flex-1 flex-col gap-2 rounded-xl border p-3 transition-colors ${
-        isOver ? "border-brand-400 bg-brand-500/15" : "border-purple-200 bg-slate-50 dark:border-purple-500/20 dark:bg-[#180f30]"
+        isOver ? "border-brand-400 bg-brand-500/15" : "border-surface-border bg-slate-50 dark:bg-surface"
       }`}
     >
       <div className="flex items-baseline justify-between px-1">

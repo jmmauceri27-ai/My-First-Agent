@@ -200,7 +200,7 @@ export default function VendorsClient({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-purple-400/10 bg-slate-50 dark:bg-[#150f26] px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-surface-border bg-slate-50 dark:bg-surface px-4 py-3">
         <h1 className="text-lg font-bold text-slate-900 dark:text-slate-50">🌐 Network · Vendors</h1>
         <div className="flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
@@ -232,7 +232,7 @@ export default function VendorsClient({
             </div>
           )}
           {legend && (
-            <div className="absolute bottom-3 left-3 z-[1000] flex max-w-[calc(100%-1.5rem)] flex-col gap-1.5 rounded-lg border border-purple-400/20 bg-white/90 px-3 py-2 shadow-md backdrop-blur dark:bg-[#150f26]/90">
+            <div className="absolute bottom-3 left-3 z-[1000] flex max-w-[calc(100%-1.5rem)] flex-col gap-1.5 rounded-lg border border-surface-border bg-white/90 px-3 py-2 shadow-md backdrop-blur dark:bg-surface/90">
               <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
                 <span className="flex items-center gap-1.5">
                   <span
@@ -251,7 +251,7 @@ export default function VendorsClient({
           )}
         </div>
 
-        <div className="flex w-80 shrink-0 flex-col divide-y divide-purple-400/10 overflow-y-auto border-l border-purple-400/10 bg-slate-50 dark:bg-[#150f26]">
+        <div className="flex w-80 shrink-0 flex-col divide-y divide-surface-border overflow-y-auto border-l border-surface-border bg-slate-50 dark:bg-surface">
           {vendors.length === 0 ? (
             <p className="p-4 text-sm text-slate-500 dark:text-slate-400">No vendors yet.</p>
           ) : (
@@ -259,7 +259,7 @@ export default function VendorsClient({
               <button
                 key={v.id}
                 onClick={() => router.push(`/network/vendors/${v.id}`)}
-                className="flex flex-col gap-0.5 px-4 py-3 text-left hover:bg-purple-500/5"
+                className="flex flex-col gap-0.5 px-4 py-3 text-left hover:bg-slate-900/5 dark:hover:bg-white/5"
               >
                 <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">{v.name}</span>
                 <span className="text-xs text-slate-500 dark:text-slate-400">

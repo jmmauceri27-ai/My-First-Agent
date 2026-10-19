@@ -149,7 +149,7 @@ export default function EmployeeDetailClient({
         <Card className="flex flex-col p-5">
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Opportunities managed</h2>
 
-          <div className="mt-4 flex flex-col divide-y divide-purple-400/10">
+          <div className="mt-4 flex flex-col divide-y divide-surface-border">
             {opportunities.length === 0 ? (
               <p className="py-2 text-xs text-slate-500 dark:text-slate-400">Not managing any opportunities yet.</p>
             ) : (

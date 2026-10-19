@@ -92,14 +92,14 @@ export default function TagInput({
           className={`${inputClass} w-full`}
         />
         {focused && filteredSuggestions.length > 0 && (
-          <div className="absolute z-[2000] mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-purple-200 bg-white py-1 shadow-xl dark:border-purple-400/40 dark:bg-[#3c2b6b] dark:shadow-black/50">
+          <div className="absolute z-[2000] mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-surface-border bg-white py-1 shadow-xl dark:bg-surface dark:shadow-black/50">
             {filteredSuggestions.map((s) => (
               <button
                 key={s}
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => selectSuggestion(s)}
-                className="block w-full truncate px-2.5 py-1.5 text-left text-xs text-slate-900 dark:text-slate-100 hover:bg-purple-500/20"
+                className="block w-full truncate px-2.5 py-1.5 text-left text-xs text-slate-900 dark:text-slate-100 hover:bg-slate-900/5 dark:hover:bg-white/5"
               >
                 {s}
               </button>
@@ -108,8 +108,8 @@ export default function TagInput({
         )}
       </div>
       {values.length > 0 && (
-        <div className="rounded-lg border border-purple-200 bg-white dark:border-purple-400/30 dark:bg-[#1a1330]">
-          <div className="flex items-center justify-between border-b border-purple-400/10 px-2 py-1 text-xs text-slate-500 dark:text-slate-400">
+        <div className="rounded-lg border border-surface-border bg-white dark:bg-surface">
+          <div className="flex items-center justify-between border-b border-surface-border px-2 py-1 text-xs text-slate-500 dark:text-slate-400">
             <span>
               {values.length} value{values.length === 1 ? "" : "s"}
             </span>
@@ -124,7 +124,7 @@ export default function TagInput({
             {values.map((v, i) => (
               <div
                 key={`${v}-${i}`}
-                className="flex items-center justify-between gap-2 border-b border-purple-400/10 px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100 last:border-b-0"
+                className="flex items-center justify-between gap-2 border-b border-surface-border px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100 last:border-b-0"
               >
                 <span className="truncate">{v}</span>
                 <button

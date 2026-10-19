@@ -31,7 +31,7 @@ export default function OpportunityCard({
       {...listeners}
       {...attributes}
       onClick={onClick}
-      className={`cursor-grab rounded-lg border border-purple-200 bg-white p-3 text-sm shadow-md transition-shadow hover:shadow-lg dark:border-purple-400/40 dark:bg-[#3c2b6b] dark:shadow-lg dark:shadow-black/40 dark:hover:shadow-xl active:cursor-grabbing ${
+      className={`cursor-grab rounded-lg border border-surface-border bg-white p-3 text-sm shadow-md transition-shadow hover:shadow-lg dark:bg-background dark:shadow-lg dark:shadow-black/40 dark:hover:shadow-xl active:cursor-grabbing ${
         isDragging ? "opacity-40" : ""
       }`}
     >
@@ -43,7 +43,7 @@ export default function OpportunityCard({
             <img
               src={opportunity.companyLogoUrl}
               alt=""
-              className="h-4 w-4 shrink-0 rounded-full border border-purple-400/20 object-contain"
+              className="h-4 w-4 shrink-0 rounded-full border border-surface-border object-contain"
             />
           )}
           {opportunity.companyName}

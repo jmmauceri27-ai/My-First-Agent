@@ -132,8 +132,8 @@ export default function QuoteCalculator({
         <p className="text-sm text-slate-500 dark:text-slate-400">No rate items for {trade} yet.</p>
       ) : (
         <div className="flex flex-col gap-6 lg:flex-row">
-          <Card className="flex flex-1 flex-col divide-y divide-purple-400/10 overflow-hidden">
-            <p className="bg-purple-500/5 px-4 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+          <Card className="flex flex-1 flex-col divide-y divide-surface-border overflow-hidden">
+            <p className="bg-surface px-4 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
               {usingContractRateCard
                 ? `Using ${contracts.find((c) => c.id === contractId)?.name ?? "this agreement"}'s rate card for ${trade}`
                 : usingCompanyRateCard
@@ -142,8 +142,8 @@ export default function QuoteCalculator({
             </p>
             {itemsByCategory.map(([category, items]) => (
               <div key={category}>
-                <p className="bg-purple-500/5 px-4 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">{category}</p>
-                <div className="flex flex-col divide-y divide-purple-400/10">
+                <p className="bg-surface px-4 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">{category}</p>
+                <div className="flex flex-col divide-y divide-surface-border">
                   {items.map((item) => {
                     const qty = quantities[item.id] ?? "";
                     const num = Number(qty);
@@ -154,7 +154,7 @@ export default function QuoteCalculator({
                           <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
                             {item.itemName}
                             {item.rateTier !== "Regular" && (
-                              <span className="ml-2 rounded-full bg-purple-500/15 px-2 py-0.5 text-xs font-medium text-purple-300">
+                              <span className="ml-2 rounded-full bg-brand-500/15 px-2 py-0.5 text-xs font-medium text-brand-600 dark:text-brand-400">
                                 {item.rateTier}
                               </span>
                             )}
@@ -210,7 +210,7 @@ export default function QuoteCalculator({
                 </span>
               </div>
             )}
-            <div className="mt-1 flex items-center justify-between border-t border-purple-400/10 pt-2 text-sm">
+            <div className="mt-1 flex items-center justify-between border-t border-surface-border pt-2 text-sm">
               <span className="font-semibold text-slate-700 dark:text-slate-300">Total</span>
               <span className="text-base font-bold tabular-nums text-slate-900 dark:text-slate-50">
                 {formatCurrency(result?.total ?? 0)}

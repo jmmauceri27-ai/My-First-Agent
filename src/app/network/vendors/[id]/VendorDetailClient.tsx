@@ -210,7 +210,7 @@ export default function VendorDetailClient({
             (Site, Trade) pairs where this vendor is contracted to directly.
           </p>
 
-          <div className="mt-4 flex flex-col divide-y divide-purple-400/10">
+          <div className="mt-4 flex flex-col divide-y divide-surface-border">
             {assignmentsAsVendor.length === 0 ? (
               <p className="py-2 text-xs text-slate-500 dark:text-slate-400">No sites assigned yet.</p>
             ) : (
@@ -246,7 +246,7 @@ export default function VendorDetailClient({
             (Site, Trade) pairs where another vendor subcontracts work to this vendor.
           </p>
 
-          <div className="mt-4 flex flex-col divide-y divide-purple-400/10">
+          <div className="mt-4 flex flex-col divide-y divide-surface-border">
             {assignmentsAsSubVendor.length === 0 ? (
               <p className="py-2 text-xs text-slate-500 dark:text-slate-400">Not used as a sub-vendor yet.</p>
             ) : (

@@ -61,7 +61,7 @@ function ContractRow({ contract: c, onSelect }: { contract: Contract; onSelect: 
   return (
     <button
       onClick={() => onSelect(c)}
-      className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-left hover:bg-purple-500/5"
+      className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-left hover:bg-slate-900/5 dark:hover:bg-white/5"
     >
       <div className="flex min-w-0 items-center gap-3">
         {c.companyLogoUrl && (
@@ -69,7 +69,7 @@ function ContractRow({ contract: c, onSelect }: { contract: Contract; onSelect: 
           <img
             src={c.companyLogoUrl}
             alt=""
-            className="h-8 w-8 shrink-0 rounded-full border border-purple-400/20 object-contain"
+            className="h-8 w-8 shrink-0 rounded-full border border-surface-border object-contain"
           />
         )}
         <div className="min-w-0">
@@ -221,7 +221,7 @@ export default function ContractsClient({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
-        <div className="flex gap-1 rounded-lg border border-purple-400/20 p-1">
+        <div className="flex gap-1 rounded-lg border border-surface-border p-1">
           <button
             type="button"
             onClick={() => setView("list")}
@@ -278,7 +278,7 @@ export default function ContractsClient({
           {sorted.length === 0 ? (
             <p className="text-sm text-slate-500 dark:text-slate-400">No agreements match these filters.</p>
           ) : (
-            <Card className="flex flex-col divide-y divide-purple-400/10 overflow-hidden">
+            <Card className="flex flex-col divide-y divide-surface-border overflow-hidden">
               {sorted.map((c) => (
                 <ContractRow key={c.id} contract={c} onSelect={openContract} />
               ))}

@@ -96,13 +96,13 @@ export default function ContractsTimeline({
           <div className="flex w-56 shrink-0 flex-col">
             <div className="h-6" />
             {rows.map(({ contract: c }) => (
-              <div key={c.id} className="flex h-14 items-center gap-2 border-t border-purple-400/5 pr-3">
+              <div key={c.id} className="flex h-14 items-center gap-2 border-t border-surface-border pr-3">
                 {c.companyLogoUrl && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={c.companyLogoUrl}
                     alt=""
-                    className="h-6 w-6 shrink-0 rounded-full border border-purple-400/20 object-contain"
+                    className="h-6 w-6 shrink-0 rounded-full border border-surface-border object-contain"
                   />
                 )}
                 <div className="min-w-0">
@@ -117,7 +117,7 @@ export default function ContractsTimeline({
             {yearTicks.map((t) => (
               <div
                 key={t.label}
-                className="absolute top-0 bottom-0 w-px bg-purple-400/10"
+                className="absolute top-0 bottom-0 w-px bg-surface-border"
                 style={{ left: `${t.pct}%` }}
               />
             ))}
@@ -128,7 +128,7 @@ export default function ContractsTimeline({
               />
             )}
 
-            <div className="relative h-6 border-b border-purple-400/10">
+            <div className="relative h-6 border-b border-surface-border">
               {yearTicks.map((t) => (
                 <span
                   key={t.label}
@@ -145,14 +145,14 @@ export default function ContractsTimeline({
                 key={c.id}
                 type="button"
                 onClick={() => onSelect(c)}
-                className="group relative block h-14 w-full border-t border-purple-400/5 text-left hover:bg-purple-500/5"
+                className="group relative block h-14 w-full border-t border-surface-border text-left hover:bg-slate-900/5 dark:hover:bg-white/5"
               >
                 <span
                   className={`absolute top-1/2 h-3 -translate-y-1/2 rounded-full ${status.barClassName}`}
                   style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
                 />
                 <span
-                  className="pointer-events-none absolute top-1/2 z-10 hidden w-60 -translate-y-full rounded-lg border border-purple-200 bg-white p-3 text-xs shadow-xl group-hover:block dark:border-purple-400/30 dark:bg-[#241a44]"
+                  className="pointer-events-none absolute top-1/2 z-10 hidden w-60 -translate-y-full rounded-lg border border-surface-border bg-white p-3 text-xs shadow-xl group-hover:block dark:bg-surface"
                   style={{ left: `${Math.min(leftPct, 60)}%` }}
                 >
                   <p className="font-semibold text-slate-900 dark:text-slate-50">{c.name}</p>

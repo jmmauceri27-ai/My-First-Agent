@@ -177,7 +177,7 @@ export default function OpportunityDetailClient({
               />
             )}
             <div>
-              <span className="rounded-full bg-purple-500/10 px-2 py-0.5 font-mono text-xs text-slate-500 dark:text-slate-400">
+              <span className="rounded-full bg-slate-900/5 dark:bg-white/5 px-2 py-0.5 font-mono text-xs text-slate-500 dark:text-slate-400">
                 {opportunity.trackingNumber}
               </span>
               <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">

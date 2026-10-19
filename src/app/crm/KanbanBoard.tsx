@@ -169,7 +169,7 @@ export default function KanbanBoard({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex gap-1 rounded-lg border border-purple-400/20 p-1">
+        <div className="flex gap-1 rounded-lg border border-surface-border p-1">
           <button
             type="button"
             onClick={() => setView("board")}
@@ -207,7 +207,7 @@ export default function KanbanBoard({
 
       {fixError && <p className="text-sm text-critical">{fixError}</p>}
       {fixResult && (
-        <div className="rounded-lg border border-purple-400/20 bg-white p-3 text-sm dark:bg-[#1a1330]">
+        <div className="rounded-lg border border-surface-border bg-white p-3 text-sm dark:bg-surface">
           <div className="flex items-center justify-between gap-3">
             <p className="text-slate-900 dark:text-slate-100">
               {fixResult.fixed.length === 0

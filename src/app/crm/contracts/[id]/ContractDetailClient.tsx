@@ -231,7 +231,7 @@ export default function ContractDetailClient({
           </Link>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {contract.trackingNumber && (
-              <span className="rounded-full bg-purple-500/10 px-2 py-0.5 font-mono text-xs text-slate-500 dark:text-slate-400">
+              <span className="rounded-full bg-slate-900/5 dark:bg-white/5 px-2 py-0.5 font-mono text-xs text-slate-500 dark:text-slate-400">
                 {contract.trackingNumber}
               </span>
             )}

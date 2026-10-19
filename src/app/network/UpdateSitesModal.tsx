@@ -196,7 +196,7 @@ export default function UpdateSitesModal({ companies, onClose }: { companies: Co
 
         {parsedRows && (
           <>
-            <div className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-purple-400/30 p-3">
+            <div className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-surface-border p-3">
               <p className="text-sm text-slate-700 dark:text-slate-300">
                 Match sites by — {parsedRows.length} row{parsedRows.length === 1 ? "" : "s"} found.
               </p>
@@ -262,7 +262,7 @@ export default function UpdateSitesModal({ companies, onClose }: { companies: Co
               )}
             </div>
 
-            <div className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-purple-400/30 p-3">
+            <div className="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-surface-border p-3">
               <p className="text-sm text-slate-700 dark:text-slate-300">Fields to update (leave as None to leave that field untouched)</p>
               <div className="flex flex-wrap gap-3">
                 {OPTIONAL_FIELDS.map(([key, label]) => (

@@ -69,7 +69,7 @@ function FieldRow<T>({
           <label
             key={c.siteId}
             className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs ${
-              selected === c.siteId ? "border-brand-500 bg-brand-500/10" : "border-purple-400/20"
+              selected === c.siteId ? "border-brand-500 bg-brand-500/10" : "border-surface-border"
             }`}
           >
             <input
@@ -136,7 +136,7 @@ function GroupCard({ group, onMerged }: { group: Site[]; onMerged: () => void })
       </div>
       {error && <p className="mt-2 text-xs text-critical">{error}</p>}
 
-      <div className="mt-3 divide-y divide-purple-400/10">
+      <div className="mt-3 divide-y divide-surface-border">
         <FieldRow label="Name" fieldKey="name" resolution={plan.fields.name} selected={selections.name} onSelect={select} format={(v) => v} />
         <FieldRow
           label="Client"
@@ -180,9 +180,9 @@ function GroupCard({ group, onMerged }: { group: Site[]; onMerged: () => void })
       </div>
 
       {plan.trades.map((t) => (
-        <div key={t.trade} className="mt-3 border-t border-purple-400/10 pt-3">
+        <div key={t.trade} className="mt-3 border-t border-surface-border pt-3">
           <p className="text-sm font-semibold text-slate-200">{t.trade}</p>
-          <div className="divide-y divide-purple-400/10">
+          <div className="divide-y divide-surface-border">
             <FieldRow
               label="Vendor"
               fieldKey={`trade:${t.trade}:vendorId`}

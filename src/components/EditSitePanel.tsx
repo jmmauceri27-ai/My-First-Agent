@@ -117,7 +117,7 @@ export default function EditSitePanel({
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">{title}</h2>
 
         {readOnlyFields.length > 0 && (
-          <div className="mt-3 flex flex-col gap-1 rounded-lg bg-purple-500/10 px-3 py-2">
+          <div className="mt-3 flex flex-col gap-1 rounded-lg bg-surface px-3 py-2">
             {readOnlyFields.map((field) => (
               <div key={field.key} className="flex items-center justify-between text-sm">
                 <span className="text-slate-500 dark:text-slate-400">{field.key}</span>
@@ -151,7 +151,7 @@ export default function EditSitePanel({
           {fields.length === 0 && <p className="text-sm text-slate-500 dark:text-slate-400">No fields yet — add one below.</p>}
         </div>
 
-        <div className="mt-4 rounded-lg border border-dashed border-purple-400/30 p-3">
+        <div className="mt-4 rounded-lg border border-dashed border-surface-border p-3">
           <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Add a field</p>
           <div className="mt-2 flex flex-wrap gap-2">
             <input
