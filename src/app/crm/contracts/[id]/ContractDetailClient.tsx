@@ -38,7 +38,7 @@ function SectionCard({
   className = "",
   children,
 }: {
-  icon: string;
+  icon: React.ReactNode;
   title: string;
   color: string;
   className?: string;
@@ -311,7 +311,16 @@ export default function ContractDetailClient({
             </div>
           </SectionCard>
 
-          <SectionCard icon="👥" title="Contacts involved" color="#14b8a6">
+          <SectionCard
+            icon={
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <circle cx="9" cy="8" r="3"></circle>
+                <circle cx="16" cy="10" r="2.5"></circle>
+              </svg>
+            }
+            title="Contacts involved"
+            color="#14b8a6"
+          >
             {involvedContacts.length === 0 ? (
               <p className="text-sm text-slate-500 dark:text-slate-400">No contacts linked.</p>
             ) : (

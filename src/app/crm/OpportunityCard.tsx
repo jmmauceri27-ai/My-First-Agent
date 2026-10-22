@@ -65,7 +65,22 @@ export default function OpportunityCard({
         <p className="mt-1.5 truncate text-xs text-slate-700 dark:text-slate-300">{opportunity.trades.join(", ")}</p>
       )}
       {opportunity.salesManagerName && (
-        <p className="mt-1.5 truncate text-xs text-slate-500 dark:text-slate-400">👤 {opportunity.salesManagerName}</p>
+        <p className="mt-1.5 flex items-center gap-1 truncate text-xs text-slate-500 dark:text-slate-400">
+          <svg
+            width="11"
+            height="11"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2.5}
+            className="shrink-0"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="8" r="3.5"></circle>
+            <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"></path>
+          </svg>
+          {opportunity.salesManagerName}
+        </p>
       )}
     </div>
   );

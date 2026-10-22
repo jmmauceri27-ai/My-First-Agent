@@ -23,7 +23,7 @@ function SectionCard({
   className = "",
   children,
 }: {
-  icon: string;
+  icon: React.ReactNode;
   title: string;
   color: string;
   className?: string;
@@ -225,7 +225,16 @@ export default function ContactDetailClient({
       <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(260px,1fr)_minmax(0,1.6fr)_minmax(260px,1fr)]">
         {/* Left: contact info */}
         <div className="flex flex-col gap-6">
-          <SectionCard icon="👤" title="Contact Info" color="#b45309">
+          <SectionCard
+            icon={
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <circle cx="12" cy="8" r="3.5"></circle>
+                <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"></path>
+              </svg>
+            }
+            title="Contact Info"
+            color="#b45309"
+          >
             <div className="grid grid-cols-2 gap-3">
               <Field label="Title" value={title} />
               <Field
