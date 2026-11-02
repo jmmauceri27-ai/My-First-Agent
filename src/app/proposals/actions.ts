@@ -11,7 +11,13 @@ import {
   updateClientRateOverride,
   updateRateItem,
 } from "@/lib/crmDal";
+import { buildXlsxBase64 } from "@/lib/exportExcel";
+import type { DatasetRecord } from "@/lib/types";
 import type { ClientRateOverrideInput, RateItemImportRow, RateItemInput } from "@/lib/crmTypes";
+
+export async function exportRateItemsToExcelAction(rows: DatasetRecord[], columns: string[]): Promise<string> {
+  return buildXlsxBase64(rows, columns);
+}
 
 export async function saveRateItemAction(id: string | null, input: RateItemInput): Promise<string> {
   let itemId: string;

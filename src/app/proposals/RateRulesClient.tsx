@@ -4,7 +4,9 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
+import { downloadBase64Xlsx } from "@/lib/downloadXlsx";
 import { formatCurrency } from "@/lib/siteMapColor";
+import type { DatasetRecord } from "@/lib/types";
 import type { ClientRateOverride, Company, Contract, RateItem } from "@/lib/crmTypes";
 import type { Vendor } from "@/lib/networkTypes";
 import RateItemModal from "./RateItemModal";
@@ -12,7 +14,41 @@ import UploadRateItemsModal from "./UploadRateItemsModal";
 import ClientRateOverrideModal from "./ClientRateOverrideModal";
 import QuoteCalculator from "./QuoteCalculator";
 import ChatAssistant from "./ChatAssistant";
-import { deleteRateItemsAction } from "./actions";
+import { deleteRateItemsAction, exportRateItemsToExcelAction } from "./actions";
+
+const RATE_CARD_EXPORT_COLUMNS = [
+  "Trade",
+  "Category",
+  "Item Name",
+  "Pricing Basis",
+  "Rate Tier",
+  "Rate",
+  "Unit Label",
+  "Vendor",
+  "Vendor Rate",
+  "Margin",
+  "Agreement",
+  "Client",
+  "Notes",
+];
+
+function rateItemToExportRow(item: RateItem): DatasetRecord {
+  return {
+    Trade: item.trade,
+    Category: item.category,
+    "Item Name": item.itemName,
+    "Pricing Basis": item.pricingBasis,
+    "Rate Tier": item.rateTier,
+    Rate: item.rate,
+    "Unit Label": item.unitLabel ?? "",
+    Vendor: item.vendorName ?? "",
+    "Vendor Rate": item.vendorRate ?? "",
+    Margin: item.vendorRate != null ? item.rate - item.vendorRate : "",
+    Agreement: item.contractName ?? "",
+    Client: item.companyName ?? "",
+    Notes: item.notes ?? "",
+  };
+}
 
 type View = "assistant" | "rate-card" | "calculator";
 
@@ -41,6 +77,7 @@ export default function RateRulesClient({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [bulkDeleteError, setBulkDeleteError] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
 
   const GENERIC_LABEL = "Generic (no agreement)";
 
@@ -143,6 +180,20 @@ export default function RateRulesClient({
   function handleAgreementFilterChange(contractId: string) {
     setAgreementFilter(contractId);
     setSelectedIds(new Set());
+  }
+
+  async function handleDownload() {
+    if (filteredRateItems.length === 0) return;
+    setDownloading(true);
+    try {
+      const rows = filteredRateItems.map(rateItemToExportRow);
+      const base64 = await exportRateItemsToExcelAction(rows, RATE_CARD_EXPORT_COLUMNS);
+      const date = new Date().toISOString().slice(0, 10);
+      const scope = selectedAgreement ? selectedAgreement.name.toLowerCase().replace(/[^a-z0-9]+/g, "_") : "all";
+      downloadBase64Xlsx(base64, `rate_card_${scope}_${date}.xlsx`);
+    } finally {
+      setDownloading(false);
+    }
   }
 
   async function handleBulkDelete() {
@@ -250,6 +301,9 @@ export default function RateRulesClient({
                     By Client & Agreement
                   </button>
                 </div>
+                <Button variant="secondary" onClick={handleDownload} disabled={filteredRateItems.length === 0 || downloading}>
+                  {downloading ? "Downloading…" : "Download"}
+                </Button>
                 <Button variant="secondary" onClick={() => setUploading(true)}>
                   Upload
                 </Button>
